@@ -3582,7 +3582,7 @@ Ext.onReady( function() {
 
 				this.setProxy({
 					type: 'ajax',
-					url: gis.conf.url.path_api + path,
+					url: gis.baseUrl + gis.conf.url.path_api + path,
 					reader: {
 						type: 'json',
 						root: 'dataElements'
@@ -3874,7 +3874,10 @@ Ext.onReady( function() {
 			forceSelection: true,
 			width: gis.conf.layout.widget.item_width - 65,
 			labelWidth: gis.conf.layout.widget.itemlabel_width,
-			listConfig: {loadMask: false},
+			listConfig: {
+				loadMask: false,
+				minWidth: 188
+			},
 			store: dataElementsByGroupStore,
 			listeners: {
 				select: function() {

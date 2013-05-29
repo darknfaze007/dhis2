@@ -110,6 +110,8 @@ public class DataQueryParams
     
     private Map<MeasureFilter, Double> measureCriteria = new HashMap<MeasureFilter, Double>();
     
+    private boolean skipMeta;
+    
     // -------------------------------------------------------------------------
     // Transient properties
     // -------------------------------------------------------------------------
@@ -412,7 +414,7 @@ public class DataQueryParams
     }
     
     /**
-     * Returns the period type of the first period specified as filter. Returns
+     * Returns the period type of the first period specified as filter, or
      * null if there is no period filter.
      */
     public PeriodType getFilterPeriodType()
@@ -422,6 +424,22 @@ public class DataQueryParams
         if ( filterPeriods != null && !filterPeriods.isEmpty() )
         {
             return ( (Period) filterPeriods.get( 0 ) ).getPeriodType();
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Returns the first period specified as filter, or null if there is no
+     * period filter.
+     */
+    public Period getFilterPeriod()
+    {
+        List<NameableObject> filterPeriods = getFilterPeriods();
+        
+        if ( filterPeriods != null && !filterPeriods.isEmpty() )
+        {
+            return (Period) filterPeriods.get( 0 );
         }
         
         return null;
@@ -1010,6 +1028,16 @@ public class DataQueryParams
     public void setMeasureCriteria( Map<MeasureFilter, Double> measureCriteria )
     {
         this.measureCriteria = measureCriteria;
+    }
+
+    public boolean isSkipMeta()
+    {
+        return skipMeta;
+    }
+
+    public void setSkipMeta( boolean skipMeta )
+    {
+        this.skipMeta = skipMeta;
     }
 
     // -------------------------------------------------------------------------

@@ -221,6 +221,8 @@ public class DefaultAnalyticsService
 
             Map<String, Double> constantMap = constantService.getConstantMap();
 
+            Period filterPeriod = dataSourceParams.getFilterPeriod();
+            
             for ( Indicator indicator : indicators )
             {
                 for ( List<DimensionItem> options : dimensionItemPermutations )
@@ -231,7 +233,7 @@ public class DefaultAnalyticsService
                     
                     if ( valueMap != null )
                     {
-                        Period period = (Period) DimensionItem.getPeriodItem( options );
+                        Period period = filterPeriod != null ? filterPeriod : (Period) DimensionItem.getPeriodItem( options );
                         
                         Double value = expressionService.getIndicatorValue( indicator, period, valueMap, constantMap, null );
                         
@@ -357,25 +359,28 @@ public class DefaultAnalyticsService
         // Meta-data
         // ---------------------------------------------------------------------
 
-        Integer cocIndex = params.getCocIndex();
-        
-        Map<Object, Object> metaData = new HashMap<Object, Object>();
-        
-        Map<String, String> uidNameMap = getUidNameMap( params );
-        Map<String, String> cocNameMap = getCocNameMap( grid, cocIndex );
-        
-        uidNameMap.putAll( cocNameMap );
-        
-        metaData.put( NAMES_META_KEY, uidNameMap );
-        metaData.put( PERIOD_DIM_ID, getUids( params.getDimensionOrFilter( PERIOD_DIM_ID ) ) );
-        metaData.put( ORGUNIT_DIM_ID, getUids( params.getDimensionOrFilter( ORGUNIT_DIM_ID ) ) );
-        
-        if ( cocIndex != null )
+        if ( !params.isSkipMeta() )
         {
-            metaData.put( CATEGORYOPTIONCOMBO_DIM_ID, cocNameMap.keySet() );
+            Integer cocIndex = params.getCocIndex();
+            
+            Map<Object, Object> metaData = new HashMap<Object, Object>();
+            
+            Map<String, String> uidNameMap = getUidNameMap( params );
+            Map<String, String> cocNameMap = getCocNameMap( grid, cocIndex );
+            
+            uidNameMap.putAll( cocNameMap );
+            
+            metaData.put( NAMES_META_KEY, uidNameMap );
+            metaData.put( PERIOD_DIM_ID, getUids( params.getDimensionOrFilter( PERIOD_DIM_ID ) ) );
+            metaData.put( ORGUNIT_DIM_ID, getUids( params.getDimensionOrFilter( ORGUNIT_DIM_ID ) ) );
+            
+            if ( cocIndex != null )
+            {
+                metaData.put( CATEGORYOPTIONCOMBO_DIM_ID, cocNameMap.keySet() );
+            }
+            
+            grid.setMetaData( metaData );
         }
-        
-        grid.setMetaData( metaData );
         
         return grid;
     }
@@ -560,7 +565,7 @@ public class DefaultAnalyticsService
     
     @Override
     public DataQueryParams getFromUrl( Set<String> dimensionParams, Set<String> filterParams, 
-        AggregationType aggregationType, String measureCriteria, I18nFormat format )
+        AggregationType aggregationType, String measureCriteria, boolean skipMeta, I18nFormat format )
     {
         DataQueryParams params = new DataQueryParams();
 
@@ -598,6 +603,8 @@ public class DefaultAnalyticsService
         {
             params.setMeasureCriteria( DataQueryParams.getMeasureCriteriaFromParam( measureCriteria ) );
         }
+        
+        params.setSkipMeta( skipMeta );
 
         return params;
     }
