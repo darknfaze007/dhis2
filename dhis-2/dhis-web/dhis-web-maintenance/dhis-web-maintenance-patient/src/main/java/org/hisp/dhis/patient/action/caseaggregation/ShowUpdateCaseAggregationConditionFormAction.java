@@ -28,7 +28,6 @@
 package org.hisp.dhis.patient.action.caseaggregation;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,15 +35,12 @@ import org.hisp.dhis.caseaggregation.CaseAggregationCondition;
 import org.hisp.dhis.caseaggregation.CaseAggregationConditionService;
 import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
 import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.patient.PatientAttribute;
 import org.hisp.dhis.patient.PatientAttributeService;
-import org.hisp.dhis.patient.comparator.PatientAttributeComparator;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramService;
-import org.hisp.dhis.program.comparator.ProgramNameComparator;
 
 import com.opensymphony.xwork2.Action;
 
@@ -169,10 +165,10 @@ public class ShowUpdateCaseAggregationConditionFormAction
         Collections.sort( dataSets, IdentifiableObjectNameComparator.INSTANCE );
 
         programs = new ArrayList<Program>( programService.getAllPrograms() );
-        Collections.sort( programs, new ProgramNameComparator() );
+        Collections.sort( programs, IdentifiableObjectNameComparator.INSTANCE );
 
         patientAttributes = new ArrayList<PatientAttribute>( patientAttributeService.getAllPatientAttributes() );
-        Collections.sort( patientAttributes, new PatientAttributeComparator() );
+        Collections.sort( patientAttributes, IdentifiableObjectNameComparator.INSTANCE );
 
         caseAggregation = aggregationConditionService.getCaseAggregationCondition( id );
         description = aggregationConditionService.getConditionDescription( caseAggregation.getAggregationExpression() );

@@ -510,17 +510,13 @@ public class HibernateProgramStageInstanceStore
         }
 
         // Filter is only one orgunit
+        
         if ( position == PatientAggregateReport.POSITION_ROW_PERIOD_COLUMN_DATA )
         {
             String orgunitName = organisationUnitService.getOrganisationUnit( orgunitIds.iterator().next() )
                 .getDisplayName();
-
-            String filterDataDes = getFilterDataDescription( deFilters );
-            if ( !filterDataDes.isEmpty() )
-            {
-                filterDataDes = "; " + i18n.getString( "data_filter" ) + ": " + filterDataDes;
-            }
-            grid.setSubtitle( subTitle + i18n.getString( "orgunit" ) + ": " + orgunitName + filterDataDes );
+            
+            grid.setSubtitle( subTitle + i18n.getString( "orgunit" ) + ": " + orgunitName );
         }
         // Filter is only one period
         else if ( position == PatientAggregateReport.POSITION_ROW_ORGUNIT
@@ -541,14 +537,8 @@ public class HibernateProgramStageInstanceStore
                 String endDate = format.formatDate( period.getEndDate() );
                 periodName += startDate + " -> " + endDate;
             }
-
-            String filterDataDes = getFilterDataDescription( deFilters );
-            if ( !filterDataDes.isEmpty() )
-            {
-                filterDataDes = "; " + i18n.getString( "data_filter" ) + ": " + filterDataDes;
-            }
-
-            grid.setSubtitle( subTitle + i18n.getString( "period" ) + ": " + periodName + filterDataDes );
+            
+            grid.setSubtitle( subTitle + i18n.getString( "period" ) + ": " + periodName );
         }
         else
         {
@@ -582,20 +572,12 @@ public class HibernateProgramStageInstanceStore
             }
 
             // Data filter description
-            String filterDataDes = "";
-            if ( position == PatientAggregateReport.POSITION_ROW_ORGUNIT_COLUMN_PERIOD
-                || position == PatientAggregateReport.POSITION_ROW_PERIOD_COLUMN_ORGUNIT
-                || position == PatientAggregateReport.POSITION_ROW_ORGUNIT_ROW_PERIOD
-                || position == PatientAggregateReport.POSITION_ROW_PERIOD
-                || position == PatientAggregateReport.POSITION_ROW_ORGUNIT )
+            String filterDataDes = getFilterDataDescription( deFilters );
+            if ( !filterDataDes.isEmpty() )
             {
-                filterDataDes = getFilterDataDescription( deFilters );
-                if ( !filterDataDes.isEmpty() )
-                {
-                    filterDataDes = i18n.getString( "data_filter" ) + ": " + filterDataDes + "; ";
-                }
+                filterDataDes = "; " + i18n.getString( "data_filter" ) + ": " + filterDataDes;
             }
-
+            
             subTitle += filterOrgunitDes + filterPeriodDes + filterDataDes;
             if ( subTitle.isEmpty() )
             {
@@ -606,7 +588,7 @@ public class HibernateProgramStageInstanceStore
                 grid.setSubtitle( subTitle );
             }
         }
-
+        
         // ---------------------------------------------------------------------
         // Get SQL and build grid
         // ---------------------------------------------------------------------
@@ -1206,16 +1188,16 @@ public class HibernateProgramStageInstanceStore
                     sql += filterSQL + "LIMIT 1 ) ";
                 }
 
-                sql += "as \"" + periodName + "\" ,";
+                sql += " as \"" + periodName + "\" ,";
             }
             // -- end period
 
             sql = sql.substring( 0, sql.length() - 1 ) + " ";
-            sql += " ) ";
+            sql += " ) ) ";
             sql += " UNION ";
         }
-        sql = sql.substring( 0, sql.length() - 6 );
-        sql += ") ORDER BY orgunit asc ";
+        sql = sql.substring( 0, sql.length() - 10 );
+        sql += " ORDER BY orgunit asc ";
         if ( limit != null )
         {
             sql += "LIMIT " + limit;
@@ -1305,13 +1287,14 @@ public class HibernateProgramStageInstanceStore
             }
         }
 
-        sql = sql.substring( 0, sql.length() - 6 ) + " ";
-        sql += " ) ORDER BY orgunit asc ";
+        sql = sql.substring( 0, sql.length() - 6 ) + " ) ";
+       
+        sql += " ORDER BY orgunit asc ";
         if ( limit != null )
         {
             sql += "LIMIT " + limit;
         }
-
+        
         return sql;
     }
 
@@ -1385,17 +1368,20 @@ public class HibernateProgramStageInstanceStore
                     }
                     sql += "     psi_1.executiondate >= '" + startDate + "' AND ";
                     sql += "     psi_1.executiondate <= '" + endDate + "' ";
-                    sql += filterSQL + " LIMIT 1 ) ";
+                    sql += filterSQL + " LIMIT 1 ";
                 }
 
-                sql += " as " + aggregateType;
+                sql += " ) as " + aggregateType;
                 sql += ") ";
                 sql += " UNION ALL ";
 
             }
         }
 
-        sql = sql.substring( 0, sql.length() - 10 ) + " ) ";
+        sql = sql.substring( 0, sql.length() - 10 );
+        
+        if( periods.size() > 1 )
+        
         if ( limit != null )
         {
             sql += " LIMIT " + limit;
@@ -2261,7 +2247,8 @@ public class HibernateProgramStageInstanceStore
             for ( int i = 1; i <= cols; i++ )
             {
                 // meta column
-                if ( rs.getMetaData().getColumnType( i ) == Types.VARCHAR )
+                if ( rs.getMetaData().getColumnType( i ) == Types.VARCHAR 
+                    || rs.getMetaData().getColumnType( i ) == Types.OTHER )
                 {
                     grid.addValue( rs.getObject( i ) );
                 }

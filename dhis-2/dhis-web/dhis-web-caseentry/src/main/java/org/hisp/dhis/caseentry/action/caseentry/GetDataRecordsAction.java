@@ -29,12 +29,14 @@ package org.hisp.dhis.caseentry.action.caseentry;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.hisp.dhis.caseentry.state.SelectedStateManager;
 import org.hisp.dhis.common.Grid;
+import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
 import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.paging.ActionPagingSupport;
@@ -224,6 +226,8 @@ public class GetDataRecordsAction
             {
                 patientAttributes = new ArrayList<PatientAttribute>(
                     patientAttributeService.getPatientAttributesByDisplayOnVisitSchedule( true ) );
+
+                Collections.sort( patientAttributes, IdentifiableObjectNameComparator.INSTANCE);
 
                 total = patientService.countSearchPatients( searchTexts, orgunit, followup );
                 this.paging = createPaging( total );

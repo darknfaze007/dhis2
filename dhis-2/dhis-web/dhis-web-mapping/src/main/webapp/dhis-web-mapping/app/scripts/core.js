@@ -259,7 +259,7 @@ GIS.core.getOLMap = function(gis) {
 				documentDrag: true
 			}),
 			new OpenLayers.Control.MousePosition({
-				prefix: '<span class="el-fontsize-10"><span class="text-mouseposition-lonlat">LON </span>',
+				prefix: '<span id="mouseposition" class="el-fontsize-10"><span class="text-mouseposition-lonlat">LON </span>',
 				separator: '<span class="text-mouseposition-lonlat">&nbsp;&nbsp;LAT </span>',
 				suffix: '<div id="google-logo" name="http://www.google.com/intl/en-US_US/help/terms_maps.html" onclick="window.open(Ext.get(this).dom.attributes.name.nodeValue);"></div></span>'
 			}),
@@ -1779,7 +1779,8 @@ GIS.core.LayerLoaderFacility = function(gis, layer) {
 };
 
 GIS.core.getInstance = function(config) {
-	var gis = {};
+	var gis = {},
+		layers = [];
 
 	gis.baseUrl = config && config.baseUrl ? config.baseUrl : '../..';
 	gis.el = config && config.el ? config.el : null;
@@ -1790,17 +1791,20 @@ GIS.core.getInstance = function(config) {
 	gis.olmap = GIS.core.getOLMap(gis);
 	gis.layer = GIS.core.getLayers(gis);
 
-	gis.olmap.addLayers([
-		gis.layer.googleStreets,
-		gis.layer.googleHybrid,
-		gis.layer.openStreetMap,
+	if (window.google) {
+		layers.push(gis.layer.googleStreets, gis.layer.googleHybrid);
+	}
+
+	layers.push(gis.layer.openStreetMap,
 		gis.layer.thematic4,
 		gis.layer.thematic3,
 		gis.layer.thematic2,
 		gis.layer.thematic1,
 		gis.layer.boundary,
 		gis.layer.facility
-	]);
+	);
+
+	gis.olmap.addLayers(layers);
 
 	return gis;
 };

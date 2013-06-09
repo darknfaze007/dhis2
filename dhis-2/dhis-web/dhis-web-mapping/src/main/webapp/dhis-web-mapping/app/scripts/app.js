@@ -146,6 +146,7 @@ Ext.onReady( function() {
 			var svgArray = [],
 				svg = '',
 				namespace,
+                title = Ext.htmlEncode(title),
 				titleSVG,
 				legendSVG = '',
 				scalelineSVG,
@@ -157,6 +158,8 @@ Ext.onReady( function() {
 			if (!layers.length) {
 				return false;
 			}
+
+			layers = layers.reverse();
 
 			namespace = 'xmlns="http://www.w3.org/2000/svg"';
 
@@ -184,6 +187,13 @@ Ext.onReady( function() {
 					when,
 					where,
 					legend;
+
+                // Html encode
+                for (var key in legendConfig) {
+                    if (legendConfig.hasOwnProperty(key)) {
+                        legendConfig[key] = Ext.htmlEncode(legendConfig[key]);
+                    }
+                }
 
 				// SVG
 				svgArray.push(layer.div.innerHTML);
@@ -615,7 +625,9 @@ Ext.onReady( function() {
 							}
 							that.updateItem(value);
 
-							gis.viewport.downloadButton.xable();
+							if (gis.viewport) {
+								gis.viewport.downloadButton.xable();
+							}
 						}
 					}
 				});
@@ -907,7 +919,7 @@ Ext.onReady( function() {
 				layer: layer,
 				text: layer.name,
 				imageUrl: 'images/' + layer.id + '_14.png',
-				value: layer.id === visibleLayer.id ? true : false,
+				value: layer.id === visibleLayer.id && window.google ? true : false,
 				opacity: layer.layerOpacity,
 				numberFieldDisabled: layer.id !== visibleLayer.id
 			});
@@ -916,9 +928,7 @@ Ext.onReady( function() {
 			items.push(layer.item);
 		}
 
-		if (window.google) {
-			visibleLayer.item.setValue(true);
-		}
+		visibleLayer.item.setValue(!!window.google);
 
         panel = Ext.create('Ext.panel.Panel', {
 			renderTo: 'layerItems',
@@ -3049,7 +3059,7 @@ Ext.onReady( function() {
 			text: GIS.i18n.download,
 			handler: function() {
 				var type = format.getValue(),
-					title = Ext.htmlEncode(name.getValue()),
+					title = name.getValue(),
 					svg = gis.util.svg.getString(title, gis.util.map.getVisibleVectorLayers()),
 					exportForm = document.getElementById('exportForm');
 
@@ -3437,7 +3447,7 @@ Ext.onReady( function() {
 				{
 					xtype: 'form',
 					cls: 'el-border-0',
-					width: 270,
+					//width: 270,
 					items: [
 						{
 							html: GIS.i18n.organisation_unit_level_parent,
@@ -5201,7 +5211,7 @@ Ext.onReady( function() {
 
 				gis.olmap.events.register('click', null, function(e) {
 					if (gis.olmap.relocate.active) {
-						var el = document.getElementById('mouseposition').childNodes[0],
+						var el = Ext.query('#mouseposition')[0],
 							coordinates = '[' + el.childNodes[1].data + ',' + el.childNodes[3].data + ']',
 							center = gis.viewport.centerRegion;
 
@@ -5230,11 +5240,6 @@ Ext.onReady( function() {
 						id: id
 					};
 					GIS.core.MapLoader(gis).load();
-				}
-
-                // Background
-				if (!window.google) {
-					gis.layer.openStreetMap.item.setValue(false);
 				}
 			};
 
