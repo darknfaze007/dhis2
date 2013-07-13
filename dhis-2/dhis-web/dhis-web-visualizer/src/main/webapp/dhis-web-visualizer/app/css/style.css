@@ -373,6 +373,10 @@ body.x-windows {
     height: 32px;
 }
 
+.x-btn-default-small {
+	border-radius: 1px;
+}
+
 .x-btn-default-toolbar-small-pressed {
 	border-color: #bbb;
     background-image: none;
@@ -383,6 +387,21 @@ body.x-windows {
     background-image: -o-linear-gradient(top, #d1d1d1,#e5e5e5);
     background-image: -ms-linear-gradient(top, #d1d1d1,#e5e5e5);
     background-image: linear-gradient(top, #d1d1d1,#e5e5e5);
+}
+
+
+/*----------------------------------------------------------------------------
+ * DV Button
+ *--------------------------------------------------------------------------*/
+
+.dv-button-icon-gear {
+	width: 22px !important;
+	height: 22px !important;
+	background: url('../images/gear_18.png') no-repeat;
+}
+
+.dv-button-organisationunitselection .x-btn-center {
+	width: 18px !important;
 }
 
 
@@ -631,12 +650,12 @@ body.x-windows {
 	border-top-right-radius: 1px;
     background-image: none;
     background-color: #e0e0e0;
-    background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #dcdcdc), color-stop(100%, #e5e5e5)) !important;
-    background-image: -webkit-linear-gradient(top, #dcdcdc, #e5e5e5) !important;
-    background-image: -moz-linear-gradient(top, #dcdcdc, #e5e5e5) !important;
-    background-image: -o-linear-gradient(top, #dcdcdc, #e5e5e5) !important;
-    background-image: -ms-linear-gradient(top, #dcdcdc, #e5e5e5) !important;
-    background-image: linear-gradient(top, #dcdcdc, #e5e5e5) !important;
+    background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #dedede), color-stop(100%, #e6e6e6)) !important;
+    background-image: -webkit-linear-gradient(top, #dedede, #e6e6e6) !important;
+    background-image: -moz-linear-gradient(top, #dedede, #e6e6e6) !important;
+    background-image: -o-linear-gradient(top, #dedede, #e6e6e6) !important;
+    background-image: -ms-linear-gradient(top, #dedede, #e6e6e6) !important;
+    background-image: linear-gradient(top, #dedede, #e6e6e6) !important;
 }
 	/* accordion title dock, default, collapsed */
 .dv-accordion .collapsed .x-accordion-hd {
@@ -645,8 +664,7 @@ body.x-windows {
 
 	/* accordion title dock outer, shared */
 .dv-accordion .x-accordion-item {
-	border-top-left-radius: 2px;
-	border-top-right-radius: 2px;
+	border-radius: 1px;
 }
 	/* accordion title dock outer, default */
 .dv-accordion .x-accordion-item {
@@ -747,6 +765,21 @@ body.x-windows {
 	/* Menu item color */
 .x-menu-item-text {
     color: #111;
+}
+
+
+/*----------------------------------------------------------------------------
+ * DV Menu
+ *--------------------------------------------------------------------------*/
+
+.dv-menu-item-selected {
+    background-image:url('../images/check.png');
+    padding-left: 18px;
+}
+
+	/* Menu align */
+.dv-btn-menu {
+	margin-top: 2px;
 }
 
 

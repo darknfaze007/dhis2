@@ -8,7 +8,7 @@ function addProgramStage()
 {
 	var programId = document.getElementById('id').value;
 
-	if( programId == "null"  || programId == "" )
+	if( programId == "null" || programId == "" )
 	{
 		showWarningMessage( i18n_please_select_program );
 	}
@@ -103,6 +103,12 @@ function selectDataElements()
 			html += "<td align='center'><input type='checkbox' name='compulsory'></td>";
 			html += "<td align='center'><input type='checkbox' name='allowProvided'></td>";
 			html += "<td align='center'><input type='checkbox' name='displayInReport'></td>";
+			if( jQuery(item).attr('valuetype') =='date'){
+				html += "<td align='center'><input type='checkbox' name='allowDateInFuture'></td>";
+			}
+			else{
+				html += "<td align='center'><input type='hidden' name='allowDateInFuture'></td>";
+			}
 			html += "</tr>";
 			selectedList.append( html );
 			jQuery( item ).remove();
@@ -119,6 +125,12 @@ function selectAllDataElements()
 		html += "<td align='center'><input type='checkbox' name='compulsory'></td>";
 		html += "<td align='center'><input type='checkbox' name='allowProvided'></td>";
 		html += "<td align='center'><input type='checkbox' name='displayInReport'></td>";
+		if( jQuery(item).attr('valuetype') =='date'){
+			html += "<td align='center'><input type='checkbox' name='allowDateInFuture'></td>";
+		}
+		else{
+			html += "<td align='center'><input type='hidden' name='allowDateInFuture'></td>";
+		}
 		html += "</tr>";
 		selectedList.append( html );
 		jQuery( item ).remove();
@@ -132,7 +144,7 @@ function unSelectDataElements()
 		item = jQuery(item);
 		if( item.hasClass("selected") )
 		{		
-			availableList.append( "<option value='" + item.attr( "id" ) + "' selected='true'>" + item.find("td:first").text() + "</option>" );
+			availableList.append( "<option value='" + item.attr( "id" ) + "' selected='true' valuetype='" + item.valuetype + "'>" + item.find("td:first").text() + "</option>" );
 			item.remove();
 		}
 	});
@@ -144,7 +156,7 @@ function unSelectAllDataElements()
 	var availableList = jQuery("#availableList");
 	jQuery("#selectedList").find("tr").each( function( i, item ){
 		item = jQuery(item);
-		availableList.append( "<option value='" + item.attr( "id" ) + "' selected='true'>" + item.find("td:first").text() + "</option>" );
+		availableList.append( "<option value='" + item.attr( "id" ) + "' selected='true' valuetype='" + item.valuetype + "'>" + item.find("td:first").text() + "</option>" );
 		item.remove();
 	});
 }
@@ -266,9 +278,29 @@ function generateTemplateMessageForm()
 				+ 	'<td colspan="2">' + i18n_reminder + ' ' + rowId + '<a href="javascript:removeTemplateMessageForm('+ rowId +')"> ( '+ i18n_remove_reminder + ' )</a></td>'
 				+ '</tr>'
 				+ '<tr name="tr' + rowId + '">'
+				+ 	'<td><label>' + i18n_send_when_to + '</label></td>'
+				+ 	'<td>'
+				+ 		'<select id="whenToSend' + rowId + '" name="whenToSend' + rowId + '" class="whenToSend" onchange="whenToSendOnChange(' + rowId + ')">'
+				+ 			'<option value="">' + i18n_from_the_day_set + '</option>'
+				+ 			'<option value="2">' + i18n_complete_event + '</option>'
+				+ 		'</select>'
+				+	'</td>'
+				+ '</tr>'
+				+ '<tr name="tr' + rowId + '">'
 				+ 	'<td><label>' + i18n_days_before_after_due_date + '</label></td>'
 				+ 	'<td><input type="text" id="daysAllowedSendMessage' + rowId + '" name="daysAllowedSendMessage' + rowId + '" class="daysAllowedSendMessage {validate:{required:true,number:true}}"/></td>'
 				+ '</tr>'
+				+ '<tr>'
+				+ 	'<td><label>' + i18n_send_to + '</label></td>'
+				+ 	'<td>'
+				+ 		'<select id="sendTo' + rowId + '" name="sendTo' + rowId + '" class="sendTo" >'
+				+ 			'<option value="1">' + i18n_patient + '</option>'
+				+ 			'<option value="2">' + i18n_health_worker + '</option>'
+				+ 			'<option value="3">' + i18n_orgunit_registered + '</option>'
+				+ 			'<option value="4">' + i18n_all_users_in_orgunit_registered + '</option>'
+				+ 		'</select>'
+				+	'</td>'
+				+ '/<tr>'
 				+ '<tr name="tr' + rowId + '">'
 				+	'<td>' + i18n_params + '</td>'
 				+	'<td>'
@@ -293,4 +325,15 @@ function generateTemplateMessageForm()
 function removeTemplateMessageForm( rowId )
 {
 	jQuery("[name=tr" + rowId + "]").remove();
+}
+
+function whenToSendOnChange(index)
+{
+	var whenToSend = getFieldValue('whenToSend' + index );
+	if(whenToSend==2){
+		disable('daysAllowedSendMessage' + index );
+	}
+	else{
+		enable('daysAllowedSendMessage' + index );
+	}
 }

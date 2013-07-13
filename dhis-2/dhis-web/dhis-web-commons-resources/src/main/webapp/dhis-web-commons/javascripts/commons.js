@@ -668,7 +668,8 @@ function hideInfo()
  */
 function showDetails()
 {
-    $( '#detailsArea' ).show( "fast" );
+	$( '#detailsData' ).css( 'width', '270px' );
+    $( '#detailsArea' ).show();
 }
 
 /**
@@ -676,7 +677,8 @@ function showDetails()
  */
 function hideDetails()
 {
-    $( '#detailsArea' ).hide( "fast" );
+	$( '#detailsData' ).css( 'width', '0' );
+    $( '#detailsArea' ).hide();
 }
 
 /**
@@ -1414,11 +1416,6 @@ function showSuccessMessage( message, time )
 function showWarningMessage( message, time )
 {
 	jQuery.growlUI( i18n_warning, message, 'warning', time ); 	
-}
-
-function showWaitMessage( message, time )
-{
-	jQuery.growlUI( i18n_waiting, message, 'waiting', time );
 }
 
 function markInvalid( elementId, message )

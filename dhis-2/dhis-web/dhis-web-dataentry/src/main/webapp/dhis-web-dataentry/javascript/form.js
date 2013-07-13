@@ -564,6 +564,10 @@ function loadForm( dataSetId, multiOrg )
 
         if ( !multiOrganisationUnit )
         {
+            if ( dataSets[dataSetId].renderAsTabs ) {
+                $( "#tabs" ).tabs();
+            }
+
             enableSectionFilter();
             insertDynamicOptions();
         }
@@ -586,6 +590,10 @@ function loadForm( dataSetId, multiOrg )
 
             if( !multiOrganisationUnit )
             {
+                if ( dataSets[dataSetId].renderAsTabs ) {
+                    $( "#tabs" ).tabs();
+                }
+
                 enableSectionFilter();
                 insertDynamicOptions();
             }
@@ -1391,6 +1399,14 @@ function getPreviousEntryField( field )
             return field;
         }
     }
+}
+
+/**
+ * Convenience method which can be used in custom form scripts. Do not change.
+ */
+function onFormLoad( fn )
+{
+	$( 'body' ).off( EVENT_FORM_LOADED ).on( EVENT_FORM_LOADED, fn );
 }
 
 // -----------------------------------------------------------------------------

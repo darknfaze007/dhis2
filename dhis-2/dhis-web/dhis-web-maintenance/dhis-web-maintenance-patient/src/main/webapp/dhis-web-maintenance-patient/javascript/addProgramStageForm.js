@@ -31,11 +31,20 @@ jQuery( document ).ready( function()
 		var daysAllowedSendMessages = jQuery( "#daysAllowedSendMessages" );
 		daysAllowedSendMessages.empty();
 		
+		var allowDateInFutures = jQuery( "#allowDateInFutures" );
+		allowDateInFutures.empty();
+		
 		var templateMessages = jQuery( "#templateMessages" );
 		templateMessages.empty();
 		
 		var allowProvidedElsewhere = jQuery( "#allowProvidedElsewhere" );
 		allowProvidedElsewhere.empty();
+		
+		var sendTo = jQuery( "#sendTo" );
+		sendTo.empty();
+		
+		var whenToSend = jQuery( "#whenToSend" );
+		whenToSend.empty();		
 		
 		jQuery("#selectedList").find("tr").each( function( i, item ){ 
 			
@@ -52,12 +61,22 @@ jQuery( document ).ready( function()
 			var displayInReport = jQuery( item ).find( "input[name='displayInReport']:first");
 			checked = displayInReport.attr('checked') ? true : false;
 			displayInReports.append( "<option value='" + checked + "' selected='true'>" + checked + "</option>" );
+		
+			var allowDateInFuture = jQuery( item ).find( "input[name='allowDateInFuture']:first");
+			checked = allowDateInFuture.attr('checked') ? true : false;
+			allowDateInFutures.append( "<option value='" + checked + "' selected='true'>" + checked + "</option>" );
 		});
 		jQuery(".daysAllowedSendMessage").each( function( i, item ){ 
 			daysAllowedSendMessages.append( "<option value='" + item.value + "' selected='true'>" + item.value +"</option>" );
 		});
 		jQuery(".templateMessage").each( function( i, item ){ 
 			templateMessages.append( "<option value='" + item.value + "' selected='true'>" +item.value+"</option>" );
+		});
+		jQuery(".sendTo").each( function( i, item ){ 
+			sendTo.append( "<option value='" + item.value + "' selected='true'>" + item.value +"</option>" );
+		});
+		jQuery(".whenToSend").each( function( i, item ){ 
+			whenToSend.append( "<option value='" + item.value + "' selected='true'>" + item.value +"</option>" );
 		});
 	});
 	
@@ -69,6 +88,7 @@ jQuery( document ).ready( function()
 				var option = jQuery("<option />");
 				option.text( item.name );
 				option.attr( "value", item.id );
+				option.attr( "valuetype", item.type );
 
 				return option;
 			}

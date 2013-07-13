@@ -625,6 +625,24 @@
 			</result>
 		</action>
 
+		<action name="showDefaultPatientRegistrationForm"
+			class="org.hisp.dhis.patient.action.dataentryform.ShowDefaultPatientRegistrationFormAction">
+			<result name="success" type="velocity">/main.vm</result>
+			<param name="page">/dhis-web-maintenance-patient/defaultPatientRegistationForm.vm</param>
+			<param name="javascripts">
+				../dhis-web-commons/ckeditor/ckeditor.js,
+				../dhis-web-commons/ckeditor/adapters/jquery.js,
+				javascript/patientRegistationForm.js
+			</param>
+			<param name="stylesheets">style/basic.css</param>
+		</action>
+		
+		<action name="saveDefaultPatientRegistrationForm"
+			class="org.hisp.dhis.patient.action.dataentryform.SaveDefaultPatientRegistrationFormAcion">
+			<result name="success" type="redirect">patientRegistrationForm.action
+			</result>
+		</action>
+		
 		<!-- Patient Attribute Group -->
 
 		<action name="patientAttributeGroup"
@@ -751,7 +769,7 @@
 			class="org.hisp.dhis.patient.action.patientidentifiertype.GetPatientIdentifierTypeListAction">
 			<result name="success" type="velocity">/main.vm</result>
 			<param name="page">
-				/dhis-web-maintenance-patient/listPatientIdentifierType.vm</param>
+				/dhis-web-maintenance-patient/patientIdentifierType.vm</param>
 			<param name="menu">/dhis-web-maintenance-patient/menu.vm</param>
 			<param name="javascripts">javascript/patientIdentifierType.js</param>
 		</action>
@@ -1132,7 +1150,7 @@
 			class="org.hisp.dhis.patient.action.program.GetProgramAction">
 			<result name="success" type="velocity">/main.vm</result>
 			<param name="page">/dhis-web-maintenance-patient/addProgramIndicator.vm</param>
-			<param name="javascripts">javascript/programIndicator.js</param>
+			<param name="javascripts">javascript/commons.js,javascript/programIndicator.js</param>
 			<param name="requiredAuthorities">F_ADD_PROGRAM_INDICATOR</param>
 		</action>
 
@@ -1147,7 +1165,7 @@
 			class="org.hisp.dhis.patient.action.programtindicator.GetProgramIndicatorAction">
 			<result name="success" type="velocity">/main.vm</result>
 			<param name="page">/dhis-web-maintenance-patient/updateProgramIndicator.vm</param>
-			<param name="javascripts">javascript/programIndicator.js</param>
+			<param name="javascripts">javascript/commons.js,javascript/programIndicator.js</param>
 			<param name="requiredAuthorities">F_UPDATE_PROGRAM_INDICATOR</param>
 		</action>
 

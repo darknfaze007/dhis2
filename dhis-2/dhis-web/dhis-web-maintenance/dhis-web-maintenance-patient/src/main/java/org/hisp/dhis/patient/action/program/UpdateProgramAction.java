@@ -217,11 +217,11 @@ public class UpdateProgramAction
         this.datesToCompare = datesToCompare;
     }
 
-    private Boolean disableRegistrationFields;
+    private List<Integer> sendTo = new ArrayList<Integer>();
 
-    public void setDisableRegistrationFields( Boolean disableRegistrationFields )
+    public void setSendTo( List<Integer> sendTo )
     {
-        this.disableRegistrationFields = disableRegistrationFields;
+        this.sendTo = sendTo;
     }
 
     private Boolean displayOnAllOrgunit;
@@ -229,6 +229,13 @@ public class UpdateProgramAction
     public void setDisplayOnAllOrgunit( Boolean displayOnAllOrgunit )
     {
         this.displayOnAllOrgunit = displayOnAllOrgunit;
+    }
+
+    private List<Integer> whenToSend = new ArrayList<Integer>();
+
+    public void setWhenToSend( List<Integer> whenToSend )
+    {
+        this.whenToSend = whenToSend;
     }
 
     // -------------------------------------------------------------------------
@@ -244,7 +251,6 @@ public class UpdateProgramAction
         ignoreOverdueEvents = (ignoreOverdueEvents == null) ? false : ignoreOverdueEvents;
         blockEntryForm = (blockEntryForm == null) ? false : blockEntryForm;
         remindCompleted = (remindCompleted == null) ? false : remindCompleted;
-        disableRegistrationFields = (disableRegistrationFields == null) ? false : disableRegistrationFields;
         displayOnAllOrgunit = (displayOnAllOrgunit == null) ? false : displayOnAllOrgunit;
 
         Program program = programService.getProgram( id );
@@ -259,7 +265,6 @@ public class UpdateProgramAction
         program.setBlockEntryForm( blockEntryForm );
         program.setOnlyEnrollOnce( onlyEnrollOnce );
         program.setRemindCompleted( remindCompleted );
-        program.setDisableRegistrationFields( disableRegistrationFields );
         program.setDisplayOnAllOrgunit( displayOnAllOrgunit );
 
         if ( type == Program.MULTIPLE_EVENTS_WITH_REGISTRATION )
@@ -309,6 +314,8 @@ public class UpdateProgramAction
             PatientReminder reminder = new PatientReminder( "", daysAllowedSendMessages.get( i ),
                 templateMessages.get( i ) );
             reminder.setDateToCompare( datesToCompare.get( i ) );
+            reminder.setSendTo( sendTo.get( i ) );
+            reminder.setWhenToSend( whenToSend.get( i ) );
             patientReminders.add( reminder );
         }
         program.setPatientReminders( patientReminders );

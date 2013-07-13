@@ -10,6 +10,7 @@ PT.core.getConfigs = function() {
         ajax: {
             path_pivot: '../',
             path_api: '../../api/',
+            path_commons: '../../dhis-web-commons-ajax-json/',
             initialize: 'initialize.action',
             redirect: 'dhis-web-commons-about/redirect.action',
             data_get: 'chartValues.json',
@@ -737,7 +738,8 @@ PT.core.getUtils = function(pt) {
 				dimConf = pt.conf.finals.dimension,
 				addCategoryDimension = false,
 				map = xLayout.dimensionNameItemsMap,
-				dx = dimConf.indicator.dimensionName;
+				dx = dimConf.indicator.dimensionName,
+				co = dimConf.category.dimensionName;
 
 			for (var i = 0, dimName, items; i < axisDimensionNames.length; i++) {
 				dimName = axisDimensionNames[i];
@@ -758,8 +760,8 @@ PT.core.getUtils = function(pt) {
 
 					items = Ext.Array.unique(items);
 				}
-
-				if (dimName !== dimConf.category.dimensionName) {
+				
+				if (dimName !== co) {
 					paramString += ':' + items.join(';');
 				}
 
@@ -767,7 +769,7 @@ PT.core.getUtils = function(pt) {
 					paramString += '&';
 				}
 			}
-
+			
 			if (addCategoryDimension) {
 				paramString += '&dimension=' + pt.conf.finals.dimension.category.dimensionName;
 			}
@@ -844,6 +846,17 @@ PT.core.getUtils = function(pt) {
 						xOuDimension = xLayout.objectNameDimensionsMap[dimConf.organisationUnit.objectName],
 						isUserOrgunit = xOuDimension && Ext.Array.contains(xOuDimension.ids, 'USER_ORGUNIT'),
 						isUserOrgunitChildren = xOuDimension && Ext.Array.contains(xOuDimension.ids, 'USER_ORGUNIT_CHILDREN'),
+						isLevel = function() {
+							if (xOuDimension && Ext.isArray(xOuDimension.ids)) {
+								for (var i = 0; i < xOuDimension.ids.length; i++) {
+									if (xOuDimension.ids[i].substr(0,5) === 'LEVEL') {
+										return true;
+									}
+								}
+							}
+							
+							return false;
+						}(),
 						co = dimConf.category.objectName,
 						ou = dimConf.organisationUnit.objectName,
 						layout;
@@ -862,6 +875,18 @@ PT.core.getUtils = function(pt) {
 								}
 								if (isUserOrgunitChildren) {
 									dim.items = dim.items.concat(pt.init.user.ouc);
+								}
+							}
+							else if (isLevel) {
+								
+								// Items: get ids from metadata -> items
+								for (var j = 0, ids = Ext.clone(response.metaData[dim.dimensionName]); j < ids.length; j++) {
+									dim.items.push({
+										id: ids[j],
+										name: response.metaData.names[ids[j]]
+									});
+									
+									dim.items = pt.util.array.sortObjectsByString(dim.items);
 								}
 							}
 							else {
@@ -943,14 +968,22 @@ PT.core.getUtils = function(pt) {
 					}
 				}();
 
-				var createValueIds = function() {
+				var createValueIdMap = function() {
 					var valueHeaderIndex = response.nameHeaderMap[pt.conf.finals.dimension.value.value].index,
-						dimensionNames = xLayout.axisDimensionNames,
+						coHeader = response.nameHeaderMap[pt.conf.finals.dimension.category.dimensionName],
+						dx = dimConf.data.dimensionName,
+						co = dimConf.category.dimensionName,
+						axisDimensionNames = xLayout.axisDimensionNames,
 						idIndexOrder = [];
 
 					// idIndexOrder
-					for (var i = 0; i < dimensionNames.length; i++) {
-						idIndexOrder.push(response.nameHeaderMap[dimensionNames[i]].index);
+					for (var i = 0; i < axisDimensionNames.length; i++) {
+						idIndexOrder.push(response.nameHeaderMap[axisDimensionNames[i]].index);
+
+						// If co exists in response and is not added in layout, add co after dx
+						if (coHeader && !Ext.Array.contains(axisDimensionNames, co) && axisDimensionNames[i] === dx) {
+							idIndexOrder.push(coHeader.index);
+						}
 					}
 
 					// idValueMap
@@ -1432,17 +1465,17 @@ PT.core.getUtils = function(pt) {
 					}
 
 					// Value objects
-					for (var i = 0, valueItemsRow, valueObjectsRow, map = Ext.clone(xResponse.idValueMap); i < rowSize; i++) {
+					for (var i = 0, valueItemsRow, valueObjectsRow, idValueMap = Ext.clone(xResponse.idValueMap); i < rowSize; i++) {
 						valueItemsRow = [];
 						valueObjectsRow = [];
 
 						for (var j = 0, id, value, htmlValue, empty; j < colSize; j++) {
-							id = (xColAxis ? xColAxis.ids[j] : '') + (xRowAxis ? xRowAxis.ids[i] : '');
+							id = (xColAxis ? pt.util.str.replaceAll(xColAxis.ids[j], '-', '') : '') + (xRowAxis ? pt.util.str.replaceAll(xRowAxis.ids[i], '-', '') : '');
 							empty = false;
-
-							if (map[id]) {
-								value = parseFloat(map[id]);
-								htmlValue = pt.util.number.roundIf(map[id], 1).toString();
+							
+							if (idValueMap[id]) {
+								value = parseFloat(idValueMap[id]);
+								htmlValue = pt.util.number.roundIf(idValueMap[id], 1).toString();
 							}
 							else {
 								value = 0;
@@ -1933,9 +1966,8 @@ console.log("xLayout", xLayout);
 					alert(r.responseText);
 				},
 				success: function(r) {
-					var layoutConfig = Ext.decode(r.responseText);
-
-					var	layout = pt.api.layout.Layout(layoutConfig);
+					var layoutConfig = Ext.decode(r.responseText),
+						layout = pt.api.layout.Layout(layoutConfig);
 
 					if (layout) {
 						pt.favorite = Ext.clone(layout);
@@ -1984,7 +2016,7 @@ PT.core.getApi = function(pt) {
 				return;
 			}
 
-			record.id = config.id;
+			record.id = config.id.replace('.', '-');
 
 			if (Ext.isString(config.name)) {
 				record.name = config.name;

@@ -144,7 +144,7 @@ public class GetPatientAction
     {
         return customRegistrationForm;
     }
-    
+
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
@@ -154,9 +154,21 @@ public class GetPatientAction
     {
         relationshipTypes = relationshipTypeService.getAllRelationshipTypes();
         patient = patientService.getPatient( id );
+        
+        // Get system identifier
+        
+        for ( PatientIdentifier identifier : patient.getIdentifiers() )
+        {
+            if ( identifier.getIdentifierType() == null )
+            {
+                systemIdentifier = identifier.getIdentifier();
+                break;
+            }
+        }
+        
         healthWorkers = patient.getOrganisationUnit().getUsers();
         Program program = null;
-        
+
         if ( programId == null )
         {
             PatientRegistrationForm patientRegistrationForm = patientRegistrationFormService
@@ -207,12 +219,12 @@ public class GetPatientAction
 
             identifierTypes = patientIdentifierTypeService.getAllPatientIdentifierTypes();
             Collection<PatientAttribute> patientAttributesInProgram = new HashSet<PatientAttribute>();
-            
+
             noGroupAttributes = patientAttributeService.getPatientAttributesWithoutGroup();
-            
+
             Collection<Program> programs = programService.getAllPrograms();
-            programs.remove(program);
-            
+            programs.remove( program );
+
             for ( Program _program : programs )
             {
                 identifierTypes.removeAll( _program.getPatientIdentifierTypes() );
@@ -220,7 +232,6 @@ public class GetPatientAction
                 noGroupAttributes.removeAll( _program.getPatientAttributes() );
             }
 
-            
             attributeGroups = new ArrayList<PatientAttributeGroup>(
                 attributeGroupService.getAllPatientAttributeGroups() );
             Collections.sort( attributeGroups, new PatientAttributeGroupSortOrderComparator() );
@@ -234,8 +245,7 @@ public class GetPatientAction
                     attributeGroupsMap.put( attributeGroup.getId(), attributes );
                 }
             }
-            
-           
+
             // -------------------------------------------------------------------------
             // Get data
             // -------------------------------------------------------------------------
@@ -267,16 +277,12 @@ public class GetPatientAction
                 {
                     identiferMap.put( identifier.getIdentifierType().getId(), identifier.getIdentifier() );
                 }
-                else
-                {
-                    systemIdentifier = identifier.getIdentifier();
-                }
             }
 
             // -------------------------------------------------------------------------
             // Get patient-attribute values
             // -------------------------------------------------------------------------
-            
+
             Collection<PatientAttributeValue> patientAttributeValues = patientAttributeValueService
                 .getPatientAttributeValues( patient );
 

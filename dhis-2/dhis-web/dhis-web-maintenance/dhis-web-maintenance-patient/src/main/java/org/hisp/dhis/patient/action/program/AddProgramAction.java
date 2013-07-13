@@ -98,6 +98,13 @@ public class AddProgramAction
         this.patientAttributeService = patientAttributeService;
     }
 
+    private List<Integer> whenToSend = new ArrayList<Integer>();
+
+    public void setWhenToSend( List<Integer> whenToSend )
+    {
+        this.whenToSend = whenToSend;
+    }
+
     // -------------------------------------------------------------------------
     // Input/Output
     // -------------------------------------------------------------------------
@@ -221,11 +228,11 @@ public class AddProgramAction
         this.datesToCompare = datesToCompare;
     }
 
-    private Boolean disableRegistrationFields;
+    private List<Integer> sendTo = new ArrayList<Integer>();
 
-    public void setDisableRegistrationFields( Boolean disableRegistrationFields )
+    public void setSendTo( List<Integer> sendTo )
     {
-        this.disableRegistrationFields = disableRegistrationFields;
+        this.sendTo = sendTo;
     }
 
     private Boolean displayOnAllOrgunit;
@@ -249,7 +256,6 @@ public class AddProgramAction
         blockEntryForm = (blockEntryForm == null) ? false : blockEntryForm;
         onlyEnrollOnce = (onlyEnrollOnce == null) ? false : onlyEnrollOnce;
         remindCompleted = (remindCompleted == null) ? false : remindCompleted;
-        disableRegistrationFields = (disableRegistrationFields == null) ? false : disableRegistrationFields;
         displayOnAllOrgunit = (displayOnAllOrgunit == null) ? false : displayOnAllOrgunit;
 
         Program program = new Program();
@@ -265,7 +271,6 @@ public class AddProgramAction
         program.setBlockEntryForm( blockEntryForm );
         program.setOnlyEnrollOnce( onlyEnrollOnce );
         program.setRemindCompleted( remindCompleted );
-        program.setDisableRegistrationFields( disableRegistrationFields );
         program.setDisplayOnAllOrgunit( displayOnAllOrgunit );
 
         if ( type == Program.MULTIPLE_EVENTS_WITH_REGISTRATION )
@@ -316,6 +321,8 @@ public class AddProgramAction
             PatientReminder reminder = new PatientReminder( "", daysAllowedSendMessages.get( i ),
                 templateMessages.get( i ) );
             reminder.setDateToCompare( datesToCompare.get( i ) );
+            reminder.setSendTo( sendTo.get( i ) );
+            reminder.setWhenToSend( whenToSend.get( i ) );
             patientReminders.add( reminder );
         }
         program.setPatientReminders( patientReminders );
@@ -331,6 +338,7 @@ public class AddProgramAction
             programStage.setDescription( description );
             programStage.setProgram( program );
             programStage.setMinDaysFromStart( 0 );
+            programStage.setAutoGenerateEvent( true );
             programStage.setReportDateDescription( REPORT_DATE_DESCRIPTION );
 
             programStageService.saveProgramStage( programStage );

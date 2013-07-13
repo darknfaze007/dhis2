@@ -235,6 +235,7 @@
 
   <bean id="org.hisp.dhis.aggregation.AggregatedDataValueStore" class="org.hisp.dhis.aggregation.jdbc.JdbcAggregatedDataValueStore">
     <property name="statementManager" ref="statementManager" />
+    <property name="statementBuilder" ref="statementBuilder" />
     <property name="jdbcTemplate" ref="jdbcTemplate" />
   </bean>
 
@@ -762,8 +763,6 @@
   </bean>
 
   <bean id="org.hisp.dhis.startup.TableCreator" class="org.hisp.dhis.startup.TableCreator">
-    <property name="jdbcTemplate" ref="jdbcTemplate" />
-    <property name="statementBuilder" ref="statementBuilder" />
     <property name="name" value="TableCreator" />
     <property name="runlevel" value="3" />
   </bean>
@@ -785,6 +784,14 @@
     <property name="runlevel" value="6" />
     <property name="skipInTests" value="true" />
   </bean>
+  
+  <!--  <bean id="org.hisp.dhis.user.UserDefaultPopulator"
+    class="org.hisp.dhis.user.UserDefaultPopulator">
+    <property name="userService" ref="org.hisp.dhis.user.UserService" />
+    <property name="runlevel" value="5" />
+    <property name="skipInTests" value="true" />
+  </bean>
+  -->
 
   <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="targetObject" ref="org.hisp.dhis.system.startup.StartupRoutineExecutor" />
@@ -801,6 +808,7 @@
           <ref local="org.hisp.dhis.organisationunit.OrganisationUnitGroupSetPopulator" />
           <ref local="org.hisp.dhis.dataentryform.DataEntryFormUpgrader" />
           <ref local="org.hisp.dhis.startup.ExpressionUpgrader" />
+          <!--<ref local="org.hisp.dhis.user.UserDefaultPopulator" />-->
         </list>
       </list>
     </property>

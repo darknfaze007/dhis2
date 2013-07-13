@@ -41,9 +41,6 @@ function showProgramDetails( programId )
 		var remindCompleted = ( json.program.remindCompleted == 'true') ? i18n_yes : i18n_no;
 		setInnerHTML( 'remindCompletedField', remindCompleted );   	
 		
-		var disableRegistrationFields = ( json.program.disableRegistrationFields == 'true') ? i18n_yes : i18n_no;
-		setInnerHTML( 'disableRegistrationFieldsField', disableRegistrationFields );   	
-		
 		setInnerHTML( 'dateOfEnrollmentDescriptionField', json.program.dateOfEnrollmentDescription );   
 		setInnerHTML( 'dateOfIncidentDescriptionField', json.program.dateOfIncidentDescription );   		
 		setInnerHTML( 'programStageCountField',  json.program.programStageCount );
@@ -139,7 +136,6 @@ function selectProperties()
 	}
 }
 
-
 function selectAllProperties()
 {
 	var selectedList = jQuery("#selectedList");
@@ -168,7 +164,6 @@ function unSelectProperties()
 		}
 	});
 }
-
 
 function unSelectAllProperties()
 {
@@ -269,9 +264,18 @@ function generateTemplateMessageForm()
 				+ 	'<td colspan="2">' + i18n_reminder + ' ' + rowId + '<a href="javascript:removeTemplateMessageForm('+ rowId +')"> ( '+ i18n_remove_reminder + ' )</a></td>'
 				+ '</tr>'
 				+ '<tr name="tr' + rowId + '">'
+				+ 	'<td><label>' + i18n_send_when_to + '</label></td>'
+				+ 	'<td>'
+				+ 		'<select id="whenToSend' + rowId + '" name="whenToSend' + rowId + '" class="whenToSend" onchange="whenToSendOnChange(' + rowId + ')" >'
+				+ 			'<option value="">' + i18n_from_the_day_set + '</option>'
+				+ 			'<option value="3">' + i18n_complete_program + '</option>'
+				+ 		'</select>'
+				+	'</td>'
+				+ '</tr>'
+				+ '<tr name="tr' + rowId + '">'
 				+ 	'<td><label>' + i18n_date_to_compare + '</label></td>'
 				+ 	'<td>'
-				+		'<select class="dateToCompare">'
+				+		'<select id="dateToCompare' + rowId + '" class="dateToCompare">'
 				+			'<option value="dateofincident">' + i18n_incident_date + '</option>'
 				+			'<option value="enrollmentdate">' + i18n_enrollment_date + '</option>'
 				+ 		'</select>'
@@ -281,6 +285,17 @@ function generateTemplateMessageForm()
 				+ 	'<td><label>' + i18n_days_before_after_comparison_date + '</label></td>'
 				+ 	'<td><input type="text" id="daysAllowedSendMessage' + rowId + '" name="daysAllowedSendMessage' + rowId + '" class="daysAllowedSendMessage {validate:{required:true,number:true}}"/></td>'
 				+ '</tr>'
+				+ '<tr>'
+				+ 	'<td><label>' + i18n_send_to + '</label></td>'
+				+ 	'<td>'
+				+ 		'<select id="sendTo' + rowId + '" name="sendTo' + rowId + '" class="sendTo" >'
+				+ 			'<option value="1">' + i18n_patient + '</option>'
+				+ 			'<option value="2">' + i18n_health_worker + '</option>'
+				+ 			'<option value="3">' + i18n_orgunit_registered + '</option>'
+				+ 			'<option value="4">' + i18n_all_users_in_orgunit_registered + '</option>'
+				+ 		'</select>'
+				+	'</td>'
+				+ '/<tr>'
 				+ '<tr name="tr' + rowId + '">'
 				+	'<td>' + i18n_params + '</td>'
 				+	'<td>'
@@ -312,4 +327,17 @@ function insertParams( paramValue, rowId )
 {
 	var templateMessage = paramValue;
 	insertTextCommon('templateMessage' + rowId, templateMessage);
+}
+
+function whenToSendOnChange(index)
+{
+	var whenToSend = getFieldValue('whenToSend' + index );
+	if(whenToSend==3){
+		disable('dateToCompare' + index );
+		disable('daysAllowedSendMessage' + index );
+	}
+	else{
+		enable('dateToCompare' + index );
+		enable('daysAllowedSendMessage' + index );
+	}
 }

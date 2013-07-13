@@ -8,6 +8,7 @@
 <input type='hidden' id='programInstanceId' name='programInstanceId' value='$programStageInstance.programInstance.id'>
 <input type='hidden' id='ps_$programStageInstance.id' name='ps_$programStageInstance.id' programStageName='$programStageInstance.programStage.displayName' >
 
+#set($programInstance = $programStageInstance.programInstance)
 <div class='dashboard-area'>
 	#set($status = $programStageInstance.getEventStatus())
 	#if( $auth.hasAccess( "dhis-web-caseentry", "accessPatientAttributes" ) )
@@ -18,6 +19,15 @@
 				<tr>            
 					<td class="bold">$i18n.getString( "full_name" ):</td>
 					<td>$encoder.htmlEncode($programStageInstance.programInstance.patient.getFullName()) ( $programStageInstance.programInstance.patient.gender )</td>
+				</tr>
+				<tr>
+					<td class="bold">$i18n.getString("gender")</td>
+					<td>#if($patient.gender=='F')
+							<img src='images/female_small.png'>
+						#else
+							<img src='images/male_small.png'>
+						#end
+					</td>
 				</tr>
 				<tr>
 					<td class="bold">$i18n.getString( "date_of_birth" ):</td>

@@ -59,6 +59,7 @@ import org.hisp.dhis.message.MessageConversationStore;
 import org.hisp.dhis.message.MessageSender;
 import org.hisp.dhis.message.UserMessage;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
+import org.hisp.dhis.patient.Patient;
 import org.hisp.dhis.period.CalendarPeriodType;
 import org.hisp.dhis.period.DailyPeriodType;
 import org.hisp.dhis.period.MonthlyPeriodType;
@@ -78,6 +79,7 @@ import org.hisp.dhis.smscommand.SMSCommand;
 import org.hisp.dhis.smscommand.SMSCommandService;
 import org.hisp.dhis.system.util.ValidationUtils;
 import org.hisp.dhis.user.User;
+import org.hisp.dhis.user.UserCredentials;
 import org.hisp.dhis.user.UserGroup;
 import org.hisp.dhis.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,6 +92,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DefaultParserManager
     implements ParserManager
 {
+    public static final String ANONYMOUS_USER_NAME = "Anonymous";
 
     private static final Log log = LogFactory.getLog( DefaultParserManager.class );
 
@@ -118,12 +121,19 @@ public class DefaultParserManager
     {
         this.messageConversationStore = messageConversationStore;
     }
-    
-    private MessageSender messageSender;
 
-    public void setMessageSender( MessageSender messageSender )
+    private MessageSender smsMessageSender;
+
+    public void setSmsMessageSender( MessageSender smsMessageSender )
     {
-        this.messageSender = messageSender;
+        this.smsMessageSender = smsMessageSender;
+    }
+
+    private MessageSender emailMessageSender;
+    
+    public void setEmailMessageSender( MessageSender emailMessageSender )
+    {
+        this.emailMessageSender = emailMessageSender;
     }
 
     @Autowired
@@ -170,19 +180,13 @@ public class DefaultParserManager
 
         sender = StringUtils.replace( sender, "+", "" );
 
-        Collection<OrganisationUnit> orgUnits = getOrganisationUnitsByPhoneNumber( sender );
-        if ( orgUnits == null || orgUnits.size() == 0 )
-        {
-            log.info( "No user found for phone number: " + sender );
-            throw new SMSParserException( "No user associated with this phone number. Please contact your supervisor." );
-        }
-
         if ( StringUtils.isEmpty( message ) )
         {
             throw new SMSParserException( "No command in SMS" );
         }
 
         String commandString = null;
+        // here, check command first
         if ( message.indexOf( " " ) > 0 )
         {
             commandString = message.substring( 0, message.indexOf( " " ) );
@@ -195,6 +199,8 @@ public class DefaultParserManager
 
         boolean foundCommand = false;
 
+        Collection<OrganisationUnit> orgUnits = getOrganisationUnitsByPhoneNumber( sender );
+
         for ( SMSCommand command : smsCommandService.getSMSCommands() )
         {
             if ( command.getName().equalsIgnoreCase( commandString ) )
@@ -202,24 +208,55 @@ public class DefaultParserManager
                 foundCommand = true;
                 if ( ParserType.KEY_VALUE_PARSER.equals( command.getParserType() ) )
                 {
+                    checkIfDHISUsers( orgUnits, sender );
                     runKeyValueParser( sender, message, orgUnits, command );
                     break;
                 }
                 else if ( ParserType.J2ME_PARSER.equals( command.getParserType() ) )
                 {
+                    checkIfDHISUsers( orgUnits, sender );
                     runJ2MEParser( sender, message, orgUnits, command );
                     break;
                 }
                 else if ( ParserType.ALERT_PARSER.equals( command.getParserType() ) )
                 {
+                    checkIfDHISUsers( orgUnits, sender );
                     runDhisMessageAlertParser( sender, message, command );
+                    break;
+                }
+                else if ( ParserType.UNREGISTERED_PARSER.equals( command.getParserType() ) )
+                {
+                    runUnregisteredParser( sender, message, command );
                     break;
                 }
             }
         }
         if ( !foundCommand )
         {
-            throw new SMSParserException( "Command '" + commandString + "' does not exist" );
+            Collection<Patient> patientList = new ArrayList<Patient>(); //TODO FIX! //patientService.getPatientsByPhone( sender, null, null );
+            
+            if ( !patientList.isEmpty() )
+            {
+                for ( Patient each : patientList )
+                {
+                    if ( each.getHealthWorker() != null )
+                    {
+                        UserCredentials patientUser = userService.getUserCredentialsByUsername( "system" );
+
+                        MessageConversation conversation = new MessageConversation( "Patients' Message", patientUser.getUser() );
+
+                        conversation.addMessage( new Message( sms.getText().trim(), null, patientUser.getUser() ) );
+
+                        conversation.addUserMessage( new UserMessage( each.getHealthWorker(), false ) );
+                        
+                        messageConversationStore.save( conversation );
+                    }
+                }
+            }
+            else
+            {
+                throw new SMSParserException( "Command '" + commandString + "' does not exist" );
+            }
         }
     }
 
@@ -236,6 +273,15 @@ public class DefaultParserManager
         }
 
         return orgUnits;
+    }
+
+    private void checkIfDHISUsers( Collection<OrganisationUnit> orgUnits, String sender )
+    {
+        if ( orgUnits == null || orgUnits.size() == 0 )
+        {
+            log.info( "No user found for phone number: " + sender );
+            throw new SMSParserException( "No user associated with this phone number. Please contact your supervisor." );
+        }
     }
 
     private void runKeyValueParser( String sender, String message, Collection<OrganisationUnit> orgUnits,
@@ -295,7 +341,8 @@ public class DefaultParserManager
 
         if ( userGroup != null )
         {
-            Collection users = userService.getUsersByPhoneNumber( senderNumber );
+            Collection<User> users = userService.getUsersByPhoneNumber( senderNumber );
+            
             if ( users != null && users.size() > 1 )
             {
                 String messageMoreThanOneUser = "System only accepts sender's number assigned for one user, but found more than one user for this number: ";
@@ -312,14 +359,17 @@ public class DefaultParserManager
             }
             else if ( users != null && users.size() == 1 )
             {
-                User sender = (User) users.iterator().next();
+                User sender = users.iterator().next();
 
                 Set<User> receivers = new HashSet<User>( userGroup.getMembers() );
-
-                //forward to user group by SMS
-                messageSender.sendMessage( command.getName(), message, sender, receivers, true );
                 
-                //forward to user group by dhis message
+                // forward to user group by SMS
+                smsMessageSender.sendMessage( command.getName(), message, sender, receivers, true );
+                
+                // forward to user group by E-mail
+                emailMessageSender.sendMessage( command.getName(), message, sender, receivers, false );
+
+                // forward to user group by dhis message
                 if ( sender != null )
                 {
                     receivers.add( sender );
@@ -336,11 +386,36 @@ public class DefaultParserManager
                     conversation.addUserMessage( new UserMessage( receiver, read ) );
                 }
                 messageConversationStore.save( conversation );
-                //confirm SMS was received and forwarded completely
+                // confirm SMS was received and forwarded completely
                 Set<User> feedbackList = new HashSet<User>();
                 feedbackList.add( sender );
-                messageSender.sendMessage( command.getName(), command.getReceivedMessage(), null, feedbackList, true );
+                smsMessageSender.sendMessage( command.getName(), command.getReceivedMessage(), null, feedbackList, true );                
             }
+        }
+    }
+
+    private void runUnregisteredParser( String senderNumber, String message, SMSCommand command )
+    {
+        UserGroup userGroup = command.getUserGroup();
+
+        if ( userGroup != null )
+        {
+            Set<User> receivers = new HashSet<User>( userGroup.getMembers() );
+
+            UserCredentials anonymousUser = userService.getUserCredentialsByUsername( "system" );
+
+            MessageConversation conversation = new MessageConversation( command.getName(), anonymousUser.getUser() );
+
+            conversation.addMessage( new Message( message, null, anonymousUser.getUser() ) );
+
+            for ( User receiver : receivers )
+            {
+                boolean read = false;
+
+                conversation.addUserMessage( new UserMessage( receiver, read ) );
+            }
+            
+            messageConversationStore.save( conversation );
         }
     }
 
@@ -475,6 +550,7 @@ public class DefaultParserManager
         {
             return null;
         }
+        
         Date date = null;
         String dateString = message.trim().split( " " )[0];
         SimpleDateFormat format = new SimpleDateFormat( "ddMM" );
@@ -987,5 +1063,4 @@ public class DefaultParserManager
     {
         return incomingSmsService;
     }
-
 }

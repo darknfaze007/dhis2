@@ -170,6 +170,13 @@ public class UpdateProgramStageAction
         this.templateMessages = templateMessages;
     }
 
+    private List<Integer> sendTo = new ArrayList<Integer>();
+
+    public void setSendTo( List<Integer> sendTo )
+    {
+        this.sendTo = sendTo;
+    }
+
     private Boolean autoGenerateEvent;
 
     public void setAutoGenerateEvent( Boolean autoGenerateEvent )
@@ -205,6 +212,20 @@ public class UpdateProgramStageAction
         this.captureCoordinates = captureCoordinates;
     }
 
+    private List<Boolean> allowDateInFutures;
+
+    public void setAllowDateInFutures( List<Boolean> allowDateInFutures )
+    {
+        this.allowDateInFutures = allowDateInFutures;
+    }
+
+    private List<Integer> whenToSend = new ArrayList<Integer>();
+
+    public void setWhenToSend( List<Integer> whenToSend )
+    {
+        this.whenToSend = whenToSend;
+    }
+
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
@@ -228,7 +249,10 @@ public class UpdateProgramStageAction
         programStage.setIrregular( irregular );
         programStage.setMinDaysFromStart( minDaysFromStart );
         programStage.setDisplayGenerateEventBox( displayGenerateEventBox );
-        programStage.setAutoGenerateEvent( autoGenerateEvent );
+        if ( !programStage.getProgram().isSingleEvent() )
+        {
+            programStage.setAutoGenerateEvent( autoGenerateEvent );
+        }
         programStage.setValidCompleteOnly( validCompleteOnly );
         programStage.setCaptureCoordinates( captureCoordinates );
 
@@ -238,6 +262,8 @@ public class UpdateProgramStageAction
             PatientReminder reminder = new PatientReminder( "", daysAllowedSendMessages.get( i ),
                 templateMessages.get( i ) );
             reminder.setDateToCompare( PatientReminder.DUE_DATE_TO_COMPARE );
+            reminder.setSendTo( sendTo.get( i ) );
+            reminder.setWhenToSend( whenToSend.get( i ) );
             patientReminders.add( reminder );
         }
         programStage.setPatientReminders( patientReminders );
@@ -252,6 +278,7 @@ public class UpdateProgramStageAction
             DataElement dataElement = dataElementService.getDataElement( selectedDataElementsValidator.get( i ) );
             Boolean allowed = allowProvidedElsewhere.get( i ) == null ? false : allowProvidedElsewhere.get( i );
             Boolean displayInReport = displayInReports.get( i ) == null ? false : displayInReports.get( i );
+            Boolean allowDate = allowDateInFutures.get( i ) == null ? false : allowDateInFutures.get( i );
 
             ProgramStageDataElement programStageDataElement = programStageDataElementService.get( programStage,
                 dataElement );
@@ -262,6 +289,7 @@ public class UpdateProgramStageAction
                     this.compulsories.get( i ), new Integer( i ) );
                 programStageDataElement.setAllowProvidedElsewhere( allowed );
                 programStageDataElement.setDisplayInReports( displayInReport );
+                programStageDataElement.setAllowDateInFuture( allowDate );
                 programStageDataElementService.addProgramStageDataElement( programStageDataElement );
             }
             else
@@ -270,6 +298,7 @@ public class UpdateProgramStageAction
                 programStageDataElement.setSortOrder( new Integer( i ) );
                 programStageDataElement.setAllowProvidedElsewhere( allowed );
                 programStageDataElement.setDisplayInReports( displayInReport );
+                programStageDataElement.setAllowDateInFuture( allowDate );
                 programStageDataElementService.updateProgramStageDataElement( programStageDataElement );
 
                 programStageDataElements.remove( programStageDataElement );

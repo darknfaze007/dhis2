@@ -66,11 +66,8 @@ public class DataSet
     extends BaseNameableObject
 {
     public static final String TYPE_DEFAULT = "default";
-
     public static final String TYPE_SECTION = "section";
-
     public static final String TYPE_CUSTOM = "custom";
-
     public static final String TYPE_SECTION_MULTIORG = "multiorg_section";
 
     public static final int NO_EXPIRY = 0;
@@ -190,8 +187,18 @@ public class DataSet
      */
     private boolean skipOffline;
 
+    /**
+     * Render default and section forms with tabs instead of multiple sections in one page
+     */
+    private boolean renderAsTabs;
+
+    /**
+     * Render multi-organisationUnit forms either with OU vertically or horizontally.
+     */
+    private boolean renderHorizontally;
+
     // -------------------------------------------------------------------------
-    // Contructors
+    // Constructors
     // -------------------------------------------------------------------------
 
     public DataSet()
@@ -679,6 +686,32 @@ public class DataSet
         this.skipOffline = skipOffline;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isRenderAsTabs()
+    {
+        return renderAsTabs;
+    }
+
+    public void setRenderAsTabs( boolean renderAsTabs )
+    {
+        this.renderAsTabs = renderAsTabs;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isRenderHorizontally()
+    {
+        return renderHorizontally;
+    }
+
+    public void setRenderHorizontally( boolean renderHorizontally )
+    {
+        this.renderHorizontally = renderHorizontally;
+    }
+
     @Override
     public void mergeWith( IdentifiableObject other )
     {
@@ -699,6 +732,8 @@ public class DataSet
             fieldCombinationRequired = dataSet.isFieldCombinationRequired();
             validCompleteOnly = dataSet.isValidCompleteOnly();
             skipOffline = dataSet.isSkipOffline();
+            renderAsTabs = dataSet.isRenderAsTabs();
+            renderHorizontally = dataSet.isRenderHorizontally();
 
             removeAllDataElements();
 

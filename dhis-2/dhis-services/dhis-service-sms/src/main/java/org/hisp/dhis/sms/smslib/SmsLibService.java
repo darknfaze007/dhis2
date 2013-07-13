@@ -52,6 +52,7 @@ import org.smslib.Message.MessageEncodings;
 import org.smslib.Service.ServiceStatus;
 
 import java.io.IOException;
+import java.lang.Character.UnicodeBlock;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,7 +148,15 @@ public class SmsLibService
 
         OutboundMessage outboundMessage = new OutboundMessage( recipient, sms.getMessage() );
         
-        outboundMessage.setEncoding( MessageEncodings.ENCUCS2 );
+        //Check if text contain any specific unicode character
+        for( char each: sms.getMessage().toCharArray())
+        {
+            if( !Character.UnicodeBlock.of(each).equals( UnicodeBlock.BASIC_LATIN ) )
+            {
+                outboundMessage.setEncoding( MessageEncodings.ENCUCS2 );
+                break;
+            }
+        }
         
         outboundMessage.setStatusReport( true );
 
@@ -287,7 +296,6 @@ public class SmsLibService
 
         message = "success";
 
-        // Add gateways
         if ( config.getGateways() == null || config.getGateways().isEmpty() )
         {
             message = "unable_load_configuration_cause_of_there_is_no_gateway";
@@ -491,7 +499,6 @@ public class SmsLibService
     @Override
     public List<OutboundSms> getAllOutboundSms()
     {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -562,6 +569,7 @@ public class SmsLibService
         {
             gatewayId = gatewayMap.get( MODEM_GATEWAY );
         }
+        
         return gatewayId;
     }
 }

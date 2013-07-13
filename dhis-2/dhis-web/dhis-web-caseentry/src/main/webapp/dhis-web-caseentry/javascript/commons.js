@@ -1777,6 +1777,20 @@ function viewPersonProgram ( displayedDiv, hidedDiv )
 // Comment && Message
 // --------------------------------------------------------------------
 
+function sendSmsOnePatientForm()
+{
+	jQuery('#smsDiv').dialog(
+		{
+			title:i18n_send_message,
+			maximize:true, 
+			closable:true,
+			modal:true,
+			overlay:{background:'#000000', opacity:0.1},
+			width:400,
+			height:200
+		});
+}
+
 function sendSmsOnePatient( field, programStageInstanceId )
 {
 	setInnerHTML('smsError', '');
@@ -1790,7 +1804,8 @@ function sendSmsOnePatient( field, programStageInstanceId )
 	jQuery.postUTF8( 'sendSMS.action',
 		{
 			programStageInstanceId: programStageInstanceId,
-			msg: field.value
+			msg: field.value,
+			sendTo: getFieldValue('sendTo')
 		}, function ( json )
 		{
 			if ( json.response == "success" ) {
@@ -2095,4 +2110,21 @@ function saveComment( programInstanceId )
 		{   
 			 $( '#comment' ).css( 'background-color', COLOR_GREEN );
 		});
+}
+
+function addPhoneNumberField(phoneNumberAreaCode)
+{	
+	$('.phoneNumberTR').last().after(
+		'<tr class="phoneNumberTR">'
+		+ '	<td></td>'
+		+ '	<td class="input-column">'
+		+ '		<input type="text" id="phoneNumber" name="phoneNumber" class="{validate:{phone:true}}" value="'+phoneNumberAreaCode+'"/>'
+		+ '		<input type="button" value="-" onclick="removePhoneNumberField(this)" style="width:20px;" class="{validate:{phone:true}}" value="' + phoneNumberAreaCode + '"/>'
+		+ '	</td>'
+		+ '</tr>' );
+}
+
+function removePhoneNumberField(_this)
+{
+	$(_this).parent().parent().remove();
 }

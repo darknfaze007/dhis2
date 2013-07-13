@@ -3,7 +3,7 @@ DV.core = {
 };
 
 Ext.onReady( function() {
-
+	
 DV.core.getConfig = function() {
 	var conf = {};
 
@@ -103,9 +103,9 @@ DV.core.getConfig = function() {
             category: 'category',
             filter: 'filter',
             column: 'column',
-            stackedColumn: 'stackedColumn',
+            stackedcolumn: 'stackedcolumn',
             bar: 'bar',
-            stackedBar: 'stackedBar',
+            stackedbar: 'stackedbar',
             line: 'line',
             area: 'area',
             pie: 'pie'
@@ -700,6 +700,17 @@ DV.core.getUtil = function(dv) {
 					xOuDimension = xLayout.objectNameDimensionsMap[dimConf.organisationUnit.objectName],
 					isUserOrgunit = xOuDimension && Ext.Array.contains(xOuDimension.ids, 'USER_ORGUNIT'),
 					isUserOrgunitChildren = xOuDimension && Ext.Array.contains(xOuDimension.ids, 'USER_ORGUNIT_CHILDREN'),
+					isLevel = function() {
+						if (xOuDimension && Ext.isArray(xOuDimension.ids)) {
+							for (var i = 0; i < xOuDimension.ids.length; i++) {
+								if (xOuDimension.ids[i].substr(0,5) === 'LEVEL') {
+									return true;
+								}
+							}
+						}
+						
+						return false;
+					}(),
 					ou = dimConf.organisationUnit.objectName,
 					layout;
 
@@ -717,6 +728,18 @@ DV.core.getUtil = function(dv) {
 							}
 							if (isUserOrgunitChildren) {
 								dim.items = dim.items.concat(dv.init.user.ouc);
+							}
+						}
+						else if (isLevel) {
+							
+							// Items: get ids from metadata -> items
+							for (var j = 0, ids = Ext.clone(response.metaData[dim.dimensionName]); j < ids.length; j++) {
+								dim.items.push({
+									id: ids[j],
+									name: response.metaData.names[ids[j]]
+								});
+								
+								dim.items = dv.util.array.sortObjectsByString(dim.items);
 							}
 						}
 						else {
@@ -1007,7 +1030,7 @@ console.log("baseLineFields", store.baseLineFields);
 					axis;
 
 				// Set maximum if stacked + extra line
-				if ((xLayout.type === typeConf.stackedColumn || xLayout.type === typeConf.stackedBar) &&
+				if ((xLayout.type === typeConf.stackedcolumn || xLayout.type === typeConf.stackedbar) &&
 					(xLayout.showTrendLine || xLayout.targetLineValue || xLayout.baseLineValue)) {
 					var a = [store.getMaximum(), store.getMaximumSum()];
 					maximum = Math.ceil(Ext.Array.max(a) * 1.1);
@@ -1237,7 +1260,6 @@ console.log("baseLineFields", store.baseLineFields);
 				numberOfChars = str.length;
 
 				width = (numberOfItems * itemLength) + (numberOfChars * charLength);
-//alert(width + ' > ' + dv.viewport.centerRegion.getWidth() + '\n' + str);
 
 				if (width > dv.viewport.centerRegion.getWidth() - 50) {
 					isVertical = true;
@@ -1399,7 +1421,7 @@ console.log("baseLineFields", store.baseLineFields);
 				return getDefaultChart(store, axes, series, xResponse, xLayout);
 			};
 
-			generator.stackedColumn = function(xResponse, xLayout) {
+			generator.stackedcolumn = function(xResponse, xLayout) {
 				var chart = this.column(xResponse, xLayout);
 
 				for (var i = 0, item; i < chart.series.items.length; i++) {
@@ -1480,7 +1502,7 @@ console.log("baseLineFields", store.baseLineFields);
 				return getDefaultChart(store, axes, series, xResponse, xLayout);
 			};
 
-			generator.stackedBar = function(xResponse, xLayout) {
+			generator.stackedbar = function(xResponse, xLayout) {
 				var chart = this.bar(xResponse, xLayout);
 
 				for (var i = 0, item; i < chart.series.items.length; i++) {
@@ -1524,8 +1546,7 @@ console.log("baseLineFields", store.baseLineFields);
 
 					//if (xLayout.showValues) {
 						//line.label = {
-							//display: 'rotate',
-							//'text-anchor': 'middle',
+							//display: 'over',
 							//field: store.rangeFields[i]
 						//};
 					//}
@@ -1674,7 +1695,7 @@ console.log("baseLineFields", store.baseLineFields);
 				xLayout = util.chart.getExtendedLayout(layout);
 
 				dv.paramString = util.chart.getParamString(xLayout, true);
-				url = dv.init.contextPath + '/api/analytics.json' + dv.paramString;
+				url = dv.init.contextPath + '/api/analytics.json' + dv.paramString;				
 
 				if (!validateUrl(url)) {
 					return;
@@ -1866,7 +1887,7 @@ DV.core.getApi = function(dv) {
 	api.layout.Layout = function(config) {
 		var layout = {};
 
-		// type: string ('column') - 'column', 'stackedColumn', 'bar', 'stackedBar', 'line', 'area', 'pie'
+		// type: string ('column') - 'column', 'stackedcolumn', 'bar', 'stackedbar', 'line', 'area', 'pie'
 
 		// columns: [Dimension]
 
@@ -1983,7 +2004,7 @@ DV.core.getApi = function(dv) {
 			}
 
 			// Layout
-			layout.type = config.type;
+			layout.type = config.type.toLowerCase();
 
 			layout.columns = config.columns;
 			layout.rows = config.rows;
