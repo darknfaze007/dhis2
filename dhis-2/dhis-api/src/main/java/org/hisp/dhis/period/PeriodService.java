@@ -1,19 +1,20 @@
 package org.hisp.dhis.period;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,9 +32,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.i18n.I18nFormat;
-import org.hisp.dhis.organisationunit.OrganisationUnit;
 
 /**
  * @author Kristian Nordal
@@ -114,24 +113,6 @@ public interface PeriodService
     Collection<Period> getPeriods( Collection<Integer> identifiers );
     
     /**
-     * Generates the Period with the corresponding external identifier. If the
-     * Period doesn't exist it will be created and persisted.
-     * 
-     * @param externalId the external identifier.
-     * @return a Period.
-     */
-    Period getPeriodByExternalId( String externalId );
-    
-    /**
-     * Generates all Periods with the corresponding external identifiers in the
-     * given Collection. The Periods which don't exist are created and persisted.
-     * 
-     * @param externalIds the external identifiers.
-     * @return a Collection of Periods.
-     */
-    Collection<Period> getPeriodsByExternalIds( Collection<String> externalIds );
-    
-    /**
      * Returns all Periods with start date after or equal the specified start
      * date and end date before or equal the specified end date.
      * 
@@ -170,8 +151,8 @@ public interface PeriodService
     
     /**
      * Returns all Intersecting Periods between the startDate and endDate based on PeriodType
-     * For example if the startDate is 2007-05-01 and endDate is 2007-08-01 and periodType is Quartely
-     * then it retuns the periods for Q2,Q3
+     * For example if the startDate is 2007-05-01 and endDate is 2007-08-01 and periodType is Quarterly
+     * then it returns the periods for Q2,Q3
      *  
      * @param periodType is the ultimate period type
      * @param startDate is intercepting startDate
@@ -230,18 +211,6 @@ public interface PeriodService
     Collection<Period> getPeriodsByPeriodType( PeriodType periodType );
 
     /**
-     * Returns all intersecting Periods for the given Period which have assosiated DataValues for
-     * the given collection of DataElements and Sources.
-     * 
-     * @param period the Period.
-     * @param dataElements the collection of DataElements.
-     * @param sources the collection of Sources.
-     * @return all intersecting Periods for the given Period which have assosiated DataValues for
-     *         the given collection of DataElements and Sources.
-     */
-    Collection<Period> getPeriods( Period period, Collection<DataElement> dataElements, Collection<OrganisationUnit> sources );
-    
-    /**
      * Enforces that each Period in the given collection is loaded in the current
      * session. Persists the Period if it does not exist.
      * 
@@ -278,6 +247,24 @@ public interface PeriodService
      * @return a Period.
      */
     Period reloadPeriod( Period period );
+
+    /**
+     * Retrieves the period with the given ISO period identifier. Reloads the 
+     * period in the session if found.
+     * 
+     * @param isoPeriod the ISO period identifier.
+     * @return a Period.
+     */
+    Period reloadIsoPeriod( String isoPeriod );
+    
+    /**
+     * Retrieves the period with the given ISO period identifiers. Reloads the 
+     * periods in the session if found.
+     * 
+     * @param isoPeriods the list of ISO period identifiers.
+     * @return a list of Periods.
+     */
+    List<Period> reloadIsoPeriods( List<String> isoPeriods );
     
     /**
      * Returns a PeriodHierarchy instance.

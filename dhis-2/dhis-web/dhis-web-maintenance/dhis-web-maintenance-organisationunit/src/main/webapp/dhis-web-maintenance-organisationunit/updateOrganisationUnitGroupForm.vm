@@ -7,7 +7,6 @@
             'beforeValidateHandler' : function()
             {
 				jQuery( "#selectedDataSetsList" ).find( "option" ).attr( "selected", "selected" );
-			
                 #tblDynamicAttributesJavascript()
             },
             'rules' : getValidationRules( "organisationUnitGroup" )
@@ -35,7 +34,6 @@
 <h3>$i18n.getString( "edit_org_unit_group" ) #openHelp( "ou_groups_edit" )</h3>
 
 <form id="updateOrganisationUnitGroupForm" action="updateOrganisationUnitGroup.action" method="post" class="inputForm">
-
 <input type="hidden" name="id" id="id" style="width:300px" value="$!{organisationUnitGroup.id}">
 <input type="hidden" id="symbol" name="symbol" value="$!{organisationUnitGroup.symbol}">
 	
@@ -57,8 +55,8 @@
 	</tr>
     <tr>
         <td style="height:35px"><label for="symbol">$i18n.getString( "symbol" )</td>
-        <td style="width:130px"><a href="javascript:openSymbolDialog()">$i18n.getString( "select_symbol" )</a></td>
-        <td><img id="symbolImg" style="padding-left:20px;"
+        <td><a href="javascript:openSymbolDialog()">$i18n.getString( "select_symbol" )</a>
+            <img id="symbolImg" style="padding-left: 30px;"
             #if( $organisationUnitGroup.hasSymbol() )
             src="../images/orgunitgroup/${organisationUnitGroup.symbol}"
             #else

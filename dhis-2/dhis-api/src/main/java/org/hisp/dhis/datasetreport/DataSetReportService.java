@@ -1,19 +1,20 @@
 package org.hisp.dhis.datasetreport;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,14 +29,13 @@ package org.hisp.dhis.datasetreport;
  */
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.period.Period;
 
 /**
@@ -48,25 +48,27 @@ public interface DataSetReportService
      * Generates html code for a custom data set report.
      * 
      * @param dataSet the data set.
-     * @param unit the organisation unit.
      * @param period the period.
+     * @param unit the organisation unit.
+     * @param dimensions mapping between dimension identifiers and dimension option identifiers.
      * @param selectedUnitOnly indicates whether to use captured or aggregated data. 
      * @param format the i18n format.
      * @return
      */
-    String getCustomDataSetReport( DataSet dataSet, Period period, OrganisationUnit unit, Set<OrganisationUnitGroup> groups, boolean selectedUnitOnly, I18nFormat format );
+    String getCustomDataSetReport( DataSet dataSet, Period period, OrganisationUnit unit, Map<String, String> dimensions, boolean selectedUnitOnly, I18nFormat format );
 
     /**
      * Generates a list of Grids based on the HTML code for a custom data set report.
      * 
      * @param dataSet the data set.
-     * @param unit the organisation unit.
      * @param period the period.
+     * @param unit the organisation unit.
+     * @param dimensions mapping between dimension identifiers and dimension option identifiers.
      * @param selectedUnitOnly indicates whether to use captured or aggregated data. 
      * @param format the i18n format.
-     * @return
+     * @return a list of Grids.
      */
-    List<Grid> getCustomDataSetReportAsGrid( DataSet dataSet, Period period, OrganisationUnit unit, Set<OrganisationUnitGroup> groups,
+    List<Grid> getCustomDataSetReportAsGrid( DataSet dataSet, Period period, OrganisationUnit unit, Map<String, String> dimensions,
         boolean selectedUnitOnly, I18nFormat format );
     
     /**
@@ -74,26 +76,28 @@ public interface DataSetReportService
      * in the data set. The data elements are grouped by their category combo.
      * 
      * @param dataSet the data set.
-     * @param unit the organisation unit.
      * @param period the period.
+     * @param unit the organisation unit.
+     * @param dimensions mapping between dimension identifiers and dimension option identifiers.
      * @param selectedUnitOnly indicates whether to use captured or aggregated data. 
      * @param format the i18n format.
      * @param i18n the i18n object.
-     * @return a Grid.
+     * @return a list of Grids.
      */
-    Grid getDefaultDataSetReport( DataSet dataSet, Period period, OrganisationUnit unit, Set<OrganisationUnitGroup> groups,  boolean selectedUnitOnly, I18nFormat format, I18n i18n );
+    List<Grid> getDefaultDataSetReport( DataSet dataSet, Period period, OrganisationUnit unit, Map<String, String> dimensions,  boolean selectedUnitOnly, I18nFormat format, I18n i18n );
     
     /**
      * Generates a list of Grids representing a data set report. The data elements
      * are grouped and sorted by their section in the data set.
      * 
      * @param dataSet the data set.
-     * @param unit the organisation unit.
      * @param period the period.
+     * @param unit the organisation unit.
+     * @param dimensions mapping between dimension identifiers and dimension option identifiers.
      * @param selectedUnitOnly indicators whether to use captured or aggregated data. 
      * @param format the i18n format.
      * @param i18n the i18n object.
      * @return a Grid.
      */
-    List<Grid> getSectionDataSetReport( DataSet dataSet, Period period, OrganisationUnit unit, Set<OrganisationUnitGroup> groups, boolean selectedUnitOnly, I18nFormat format, I18n i18n );
+    List<Grid> getSectionDataSetReport( DataSet dataSet, Period period, OrganisationUnit unit, Map<String, String> dimensions, boolean selectedUnitOnly, I18nFormat format, I18n i18n );
 }

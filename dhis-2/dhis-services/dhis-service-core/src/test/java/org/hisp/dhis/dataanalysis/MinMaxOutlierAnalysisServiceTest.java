@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataanalysis;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,7 +35,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hisp.dhis.DhisTest;
+import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
@@ -59,7 +60,7 @@ import org.junit.Test;
  * @version $Id: MinMaxOutlierAnalysisServiceTest.java 883 2009-05-15 00:42:45Z daghf $
  */
 public class MinMaxOutlierAnalysisServiceTest
-    extends DhisTest
+    extends DhisSpringTest
 {
     private DataAnalysisService minMaxOutlierAnalysisService;
 
@@ -120,7 +121,9 @@ public class MinMaxOutlierAnalysisServiceTest
 
         periodService = (PeriodService) getBean( PeriodService.ID );
 
-        categoryCombo = categoryService.getDataElementCategoryComboByName( DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
+        categoryCombo = categoryService.getDefaultDataElementCategoryCombo();
+        
+        categoryOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
 
         dataElementA = createDataElement( 'A', categoryCombo );
         dataElementB = createDataElement( 'B', categoryCombo );
@@ -138,8 +141,6 @@ public class MinMaxOutlierAnalysisServiceTest
         dataElementsB.add( dataElementD );
         dataElementsC.add( dataElementB );
 
-        categoryOptionCombo = categoryCombo.getOptionCombos().iterator().next();
-
         periodA = createPeriod( new MonthlyPeriodType(), getDate( 2000, 3, 1 ), getDate( 2000, 3, 31 ) );
         periodB = createPeriod( new MonthlyPeriodType(), getDate( 2000, 4, 1 ), getDate( 2000, 4, 30 ) );
         periodC = createPeriod( new MonthlyPeriodType(), getDate( 2000, 5, 1 ), getDate( 2000, 5, 30 ) );
@@ -156,12 +157,6 @@ public class MinMaxOutlierAnalysisServiceTest
         organisationUnitService.addOrganisationUnit( organisationUnitA );
     }
 
-    @Override
-    public boolean emptyDatabaseAfterTest()
-    {
-        return true;
-    }
-    
     // ----------------------------------------------------------------------
     // Business logic tests
     // ----------------------------------------------------------------------

@@ -1,19 +1,20 @@
 package org.hisp.dhis.user;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -55,8 +56,7 @@ public class UserAuthorityGroup
 
     public static final String[] CRITICAL_AUTHS = { "ALL", "F_SCHEDULING_ADMIN",
         "F_PERFORM_MAINTENANCE", "F_MERGE_ORGANISATION_UNITS", "F_ELIMINATE_DUPLICATE_DATA_ELEMENTS",
-        "F_ARCHIVE_DATA", "F_SQLVIEW_MANAGEMENT", "F_SYSTEM_SETTING",
-        "F_USERROLE_LIST", "F_USERROLE_DELETE", "F_USERROLE_ADD", "F_USERROLE_UPDATE" };
+        "F_SQLVIEW_MANAGEMENT", "F_SYSTEM_SETTING", "F_USERROLE_LIST", "F_USERROLE_DELETE", "F_USERROLE_PUBLIC_ADD" };
 
     /**
      * Required and unique.
@@ -69,33 +69,6 @@ public class UserAuthorityGroup
 
     @Scanned
     private Set<DataSet> dataSets = new HashSet<DataSet>();
-
-    // -------------------------------------------------------------------------
-    // hashCode and equals
-    // -------------------------------------------------------------------------
-
-    @Override
-    public boolean equals( Object o )
-    {
-        if ( this == o )
-        {
-            return true;
-        }
-
-        if ( o == null )
-        {
-            return false;
-        }
-
-        if ( !(o instanceof UserAuthorityGroup) )
-        {
-            return false;
-        }
-
-        final UserAuthorityGroup other = (UserAuthorityGroup) o;
-
-        return name.equals( other.getName() );
-    }
 
     // -------------------------------------------------------------------------
     // Logic
@@ -112,7 +85,12 @@ public class UserAuthorityGroup
         members.remove( userCredentials );
         userCredentials.getUserAuthorityGroups().remove( this );
     }
-
+    
+    public boolean isSuper()
+    {
+        return authorities != null && authorities.contains( AUTHORITY_ALL );
+    }
+    
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
@@ -124,7 +102,7 @@ public class UserAuthorityGroup
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getDescription()
     {
@@ -137,7 +115,7 @@ public class UserAuthorityGroup
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlElementWrapper( localName = "authorities", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "authority", namespace = DxfNamespaces.DXF_2_0 )
     public Set<String> getAuthorities()
@@ -162,7 +140,7 @@ public class UserAuthorityGroup
 
     @JsonProperty
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( {DetailedView.class, ExportView.class} )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlElementWrapper( localName = "dataSets", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "dataSet", namespace = DxfNamespaces.DXF_2_0 )
     public Set<DataSet> getDataSets()
@@ -187,7 +165,7 @@ public class UserAuthorityGroup
             description = userAuthorityGroup.getDescription() == null ? description : userAuthorityGroup.getDescription();
 
             removeAllAuthorities();
-            authorities.addAll( authorities );
+            authorities.addAll( ((UserAuthorityGroup) other).getAuthorities() );
 
             removeAllDataSets();
             dataSets.addAll( userAuthorityGroup.getDataSets() );

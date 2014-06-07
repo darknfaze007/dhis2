@@ -1,9 +1,16 @@
 package org.hisp.dhis.coldchain.equipment.action;
 
-import org.hisp.dhis.coldchain.inventory.EquipmentInstance;
-import org.hisp.dhis.coldchain.inventory.EquipmentInstanceService;
-import org.hisp.dhis.coldchain.inventory.EquipmentStatus;
-import org.hisp.dhis.coldchain.inventory.EquipmentStatusService;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.hisp.dhis.coldchain.equipment.EquipmentAttributeValue;
+import org.hisp.dhis.coldchain.equipment.EquipmentAttributeValueService;
+import org.hisp.dhis.coldchain.equipment.Equipment;
+import org.hisp.dhis.coldchain.equipment.EquipmentService;
+import org.hisp.dhis.coldchain.equipment.EquipmentStatus;
+import org.hisp.dhis.coldchain.equipment.EquipmentStatusService;
+import org.hisp.dhis.coldchain.equipment.EquipmentTypeAttribute;
+import org.hisp.dhis.coldchain.equipment.EquipmentType_Attribute;
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.user.CurrentUserService;
 
@@ -17,17 +24,24 @@ public class UpdateEquipmentStatusAction implements Action
 
     private EquipmentStatusService equipmentStatusService;
     
-    private EquipmentInstanceService equipmentInstanceService;
+    private EquipmentService equipmentService;
     
     private CurrentUserService currentUserService;
 
     private I18nFormat format;
     
+    private EquipmentAttributeValueService equipmentAttributeValueService;
+    
+    public void setEquipmentAttributeValueService( EquipmentAttributeValueService equipmentAttributeValueService )
+    {
+        this.equipmentAttributeValueService = equipmentAttributeValueService;
+    }
+    
     // -------------------------------------------------------------------------
     // Input & Output
     // -------------------------------------------------------------------------
     
-    private Integer equipmentInstanceId;
+    private Integer equipmentId;
     
     private String reportingDate;
     
@@ -43,17 +57,80 @@ public class UpdateEquipmentStatusAction implements Action
     // -------------------------------------------------------------------------
     public String execute() throws Exception
     {
-        EquipmentInstance equipmentInstance = equipmentInstanceService.getEquipmentInstance( equipmentInstanceId );
+        Equipment equipment = equipmentService.getEquipment( equipmentId );
         
-        if( status.equalsIgnoreCase( "WORKING" ))
+        
+       // EquipmentType equipmentType = equipment.getEquipmentType();
+        
+        List<EquipmentTypeAttribute> equipmentTypeAttributes = new ArrayList<EquipmentTypeAttribute>( );
+        
+        for( EquipmentType_Attribute equipmentType_Attribute : equipment.getEquipmentType().getEquipmentType_Attributes() )
         {
-            equipmentInstance.setWorking( true );
-            equipmentInstanceService.updateEquipmentInstance( equipmentInstance );
+            equipmentTypeAttributes.add( equipmentType_Attribute.getEquipmentTypeAttribute() );
+        }
+        
+        EquipmentAttributeValue equipmentAttributeValue = new EquipmentAttributeValue();
+        
+        for ( EquipmentTypeAttribute equipmentTypeAttribute : equipmentTypeAttributes )
+        {
+            if( EquipmentTypeAttribute.TYPE_COMBO.equalsIgnoreCase( equipmentTypeAttribute.getValueType() ) )
+            {
+                if ( EquipmentStatus.WORKING_STATUS.equalsIgnoreCase( equipmentTypeAttribute.getDescription() ) )
+                {
+                    //System.out.println( "Inside Working Status" );
+                    equipmentAttributeValue = equipmentAttributeValueService.getEquipmentAttributeValue( equipment, equipmentTypeAttribute );
+                    
+                    if( equipmentAttributeValue == null )
+                    {
+                        equipmentAttributeValue = new EquipmentAttributeValue();
+                        
+                        if( status.equalsIgnoreCase( EquipmentStatus.STATUS_WORKING_WELL ))
+                        {
+                            equipmentAttributeValue.setValue( EquipmentStatus.STATUS_WORKING_WELL.trim() );
+                        }
+                        
+                        else if( status.equalsIgnoreCase( EquipmentStatus.STATUS_WORKING_NEEDS_MAINTENANCE ))
+                        {
+                            equipmentAttributeValue.setValue( EquipmentStatus.STATUS_WORKING_NEEDS_MAINTENANCE.trim() );
+                        }
+                        else
+                        {
+                            equipmentAttributeValue.setValue( EquipmentStatus.STATUS_NOT_WORKING.trim() );
+                        }
+                        
+                        equipmentAttributeValueService.addEquipmentAttributeValue( equipmentAttributeValue );
+                    }
+                    else
+                    {
+                        if( status.equalsIgnoreCase( EquipmentStatus.STATUS_WORKING_WELL ))
+                        {
+                            equipmentAttributeValue.setValue( EquipmentStatus.STATUS_WORKING_WELL.trim() );
+                        }
+                        
+                        else if( status.equalsIgnoreCase( EquipmentStatus.STATUS_WORKING_NEEDS_MAINTENANCE ))
+                        {
+                            equipmentAttributeValue.setValue( EquipmentStatus.STATUS_WORKING_NEEDS_MAINTENANCE.trim() );
+                        }
+                        else
+                        {
+                            equipmentAttributeValue.setValue( EquipmentStatus.STATUS_NOT_WORKING.trim() );
+                        }
+                        equipmentAttributeValueService.updateEquipmentAttributeValue( equipmentAttributeValue );
+                    }
+                    
+                }
+            }
+        }
+       
+        if( status.equalsIgnoreCase( EquipmentStatus.STATUS_WORKING_WELL ))
+        {
+            equipment.setWorking( true );
+            equipmentService.updateEquipment( equipment );
         }
         else
         {
-            equipmentInstance.setWorking( false );
-            equipmentInstanceService.updateEquipmentInstance( equipmentInstance );
+            equipment.setWorking( false );
+            equipmentService.updateEquipment( equipment );
         }
         
         String storedBy = currentUserService.getCurrentUsername();
@@ -61,7 +138,7 @@ public class UpdateEquipmentStatusAction implements Action
         EquipmentStatus equipmentStatus = new EquipmentStatus();
         
         equipmentStatus.setDescription( description );
-        equipmentStatus.setEquipmentInstance( equipmentInstance );
+        equipmentStatus.setEquipment( equipment );
         equipmentStatus.setStatus( status );
         equipmentStatus.setReportingDate( format.parseDate( reportingDate.trim() ) );
         equipmentStatus.setUpdationDate( format.parseDate( dateOfUpdation.trim() ) );
@@ -83,9 +160,9 @@ public class UpdateEquipmentStatusAction implements Action
     }
 
 
-    public void setEquipmentInstanceService( EquipmentInstanceService equipmentInstanceService )
+    public void setEquipmentService( EquipmentService equipmentService )
     {
-        this.equipmentInstanceService = equipmentInstanceService;
+        this.equipmentService = equipmentService;
     }
 
 
@@ -101,9 +178,9 @@ public class UpdateEquipmentStatusAction implements Action
     }
 
 
-    public void setEquipmentInstanceId( Integer equipmentInstanceId )
+    public void setEquipmentId( Integer equipmentId )
     {
-        this.equipmentInstanceId = equipmentInstanceId;
+        this.equipmentId = equipmentId;
     }
 
 

@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.util;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -26,6 +27,12 @@ package org.hisp.dhis.system.util;
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+import javassist.util.proxy.ProxyFactory;
+import org.hibernate.collection.spi.PersistentCollection;
+import org.hisp.dhis.system.util.functional.Function1;
+import org.hisp.dhis.system.util.functional.Predicate;
+import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -41,9 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.hisp.dhis.system.util.functional.Function1;
-import org.hisp.dhis.system.util.functional.Predicate;
-import org.springframework.util.StringUtils;
+import static org.hisp.dhis.system.util.PredicateUtils.alwaysTrue;
 
 /**
  * @author Lars Helge Overland
@@ -64,7 +69,8 @@ public class ReflectionUtils
             Method method = object.getClass().getMethod( "getId" );
 
             return (Integer) method.invoke( object );
-        } catch ( Exception ex )
+        }
+        catch ( Exception ex )
         {
             return -1;
         }
@@ -86,7 +92,8 @@ public class ReflectionUtils
             Method method = object.getClass().getMethod( "get" + property );
 
             return (String) method.invoke( object );
-        } catch ( Exception ex )
+        }
+        catch ( Exception ex )
         {
             return null;
         }
@@ -102,9 +109,9 @@ public class ReflectionUtils
      */
     public static void setProperty( Object object, String name, String value )
     {
-        Object[] arguments = new Object[] { value };
+        Object[] arguments = new Object[]{ value };
 
-        Class<?>[] parameterTypes = new Class<?>[] { String.class };
+        Class<?>[] parameterTypes = new Class<?>[]{ String.class };
 
         if ( name.length() > 0 )
         {
@@ -115,7 +122,8 @@ public class ReflectionUtils
                 Method concatMethod = object.getClass().getMethod( name, parameterTypes );
 
                 concatMethod.invoke( object, arguments );
-            } catch ( Exception ex )
+            }
+            catch ( Exception ex )
             {
                 throw new UnsupportedOperationException( "Failed to set property", ex );
             }
@@ -209,7 +217,8 @@ public class ReflectionUtils
                 }
             }
 
-        } catch ( ClassCastException e )
+        }
+        catch ( ClassCastException e )
         {
             return false;
         }
@@ -219,20 +228,25 @@ public class ReflectionUtils
 
     public static Method findGetterMethod( String fieldName, Object target )
     {
-        String[] getterNames = new String[] {
+        return findGetterMethod( fieldName, target.getClass() );
+    }
+
+    public static Method findGetterMethod( String fieldName, Class<?> clazz )
+    {
+        String[] getterNames = new String[]{
             "get",
             "is",
             "has"
         };
 
-        Field field = _findField( target.getClass(), StringUtils.uncapitalize( fieldName ) );
+        Field field = _findField( clazz, StringUtils.uncapitalize( fieldName ) );
         Method method;
 
         if ( field != null )
         {
             for ( String getterName : getterNames )
             {
-                method = _findMethod( target.getClass(), getterName + StringUtils.capitalize( field.getName() ) );
+                method = _findMethod( clazz, getterName + StringUtils.capitalize( field.getName() ) );
 
                 if ( method != null )
                 {
@@ -259,7 +273,7 @@ public class ReflectionUtils
 
     public static Method findSetterMethod( String fieldName, Object target )
     {
-        String[] setterNames = new String[] {
+        String[] setterNames = new String[]{
             "set"
         };
 
@@ -385,17 +399,27 @@ public class ReflectionUtils
         return methods;
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public static <T> T invokeMethod( Object target, Method method, Object... args )
     {
+        if ( target == null || method == null )
+        {
+            return null;
+        }
+
+        if ( Modifier.isProtected( method.getModifiers() ) || Modifier.isPrivate( method.getModifiers() ) )
+        {
+            return null;
+        }
+
         try
         {
             return (T) method.invoke( target, args );
-        } 
+        }
         catch ( InvocationTargetException e )
         {
             throw new RuntimeException( e );
-        } 
+        }
         catch ( IllegalAccessException e )
         {
             throw new RuntimeException( e );
@@ -433,6 +457,11 @@ public class ReflectionUtils
 
             currentType = currentType.getSuperclass();
         }
+    }
+
+    public static Collection<Field> collectFields( Class<?> clazz )
+    {
+        return collectFields( clazz, alwaysTrue );
     }
 
     public static Collection<Field> collectFields( Class<?> clazz, Predicate<Field> predicate )
@@ -474,5 +503,20 @@ public class ReflectionUtils
         {
             throw new RuntimeException( "Unknown Collection type." );
         }
+    }
+
+    public static Class<?> getRealClass( Class<?> klass )
+    {
+        if ( ProxyFactory.isProxyClass( klass ) )
+        {
+            klass = klass.getSuperclass();
+        }
+
+        while ( PersistentCollection.class.isAssignableFrom( klass ) )
+        {
+            klass = klass.getSuperclass();
+        }
+
+        return klass;
     }
 }

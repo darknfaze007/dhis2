@@ -1,19 +1,20 @@
 package org.hisp.dhis.sqlview;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,22 +28,21 @@ package org.hisp.dhis.sqlview;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-
 import org.apache.commons.lang.StringUtils;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author Dang Duy Hieu
@@ -54,7 +54,7 @@ public class SqlView
     public static final String PREFIX_VIEWNAME = "_view";
 
     private static final String CRITERIA_SEP = ":";
-    
+
     // -------------------------------------------------------------------------
     // Variables
     // -------------------------------------------------------------------------
@@ -79,37 +79,6 @@ public class SqlView
     }
 
     // -------------------------------------------------------------------------
-    // hashCode, equals and toString
-    // -------------------------------------------------------------------------
-
-    @Override
-    public boolean equals( Object obj )
-    {
-        if ( this == obj )
-        {
-            return true;
-        }
-        if ( obj == null )
-        {
-            return false;
-        }
-        if ( getClass() != obj.getClass() )
-        {
-            return false;
-        }
-
-        final SqlView other = (SqlView) obj;
-
-        return name.equals( other.name );
-    }
-
-    @Override
-    public String toString()
-    {
-        return "[ Name: " + name + ", sql query: " + sqlQuery + " ]";
-    }
-
-    // -------------------------------------------------------------------------
     // Logic
     // -------------------------------------------------------------------------
 
@@ -117,24 +86,24 @@ public class SqlView
     {
         final Pattern p = Pattern.compile( "\\W" );
 
-        String input = new String( this.name );
-        
+        String input = name;
+
         String[] items = p.split( input.trim().replaceAll( "_", "" ) );
 
         input = "";
 
         for ( String s : items )
         {
-            input += (s.equals( "" ) == true) ? "" : ("_" + s);
+            input += s.isEmpty() ? "" : ("_" + s);
         }
 
-        return PREFIX_VIEWNAME + input;
+        return PREFIX_VIEWNAME + input.toLowerCase();
     }
-    
+
     public static Map<String, String> getCriteria( Set<String> params )
     {
         Map<String, String> map = new HashMap<String, String>();
-        
+
         if ( params != null )
         {
             for ( String param : params )
@@ -144,24 +113,24 @@ public class SqlView
                     String[] criteria = param.split( CRITERIA_SEP );
                     String filter = criteria[0];
                     String value = criteria[1];
-                    
-                    if ( StringUtils.isAlphanumeric( filter ) && StringUtils.isAlphanumeric( value ) )
+
+                    if ( StringUtils.isAlphanumericSpace( filter ) && StringUtils.isAlphanumericSpace( value ) )
                     {
                         map.put( filter, value );
                     }
                 }
             }
         }
-        
+
         return map;
     }
-    
+
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getDescription()
     {
@@ -174,7 +143,7 @@ public class SqlView
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getSqlQuery()
     {

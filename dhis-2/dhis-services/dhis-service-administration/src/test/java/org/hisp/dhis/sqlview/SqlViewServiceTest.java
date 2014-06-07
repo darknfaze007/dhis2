@@ -1,19 +1,20 @@
 package org.hisp.dhis.sqlview;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -214,37 +215,9 @@ public class SqlViewServiceTest
         SqlView sqlViewC = createSqlView( 'C', SQL3 );
         SqlView sqlViewD = createSqlView( 'D', SQL4 );
 
-        assertEquals( "_view_SqlViewC", sqlViewC.getViewName() );
-        assertNotSame( "_view_SqlViewC", sqlViewD.getViewName() );
+        assertEquals( "_view_sqlviewc", sqlViewC.getViewName() );
+        assertNotSame( "_view_sqlviewc", sqlViewD.getViewName() );
 
-    }
-
-    @Test
-    public void testGetAllSqlViewNames()
-    {
-        SqlView sqlViewA = createSqlView( 'A', SQL4 );
-        SqlView sqlViewB = createSqlView( 'B', SQL4 );
-        SqlView sqlViewC = createSqlView( 'C', SQL4 );
-        SqlView sqlViewD = createSqlView( 'D', SQL4 );
-
-        sqlViewService.saveSqlView( sqlViewA );
-        sqlViewService.saveSqlView( sqlViewB );
-        sqlViewService.saveSqlView( sqlViewC );
-        sqlViewService.saveSqlView( sqlViewD );
-
-        boolean flag = sqlViewService.createAllViewTables();
-
-        assertTrue( flag );
-
-        sqlViewService.dropViewTable( sqlViewA.getViewName() );
-        sqlViewService.dropViewTable( sqlViewB.getViewName() );
-        sqlViewService.dropViewTable( sqlViewC.getViewName() );
-        sqlViewService.dropViewTable( sqlViewD.getViewName() );
-
-        sqlViewService.deleteSqlView( sqlViewA );
-        sqlViewService.deleteSqlView( sqlViewB );
-        sqlViewService.deleteSqlView( sqlViewC );
-        sqlViewService.deleteSqlView( sqlViewD );
     }
 
     @Test

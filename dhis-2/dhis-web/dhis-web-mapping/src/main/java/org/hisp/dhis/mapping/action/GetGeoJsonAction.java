@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapping.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,11 +32,17 @@ import static org.hisp.dhis.util.ContextUtils.clearIfNotModified;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.struts2.ServletActionContext;
+import org.hisp.dhis.analytics.AggregationType;
+import org.hisp.dhis.analytics.AnalyticsService;
+import org.hisp.dhis.analytics.DataQueryParams;
+import org.hisp.dhis.common.DimensionalObject;
+import org.hisp.dhis.common.NameableObjectUtils;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.organisationunit.OrganisationUnitLevel;
-import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.system.filter.OrganisationUnitWithValidCoordinatesFilter;
 import org.hisp.dhis.system.util.FilterUtils;
 
@@ -50,30 +57,23 @@ public class GetGeoJsonAction
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
+    
+    private AnalyticsService analyticsService;
 
-    private OrganisationUnitService organisationUnitService;
-
-    public void setOrganisationUnitService( OrganisationUnitService organisationUnitService )
+    public void setAnalyticsService( AnalyticsService analyticsService )
     {
-        this.organisationUnitService = organisationUnitService;
+        this.analyticsService = analyticsService;
     }
 
     // -------------------------------------------------------------------------
     // Input
     // -------------------------------------------------------------------------
 
-    private String parentId;
+    private Collection<String> ids;
     
-    public void setParentId( String parentId )
+    public void setIds( Collection<String> ids )
     {
-        this.parentId = parentId;
-    }
-
-    private String level;
-
-    public void setLevel( String level )
-    {
-        this.level = level;
+        this.ids = ids;
     }
     
     private String callback;
@@ -98,13 +98,6 @@ public class GetGeoJsonAction
     {
         return object;
     }
-    
-    private boolean hasCoordinatesUp;
-
-    public boolean isHasCoordinatesUp()
-    {
-        return hasCoordinatesUp;
-    }
 
     // -------------------------------------------------------------------------
     // Action implementation
@@ -113,27 +106,22 @@ public class GetGeoJsonAction
     public String execute()
         throws Exception
     {
-        OrganisationUnit parent = organisationUnitService.getOrganisationUnit( parentId );
+        String paramString = "ou:";
+        
+        for ( String id : ids )
+        {
+            paramString += id + ";";
+        }
 
-        if ( parent == null )
-        {
-            parent = organisationUnitService.getOrganisationUnit( Integer.parseInt( parentId ) );
-        }
+        Set<String> ouParams = new HashSet<String>();
         
-        OrganisationUnitLevel orgUnitLevel = organisationUnitService.getOrganisationUnitLevel( level );
-
-        if ( orgUnitLevel == null )
-        {
-            orgUnitLevel = organisationUnitService.getOrganisationUnitLevel( Integer.parseInt( level ) );
-        }
+        ouParams.add( paramString.substring( 0, paramString.length() ) );
         
-        if ( orgUnitLevel == null )
-        {
-            orgUnitLevel = organisationUnitService.getOrganisationUnitLevel( parent.getOrganisationUnitLevel() );
-        }
+        DataQueryParams params = analyticsService.getFromUrl( ouParams, null, AggregationType.SUM, null, false, false, false, false, false, false, null );
         
-        Collection<OrganisationUnit> organisationUnits = organisationUnitService.getOrganisationUnitsAtLevel(
-            orgUnitLevel.getLevel(), parent );
+        DimensionalObject dim = params.getDimension( DimensionalObject.ORGUNIT_DIM_ID );
+        
+        List<OrganisationUnit> organisationUnits = NameableObjectUtils.asTypedList( dim.getItems() );
 
         FilterUtils.filter( organisationUnits, new OrganisationUnitWithValidCoordinatesFilter() );
 
@@ -158,15 +146,6 @@ public class GetGeoJsonAction
             {
                 object.add( unit );
             }
-        }
-        
-        if ( orgUnitLevel.getLevel() > 1 )
-        {
-            Collection<OrganisationUnit> organisationUnitsUp = organisationUnitService.getOrganisationUnitsAtLevel( orgUnitLevel.getLevel() - 1 );
-            
-            FilterUtils.filter( organisationUnitsUp, new OrganisationUnitWithValidCoordinatesFilter() );
-            
-            hasCoordinatesUp = organisationUnitsUp.size() > 0;
         }
 
         return SUCCESS;

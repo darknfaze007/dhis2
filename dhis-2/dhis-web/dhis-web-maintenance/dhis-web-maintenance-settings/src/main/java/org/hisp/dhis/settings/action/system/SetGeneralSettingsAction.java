@@ -1,19 +1,20 @@
 package org.hisp.dhis.settings.action.system;
 
 /*
- * Copyright (c) 2004-2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -103,6 +104,13 @@ public class SetGeneralSettingsAction
     {
         this.cacheStrategy = cacheStrategy;
     }
+    
+    private Integer analyticsMaxLimit;
+    
+    public void setAnalyticsMaxLimit( Integer analyticsMaxLimit )
+    {
+        this.analyticsMaxLimit = analyticsMaxLimit;
+    }
 
     private Integer infrastructuralDataElements;
 
@@ -146,18 +154,18 @@ public class SetGeneralSettingsAction
         this.offlineOrganisationUnitLevel = offlineOrganisationUnitLevel;
     }
 
-    private Integer completenessOffset;
-
-    public void setCompletenessOffset( Integer completenessOffset )
-    {
-        this.completenessOffset = completenessOffset;
-    }
-
     private String phoneNumberAreaCode;
-    
+
     public void setPhoneNumberAreaCode( String phoneNumberAreaCode )
     {
         this.phoneNumberAreaCode = phoneNumberAreaCode;
+    }
+
+    private String googleAnalyticsUA;
+
+    public void setGoogleAnalyticsUA( String googleAnalyticsUA )
+    {
+        this.googleAnalyticsUA = googleAnalyticsUA;
     }
 
     private boolean multiOrganisationUnitForms;
@@ -165,6 +173,20 @@ public class SetGeneralSettingsAction
     public void setMultiOrganisationUnitForms( boolean multiOrganisationUnitForms )
     {
         this.multiOrganisationUnitForms = multiOrganisationUnitForms;
+    }
+
+    private String calendar;
+
+    public void setCalendar( String calendar )
+    {
+        this.calendar = calendar;
+    }
+
+    private String dateFormat;
+
+    public void setDateFormat( String dateFormat )
+    {
+        this.dateFormat = dateFormat;
     }
 
     private String message;
@@ -188,12 +210,14 @@ public class SetGeneralSettingsAction
     public String execute()
     {
         systemSettingManager.saveSystemSetting( KEY_CACHE_STRATEGY, cacheStrategy );
-        systemSettingManager.saveSystemSetting( KEY_OMIT_INDICATORS_ZERO_NUMERATOR_DATAMART,
-            omitIndicatorsZeroNumeratorDataMart );
+        systemSettingManager.saveSystemSetting( KEY_ANALYTICS_MAX_LIMIT, analyticsMaxLimit );
+        systemSettingManager.saveSystemSetting( KEY_OMIT_INDICATORS_ZERO_NUMERATOR_DATAMART, omitIndicatorsZeroNumeratorDataMart );
         systemSettingManager.saveSystemSetting( KEY_FACTOR_OF_DEVIATION, factorDeviation );
-        systemSettingManager.saveSystemSetting( KEY_COMPLETENESS_OFFSET, completenessOffset );
         systemSettingManager.saveSystemSetting( KEY_PHONE_NUMBER_AREA_CODE, phoneNumberAreaCode );
         systemSettingManager.saveSystemSetting( KEY_MULTI_ORGANISATION_UNIT_FORMS, multiOrganisationUnitForms );
+        systemSettingManager.saveSystemSetting( KEY_GOOGLE_ANALYTICS_UA, googleAnalyticsUA );
+        systemSettingManager.saveSystemSetting( KEY_CALENDAR, calendar );
+        systemSettingManager.saveSystemSetting( KEY_DATE_FORMAT, dateFormat );
 
         Configuration configuration = configurationService.getConfiguration();
 
@@ -204,11 +228,9 @@ public class SetGeneralSettingsAction
 
         if ( offlineOrganisationUnitLevel != null )
         {
-            configuration.setOfflineOrganisationUnitLevel( organisationUnitService
-                .getOrganisationUnitLevel( offlineOrganisationUnitLevel ) );
+            configuration.setOfflineOrganisationUnitLevel( 
+                organisationUnitService.getOrganisationUnitLevel( offlineOrganisationUnitLevel ) );
 
-            // if the level is changed, we need to make sure that the version is
-            // also changed.
             organisationUnitService.updateVersion();
         }
 

@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataanalysis;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -35,7 +36,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hisp.dhis.DhisTest;
+import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
@@ -58,7 +59,7 @@ import org.junit.Test;
  */
 @SuppressWarnings( "unused" )
 public class StdDevOutlierAnalysisServiceTest
-    extends DhisTest
+    extends DhisSpringTest
 {
     private DataAnalysisService stdDevOutlierAnalysisService;
 
@@ -110,7 +111,7 @@ public class StdDevOutlierAnalysisServiceTest
 
         periodService = (PeriodService) getBean( PeriodService.ID );
 
-        categoryCombo = categoryService.getDataElementCategoryComboByName( DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
+        categoryCombo = categoryService.getDefaultDataElementCategoryCombo();
 
         dataElementA = createDataElement( 'A', categoryCombo );
         dataElementB = createDataElement( 'B', categoryCombo );
@@ -141,12 +142,6 @@ public class StdDevOutlierAnalysisServiceTest
         organisationUnitA = createOrganisationUnit( 'A' );
 
         organisationUnitService.addOrganisationUnit( organisationUnitA );
-    }
-
-    @Override
-    public boolean emptyDatabaseAfterTest()
-    {
-        return true;
     }
     
     // ----------------------------------------------------------------------
@@ -185,8 +180,7 @@ public class StdDevOutlierAnalysisServiceTest
         DeflatedDataValue valueA = new DeflatedDataValue( dataValueA );
         DeflatedDataValue valueB = new DeflatedDataValue( dataValueB );
         
-        assertEquals( 2, values.size() );
+        assertEquals( 1, values.size() );
         assertTrue( values.contains( valueA ) );
-        assertTrue( values.contains( valueB ) );        
     }
 }

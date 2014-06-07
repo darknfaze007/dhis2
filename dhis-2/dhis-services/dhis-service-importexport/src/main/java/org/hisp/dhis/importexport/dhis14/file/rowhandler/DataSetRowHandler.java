@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.dhis14.file.rowhandler;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -45,21 +46,19 @@ import com.ibatis.sqlmap.client.event.RowHandler;
  * @version $Id: DataSetRowHandler.java 6298 2008-11-17 17:31:14Z larshelg $
  */
 public class DataSetRowHandler
-    extends DataSetImporter implements RowHandler
+    extends DataSetImporter
+    implements RowHandler
 {
     private ImportParams params;
 
     private Map<String, Integer> periodTypeMapping;
-    
+
     // -------------------------------------------------------------------------
     // Constructor
     // -------------------------------------------------------------------------
 
-    public DataSetRowHandler( BatchHandler<DataSet> batchHandler,
-        ImportObjectService importObjectService,
-        DataSetService dataSetService,
-        Map<String, Integer> periodTypeMapping,
-        ImportParams params,
+    public DataSetRowHandler( BatchHandler<DataSet> batchHandler, ImportObjectService importObjectService,
+        DataSetService dataSetService, Map<String, Integer> periodTypeMapping, ImportParams params,
         ImportAnalyser importAnalyser )
     {
         this.batchHandler = batchHandler;
@@ -69,7 +68,7 @@ public class DataSetRowHandler
         this.params = params;
         this.importAnalyser = importAnalyser;
     }
-    
+
     // -------------------------------------------------------------------------
     // RowHandler implementation
     // -------------------------------------------------------------------------
@@ -77,12 +76,12 @@ public class DataSetRowHandler
     public void handleRow( Object object )
     {
         final DataSet dataSet = (DataSet) object;
-        
+
         Integer periodTypeId = periodTypeMapping.get( dataSet.getPeriodType().getName() );
         Integer defaultId = periodTypeMapping.get( YearlyPeriodType.NAME );
-        
+
         dataSet.getPeriodType().setId( periodTypeId != null ? periodTypeId : defaultId );
-        
+
         importObject( dataSet, params );
     }
 }

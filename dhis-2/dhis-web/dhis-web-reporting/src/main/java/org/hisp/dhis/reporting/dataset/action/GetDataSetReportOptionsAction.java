@@ -1,19 +1,20 @@
 package org.hisp.dhis.reporting.dataset.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -35,6 +36,9 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
+import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
+import org.hisp.dhis.dataelement.DataElementCategoryCombo;
+import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
@@ -76,6 +80,13 @@ public class GetDataSetReportOptionsAction
     public void setOrganisationUnitGroupService( OrganisationUnitGroupService organisationUnitGroupService )
     {
         this.organisationUnitGroupService = organisationUnitGroupService;
+    }
+    
+    private DataElementCategoryService categoryService;
+
+    public void setCategoryService( DataElementCategoryService categoryService )
+    {
+        this.categoryService = categoryService;
     }
 
     private SelectionTreeManager selectionTreeManager;
@@ -159,11 +170,32 @@ public class GetDataSetReportOptionsAction
         return periodType;
     }
 
-    private List<OrganisationUnitGroupSet> groupSets = new ArrayList<OrganisationUnitGroupSet>();
+    private DataElementCategoryCombo defaultCategoryCombo;
 
-    public List<OrganisationUnitGroupSet> getGroupSets()
+    public DataElementCategoryCombo getDefaultCategoryCombo()
     {
-        return groupSets;
+        return defaultCategoryCombo;
+    }
+
+    private List<DataElementCategoryCombo> categoryCombos;
+    
+    public List<DataElementCategoryCombo> getCategoryCombos()
+    {
+        return categoryCombos;
+    }
+
+    private List<CategoryOptionGroupSet> categoryOptionGroupSets;
+    
+    public List<CategoryOptionGroupSet> getCategoryOptionGroupSets()
+    {
+        return categoryOptionGroupSets;
+    }
+
+    private List<OrganisationUnitGroupSet> organisationUnitGroupSets;
+
+    public List<OrganisationUnitGroupSet> getOrganisationUnitGroupSets()
+    {
+        return organisationUnitGroupSets;
     }
 
     // -------------------------------------------------------------------------
@@ -171,11 +203,7 @@ public class GetDataSetReportOptionsAction
     // -------------------------------------------------------------------------
 
     public String execute()
-    {
-        dataSets = new ArrayList<DataSet>( dataSetService.getAllDataSets() );
-        
-        Collections.sort( dataSets, IdentifiableObjectNameComparator.INSTANCE );
-        
+    {        
         periodTypes = getAvailablePeriodTypes();
         
         render = ( ds != null && pe != null && ou != null );
@@ -191,7 +219,17 @@ public class GetDataSetReportOptionsAction
             selectionTreeManager.setSelectedOrganisationUnit( organisationUnitService.getOrganisationUnit( ou ) ); //TODO set unit state in client instead
         }
 
-        groupSets = new ArrayList<OrganisationUnitGroupSet>( organisationUnitGroupService.getAllOrganisationUnitGroupSets() );
+        defaultCategoryCombo = categoryService.getDefaultDataElementCategoryCombo();
+
+        dataSets = new ArrayList<DataSet>( dataSetService.getAllDataSets() ); 
+        categoryCombos = new ArrayList<DataElementCategoryCombo>( categoryService.getAttributeCategoryCombos() );
+        categoryOptionGroupSets = new ArrayList<CategoryOptionGroupSet>( categoryService.getAllCategoryOptionGroupSets() );
+        organisationUnitGroupSets = new ArrayList<OrganisationUnitGroupSet>( organisationUnitGroupService.getAllOrganisationUnitGroupSets() );
+
+        Collections.sort( dataSets, IdentifiableObjectNameComparator.INSTANCE );   
+        Collections.sort( categoryCombos, IdentifiableObjectNameComparator.INSTANCE );
+        Collections.sort( categoryOptionGroupSets, IdentifiableObjectNameComparator.INSTANCE );
+        Collections.sort( organisationUnitGroupSets, IdentifiableObjectNameComparator.INSTANCE );
         
         return SUCCESS;
     }

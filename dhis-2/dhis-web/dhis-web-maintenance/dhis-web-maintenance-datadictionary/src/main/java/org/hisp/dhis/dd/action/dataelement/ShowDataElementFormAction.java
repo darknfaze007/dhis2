@@ -1,19 +1,20 @@
 package org.hisp.dhis.dd.action.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -216,27 +217,26 @@ public class ShowDataElementFormAction
             .getDataElementCategoryComboByName( DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
 
         dataElementCategoryCombos = new ArrayList<DataElementCategoryCombo>( dataElementCategoryService
-            .getAllDataElementCategoryCombos() );
+            .getDisaggregationCategoryCombos() );
 
         dataElementGroups = dataElementService.getAllDataElementGroups();
+
+        Map<Integer, OrganisationUnitLevel> levelMap = organisationUnitService.getOrganisationUnitLevelMap();
 
         if ( id != null )
         {
             dataElement = dataElementService.getDataElement( id );
 
-            Map<Integer, OrganisationUnitLevel> levelMap = organisationUnitService.getOrganisationUnitLevelMap();
-
             for ( Integer level : dataElement.getAggregationLevels() )
             {
                 aggregationLevels.add( levelMap.get( level ) );
+                levelMap.remove( level );
             }
 
             attributeValues = AttributeUtils.getAttributeValueMap( dataElement.getAttributeValues() );
         }
 
-        organisationUnitLevels = organisationUnitService.getOrganisationUnitLevels();
-
-        organisationUnitLevels.removeAll( aggregationLevels );
+        organisationUnitLevels = new ArrayList<OrganisationUnitLevel>( levelMap.values() );
 
         groupSets = new ArrayList<DataElementGroupSet>( dataElementService
             .getCompulsoryDataElementGroupSetsWithMembers() );
@@ -249,7 +249,7 @@ public class ShowDataElementFormAction
 
         Collections.sort( dataElementCategoryCombos, IdentifiableObjectNameComparator.INSTANCE );
         Collections.sort( groupSets, IdentifiableObjectNameComparator.INSTANCE );
-        Collections.sort( attributes, new AttributeSortOrderComparator() );
+        Collections.sort( attributes, AttributeSortOrderComparator.INSTANCE );
         Collections.sort( optionSets, IdentifiableObjectNameComparator.INSTANCE );
         Collections.sort( legendSets, IdentifiableObjectNameComparator.INSTANCE );
 

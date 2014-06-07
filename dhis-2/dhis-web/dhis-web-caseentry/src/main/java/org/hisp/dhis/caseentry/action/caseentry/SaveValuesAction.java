@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.caseentry;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,8 +28,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.caseentry;
-
 import java.util.Collection;
 import java.util.Date;
 
@@ -35,11 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts2.ServletActionContext;
-import org.hisp.dhis.caseentry.state.SelectedStateManager;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientService;
-import org.hisp.dhis.patientdatavalue.PatientDataValue;
-import org.hisp.dhis.patientdatavalue.PatientDataValueService;
+import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramInstanceService;
@@ -48,6 +45,10 @@ import org.hisp.dhis.program.ProgramStage;
 import org.hisp.dhis.program.ProgramStageDataElement;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
 import org.hisp.dhis.user.CurrentUserService;
 
 import com.opensymphony.xwork2.Action;
@@ -73,18 +74,18 @@ public class SaveValuesAction
         this.programService = programService;
     }
 
-    private PatientService patientService;
+    private TrackedEntityInstanceService entityInstanceService;
 
-    public void setPatientService( PatientService patientService )
+    public void setEntityInstanceService( TrackedEntityInstanceService entityInstanceService )
     {
-        this.patientService = patientService;
+        this.entityInstanceService = entityInstanceService;
     }
 
-    private PatientDataValueService patientDataValueService;
+    private TrackedEntityDataValueService dataValueService;
 
-    public void setPatientDataValueService( PatientDataValueService patientDataValueService )
+    public void setDataValueService( TrackedEntityDataValueService dataValueService )
     {
-        this.patientDataValueService = patientDataValueService;
+        this.dataValueService = dataValueService;
     }
 
     private ProgramStageInstanceService programStageInstanceService;
@@ -101,12 +102,13 @@ public class SaveValuesAction
         this.programInstanceService = programInstanceService;
     }
 
-    private SelectedStateManager selectedStateManager;
+    private OrganisationUnitSelectionManager selectionManager;
 
-    public void setSelectedStateManager( SelectedStateManager selectedStateManager )
+    public void setSelectionManager( OrganisationUnitSelectionManager selectionManager )
     {
-        this.selectedStateManager = selectedStateManager;
+        this.selectionManager = selectionManager;
     }
+
 
     private CurrentUserService currentUserService;
 
@@ -119,18 +121,18 @@ public class SaveValuesAction
     // Input/Output
     // -------------------------------------------------------------------------
 
-    private Integer programId;
+    private String programId;
 
-    public void setProgramId( Integer programId )
+    public void setProgramId( String programId )
     {
         this.programId = programId;
     }
 
-    private Integer patientId;
+    private Integer entityInstanceId;
 
-    public void setPatientId( Integer patientId )
+    public void setEntityInstanceId( Integer entityInstanceId )
     {
-        this.patientId = patientId;
+        this.entityInstanceId = entityInstanceId;
     }
 
     private int statusCode;
@@ -149,7 +151,7 @@ public class SaveValuesAction
     {
         Program program = programService.getProgram( programId );
         ProgramStage programStage = program.getProgramStages().iterator().next();
-        Patient patient = patientService.getPatient( patientId );
+        TrackedEntityInstance entityInstance = entityInstanceService.getTrackedEntityInstance( entityInstanceId );
 
         // ---------------------------------------------------------------------
         // Add a new program-instance
@@ -161,10 +163,7 @@ public class SaveValuesAction
         programInstance.setDateOfIncident( currentDate );
         programInstance.setProgram( program );
         programInstance.setStatus( ProgramInstance.STATUS_COMPLETED );
-        programInstance.setPatient( patient );
-
-        patient.getPrograms().add( program );
-        patientService.updatePatient( patient );
+        programInstance.setEntityInstance( entityInstance );
 
         programInstanceService.addProgramInstance( programInstance );
 
@@ -177,7 +176,7 @@ public class SaveValuesAction
         programStageInstance.setProgramStage( programStage );
         programStageInstance.setDueDate( currentDate );
         programStageInstance.setExecutionDate( currentDate );
-        programStageInstance.setOrganisationUnit( selectedStateManager.getSelectedOrganisationUnit() );
+        programStageInstance.setOrganisationUnit( selectionManager.getSelectedOrganisationUnit() );
         programStageInstance.setCompleted( true );
 
         programStageInstanceService.addProgramStageInstance( programStageInstance );
@@ -200,13 +199,13 @@ public class SaveValuesAction
                     + "_facility";
                 boolean providedElsewhere = (request.getParameter( providedElsewhereId ) == null) ? false : true;
 
-                PatientDataValue patientDataValue = new PatientDataValue( programStageInstance,
+                TrackedEntityDataValue entityInstanceDataValue = new TrackedEntityDataValue( programStageInstance,
                     psDataElement.getDataElement(), new Date(), value.trim() );
-                patientDataValue.setStoredBy( storedBy );
-                patientDataValue.setProvidedElsewhere( providedElsewhere );
-                patientDataValueService.savePatientDataValue( patientDataValue );
+                entityInstanceDataValue.setStoredBy( storedBy );
+                entityInstanceDataValue.setProvidedElsewhere( providedElsewhere );
+                dataValueService.saveTrackedEntityDataValue( entityInstanceDataValue );
 
-                LOG.debug( "Adding PatientDataValue, value added" );
+                LOG.debug( "Adding TrackedEntityDataValue, value added" );
             }
         }
 

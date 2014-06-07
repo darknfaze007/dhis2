@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapgeneration;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,8 +29,11 @@ package org.hisp.dhis.mapgeneration;
  */
 
 import java.awt.image.BufferedImage;
+import java.util.Date;
 
+import org.hisp.dhis.mapping.Map;
 import org.hisp.dhis.mapping.MapView;
+import org.hisp.dhis.organisationunit.OrganisationUnit;
 
 /**
  * The MapGenerationService interface generates map images from Map objects.
@@ -46,12 +50,32 @@ import org.hisp.dhis.mapping.MapView;
 public interface MapGenerationService
 {
     public final String ID = MapGenerationService.class.getName();
+    
+    /**
+     * Generate an image that represents this map.
+     * 
+     * @param mapView the map view that will be rendered,
+     * @return the rendered map image or null if there is no data for the map view.
+     */
+    BufferedImage generateMapImage( MapView mapView );
+    
+    /**
+     * Generate an image that represents this map.
+     * 
+     * @param map the map that will be rendered,
+     * @return the rendered map image or null if there is no data for the map view.
+     */
+    BufferedImage generateMapImage( Map map );
 
     /**
      * Generate an image that represents this map.
      * 
-     * @param mapView the map view that will be rendered
+     * @param map the map that will be rendered.
+     * @param date the date for relative periods.
+     * @param unit the organisation unit.
+     * @param width the maximum width of the map image.
+     * @param height the maximum height of the map image.
      * @return the rendered map image or null if there is no data for the map view.
      */
-    public BufferedImage generateMapImage( MapView mapView );
+    BufferedImage generateMapImage( Map map, Date date, OrganisationUnit unit, Integer width, Integer height );
 }

@@ -1,19 +1,20 @@
 package org.hisp.dhis.i18n;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -38,7 +39,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.hisp.dhis.DhisSpringTest;
+import org.hisp.dhis.DhisTest;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.junit.Before;
@@ -48,7 +49,7 @@ import org.junit.Test;
  * @author Lars Helge Overland
  */
 public class I18nServiceTest
-    extends DhisSpringTest
+    extends DhisTest
 {
     private I18nService i18nService;
 
@@ -65,6 +66,12 @@ public class I18nServiceTest
         dataElementService = (DataElementService) getBean( DataElementService.ID );
     }
 
+    @Override
+    public boolean emptyDatabaseAfterTest()
+    {
+        return true;
+    }
+    
     // -------------------------------------------------------------------------
     // Tests
     // -------------------------------------------------------------------------
@@ -77,16 +84,16 @@ public class I18nServiceTest
         String className = DataElement.class.getSimpleName();
         
         DataElement dataElementA = createDataElement( 'A' );
-        int idA = dataElementService.addDataElement( dataElementA );
+        String idA = dataElementA.getUid();
         
         Map<String, String> translationsA = new HashMap<String, String>();
         translationsA.put( "name", "frenchNameA" );
         translationsA.put( "shortName", "frenchShortNameA" );
         translationsA.put( "description", "frenchDescriptionA" );        
         
-        i18nService.updateTranslation( className, idA, locale, translationsA );
+        i18nService.updateTranslation( className, locale, translationsA, dataElementA.getUid());
         
-        Map<String, String> actual = i18nService.getTranslations( className, idA, locale );
+        Map<String, String> actual = i18nService.getTranslations( className, locale, idA );
         
         assertNotNull( actual );
         assertEquals( 3, actual.size() );
@@ -108,7 +115,7 @@ public class I18nServiceTest
         translationsA.put( "shortName", "frenchShortNameA" );
         translationsA.put( "description", "frenchDescriptionA" );        
         
-        i18nService.updateTranslation( className, idA, locale, translationsA );
+        i18nService.updateTranslation( className, locale, translationsA,dataElementA.getUid() );
 
         assertEquals( "DataElementA", dataElementA.getDisplayName() );
         assertEquals( "DataElementShortA", dataElementA.getDisplayShortName() );
@@ -156,9 +163,9 @@ public class I18nServiceTest
         translationsC.put( "shortName", "frenchShortNameC" );
         translationsC.put( "description", "frenchDescriptionC" );        
 
-        i18nService.updateTranslation( className, idA, locale, translationsA );
-        i18nService.updateTranslation( className, idB, locale, translationsB );
-        i18nService.updateTranslation( className, idC, locale, translationsC );
+        i18nService.updateTranslation( className, locale, translationsA,dataElementA.getUid() );
+        i18nService.updateTranslation( className, locale, translationsB,dataElementB.getUid() );
+        i18nService.updateTranslation( className, locale, translationsC, dataElementC.getUid());
         
         i18nService.internationalise( elements, locale );
         

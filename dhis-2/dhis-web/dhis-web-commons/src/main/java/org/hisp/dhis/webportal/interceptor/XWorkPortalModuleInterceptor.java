@@ -1,19 +1,20 @@
 package org.hisp.dhis.webportal.interceptor;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -47,8 +48,7 @@ public class XWorkPortalModuleInterceptor
      */
     private static final long serialVersionUID = 8996189907119658364L;
 
-    private static final String KEY_MAINTENANCE_MODULES = "maintenanceModules";
-    private static final String KEY_SERVICE_MODULES = "serviceModules";
+    private static final String KEY_MENU_MODULES = "menuModules";
 
     // -------------------------------------------------------------------------
     // Dependencies
@@ -82,8 +82,7 @@ public class XWorkPortalModuleInterceptor
     {
         Map<String, Object> handle = new HashMap<String, Object>( 2 );
 
-        handle.put( KEY_MAINTENANCE_MODULES, moduleManager.getAccessibleMaintenanceModules() );
-        handle.put( KEY_SERVICE_MODULES, moduleManager.getAccessibleServiceModules() );
+        handle.put( KEY_MENU_MODULES, moduleManager.getAccessibleMenuModulesAndApps() );
 
         actionInvocation.getStack().push( handle );
         

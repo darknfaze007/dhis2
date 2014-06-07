@@ -10,7 +10,7 @@
   #set( $marker = 1 )
 #end
 
-#if( !$dataSet.renderHorizontally )
+#if( !$dataSet.renderHorizontally ) ## Render horizontally
 <table class="formSection" data-multiorg="true" style="margin-bottom: 20px;">
 <tr>
   <td>
@@ -71,29 +71,29 @@
         #set( $mark = 1 )
         #end
         #set( $count = $count + 1 )
-        #set( $dataEntryId = "${organisationUnit.id}-${dataElement.uid}-${optionCombo.uid}-val" )
+        #set( $dataEntryId = "${organisationUnit.uid}-${dataElement.uid}-${optionCombo.uid}-val" )
         <tr>
             <td #if( $mark == 1 )class="alt"#else class="reg"#end>${encoder.htmlEncode( $organisationUnit.displayName )}</td>
 
             #foreach( $dataElement in $section.dataElements )
                 <span class="hidden" id="${dataElement.uid}-dataelement">${encoder.htmlEncode( $dataElement.getFormNameFallback() )}</span>
                 #foreach( $optionCombo in $optionCombos )
-                #set( $dataEntryId = "${organisationUnit.id}-${dataElement.uid}-${optionCombo.uid}-val" )
+                #set( $dataEntryId = "${organisationUnit.uid}-${dataElement.uid}-${optionCombo.uid}-val" )
                 #set( $greyedField = false )
                 #set( $greyedField = $greyedFields.get( "$dataElement.uid:$optionCombo.uid" ) )
                 #if( $dataElement.type == "bool" )
-                <td><select name="entryselect" id="$dataEntryId" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end>
+                <td><select name="entryselect" class="entryselect" id="$dataEntryId" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end>
                   <option value="">[$i18n.getString( "no_value" )]</option>
                   <option value="true">$i18n.getString( "yes" )</option>
                   <option value="false">$i18n.getString( "no" )</option>
                 </select></td>
                 #elseif( $dataElement.type == 'trueOnly' )
-                    <td><input name="entrytrueonly" id="$dataEntryId" type="checkbox" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+                    <td><input name="entrytrueonly" class="entrytrueonly" id="$dataEntryId" type="checkbox" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
                 #else
                     #if( $dataElement.optionSet )
-                        <td><input name="entryoptionset" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+                        <td><input name="entryoptionset" class="entryoptionset" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
                     #else
-                        <td><input name="entryfield" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+                        <td><input name="entryfield" class="entryfield" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
                     #end
                 #end
                 </td>
@@ -107,7 +107,7 @@
     </td>
   </tr>
 </table>
-#else
+#else ## Render vertically
 <table class="formSection" data-multiorg="true" style="margin-bottom: 20px;">
 <tr>
   <td>
@@ -159,22 +159,22 @@
             #foreach( $organisationUnit in $organisationUnits )
                 <span class="hidden" id="${dataElement.uid}-dataelement">${encoder.htmlEncode( $dataElement.getFormNameFallback() )}</span>
                 #foreach( $optionCombo in $optionCombos )
-                    #set( $dataEntryId = "${organisationUnit.id}-${dataElement.uid}-${optionCombo.uid}-val" )
+                    #set( $dataEntryId = "${organisationUnit.uid}-${dataElement.uid}-${optionCombo.uid}-val" )
                     #set( $greyedField = false )
                     #set( $greyedField = $greyedFields.get( "$dataElement.uid:$optionCombo.uid" ) )
                     #if( $dataElement.type == "bool" )
-                    <td><select name="entryselect" id="$dataEntryId" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end>
+                    <td><select name="entryselect" class="entryselect" id="$dataEntryId" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end>
                       <option value="">[$i18n.getString( "no_value" )]</option>
                       <option value="true">$i18n.getString( "yes" )</option>
                       <option value="false">$i18n.getString( "no" )</option>
                     </select></td>
                     #elseif( $dataElement.type == 'trueOnly' )
-                        <td><input name="entrytrueonly" id="$dataEntryId" type="checkbox" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+                        <td><input name="entrytrueonly" class="entrytrueonly" id="$dataEntryId" type="checkbox" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
                     #else
                         #if( $dataElement.optionSet )
-                            <td><input name="entryoptionset" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+                            <td><input name="entryoptionset" class="entryoptionset" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
                         #else
-                            <td><input name="entryfield" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+                            <td><input name="entryfield" class="entryfield" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
                         #end
                     #end
                     </td>
@@ -208,22 +208,22 @@
 
             #foreach( $organisationUnit in $organisationUnits )
                 <span class="hidden" id="${dataElement.uid}-dataelement">${encoder.htmlEncode( $dataElement.getFormNameFallback() )}</span>
-                #set( $dataEntryId = "${organisationUnit.id}-${dataElement.uid}-${optionCombo.uid}-val" )
+                #set( $dataEntryId = "${organisationUnit.uid}-${dataElement.uid}-${optionCombo.uid}-val" )
                 #set( $greyedField = false )
                 #set( $greyedField = $greyedFields.get( "$dataElement.uid:$optionCombo.uid" ) )
                 #if( $dataElement.type == "bool" )
-                <td><select name="entryselect" id="$dataEntryId" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end>
+                <td><select name="entryselect" class="entryselect" id="$dataEntryId" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end>
                   <option value="">[$i18n.getString( "no_value" )]</option>
                   <option value="true">$i18n.getString( "yes" )</option>
                   <option value="false">$i18n.getString( "no" )</option>
                 </select></td>
                 #elseif( $dataElement.type == 'trueOnly' )
-                    <td><input name="entrytrueonly" id="$dataEntryId" type="checkbox" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+                    <td><input name="entrytrueonly" class="entrytrueonly" id="$dataEntryId" type="checkbox" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
                 #else
                     #if( $dataElement.optionSet )
-                        <td><input name="entryoptionset" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+                        <td><input name="entryoptionset" class="entryoptionset" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
                     #else
-                        <td><input name="entryfield" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+                        <td><input name="entryfield" class="entryfield" id="$dataEntryId" type="text" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
                     #end
                 #end
                 </td>

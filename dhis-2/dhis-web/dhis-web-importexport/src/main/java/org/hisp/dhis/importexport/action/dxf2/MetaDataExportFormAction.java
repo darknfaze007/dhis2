@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.action.dxf2;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,13 +28,15 @@ package org.hisp.dhis.importexport.action.dxf2;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.opensymphony.xwork2.Action;
 import org.apache.commons.lang3.StringUtils;
-import org.hisp.dhis.dxf2.metadata.ExchangeClasses;
+import org.hisp.dhis.schema.Schema;
+import org.hisp.dhis.schema.SchemaService;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,11 +46,14 @@ import java.util.Map;
 public class MetaDataExportFormAction
     implements Action
 {
+    @Autowired
+    private SchemaService schemaService;
+
     // -------------------------------------------------------------------------
     // Input & Output
     // -------------------------------------------------------------------------
 
-    private Map<String, String> exportClasses = new LinkedHashMap<String, String>();
+    private Map<String, String> exportClasses = Maps.newLinkedHashMap();
 
     public Map<String, String> getExportClasses()
     {
@@ -61,7 +67,13 @@ public class MetaDataExportFormAction
     @Override
     public String execute() throws Exception
     {
-        List<String> values = new ArrayList<String>( ExchangeClasses.getExportMap().values() );
+        List<String> values = Lists.newArrayList();
+
+        for ( Schema schema : schemaService.getMetadataSchemas() )
+        {
+            values.add( schema.getPlural() );
+        }
+
         Collections.sort( values );
 
         for ( String key : values )

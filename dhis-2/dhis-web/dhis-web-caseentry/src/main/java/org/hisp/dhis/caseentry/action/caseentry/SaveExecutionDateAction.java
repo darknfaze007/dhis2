@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.caseentry;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,28 +28,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.caseentry;
-
-import java.util.Collection;
-import java.util.Date;
+import com.opensymphony.xwork2.Action;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hisp.dhis.caseentry.state.SelectedStateManager;
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientService;
+import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
 import org.hisp.dhis.program.Program;
-import org.hisp.dhis.program.ProgramInstance;
-import org.hisp.dhis.program.ProgramInstanceService;
 import org.hisp.dhis.program.ProgramService;
-import org.hisp.dhis.program.ProgramStage;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
 
-import com.opensymphony.xwork2.Action;
+import java.util.Date;
 
 /**
  * @author Abyot Asalefew Gizaw
@@ -75,18 +72,11 @@ public class SaveExecutionDateAction
         this.programService = programService;
     }
 
-    private ProgramInstanceService programInstanceService;
+    private TrackedEntityInstanceService entityInstanceService;
 
-    public void setProgramInstanceService( ProgramInstanceService programInstanceService )
+    public void setEntityInstanceService( TrackedEntityInstanceService entityInstanceService )
     {
-        this.programInstanceService = programInstanceService;
-    }
-
-    private PatientService patientService;
-
-    public void setPatientService( PatientService patientService )
-    {
-        this.patientService = patientService;
+        this.entityInstanceService = entityInstanceService;
     }
 
     private OrganisationUnitService organisationUnitService;
@@ -96,11 +86,11 @@ public class SaveExecutionDateAction
         this.organisationUnitService = organisationUnitService;
     }
 
-    private SelectedStateManager selectedStateManager;
+    private OrganisationUnitSelectionManager selectionManager;
 
-    public void setSelectedStateManager( SelectedStateManager selectedStateManager )
+    public void setSelectionManager( OrganisationUnitSelectionManager selectionManager )
     {
-        this.selectedStateManager = selectedStateManager;
+        this.selectionManager = selectionManager;
     }
 
     private I18nFormat format;
@@ -114,18 +104,18 @@ public class SaveExecutionDateAction
     // Input/Output
     // -------------------------------------------------------------------------
 
-    private Integer organisationUnitId;
+    private String organisationUnitId;
 
-    public void setOrganisationUnitId( Integer organisationUnitId )
+    public void setOrganisationUnitId( String organisationUnitId )
     {
         this.organisationUnitId = organisationUnitId;
     }
 
-    private Integer patientId;
+    private Integer entityInstanceId;
 
-    public void setPatientId( Integer patientId )
+    public void setEntityInstanceId( Integer entityInstanceId )
     {
-        this.patientId = patientId;
+        this.entityInstanceId = entityInstanceId;
     }
 
     private String executionDate;
@@ -142,9 +132,9 @@ public class SaveExecutionDateAction
         this.programStageInstanceId = programStageInstanceId;
     }
 
-    private Integer programId;
+    private String programId;
 
-    public void setProgramId( Integer programId )
+    public void setProgramId( String programId )
     {
         this.programId = programId;
     }
@@ -165,93 +155,26 @@ public class SaveExecutionDateAction
     {
         Date dateValue = format.parseDate( executionDate );
 
-        OrganisationUnit organisationUnit = organisationUnitId == null ? selectedStateManager
-            .getSelectedOrganisationUnit() : organisationUnitService.getOrganisationUnit( organisationUnitId );
-
-        Patient patient = patientId == null ? selectedStateManager.getSelectedPatient() : patientService
-            .getPatient( patientId );
-
         if ( dateValue != null )
         {
-            ProgramStageInstance programStageInstance = programStageInstanceService
-                .getProgramStageInstance( programStageInstanceId );
+            OrganisationUnit organisationUnit = organisationUnitId == null ?
+                selectionManager.getSelectedOrganisationUnit() : organisationUnitService.getOrganisationUnit( organisationUnitId );
 
-            // If the program-stage-instance of the patient not exists,
-            // create a program-instance and program-stage-instance for
-            // single-event program
+            ProgramStageInstance programStageInstance = programStageInstanceService.getProgramStageInstance( programStageInstanceId );
+
             if ( programStageInstance == null )
             {
-                Program program = programService.getProgram( programId );
-                ProgramStage programStage = null;
+                Program program = (programId == null) ? null : programService.getProgram( programId );
+                TrackedEntityInstance entityInstance = (entityInstanceId == null) ? null : entityInstanceService.getTrackedEntityInstance( entityInstanceId );
 
-                if ( program.getProgramStages() != null )
-                {
-                    programStage = program.getProgramStages().iterator().next();
-                }
-
-                int type = program.getType();
-                ProgramInstance programInstance = null;
-
-                if ( type == Program.SINGLE_EVENT_WITH_REGISTRATION )
-                {
-                    // Add a new program-instance
-                    programInstance = new ProgramInstance();
-                    programInstance.setEnrollmentDate( dateValue );
-                    programInstance.setDateOfIncident( dateValue );
-                    programInstance.setProgram( program );
-                    programInstance.setStatus( ProgramInstance.STATUS_ACTIVE );
-
-                    programInstance.setPatient( patient );
-                    patient.getPrograms().add( program );
-                    patientService.updatePatient( patient );
-
-                    programInstanceService.addProgramInstance( programInstance );
-                }
-                else if ( type == Program.SINGLE_EVENT_WITHOUT_REGISTRATION )
-                {
-                    Collection<ProgramInstance> programInstances = programInstanceService.getProgramInstances( program );
-                    if ( programInstances == null || programInstances.size() == 0 )
-                    {
-                        // Add a new program-instance
-                        programInstance = new ProgramInstance();
-                        programInstance.setEnrollmentDate( dateValue );
-                        programInstance.setDateOfIncident( dateValue );
-                        programInstance.setProgram( program );
-                        programInstance.setStatus( ProgramInstance.STATUS_ACTIVE );
-                        programInstanceService.addProgramInstance( programInstance );
-                    }
-                    else
-                    {
-                        programInstance = programInstanceService.getProgramInstances( program ).iterator().next();
-                    }
-                }
-
-                // Add a new program-stage-instance
-                programStageInstance = new ProgramStageInstance();
-                programStageInstance.setProgramInstance( programInstance );
-                programStageInstance.setProgramStage( programStage );
-                programStageInstance.setDueDate( dateValue );
-                programStageInstance.setExecutionDate( dateValue );
-                programStageInstance.setOrganisationUnit( organisationUnit );
-
-                programStageInstanceService.addProgramStageInstance( programStageInstance );
-                selectedStateManager.setSelectedProgramInstance( programInstance );
-                selectedStateManager.setSelectedProgramStageInstance( programStageInstance );
+                programStageInstance = programStageInstanceService.createProgramStageInstance( entityInstance, program, dateValue, organisationUnit );
             }
             else
             {
-                programStageInstance.setExecutionDate( dateValue );
-                programStageInstance.setOrganisationUnit( organisationUnit );
-
-                if ( programStageInstance.getProgramInstance().getProgram().isSingleEvent() )
-                {
-                    programStageInstance.setDueDate( dateValue );
-                }
-
-                programStageInstanceService.updateProgramStageInstance( programStageInstance );
+                programStageInstanceService.setExecutionDate( programStageInstance, dateValue, organisationUnit );
             }
 
-            LOG.debug( "Updating Execution Date, value added/changed" );
+            LOG.debug( "Updating Execution Date, value added/updated" );
 
             message = programStageInstance.getId() + "";
 

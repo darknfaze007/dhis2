@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapping;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -35,6 +36,7 @@ import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.annotation.Scanned;
 import org.hisp.dhis.common.view.DetailedView;
+import org.hisp.dhis.common.view.DimensionalView;
 import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.user.User;
 
@@ -82,7 +84,7 @@ public class Map
     // -------------------------------------------------------------------------
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Double getLongitude()
     {
@@ -95,7 +97,7 @@ public class Map
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Double getLatitude()
     {
@@ -108,7 +110,7 @@ public class Map
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Integer getZoom()
     {
@@ -121,7 +123,7 @@ public class Map
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
     @JacksonXmlElementWrapper( localName = "mapViews", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "mapView", namespace = DxfNamespaces.DXF_2_0 )
     public List<MapView> getMapViews()
@@ -143,10 +145,10 @@ public class Map
         {
             Map map = (Map) other;
             
-            user = map.getUser() == null ? user : map.getUser();
-            longitude = map.getLongitude() == null ? longitude : map.getLongitude();
-            latitude = map.getLatitude() == null ? latitude : map.getLatitude();
-            zoom = map.getZoom() == null ? zoom : map.getZoom();
+            user = map.getUser();
+            longitude = map.getLongitude();
+            latitude = map.getLatitude();
+            zoom = map.getZoom();
             
             mapViews.clear();
             mapViews.addAll( map.getMapViews() );

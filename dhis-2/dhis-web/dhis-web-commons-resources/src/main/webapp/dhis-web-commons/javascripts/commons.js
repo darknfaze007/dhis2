@@ -1,3 +1,57 @@
+/*
+ * Copyright (c) 2004-2013, University of Oslo
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+dhis2.util.namespace( 'dhis2.commons' );
+
+dhis2.commons.getCurrentPage = function() {
+	return $.cookie( "currentPage" );
+}
+
+dhis2.commons.getCurrentKey = function() {
+	return $.cookie( "currentKey" );
+}
+
+dhis2.commons.redirectCurrentPage = function( url ) {
+	var currentPage = dhis2.commons.getCurrentPage();
+	var currentKey = dhis2.commons.getCurrentKey();
+	var separator = url && url.indexOf( "?" ) == -1 ? "?" : "&";
+
+    var redirect = url;
+
+    if ( currentPage && currentKey ) {
+        redirect = currentPage ? ( url + separator + "currentPage=" + currentPage + "&key=" + currentKey ) : url;
+    } 
+    else if ( currentPage ) {
+        redirect = currentPage ? ( url + separator + "currentPage=" + currentPage ) : url;
+    }
+
+    window.location.href = redirect;
+};
 
 // -----------------------------------------------------------------------------
 // Global variables
@@ -28,13 +82,22 @@ function referrerBack( defaultUrl )
 
 /**
  * Redirects to the translate GUI.
- * 
+ *
+ * @param context Context vars from context menu
+ */
+function translateWithContext( context ) {
+  translate( context.type, context.uid );
+}
+
+/**
+ * Redirects to the translate GUI.
+ *
  * @param className the name of the object class.
  * @param objectId the identifier of the object.
  */
-function translate( className, objectId )
+function translate( className, uid )
 {
-    var url = "../dhis-web-commons/i18n.action?className=" + className + "&objectId=" + objectId + "&returnUrl=" + htmlEncode( window.location.href ); 
+    var url = "../dhis-web-commons/i18n.action?className=" + className + "&uid=" + uid + "&returnUrl=" + htmlEncode( window.location.href );
     
     window.location.href = url; 
 }
@@ -425,6 +488,17 @@ function getRootElementValue( rootElement )
 function getRootElementAttribute( rootElement, attributeName )
 {
    return rootElement.getAttribute( attributeName );
+}
+
+/**
+ * Sets the text (HTML is not interpreted) on the given element.
+ * 
+ * @param fieldId the identifier of the element.
+ * @param txt the text to set.
+ */
+function setText( fieldId, txt )
+{
+    jQuery("#" + fieldId).text( txt );
 }
 
 /**
@@ -1584,74 +1658,9 @@ function relativePeriodsChecked()
     return false;
 }
 
-// -----------------------------------------------------------------------------
-// Math methods
-// -----------------------------------------------------------------------------
-
-/**
- * Allow Zero likes 0 and 0.0x In which, x is Multiple leading zero.
- */
-function isValidZeroNumber( value )
-{
-	var regex = /^0(\.0*)?$/;
-	return regex.test( value );
-}
-
-/**
- * Allow only integers or a single Zero. No thousands seperators
- */
-function isInt(value)
-{
-	var regex = /^(0|-?[1-9]\d*)$/;
-	return regex.test( value );
-}
-
-/**
- * Allow only positive integers, not Zero and no thousands seperators
- */
-function isPositiveInt( value )
-{
-	var regex = /^[1-9]\d*$/;
-	return regex.test( value );
-}
-
-/**
- * Allow only negative integers, not Zero and no thousands seperators
- */
-function isNegativeInt( value )
-{
-	var regex = /^-[1-9]\d*$/;
-	return regex.test( value );
-}
-
-/**
- * Allow any real number,optionally with a sign, no thousands seperators and a
- * single decimal point.
- */
-function isNumber( value )
-{
-	var regex = /^(0|-?[1-9]\d*)(\.\d+)?$/;
-	return regex.test( value );
-}
-
 function startsWith( string, substring )
 {
 	return ( string && string.lastIndexOf( substring, 0 ) === 0 ) ? true : false;
-}
-
-function isPositiveNumber( value )
-{
-	return isNumber( value ) && parseFloat( value ) > 0;
-}
-
-function isNegativeNumber( value )
-{
-	return isNumber( value ) && parseFloat( value ) < 0;
-}
-
-function isZeroNumber( value )
-{
-	return isNumber( value ) && parseFloat( value ) == 0;
 }
 
 function getRandomNumber()
@@ -1769,43 +1778,75 @@ function pingNotifications( category, tableId, completedCallback )
 {
 	var lastUid = $( '#' + tableId ).prop( 'lastUid' ); // Store on table property
 	
-	var param = lastUid ? '&lastUid=' + lastUid : '';
+	var param = ( undefined !== lastUid ) ? '?lastId=' + lastUid : '';
 	
-	$.getJSON( '../dhis-web-commons-ajax-json/getNotifications.action?category=' + category + param, function( notifications )
+	$.getJSON( '../api/system/tasks/' + category + param, function( notifications )
 	{
-		var html = '', 
-			isComplete = false;
-		
-		if ( isDefined( notifications ) && notifications.length )
-		{
+		var html = '',
+		    isComplete = false;
+
+		if ( isDefined( notifications ) && notifications.length ) {
 			$.each( notifications, function( i, notification )
 			{
 				var first = i == 0,
-					loaderHtml = '';			
-				
-				if ( notification.completed == "true" )
-				{
-					isComplete = true;
-				}
-				
-				if ( first )
-				{
+					loaderHtml = '';
+
+                if ( first ) {
 					$( '#' + tableId ).prop( 'lastUid', notification.uid );
 					loaderHtml = _loading_bar_html;
 					$( '#loaderSpan' ).replaceWith ( '' ); // Hide previous loader bar
 				}
 				
-				html += '<tr><td>' + notification.time + '</td><td>' + notification.message + ' &nbsp;';
-				html += notification.completed == 'true' ?  '<img src="../images/completed.png">' : loaderHtml;
+				var time = '';
+				
+				if ( undefined !== notification.time ) {
+					time = notification.time.replace( 'T', ' ' ).substring( 0, 19 );
+				}
+				
+				html += '<tr><td>' + time + '</td><td>' + notification.message + ' &nbsp;';
+				
+				if ( notification.level == "ERROR" ) {
+					html += '<img src="../images/error_small.png">';
+					isComplete = true;
+				}
+				else if ( notification.completed ) {
+					html += '<img src="../images/completed.png">';
+					isComplete = true;
+				}
+				else {
+					html += loaderHtml;
+				}
+				
 				html += '</td></tr>';
 			} );
 		
 			$( '#' + tableId ).show().prepend( html );
 		
-			if ( isComplete && completedCallback && completedCallback.call )
-			{
+			if ( isComplete && completedCallback && completedCallback.call ) {
 				completedCallback();				
 			}
 		}
 	} );
+}
+
+//-----------------------------------------------------------------------------
+// Symbol
+//-----------------------------------------------------------------------------
+
+function openSymbolDialog()
+{
+	$( "#symbolDiv" ).dialog( {
+		height: 294,
+		width: 250,
+		modal: true,
+		resizable: false,
+		title: "Select symbol"
+	} );
+}
+
+function selectSymbol( img )
+{
+	$( "#symbol" ).val( img );
+	$( "#symbolDiv" ).dialog( "close" );
+	$( "#symbolImg" ).attr( "src", "../images/orgunitgroup/" + img ).show();
 }

@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapping.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,20 +28,8 @@ package org.hisp.dhis.mapping.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import org.apache.struts2.ServletActionContext;
-import org.hisp.dhis.api.utils.ContextUtils;
 import org.hisp.dhis.configuration.ConfigurationService;
 import org.hisp.dhis.dataelement.DataElementGroup;
-import org.hisp.dhis.mapping.MapLayer;
-import org.hisp.dhis.mapping.MappingService;
-import org.hisp.dhis.mapping.comparator.MapLayerNameComparator;
-import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.PeriodType;
 
 import com.opensymphony.xwork2.Action;
@@ -56,25 +45,11 @@ public class InitializeAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private MappingService mappingService;
-
-    public void setMappingService( MappingService mappingService )
-    {
-        this.mappingService = mappingService;
-    }
-
     private ConfigurationService configurationService;
 
     public void setConfigurationService( ConfigurationService configurationService )
     {
         this.configurationService = configurationService;
-    }
-
-    private OrganisationUnitService organisationUnitService;
-
-    public void setOrganisationUnitService( OrganisationUnitService organisationUnitService )
-    {
-        this.organisationUnitService = organisationUnitService;
     }
 
     // -------------------------------------------------------------------------
@@ -97,20 +72,6 @@ public class InitializeAction
         return callback;
     }
 
-    private String contextPath;
-
-    public String getContextPath()
-    {
-        return contextPath;
-    }
-
-    private List<MapLayer> overlays;
-
-    public List<MapLayer> getOverlays()
-    {
-        return overlays;
-    }
-
     private DataElementGroup infrastructuralDataElementGroup;
 
     public DataElementGroup getInfrastructuralDataElementGroup()
@@ -125,13 +86,6 @@ public class InitializeAction
         return infrastructuralPeriodType;
     }
 
-    private Collection<OrganisationUnit> rootNodes;
-
-    public Collection<OrganisationUnit> getRootNodes()
-    {
-        return rootNodes;
-    }
-
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
@@ -139,17 +93,9 @@ public class InitializeAction
     public String execute()
         throws Exception
     {
-        contextPath = ContextUtils.getContextPath( ServletActionContext.getRequest() );
-        
-        overlays = new ArrayList<MapLayer>( mappingService.getMapLayersByType( MappingService.MAP_LAYER_TYPE_OVERLAY ) );
-
-        Collections.sort( overlays, new MapLayerNameComparator() );
-
         infrastructuralDataElementGroup = configurationService.getConfiguration().getInfrastructuralDataElements();
 
         infrastructuralPeriodType = configurationService.getConfiguration().getInfrastructuralPeriodTypeDefaultIfNull();
-
-        rootNodes = new ArrayList<OrganisationUnit>( organisationUnitService.getOrganisationUnitsAtLevel( 1 ) );
 
         return SUCCESS;
     }

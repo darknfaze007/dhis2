@@ -1,19 +1,20 @@
 package org.hisp.dhis.interpretation;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,13 +28,17 @@ package org.hisp.dhis.interpretation;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.hisp.dhis.chart.Chart;
+import org.hisp.dhis.acl.AccessStringHelper;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
+import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.annotation.Scanned;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
@@ -43,33 +48,36 @@ import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.reporttable.ReportTable;
+import org.hisp.dhis.user.User;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Lars Helge Overland
  */
-@JacksonXmlRootElement( localName = "interpretation", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement( localName = "interpretation", namespace = DxfNamespaces.DXF_2_0 )
 public class Interpretation
     extends BaseIdentifiableObject
 {
+    public static final String TYPE_CHART = "chart";
+    public static final String TYPE_MAP = "map";
+    public static final String TYPE_REPORT_TABLE = "reportTable";
+    public static final String TYPE_DATASET_REPORT = "dataSetReport";
+
     private Chart chart;
 
     private Map map;
-    
+
     private ReportTable reportTable;
-    
+
     private DataSet dataSet;
-    
+
     private Period period; // Applicable to report table and data set report
-    
+
     private OrganisationUnit organisationUnit; // Applicable to chart, report table and data set report
-    
+
     private String text;
 
     @Scanned
@@ -98,7 +106,7 @@ public class Interpretation
         this.text = text;
         this.created = new Date();
     }
-    
+
     public Interpretation( ReportTable reportTable, Period period, OrganisationUnit organisationUnit, String text )
     {
         this.reportTable = reportTable;
@@ -107,7 +115,7 @@ public class Interpretation
         this.text = text;
         this.created = new Date();
     }
-    
+
     public Interpretation( DataSet dataSet, Period period, OrganisationUnit organisationUnit, String text )
     {
         this.dataSet = dataSet;
@@ -121,6 +129,67 @@ public class Interpretation
     // Logic
     // -------------------------------------------------------------------------
 
+    /**
+     * Overriding getUser in order to expose user in web api. Sharing is not enabled
+     * for interpretations but "user" is used for representing the creator. Must
+     * be removed when sharing is enabled for this class.
+     */
+    @Override
+    @JsonProperty
+    @JsonSerialize( as = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public User getUser()
+    {
+        return user;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public String getType()
+    {
+        if ( chart != null )
+        {
+            return TYPE_CHART;
+        }
+        else if ( map != null )
+        {
+            return TYPE_MAP;
+        }
+        else if ( reportTable != null )
+        {
+            return TYPE_REPORT_TABLE;
+        }
+        else if ( dataSet != null )
+        {
+            return TYPE_DATASET_REPORT;
+        }
+
+        return null;
+    }
+
+    public IdentifiableObject getObject()
+    {
+        if ( chart != null )
+        {
+            return chart;
+        }
+        else if ( map != null )
+        {
+            return map;
+        }
+        else if ( reportTable != null )
+        {
+            return reportTable;
+        }
+        else if ( dataSet != null )
+        {
+            return dataSet;
+        }
+
+        return null;
+    }
+
     public void addComment( InterpretationComment comment )
     {
         this.comments.add( comment );
@@ -130,27 +199,32 @@ public class Interpretation
     {
         return chart != null;
     }
-    
+
     public boolean isMapInterpretation()
     {
         return map != null;
     }
-    
+
     public boolean isReportTableInterpretation()
     {
         return reportTable != null;
     }
-    
+
     public boolean isDataSetReportInterpretation()
     {
         return dataSet != null;
     }
-    
+
     public PeriodType getPeriodType()
     {
         return period != null ? period.getPeriodType() : null;
     }
-    
+
+    public void updateSharing()
+    {
+        setPublicAccess( AccessStringHelper.newInstance().enable( AccessStringHelper.Permission.READ ).build() );
+    }
+
     // -------------------------------------------------------------------------
     // Get and set methods
     // -------------------------------------------------------------------------
@@ -164,7 +238,7 @@ public class Interpretation
     @JsonProperty
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Chart getChart()
     {
         return chart;
@@ -178,7 +252,7 @@ public class Interpretation
     @JsonProperty
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Map getMap()
     {
         return map;
@@ -192,7 +266,7 @@ public class Interpretation
     @JsonProperty
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public ReportTable getReportTable()
     {
         return reportTable;
@@ -206,7 +280,7 @@ public class Interpretation
     @JsonProperty
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public DataSet getDataSet()
     {
         return dataSet;
@@ -220,7 +294,7 @@ public class Interpretation
     @JsonProperty
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Period getPeriod()
     {
         return period;
@@ -234,7 +308,7 @@ public class Interpretation
     @JsonProperty
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public OrganisationUnit getOrganisationUnit()
     {
         return organisationUnit;
@@ -247,7 +321,7 @@ public class Interpretation
 
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getText()
     {
         return text;
@@ -260,8 +334,8 @@ public class Interpretation
 
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "comments", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty( localName = "comment", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlElementWrapper( localName = "comments", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "comment", namespace = DxfNamespaces.DXF_2_0 )
     public List<InterpretationComment> getComments()
     {
         return comments;

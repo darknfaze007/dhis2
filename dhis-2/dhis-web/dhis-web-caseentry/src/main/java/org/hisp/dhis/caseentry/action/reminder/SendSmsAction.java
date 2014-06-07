@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.reminder;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,20 +28,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.reminder;
-
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.hisp.dhis.i18n.I18n;
-import org.hisp.dhis.patient.PatientReminder;
+import org.hisp.dhis.program.ProgramInstance;
+import org.hisp.dhis.program.ProgramInstanceService;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.sms.SmsSender;
 import org.hisp.dhis.sms.SmsServiceException;
 import org.hisp.dhis.sms.outbound.OutboundSms;
-import org.hisp.dhis.sms.outbound.OutboundSmsService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminder;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminderService;
 import org.hisp.dhis.user.CurrentUserService;
 
 import com.opensymphony.xwork2.Action;
@@ -55,11 +58,11 @@ public class SendSmsAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private OutboundSmsService outboundSmsService;
+    private SmsSender smsSender;
 
-    public void setOutboundSmsService( OutboundSmsService outboundSmsService )
+    public void setSmsSender( SmsSender smsSender )
     {
-        this.outboundSmsService = outboundSmsService;
+        this.smsSender = smsSender;
     }
 
     private ProgramStageInstanceService programStageInstanceService;
@@ -74,6 +77,20 @@ public class SendSmsAction
     public void setCurrentUserService( CurrentUserService currentUserService )
     {
         this.currentUserService = currentUserService;
+    }
+
+    private TrackedEntityInstanceReminderService reminderService;
+
+    public void setReminderService( TrackedEntityInstanceReminderService reminderService )
+    {
+        this.reminderService = reminderService;
+    }
+
+    private ProgramInstanceService programInstanceService;
+
+    public void setProgramInstanceService( ProgramInstanceService programInstanceService )
+    {
+        this.programInstanceService = programInstanceService;
     }
 
     private I18n i18n;
@@ -92,6 +109,13 @@ public class SendSmsAction
     public void setProgramStageInstanceId( Integer programStageInstanceId )
     {
         this.programStageInstanceId = programStageInstanceId;
+    }
+
+    private Integer programInstanceId;
+
+    public void setProgramInstanceId( Integer programInstanceId )
+    {
+        this.programInstanceId = programInstanceId;
     }
 
     private String msg;
@@ -123,32 +147,33 @@ public class SendSmsAction
     public String execute()
         throws Exception
     {
+        if ( programStageInstanceId != null )
+        {
+            sendSMSToEvent();
+        }
+        else if ( programInstanceId != null )
+        {
+            sendSMSToProgram();
+        }
+
+        return SUCCESS;
+    }
+
+    // -------------------------------------------------------------------------
+    // Supportive methods
+    // -------------------------------------------------------------------------
+
+    private String sendSMSToEvent()
+    {
         ProgramStageInstance programStageInstance = programStageInstanceService
             .getProgramStageInstance( programStageInstanceId );
 
-        Set<String> phoneNumbers = new HashSet<String>();
+        TrackedEntityInstanceReminder reminder = new TrackedEntityInstanceReminder();
+        reminder.setTemplateMessage( msg );
+        reminder.setSendTo( sendTo );
 
-        switch ( sendTo )
-        {
-        case PatientReminder.SEND_TO_PATIENT:
-            String[] _phoneNumbers = programStageInstance.getProgramInstance().getPatient().getPhoneNumber().split( ";" );
-            for ( String phoneNumber : _phoneNumbers )
-            {
-                phoneNumbers.add(phoneNumber);
-            }
-            break;
-        case PatientReminder.SEND_TO_HEALTH_WORKER:
-            phoneNumbers
-                .add( programStageInstance.getProgramInstance().getPatient().getHealthWorker().getPhoneNumber() );
-            break;
-        case PatientReminder.SEND_TO_ORGUGNIT_REGISTERED:
-            phoneNumbers.add( programStageInstance.getProgramInstance().getPatient().getOrganisationUnit()
-                .getPhoneNumber() );
-            break;
-        default:
-            phoneNumbers.add( programStageInstance.getProgramInstance().getPatient().getPhoneNumber() );
-            break;
-        }
+        Set<String> phoneNumbers = reminderService.getPhonenumbers( reminder, programStageInstance
+            .getProgramInstance().getEntityInstance() );
 
         try
         {
@@ -156,7 +181,7 @@ public class SendSmsAction
             outboundSms.setMessage( msg );
             outboundSms.setRecipients( phoneNumbers );
             outboundSms.setSender( currentUserService.getCurrentUsername() );
-            outboundSmsService.sendMessage( outboundSms, null );
+            smsSender.sendMessage( outboundSms, null );
 
             List<OutboundSms> outboundSmsList = programStageInstance.getOutboundSms();
             if ( outboundSmsList == null )
@@ -164,10 +189,11 @@ public class SendSmsAction
                 outboundSmsList = new ArrayList<OutboundSms>();
             }
             outboundSmsList.add( outboundSms );
+
             programStageInstance.setOutboundSms( outboundSmsList );
             programStageInstanceService.updateProgramStageInstance( programStageInstance );
-
-            message = i18n.getString( "message_is_sent" );
+            message = i18n.getString( "message_is_sent" + " " + phoneNumbers );
+            return ERROR;
         }
         catch ( SmsServiceException e )
         {
@@ -175,8 +201,45 @@ public class SendSmsAction
 
             return ERROR;
         }
-
-        return SUCCESS;
     }
 
+    private String sendSMSToProgram()
+    {
+        ProgramInstance programInstance = programInstanceService
+            .getProgramInstance( programInstanceId );
+
+        TrackedEntityInstanceReminder reminder = new TrackedEntityInstanceReminder();
+        reminder.setTemplateMessage( msg );
+        reminder.setSendTo( sendTo );
+
+        Set<String> phoneNumbers = reminderService.getPhonenumbers( reminder, programInstance.getEntityInstance() );
+
+        try
+        {
+            OutboundSms outboundSms = new OutboundSms();
+            outboundSms.setMessage( msg );
+            outboundSms.setRecipients( phoneNumbers );
+            outboundSms.setSender( currentUserService.getCurrentUsername() );
+            smsSender.sendMessage( outboundSms, null );
+
+            List<OutboundSms> outboundSmsList = programInstance.getOutboundSms();
+            if ( outboundSmsList == null )
+            {
+                outboundSmsList = new ArrayList<OutboundSms>();
+            }
+            outboundSmsList.add( outboundSms );
+
+            programInstance.setOutboundSms( outboundSmsList );
+            programInstanceService.updateProgramInstance( programInstance );
+            message = i18n.getString( "message_is_sent" + " " + phoneNumbers );
+
+            return SUCCESS;
+        }
+        catch ( SmsServiceException e )
+        {
+            message = e.getMessage();
+
+            return ERROR;
+        }
+    }
 }

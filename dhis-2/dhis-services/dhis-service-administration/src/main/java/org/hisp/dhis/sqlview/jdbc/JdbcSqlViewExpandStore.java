@@ -1,19 +1,20 @@
 package org.hisp.dhis.sqlview.jdbc;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,17 +28,18 @@ package org.hisp.dhis.sqlview.jdbc;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.Map;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.common.Grid;
+import org.hisp.dhis.jdbc.StatementBuilder;
 import org.hisp.dhis.sqlview.SqlView;
 import org.hisp.dhis.sqlview.SqlViewExpandStore;
 import org.hisp.dhis.system.util.SqlHelper;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+
+import java.util.Map;
 
 /**
  * @author Dang Duy Hieu
@@ -47,9 +49,8 @@ public class JdbcSqlViewExpandStore
     implements SqlViewExpandStore
 {
     private static final Log log = LogFactory.getLog( JdbcSqlViewExpandStore.class );
-    
+
     private static final String PREFIX_CREATEVIEW_QUERY = "CREATE VIEW ";
-    private static final String PREFIX_DROPVIEW_QUERY = "DROP VIEW IF EXISTS ";
     private static final String PREFIX_SELECT_QUERY = "SELECT * FROM ";
 
     // -------------------------------------------------------------------------
@@ -63,6 +64,13 @@ public class JdbcSqlViewExpandStore
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    private StatementBuilder statementBuilder;
+
+    public void setStatementBuilder( StatementBuilder statementBuilder )
+    {
+        this.statementBuilder = statementBuilder;
+    }
+
     // -------------------------------------------------------------------------
     // Implementing methods
     // -------------------------------------------------------------------------
@@ -72,8 +80,8 @@ public class JdbcSqlViewExpandStore
     {
         try
         {
-            jdbcTemplate.queryForRowSet( "select * from " + viewTableName.toLowerCase() + " limit 1" );
-            
+            jdbcTemplate.queryForRowSet( "select * from " + statementBuilder.columnQuote( viewTableName ) + " limit 1" );
+
             return true;
         }
         catch ( BadSqlGrammarException ex )
@@ -89,10 +97,10 @@ public class JdbcSqlViewExpandStore
 
         dropViewTable( viewName );
 
-        final String sql = PREFIX_CREATEVIEW_QUERY + viewName + " AS " + sqlViewInstance.getSqlQuery();
-        
+        final String sql = PREFIX_CREATEVIEW_QUERY + statementBuilder.columnQuote( viewName ) + " AS " + sqlViewInstance.getSqlQuery();
+
         log.debug( "Create view SQL: " + sql );
-        
+
         try
         {
             jdbcTemplate.execute( sql );
@@ -108,22 +116,22 @@ public class JdbcSqlViewExpandStore
     @Override
     public void setUpDataSqlViewTable( Grid grid, String viewTableName, Map<String, String> criteria )
     {
-        String sql = PREFIX_SELECT_QUERY + viewTableName;
-        
+        String sql = PREFIX_SELECT_QUERY + statementBuilder.columnQuote( viewTableName );
+
         if ( criteria != null && !criteria.isEmpty() )
         {
             SqlHelper helper = new SqlHelper();
-            
+
             for ( String filter : criteria.keySet() )
             {
-                sql += " " + helper.whereAnd() + " " + filter + "='" + criteria.get( filter ) + "'";
+                sql += " " + helper.whereAnd() + " " + statementBuilder.columnQuote( filter ) + "='" + criteria.get( filter ) + "'";
             }
         }
-        
+
         log.info( "Get view SQL: " + sql );
-        
+
         SqlRowSet rs = jdbcTemplate.queryForRowSet( sql );
-        
+
         grid.addHeaders( rs );
         grid.addRows( rs );
     }
@@ -134,9 +142,9 @@ public class JdbcSqlViewExpandStore
         String viewNameCheck = SqlView.PREFIX_VIEWNAME + System.currentTimeMillis();
 
         sql = PREFIX_CREATEVIEW_QUERY + viewNameCheck + " AS " + sql;
-        
+
         log.debug( "Test view SQL: " + sql );
-        
+
         try
         {
             jdbcTemplate.execute( sql );
@@ -156,11 +164,15 @@ public class JdbcSqlViewExpandStore
     {
         try
         {
-            jdbcTemplate.update( PREFIX_DROPVIEW_QUERY + viewName );
+            final String sql = "DROP VIEW IF EXISTS " + statementBuilder.columnQuote( viewName );
+            
+            log.info( "Drop view SQL: " + sql );
+            
+            jdbcTemplate.update( sql );
         }
         catch ( BadSqlGrammarException ex )
         {
-            throw new RuntimeException( "Failed to drop view: " + viewName, ex );
+            log.warn( "Could not drop view: " + viewName, ex );
         }
     }
 }

@@ -122,8 +122,21 @@
       <result name="success" type="velocity-json">/dhis-web-commons/security/loginStrings.vm</result>
     </action>
 
+    <action name="accountStrings" class="org.hisp.dhis.i18n.action.GetStringsFromLocaleAction">
+      <result name="success" type="velocity-json">/dhis-web-commons/useraccount/accountStrings.vm</result>
+    </action>
+
+    <action name="recoveryStrings" class="org.hisp.dhis.i18n.action.GetStringsFromLocaleAction">
+      <result name="success" type="velocity-json">/dhis-web-commons/useraccount/recoveryStrings.vm</result>
+    </action>
+
     <action name="account" class="org.hisp.dhis.useraccount.action.IsSelfRegistrationAllowedAction">
       <result name="success" type="velocity">/dhis-web-commons/useraccount/account.vm</result>
+      <result name="error" type="redirect">login.action</result>
+    </action>
+
+    <action name="expired" class="org.hisp.dhis.useraccount.action.ExpiredAccountAction">
+      <result name="success" type="velocity">/dhis-web-commons/useraccount/expired.vm</result>
       <result name="error" type="redirect">login.action</result>
     </action>
 
@@ -133,10 +146,15 @@
     </action>
 
     <action name="restore" class="org.hisp.dhis.useraccount.action.IsRestoreTokenValidAction">
-      <result name="success" type="velocity">/dhis-web-commons/useraccount/restore.vm</result>
-      <result name="error" type="redirect">login.action</result>
+        <result name="success" type="velocity">/dhis-web-commons/useraccount/restore.vm</result>
+        <result name="error" type="redirect">login.action</result>
     </action>
-    
+
+    <action name="invite" class="org.hisp.dhis.useraccount.action.IsInviteTokenValidAction">
+        <result name="success" type="velocity">/dhis-web-commons/useraccount/account.vm</result>
+        <result name="error" type="redirect">login.action</result>
+    </action>
+
   </package>
 
   <!-- Organisation Unit Selection Tree -->
@@ -270,17 +288,15 @@
 
   <package name="dhis-web-commons-menu" extends="dhis-web-commons" namespace="/dhis-web-commons/menu">
 
-    <action name="setMenuVisible" class="org.hisp.dhis.webportal.menu.action.SetMenuVisibleAction">
+    <action name="setMenuState" class="org.hisp.dhis.webportal.menu.action.SetMenuStateAction">
       <result name="success" type="httpheader">
         <param name="status">204</param>
       </result>
       <param name="onExceptionReturn">plainTextError</param>
     </action>
-
-    <action name="setMenuHidden" class="org.hisp.dhis.webportal.menu.action.SetMenuHiddenAction">
-      <result name="success" type="httpheader">
-        <param name="status">204</param>
-      </result>
+    
+    <action name="getModules" class="org.hisp.dhis.webportal.menu.action.GetModulesAction">
+      <result name="success" type="velocity-json">/dhis-web-commons/ajax/jsonModules.vm</result>
       <param name="onExceptionReturn">plainTextError</param>
     </action>
 
@@ -289,10 +305,9 @@
   <!-- i18n -->
 
   <package name="dhis-web-commons-i18n" extends="dhis-web-commons" namespace="/dhis-web-commons">
-
     <!-- TODO give i18n its own namespace and move cacheManifest action to dhis-web-commons package -->
 
-    <action name="cacheManifest" class="org.hisp.dhis.commons.action.NoAction">
+    <action name="cacheManifest" class="org.hisp.dhis.appcache.AppCacheAction">
       <result name="success" type="velocity-cache-manifest">/cacheManifest.vm</result>
     </action>
 
@@ -472,11 +487,6 @@
 
   <package name="dhis-web-commons-ajax-html" extends="dhis-web-commons" namespace="/dhis-web-commons-ajax-html">
 
-    <action name="getNotifications" class="org.hisp.dhis.commons.action.GetNotificationsAction">
-      <result name="success" type="velocity">/dhis-web-commons/ajax/htmlNotifications.vm</result>
-      <param name="onExceptionReturn">plainTextError</param>
-    </action>
-
     <action name="getUser" class="org.hisp.dhis.commons.action.GetUserAction">
       <result name="success" type="velocity">
         /dhis-web-commons/ajax/htmlUser.vm
@@ -624,6 +634,13 @@
     <action name="getDataElementCategoryOptions" class="org.hisp.dhis.commons.action.GetCategoryOptionsAction">
       <result name="success" type="velocity-json">
         /dhis-web-commons/ajax/jsonDataElementCategoryOptions.vm
+      </result>
+      <param name="onExceptionReturn">plainTextError</param>
+    </action>
+    
+    <action name="getCategoryOptionGroups" class="org.hisp.dhis.commons.action.GetCategoryOptionGroupsAction">
+      <result name="success" type="velocity-json">
+        /dhis-web-commons/ajax/jsonCategoryOptionGroups.vm
       </result>
       <param name="onExceptionReturn">plainTextError</param>
     </action>
@@ -858,17 +875,11 @@
     </action>
 
     <action name="getHelpContent" class="org.hisp.dhis.help.action.GetHelpContentAction">
-      <result name="success" type="outputStreamResult"></result>
+      <result name="success" type="outputStreamResult" />
     </action>
 
     <action name="getHelpItems" class="org.hisp.dhis.help.action.GetHelpItemsAction">
-      <result name="success" type="outputStreamResult"></result>
-    </action>
-
-    <action name="software" class="org.hisp.dhis.commons.action.NoAction">
-      <result name="success" type="velocity">/main.vm</result>
-      <param name="page">/dhis-web-commons/about/software.vm</param>
-      <param name="menu">/dhis-web-commons/about/menu.vm</param>
+      <result name="success" type="outputStreamResult" />
     </action>
 
     <action name="showUpdateUserAccountForm" class="org.hisp.dhis.useraccount.action.GetCurrentUserAction">
@@ -905,12 +916,14 @@
       <result name="success" type="velocity">/main.vm</result>
       <param name="page">/dhis-web-commons/about/modules.vm</param>
       <param name="menu">/dhis-web-commons/about/menu.vm</param>
+      <param name="hideMenu">true</param>
     </action>
 
     <action name="functions" class="org.hisp.dhis.commons.action.NoAction">
       <result name="success" type="velocity">/main.vm</result>
       <param name="page">/dhis-web-commons/about/functions.vm</param>
       <param name="menu">/dhis-web-commons/about/menu.vm</param>
+      <param name="hideMenu">true</param>
     </action>
 
     <action name="userSettings" class="org.hisp.dhis.settings.user.action.GetGeneralSettingsAction">

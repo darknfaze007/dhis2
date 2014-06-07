@@ -1,17 +1,20 @@
+package org.hisp.dhis.light.singleevent.action;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,8 +28,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.light.singleevent.action;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -35,10 +36,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientService;
-import org.hisp.dhis.patientdatavalue.PatientDataValue;
-import org.hisp.dhis.patientdatavalue.PatientDataValueService;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramInstanceService;
@@ -47,6 +44,10 @@ import org.hisp.dhis.program.ProgramStage;
 import org.hisp.dhis.program.ProgramStageDataElement;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
 import org.hisp.dhis.user.UserService;
 import org.hisp.dhis.util.SessionUtils;
 
@@ -66,9 +67,9 @@ public class GetSingleEventFormAction
         this.programService = programService;
     }
 
-    private PatientDataValueService patientDataValueService;
+    private TrackedEntityDataValueService patientDataValueService;
 
-    public void setPatientDataValueService( PatientDataValueService patientDataValueService )
+    public void setPatientDataValueService( TrackedEntityDataValueService patientDataValueService )
     {
         this.patientDataValueService = patientDataValueService;
     }
@@ -87,9 +88,9 @@ public class GetSingleEventFormAction
         this.programInstanceService = programInstanceService;
     }
 
-    private PatientService patientService;
+    private TrackedEntityInstanceService patientService;
 
-    public void setPatientService( PatientService patientService )
+    public void setPatientService( TrackedEntityInstanceService patientService )
     {
         this.patientService = patientService;
     }
@@ -237,9 +238,9 @@ public class GetSingleEventFormAction
         this.programStageInstanceId = programStageInstanceId;
     }
 
-    private Patient patient;
+    private TrackedEntityInstance patient;
 
-    public Patient getPatient()
+    public TrackedEntityInstance getPatient()
     {
         return patient;
     }
@@ -250,7 +251,7 @@ public class GetSingleEventFormAction
         throws Exception
     {
         Program program = programService.getProgram( programId );
-        this.patient = patientService.getPatient( this.patientId );
+        this.patient = patientService.getTrackedEntityInstance( this.patientId );
         eventName = program.getName();
         ProgramStage programStage = program.getProgramStages().iterator().next();
         programStageDataElements = new ArrayList<ProgramStageDataElement>( programStage.getProgramStageDataElements() );
@@ -288,7 +289,7 @@ public class GetSingleEventFormAction
                 {
                     DataElement dataElement = each.getDataElement();
 
-                    PatientDataValue patientDataValue = patientDataValueService.getPatientDataValue( proStageInstance,
+                    TrackedEntityDataValue patientDataValue = patientDataValueService.getTrackedEntityDataValue( proStageInstance,
                         dataElement );
 
                     if ( patientDataValue != null )

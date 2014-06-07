@@ -1,19 +1,20 @@
 package org.hisp.dhis.period;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,19 +29,30 @@ package org.hisp.dhis.period;
  */
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import org.hisp.dhis.calendar.CalendarService;
+import org.hisp.dhis.calendar.DateInterval;
+import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.calendar.DateUnitPeriodTypeParser;
+import org.hisp.dhis.calendar.DateUnitType;
+import org.hisp.dhis.calendar.PeriodTypeParser;
+import org.hisp.dhis.calendar.impl.Iso8601Calendar;
 import org.hisp.dhis.common.DxfNamespaces;
 
 import java.io.Serializable;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The superclass of all PeriodTypes.
  *
  * @author Kristian Nordal
  */
-@JacksonXmlRootElement( localName = "periodType", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement( localName = "periodType", namespace = DxfNamespaces.DXF_2_0 )
 public abstract class PeriodType
     implements Serializable
 {
@@ -49,10 +61,37 @@ public abstract class PeriodType
      */
     private static final long serialVersionUID = 2402122626196305083L;
 
+    private static CalendarService calendarService;
+
+    public static void setCalendarService( CalendarService calendarService )
+    {
+        PeriodType.calendarService = calendarService;
+    }
+
+    public static CalendarService getCalendarService()
+    {
+        return calendarService;
+    }
+
+    public static org.hisp.dhis.calendar.Calendar getCalendar()
+    {
+        if ( calendarService != null )
+        {
+            return calendarService.getSystemCalendar();
+        }
+
+        return Iso8601Calendar.getInstance();
+    }
+
+    protected PeriodTypeParser dateUnitFormat = new DateUnitPeriodTypeParser();
+
     // -------------------------------------------------------------------------
     // Available PeriodTypes
     // -------------------------------------------------------------------------
 
+    /**
+     * All period types in descending order according to frequency.
+     */
     public static final List<PeriodType> PERIOD_TYPES = new ArrayList<PeriodType>()
     {
         {
@@ -62,6 +101,7 @@ public abstract class PeriodType
             add( new BiMonthlyPeriodType() );
             add( new QuarterlyPeriodType() );
             add( new SixMonthlyPeriodType() );
+            add( new SixMonthlyAprilPeriodType() );
             add( new YearlyPeriodType() );
             add( new FinancialAprilPeriodType() );
             add( new FinancialJulyPeriodType() );
@@ -94,7 +134,7 @@ public abstract class PeriodType
      *
      * @param name the name of the PeriodType to return.
      * @return the PeriodType with the given name or null if no such PeriodType
-     *         exists.
+     * exists.
      */
     public static PeriodType getPeriodTypeByName( String name )
     {
@@ -119,7 +159,7 @@ public abstract class PeriodType
      *
      * @param index the index of the period type with base 1
      * @return period type according to index order or null if no match
-     *         TODO: Consider manual ordering, since relying on natural order might create problems if new periods are introduced.
+     * TODO: Consider manual ordering, since relying on natural order might create problems if new periods are introduced.
      */
     public static PeriodType getByIndex( int index )
     {
@@ -139,12 +179,12 @@ public abstract class PeriodType
 
     private int id;
 
-    public final void setId( int id )
+    public void setId( int id )
     {
         this.id = id;
     }
 
-    public final int getId()
+    public int getId()
     {
         return id;
     }
@@ -166,7 +206,10 @@ public abstract class PeriodType
      *
      * @return a valid Period based on the current date.
      */
-    public abstract Period createPeriod();
+    public Period createPeriod()
+    {
+        return createPeriod( createCalendarInstance() );
+    }
 
     /**
      * Creates a valid Period based on the given date. E.g. the given date is
@@ -175,9 +218,27 @@ public abstract class PeriodType
      * @param date the date which is contained by the created period.
      * @return the valid Period based on the given date
      */
-    public abstract Period createPeriod( Date date );
+    public Period createPeriod( Date date )
+    {
+        return createPeriod( createCalendarInstance( date ) );
+    }
 
-    public abstract Period createPeriod( Calendar cal );
+    public Period createPeriod( Calendar cal )
+    {
+        return createPeriod( getCalendar().fromIso( DateUnit.fromJdkCalendar( cal ) ) );
+    }
+
+    public Period toIsoPeriod( DateUnit start, DateUnit end )
+    {
+        return new Period( this, getCalendar().toIso( start ).toJdkDate(), getCalendar().toIso( end ).toJdkDate() );
+    }
+
+    public Period toIsoPeriod( DateUnit dateUnit )
+    {
+        return toIsoPeriod( dateUnit, dateUnit );
+    }
+
+    public abstract Period createPeriod( DateUnit dateUnit );
 
     /**
      * Returns a comparable value for the frequency length of this PeriodType.
@@ -191,7 +252,7 @@ public abstract class PeriodType
      * Returns a new date rewinded from now.
      *
      * @return the Date.
-     */    
+     */
     public abstract Date getRewindedDate( Date date, Integer rewindedPeriods );
 
     // -------------------------------------------------------------------------
@@ -204,13 +265,9 @@ public abstract class PeriodType
      *
      * @return an instance of a Calendar without any time of day.
      */
-    public static final Calendar createCalendarInstance()
+    public static Calendar createCalendarInstance()
     {
-        Calendar calendar = new GregorianCalendar();
-
-        clearTimeOfDay( calendar );
-
-        return calendar;
+        return getCalendar().toIso( getCalendar().today() ).toJdkCalendar();
     }
 
     /**
@@ -220,7 +277,7 @@ public abstract class PeriodType
      * @param date the date of the Calendar.
      * @return an instance of a Calendar without any time of day.
      */
-    public static final Calendar createCalendarInstance( Date date )
+    public static Calendar createCalendarInstance( Date date )
     {
         Calendar calendar = new GregorianCalendar();
         calendar.setTime( date );
@@ -231,36 +288,27 @@ public abstract class PeriodType
     }
 
     /**
+     * Returns an instance of a DateUnit.
+     *
+     * @param date date of calendar in local calendar
+     * @return an instance of a Calendar without any time of day.
+     */
+    public static DateUnit createLocalDateUnitInstance( Date date )
+    {
+        return getCalendar().fromIso( DateUnit.fromJdkDate( date ) );
+    }
+
+    /**
      * Clears the time of day in a Calendar instance.
      *
      * @param calendar the Calendar to fix.
      */
-    public static final void clearTimeOfDay( Calendar calendar )
+    public static void clearTimeOfDay( Calendar calendar )
     {
         calendar.set( Calendar.MILLISECOND, 0 );
         calendar.set( Calendar.SECOND, 0 );
         calendar.set( Calendar.MINUTE, 0 );
         calendar.set( Calendar.HOUR_OF_DAY, 0 );
-    }
-
-    /**
-     * Parses a date from a String on the format YYYY-MM-DD.
-     * 
-     * @param dateString the String to parse.
-     * @return a Date based on the given String.
-     */
-    public static Date getMediumDate( String dateString )
-    {
-        try
-        {
-            final SimpleDateFormat format = new SimpleDateFormat();
-            format.applyPattern( "yyyy-MM-dd" );
-            return dateString != null ? format.parse( dateString ) : null;
-        }
-        catch ( ParseException ex )
-        {
-            throw new RuntimeException( "Failed to parse medium date", ex );
-        }
     }
 
     /**
@@ -274,54 +322,14 @@ public abstract class PeriodType
      */
     public static PeriodType getPeriodTypeFromIsoString( String isoPeriod )
     {
-        if ( isoPeriod.matches( "\\b\\d{4}\\b" ) )
-        {
-            return new YearlyPeriodType();
-        }
-        if ( isoPeriod.matches( "\\b\\d{4}[-]?\\d{2}\\b" ) )
-        {
-            return new MonthlyPeriodType();
-        }
-        if ( isoPeriod.matches( "\\b\\d{4}W\\d[\\d]?\\b" ) )
-        {
-            return new WeeklyPeriodType();
-        }
-        if ( isoPeriod.matches( "\\b\\d{8}\\b" ) )
-        {
-            return new DailyPeriodType();
-        }
-        if ( isoPeriod.matches( "\\b\\d{4}Q\\d\\b" ) )
-        {
-            return new QuarterlyPeriodType();
-        }
-        if ( isoPeriod.matches( "\\b\\d{4}S\\d\\b" ) )
-        {
-            return new SixMonthlyPeriodType();
-        }
-        if ( isoPeriod.matches( "\\b\\d{6}B\\b" ) )
-        {
-            return new BiMonthlyPeriodType();
-        }
-        if ( isoPeriod.matches( "\\b\\d{4}April\\b" ) )
-        {
-            return new FinancialAprilPeriodType();
-        }
-        if ( isoPeriod.matches( "\\b\\d{4}July\\b" ) )
-        {
-            return new FinancialJulyPeriodType();
-        }
-        if ( isoPeriod.matches( "\\b\\d{4}Oct\\b" ) )
-        {
-            return new FinancialOctoberPeriodType();
-        }
-
-        return null;
+        DateUnitType dateUnitType = DateUnitType.find( isoPeriod );
+        return dateUnitType != null ? PERIOD_TYPE_MAP.get( dateUnitType.getType() ) : null;
     }
-    
+
     /**
      * Returns a period type based on the given date string in ISO format. Returns
      * null if the date string cannot be parsed to a date.
-     * 
+     *
      * @param isoPeriod the date string in ISO format.
      * @return a period.
      */
@@ -330,7 +338,7 @@ public abstract class PeriodType
         if ( isoPeriod != null )
         {
             PeriodType periodType = getPeriodTypeFromIsoString( isoPeriod );
-            
+
             try
             {
                 return periodType != null ? periodType.createPeriod( isoPeriod ) : null;
@@ -340,27 +348,8 @@ public abstract class PeriodType
                 // Do nothing and return null
             }
         }
-        
+
         return null;
-    }
-
-    /**
-     * Creates a period based on the given external identifier, which is on the
-     * format [PeriodType]_[StartDate]. The start date is on the form yyyy-MM-dd.
-     *
-     * @param externalId the external identifier.
-     * @return the period.
-     */
-    public static Period createPeriodExternalId( String externalId )
-    {
-        if ( externalId == null || externalId.split( "_" ).length <= 1 )
-        {
-            return null;
-        }
-
-        final String[] id = externalId.split( "_" );
-        final PeriodType periodType = getPeriodTypeByName( id[0] );
-        return periodType.createPeriod( getMediumDate( id[1] ) );
     }
 
     /**
@@ -369,7 +358,7 @@ public abstract class PeriodType
      *
      * @param type the period type.
      * @return the potential number of periods of the given period type spanned
-     *         by this period.
+     * by this period.
      */
     public int getPeriodSpan( PeriodType type )
     {
@@ -377,18 +366,46 @@ public abstract class PeriodType
 
         return (int) Math.floor( no );
     }
-    
+
     // -------------------------------------------------------------------------
     // ISO format methods
     // -------------------------------------------------------------------------
 
     /**
+     * @param dateInterval DateInterval to create period from
+     * @return the period.
+     */
+    public Period createPeriod( DateInterval dateInterval )
+    {
+        if ( dateInterval == null || dateInterval.getFrom() == null || dateInterval.getTo() == null )
+        {
+            return null;
+        }
+
+        final DateUnit from = getCalendar().toIso( dateInterval.getFrom() );
+        final DateUnit to = getCalendar().toIso( dateInterval.getTo() );
+
+        return new Period( this, from.toJdkDate(), to.toJdkDate() );
+    }
+
+    /**
      * Returns an iso8601 formatted string representation of the period
      *
-     * @param period
+     * @param period Period
      * @return the period as string
      */
-    public abstract String getIsoDate( Period period );
+    public String getIsoDate( Period period )
+    {
+        return getIsoDate( createLocalDateUnitInstance( period.getStartDate() ) );
+    }
+
+    /**
+     * Returns an iso8601 formatted string representation of the dataUnit
+     *
+     * @param dateUnit Period
+     * @return the period as string
+     */
+    public abstract String getIsoDate( DateUnit dateUnit );
 
     /**
      * Generates a period based on the given iso8601 formatted string.
@@ -396,11 +413,14 @@ public abstract class PeriodType
      * @param isoDate the iso8601 string.
      * @return the period.
      */
-    public abstract Period createPeriod( String isoDate );
+    public Period createPeriod( String isoDate )
+    {
+        return createPeriod( dateUnitFormat.parse( isoDate ) );
+    }
 
     /**
      * Returns the iso8601 format as a string for this period type.
-     * 
+     *
      * @return the iso8601 format.
      */
     public abstract String getIsoFormat();

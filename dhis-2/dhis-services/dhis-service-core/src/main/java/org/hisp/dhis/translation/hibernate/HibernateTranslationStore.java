@@ -1,19 +1,20 @@
 package org.hisp.dhis.translation.hibernate;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -36,6 +37,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Restrictions;
+import org.hisp.dhis.system.util.LocaleUtils;
 import org.hisp.dhis.translation.Translation;
 import org.hisp.dhis.translation.TranslationStore;
 
@@ -74,31 +76,73 @@ public class HibernateTranslationStore
         session.update( translation );
     }
 
-    public Translation getTranslation( String className, int id, Locale locale, String property )
+    @SuppressWarnings( "unchecked" )
+    public Translation getTranslation( String className, Locale locale, String property, String objectUid )
     {
         Session session = sessionFactory.getCurrentSession();
 
         Criteria criteria = session.createCriteria( Translation.class );
 
         criteria.add( Restrictions.eq( "className", className ) );
-        criteria.add( Restrictions.eq( "id", id ) );
+        criteria.add( Restrictions.eq( "objectUid", objectUid ) );
+        criteria.add( Restrictions.in( "locale", LocaleUtils.getLocaleFallbacks( locale ) ) );
+        criteria.add( Restrictions.eq( "property", property ) );
+
+        criteria.setCacheable( true );
+
+        List<Translation> list = criteria.list();
+        
+        List<Translation> translations = LocaleUtils.getTranslationsHighestSpecifity( list );
+        
+        return !translations.isEmpty() ? translations.get( 0 ) : null;
+    }
+
+    @SuppressWarnings( "unchecked" )
+    public Translation getTranslationNoFallback( String className, Locale locale, String property, String objectUid )
+    {
+        Session session = sessionFactory.getCurrentSession();
+
+        Criteria criteria = session.createCriteria( Translation.class );
+
+        criteria.add( Restrictions.eq( "className", className ) );
+        criteria.add( Restrictions.eq( "objectUid", objectUid ) );
         criteria.add( Restrictions.eq( "locale", locale.toString() ) );
         criteria.add( Restrictions.eq( "property", property ) );
 
         criteria.setCacheable( true );
 
-        return (Translation) criteria.uniqueResult();
+        List<Translation> translations = criteria.list();     
+               
+        return !translations.isEmpty() ? translations.get( 0 ) : null;
     }
-
+    
     @SuppressWarnings( "unchecked" )
-    public Collection<Translation> getTranslations( String className, int id, Locale locale )
+    public Collection<Translation> getTranslations( String className, Locale locale, String objectUid )
     {
         Session session = sessionFactory.getCurrentSession();
 
         Criteria criteria = session.createCriteria( Translation.class );
 
         criteria.add( Restrictions.eq( "className", className ) );
-        criteria.add( Restrictions.eq( "id", id ) );
+        criteria.add( Restrictions.eq( "objectUid", objectUid ) );
+        criteria.add( Restrictions.in( "locale", LocaleUtils.getLocaleFallbacks( locale ) ) );
+
+        criteria.setCacheable( true );
+
+        List<Translation> translations = criteria.list();
+        
+        return LocaleUtils.getTranslationsHighestSpecifity( translations );
+    }
+
+    @SuppressWarnings( "unchecked" )
+    public Collection<Translation> getTranslationsNoFallback( String className, String objectUid, Locale locale )
+    {
+        Session session = sessionFactory.getCurrentSession();
+
+        Criteria criteria = session.createCriteria( Translation.class );
+
+        criteria.add( Restrictions.eq( "className", className ) );
+        criteria.add( Restrictions.eq( "objectUid", objectUid ) );
         criteria.add( Restrictions.eq( "locale", locale.toString() ) );
 
         criteria.setCacheable( true );
@@ -114,10 +158,26 @@ public class HibernateTranslationStore
         Criteria criteria = session.createCriteria( Translation.class );
 
         criteria.add( Restrictions.eq( "className", className ) );
-        criteria.add( Restrictions.eq( "locale", locale.toString() ) );
+        criteria.add( Restrictions.in( "locale", LocaleUtils.getLocaleFallbacks( locale ) ) );
 
         criteria.setCacheable( true );
 
+        List<Translation> translations = criteria.list();
+        
+        return LocaleUtils.getTranslationsHighestSpecifity( translations );
+    }
+
+    @SuppressWarnings( "unchecked" )
+    public Collection<Translation> getTranslations( Locale locale )
+    {
+        Session session = sessionFactory.getCurrentSession();
+
+        Criteria criteria = session.createCriteria( Translation.class );
+
+        criteria.add( Restrictions.eq( "locale", locale.toString() ) );
+
+        criteria.setCacheable( true );
+        
         return criteria.list();
     }
 
@@ -141,14 +201,14 @@ public class HibernateTranslationStore
     }
 
     @SuppressWarnings( "unchecked" )
-    public void deleteTranslations( String className, int id )
+    public void deleteTranslations( String className, String objectUid )
     {
         Session session = sessionFactory.getCurrentSession();
 
-        Query query = session.createQuery( "from Translation t where t.className = :className and t.id = :id" );
+        Query query = session.createQuery( "from Translation t where t.className = :className and t.objectUid = :objectUid" );
 
         query.setString( "className", className );
-        query.setInteger( "id", id );
+        query.setString( "objectUid", objectUid );
 
         List<Object> objlist = query.list();
 

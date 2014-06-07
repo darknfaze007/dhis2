@@ -1,19 +1,20 @@
 package org.hisp.dhis.report;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,13 +28,16 @@ package org.hisp.dhis.report;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.io.OutputStream;
+import java.io.Writer;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+
 import net.sf.jasperreports.engine.JasperPrint;
+
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.period.Period;
-
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Lars Helge Overland
@@ -77,6 +81,17 @@ public interface ReportService
      */
     JasperPrint renderReport( OutputStream out, String reportUid, Period period,
         String organisationUnitUid, String type, I18nFormat format );
+    
+    /**
+     * Renders and writes a HTML-based standard report to the given Writer.
+     * 
+     * @param writer the Writer.
+     * @param uid the report uid.
+     * @param date the date.
+     * @param ou the organisation unit uid.
+     * @param format the I18nFormat.
+     */
+    void renderHtmlReport( Writer writer, String uid, Date date, String ou, I18nFormat format );
 
     /**
      * Saves a Report.
@@ -164,4 +179,12 @@ public interface ReportService
      * @return a Collection of Reports.
      */
     Collection<Report> getReports( final Collection<Integer> identifiers );
+
+    /**
+     * Retrieves Reports with the given uids.
+     * 
+     * @param uids the list of uids.
+     * @return a list of ReportTables.
+     */
+    List<Report> getReportsByUid( List<String> uids );
 }

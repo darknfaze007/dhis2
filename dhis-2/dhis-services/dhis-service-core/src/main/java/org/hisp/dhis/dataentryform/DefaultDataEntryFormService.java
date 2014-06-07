@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataentryform;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,10 +28,22 @@ package org.hisp.dhis.dataentryform;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.apache.commons.lang.StringEscapeUtils.escapeHtml;
+import static org.hisp.dhis.dataelement.DataElement.VALUE_TYPE_BOOL;
+import static org.hisp.dhis.dataelement.DataElement.VALUE_TYPE_LONG_TEXT;
+import static org.hisp.dhis.dataelement.DataElement.VALUE_TYPE_TRUE_ONLY;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementOperand;
@@ -43,17 +56,8 @@ import org.hisp.dhis.system.util.Filter;
 import org.hisp.dhis.system.util.FilterUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-
 /**
  * @author Bharath Kumar
- * @version $Id$
  */
 @Transactional
 public class DefaultDataEntryFormService
@@ -182,8 +186,6 @@ public class DefaultDataEntryFormService
             Matcher identifierMatcher = IDENTIFIER_PATTERN.matcher( inputHtml );
             Matcher dataElementTotalMatcher = DATAELEMENT_TOTAL_PATTERN.matcher( inputHtml );
             Matcher indicatorMatcher = INDICATOR_PATTERN.matcher( inputHtml );
-            Matcher dynamicInputMatcher = DYNAMIC_INPUT_PATTERN.matcher( inputHtml );
-            Matcher dynamicSelectMatcher = DYNAMIC_SELECT_PATTERN.matcher( inputHtml );
 
             String displayValue = null;
             String displayTitle = null;
@@ -195,14 +197,14 @@ public class DefaultDataEntryFormService
 
                 String optionComboId = identifierMatcher.group( 2 );
                 DataElementCategoryOptionCombo categegoryOptionCombo = categoryService.getDataElementCategoryOptionCombo( optionComboId );
-                String optionComboName = categegoryOptionCombo != null ? categegoryOptionCombo.getName() : "[ " + i18n.getString( "cat_option_combo_not_exist" ) + " ]";
+                String optionComboName = categegoryOptionCombo != null ? escapeHtml( categegoryOptionCombo.getName() ) : "[ " + i18n.getString( "cat_option_combo_not_exist" ) + " ]";
 
                 StringBuilder title = dataElement != null ?
                     new StringBuilder( "title=\"" ).append( dataElementId ).append( " - " ).
-                        append( dataElement.getDisplayName() ).append( " - " ).append( optionComboId ).append( " - " ).
+                        append( escapeHtml( dataElement.getDisplayName() ) ).append( " - " ).append( optionComboId ).append( " - " ).
                         append( optionComboName ).append( " - " ).append( dataElement.getType() ).append( "\"" ) : new StringBuilder();
 
-                displayValue = dataElement != null ? "value=\"[ " + dataElement.getDisplayName() + " " + optionComboName + " ]\"" : "[ " + i18n.getString( "data_element_not_exist" ) + " ]";
+                displayValue = dataElement != null ? "value=\"[ " + escapeHtml( dataElement.getDisplayName() ) + " " + optionComboName + " ]\"" : "[ " + i18n.getString( "data_element_not_exist" ) + " ]";
                 displayTitle = dataElement != null ? title.toString() : "[ " + i18n.getString( "dataelement_not_exist" ) + " ]";
             }
             else if ( dataElementTotalMatcher.find() && dataElementTotalMatcher.groupCount() > 0 )
@@ -210,32 +212,16 @@ public class DefaultDataEntryFormService
                 String dataElementId = dataElementTotalMatcher.group( 1 );
                 DataElement dataElement = dataElementService.getDataElement( dataElementId );
 
-                displayValue = dataElement != null ? "value=\"[ " + dataElement.getDisplayName() + " ]\"" : "[ " + i18n.getString( "data_element_not_exist" ) + " ]";
-                displayTitle = dataElement != null ? "title=\"" + dataElement.getDisplayName() + "\"" : "[ " + i18n.getString( "dat_aelement_not_exist" ) + " ]";
+                displayValue = dataElement != null ? "value=\"[ " + escapeHtml( dataElement.getDisplayName() ) + " ]\"" : "[ " + i18n.getString( "data_element_not_exist" ) + " ]";
+                displayTitle = dataElement != null ? "title=\"" + escapeHtml( dataElement.getDisplayName() ) + "\"" : "[ " + i18n.getString( "data_element_not_exist" ) + " ]";
             }
             else if ( indicatorMatcher.find() && indicatorMatcher.groupCount() > 0 )
             {
                 String indicatorId = indicatorMatcher.group( 1 );
                 Indicator indicator = indicatorService.getIndicator( indicatorId );
 
-                displayValue = indicator != null ? "value=\"[ " + indicator.getDisplayName() + " ]\"" : "[ " + i18n.getString( "indicator_not_exist" ) + " ]";
-                displayTitle = indicator != null ? "title=\"" + indicator.getDisplayName() + "\"" : "[ " + i18n.getString( "indicator_not_exist" ) + " ]";
-            }
-            else if ( dynamicInputMatcher.find() && dynamicInputMatcher.groupCount() > 0 )
-            {
-                String categoryOptionComboId = dynamicInputMatcher.group( 2 );
-                DataElementCategoryOptionCombo categoryOptionCombo = categoryService.getDataElementCategoryOptionCombo( categoryOptionComboId );
-
-                displayValue = categoryOptionCombo != null ? "value=\"[ " + categoryOptionCombo.getDisplayName() + " ]\"" : "[ " + i18n.getString( "cat_option_combo_not_exist" ) + " ]";
-                displayTitle = categoryOptionCombo != null ? "title=\"" + categoryOptionCombo.getDisplayName() + "\"" : "[ " + i18n.getString( "cat_option_combo_not_exist" ) + " ]";
-            }
-            else if ( dynamicSelectMatcher.find() && dynamicSelectMatcher.groupCount() > 0 )
-            {
-                String categoryComboId = dynamicSelectMatcher.group( 1 );
-                DataElementCategoryCombo categoryCombo = categoryService.getDataElementCategoryCombo( categoryComboId );
-
-                displayValue = categoryCombo != null ? "value=\"[ " + categoryCombo.getDisplayName() + " ]\"" : "[ " + i18n.getString( "cat_combo_not_exist" );
-                displayTitle = categoryCombo != null ? "title=\"" + categoryCombo.getDisplayName() + "\"" : "[ " + i18n.getString( "cat_combo_not_exist" );
+                displayValue = indicator != null ? "value=\"[ " + escapeHtml( indicator.getDisplayName() ) + " ]\"" : "[ " + i18n.getString( "indicator_not_exist" ) + " ]";
+                displayTitle = indicator != null ? "title=\"" + escapeHtml( indicator.getDisplayName() ) + "\"" : "[ " + i18n.getString( "indicator_not_exist" ) + " ]";
             }
 
             // -----------------------------------------------------------------
@@ -284,8 +270,8 @@ public class DefaultDataEntryFormService
             String inputHtml = inputMatcher.group();
 
             Matcher identifierMatcher = IDENTIFIER_PATTERN.matcher( inputHtml );
-            Matcher dynamicInputMather = DYNAMIC_INPUT_PATTERN.matcher( inputHtml );
-            Matcher dynamicSelectMatcher = DYNAMIC_SELECT_PATTERN.matcher( inputHtml );
+            Matcher dataElementTotalMatcher = DATAELEMENT_TOTAL_PATTERN.matcher( inputHtml );
+            Matcher indicatorMatcher = INDICATOR_PATTERN.matcher( inputHtml );
 
             if ( identifierMatcher.find() && identifierMatcher.groupCount() > 0 )
             {
@@ -306,57 +292,61 @@ public class DefaultDataEntryFormService
                 {
                     return i18n.getString( "category_option_combo_with_id" ) + ": " + optionComboId + " " + i18n.getString( "does_not_exist" );
                 }
-
+                
+                if ( dataSet.isDataElementDecoration() && dataElement.hasDescription() ) 
+                {
+                    String titleTag = " title=\"" +  escapeHtml( dataElement.getDisplayDescription() ) + "\" ";
+                    inputHtml = inputHtml.replaceAll( "title=\".*?\"", "" ).replace( TAG_CLOSE, titleTag + TAG_CLOSE );
+                }                
+                
                 String appendCode = "";
 
-                if ( dataElement.getType().equals( DataElement.VALUE_TYPE_BOOL ) )
+                if ( VALUE_TYPE_BOOL.equals( dataElement.getType() ) )
                 {
                     inputHtml = inputHtml.replace( "input", "select" );
                     inputHtml = inputHtml.replaceAll( "value=\".*?\"", "" );
 
-                    appendCode += " name=\"entryselect\" tabindex=\"" + i++ + "\">";
+                    appendCode += " name=\"entryselect\" class=\"entryselect\" tabindex=\"" + i++ + "\">";
 
                     appendCode += "<option value=\"\">" + i18n.getString( "no_value" ) + "</option>";
                     appendCode += "<option value=\"true\">" + i18n.getString( "yes" ) + "</option>";
                     appendCode += "<option value=\"false\">" + i18n.getString( "no" ) + "</option>";
                     appendCode += "</select>";
                 }
-                else if ( dataElement.getType().equals( DataElement.VALUE_TYPE_TRUE_ONLY ) )
+                else if ( VALUE_TYPE_TRUE_ONLY.equals( dataElement.getType() ) )
                 {
-                    appendCode += " name=\"entrytrueonly\" type=\"checkbox\" tabindex=\"" + i++ + "\"" + TAG_CLOSE;
+                    appendCode += " name=\"entrytrueonly\" class=\"entrytrueonly\" type=\"checkbox\" tabindex=\"" + i++ + "\"" + TAG_CLOSE;
                 }
-                else if ( dataElement.getOptionSet() != null )
+                else if ( dataElement.hasOptionSet() )
                 {
-                    appendCode += " name=\"entryoptionset\" tabindex=\"" + i++ + "\"" + TAG_CLOSE;
+                    appendCode += " name=\"entryoptionset\" class=\"entryoptionset\" tabindex=\"" + i++ + "\"" + TAG_CLOSE;
+                }
+                else if ( VALUE_TYPE_LONG_TEXT.equals( dataElement.getTextType() ) )
+                {
+                    inputHtml = inputHtml.replace( "input", "textarea" );
+                    
+                    appendCode += " name=\"entryfield\" class=\"entryfield entryarea\" tabindex=\"" + i++ + "\"" + "></textarea>";
                 }
                 else
                 {
-                    appendCode += " name=\"entryfield\" tabindex=\"" + i++ + "\"" + TAG_CLOSE;
+                    appendCode += " name=\"entryfield\" class=\"entryfield\" tabindex=\"" + i++ + "\"" + TAG_CLOSE;
                 }
-
+                
                 inputHtml = inputHtml.replace( TAG_CLOSE, appendCode );
+
                 inputHtml += "<span id=\"" + dataElement.getUid() + "-dataelement\" style=\"display:none\">" + dataElement.getFormNameFallback() + "</span>";
                 inputHtml += "<span id=\"" + categoryOptionCombo.getUid() + "-optioncombo\" style=\"display:none\">" + categoryOptionCombo.getName() + "</span>";
             }
-            else if ( dynamicInputMather.find() && dynamicInputMather.groupCount() > 0 )
+            else if ( dataElementTotalMatcher.find() && dataElementTotalMatcher.groupCount() > 0 )
             {
-                String optionComboId = dynamicInputMather.group( 2 );
-                DataElementCategoryOptionCombo categoryOptionCombo = categoryService.getDataElementCategoryOptionCombo( optionComboId );
-
-                if ( categoryOptionCombo == null )
-                {
-                    return i18n.getString( "category_option_combo_with_id" ) + ": " + optionComboId + " " + i18n.getString( "does_not_exist" );
-                }
-
-                inputHtml = inputHtml.replace( TAG_CLOSE, " name=\"dyninput\" tabindex=\"" + i++ + "\"" + TAG_CLOSE );
+                inputHtml = inputHtml.replace( TAG_CLOSE, " class=\"dataelementtotal\"" + TAG_CLOSE );
             }
-            else if ( dynamicSelectMatcher.find() && dynamicSelectMatcher.groupCount() > 0 )
+            else if ( indicatorMatcher.find() && indicatorMatcher.groupCount() > 0 )
             {
-                inputHtml = inputHtml.replace( "<input", "<select name=\"dynselect\"" );
-                inputHtml = inputHtml.replace( TAG_CLOSE, "</select>" );
+                inputHtml = inputHtml.replace( TAG_CLOSE, " class=\"indicator\"" + TAG_CLOSE );
             }
 
-            inputMatcher.appendReplacement( sb, inputHtml );
+            inputMatcher.appendReplacement( sb, inputHtml );            
         }
 
         inputMatcher.appendTail( sb );
@@ -437,24 +427,24 @@ public class DefaultDataEntryFormService
         return operands;
     }
 
-    public Collection<DataEntryForm> listDisctinctDataEntryFormByProgramStageIds( List<Integer> programStageIds )
+    public Collection<DataEntryForm> listDistinctDataEntryFormByProgramStageIds( List<Integer> programStageIds )
     {
         if ( programStageIds == null || programStageIds.isEmpty() )
         {
             return null;
         }
 
-        return dataEntryFormStore.listDisctinctDataEntryFormByProgramStageIds( programStageIds );
+        return dataEntryFormStore.listDistinctDataEntryFormByProgramStageIds( programStageIds );
     }
 
-    public Collection<DataEntryForm> listDisctinctDataEntryFormByDataSetIds( List<Integer> dataSetIds )
+    public Collection<DataEntryForm> listDistinctDataEntryFormByDataSetIds( List<Integer> dataSetIds )
     {
         if ( dataSetIds == null || dataSetIds.size() == 0 )
         {
             return null;
         }
 
-        return dataEntryFormStore.listDisctinctDataEntryFormByDataSetIds( dataSetIds );
+        return dataEntryFormStore.listDistinctDataEntryFormByDataSetIds( dataSetIds );
     }
 
     public Collection<DataEntryForm> getDataEntryForms( final Collection<Integer> identifiers )

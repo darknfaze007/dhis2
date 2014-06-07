@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.dxf.exporter;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -51,7 +52,6 @@ import org.hisp.dhis.constant.ConstantService;
 import org.hisp.dhis.datadictionary.DataDictionaryService;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementService;
-import org.hisp.dhis.dataset.CompleteDataSetRegistrationService;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.importexport.ExportParams;
 import org.hisp.dhis.importexport.ExportPipeThread;
@@ -59,7 +59,6 @@ import org.hisp.dhis.importexport.ExportService;
 import org.hisp.dhis.importexport.dxf.converter.CategoryCategoryOptionAssociationConverter;
 import org.hisp.dhis.importexport.dxf.converter.CategoryComboCategoryAssociationConverter;
 import org.hisp.dhis.importexport.dxf.converter.ChartConverter;
-import org.hisp.dhis.importexport.dxf.converter.CompleteDataSetRegistrationConverter;
 import org.hisp.dhis.importexport.dxf.converter.ConceptConverter;
 import org.hisp.dhis.importexport.dxf.converter.ConstantConverter;
 import org.hisp.dhis.importexport.dxf.converter.DataDictionaryConverter;
@@ -221,14 +220,6 @@ public class DefaultDXFExportService
         this.chartService = chartService;
     }
 
-    private CompleteDataSetRegistrationService completeDataSetRegistrationService;
-
-    public void setCompleteDataSetRegistrationService(
-        CompleteDataSetRegistrationService completeDataSetRegistrationService )
-    {
-        this.completeDataSetRegistrationService = completeDataSetRegistrationService;
-    }
-
     // -------------------------------------------------------------------------
     // ExportService implementation
     // -------------------------------------------------------------------------
@@ -316,8 +307,6 @@ public class DefaultDXFExportService
             thread.registerXMLConverter( new ReportConverter( reportService ) );
             thread.registerXMLConverter( new ReportTableConverter( reportTableService ) );
             thread.registerXMLConverter( new ChartConverter( chartService ) );
-            thread.registerXMLConverter( new CompleteDataSetRegistrationConverter( completeDataSetRegistrationService,
-                dataSetService, organisationUnitService, periodService ) );
 
             thread.start();
 

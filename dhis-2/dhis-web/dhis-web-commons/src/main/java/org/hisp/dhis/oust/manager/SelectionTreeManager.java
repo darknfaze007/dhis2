@@ -1,19 +1,20 @@
 package org.hisp.dhis.oust.manager;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -32,8 +33,9 @@ import java.util.Collection;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 
 /**
+ * The selection tree is used for data output and analysis.
+ * 
  * @author Torgeir Lorange Ostby
- * @version $Id: SelectionTreeManager.java 5549 2008-08-20 05:23:35Z abyot $
  */
 public interface SelectionTreeManager
 {
@@ -148,14 +150,4 @@ public interface SelectionTreeManager
      *             if the argument is null
      */
     void setSelectedOrganisationUnit( OrganisationUnit unit );
-    
-    /**
-     * Sets the current user's organisation unit as selected. If the user is
-     * associated with more than one organisation unit, it is undefined which one
-     * is selected.
-     * 
-     * @return true if the operation was successful, ie. if a current users exists
-     * and if the current user is associated with one or more organisation units.
-     */
-    boolean setCurrentUserOrganisationUnitAsSelected();
 }

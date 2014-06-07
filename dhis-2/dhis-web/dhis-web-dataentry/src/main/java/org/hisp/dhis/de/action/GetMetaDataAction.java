@@ -1,19 +1,20 @@
 package org.hisp.dhis.de.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,7 +29,14 @@ package org.hisp.dhis.de.action;
  */
 
 import com.opensymphony.xwork2.Action;
+import org.hisp.dhis.acl.AclService;
+import org.hisp.dhis.common.ListMap;
+import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
 import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataelement.DataElementCategory;
+import org.hisp.dhis.dataelement.DataElementCategoryCombo;
+import org.hisp.dhis.dataelement.DataElementCategoryOption;
+import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
@@ -37,9 +45,14 @@ import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.organisationunit.OrganisationUnitDataSetAssociationSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
+import org.hisp.dhis.user.CurrentUserService;
+import org.hisp.dhis.user.User;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,6 +102,23 @@ public class GetMetaDataAction
         this.organisationUnitService = organisationUnitService;
     }
 
+    private DataElementCategoryService categoryService;
+
+    public void setCategoryService( DataElementCategoryService categoryService )
+    {
+        this.categoryService = categoryService;
+    }
+
+    private CurrentUserService currentUserService;
+
+    public void setCurrentUserService( CurrentUserService currentUserService )
+    {
+        this.currentUserService = currentUserService;
+    }
+
+    @Autowired
+    protected AclService aclService;
+
     // -------------------------------------------------------------------------
     // Output
     // -------------------------------------------------------------------------
@@ -121,25 +151,60 @@ public class GetMetaDataAction
         return indicators;
     }
 
-    private Collection<DataSet> dataSets;
+    private List<DataSet> dataSets;
 
-    public Collection<DataSet> getDataSets()
+    public List<DataSet> getDataSets()
     {
         return dataSets;
     }
 
-    private List<Set<Integer>> dataSetAssociationSets;
+    private List<Set<String>> dataSetAssociationSets;
 
-    public List<Set<Integer>> getDataSetAssociationSets()
+    public List<Set<String>> getDataSetAssociationSets()
     {
         return dataSetAssociationSets;
     }
 
-    private Map<Integer, Integer> organisationUnitAssociationSetMap;
+    private Map<String, Integer> organisationUnitAssociationSetMap;
 
-    public Map<Integer, Integer> getOrganisationUnitAssociationSetMap()
+    public Map<String, Integer> getOrganisationUnitAssociationSetMap()
     {
         return organisationUnitAssociationSetMap;
+    }
+
+    private boolean emptyOrganisationUnits;
+
+    public boolean isEmptyOrganisationUnits()
+    {
+        return emptyOrganisationUnits;
+    }
+
+    private List<DataElementCategoryCombo> categoryCombos;
+
+    public List<DataElementCategoryCombo> getCategoryCombos()
+    {
+        return categoryCombos;
+    }
+
+    private List<DataElementCategory> categories;
+
+    public List<DataElementCategory> getCategories()
+    {
+        return categories;
+    }
+
+    private DataElementCategoryCombo defaultCategoryCombo;
+
+    public DataElementCategoryCombo getDefaultCategoryCombo()
+    {
+        return defaultCategoryCombo;
+    }
+
+    private ListMap<String, DataElementCategoryOption> categoryOptionMap = new ListMap<String, DataElementCategoryOption>();
+
+    public ListMap<String, DataElementCategoryOption> getCategoryOptionMap()
+    {
+        return categoryOptionMap;
     }
 
     // -------------------------------------------------------------------------
@@ -148,6 +213,15 @@ public class GetMetaDataAction
 
     public String execute()
     {
+        User user = currentUserService.getCurrentUser();
+
+        if ( user.getOrganisationUnits().isEmpty() )
+        {
+            emptyOrganisationUnits = true;
+
+            return SUCCESS;
+        }
+
         significantZeros = dataElementService.getDataElementsByZeroIsSignificant( true );
 
         dataElements = dataElementService.getDataElementsWithDataSets();
@@ -170,7 +244,46 @@ public class GetMetaDataAction
 
         organisationUnitAssociationSetMap = organisationUnitSet.getOrganisationUnitAssociationSetMap();
 
-        dataSets = dataSetService.getDataSets( organisationUnitSet.getDistinctDataSets() );
+        dataSets = new ArrayList<DataSet>( dataSetService.getDataSetsByUidNoAcl( organisationUnitSet.getDistinctDataSets() ) );
+
+        Set<DataElementCategoryCombo> categoryComboSet = new HashSet<DataElementCategoryCombo>();
+        Set<DataElementCategory> categorySet = new HashSet<DataElementCategory>();
+
+        for ( DataSet dataSet : dataSets )
+        {
+            if ( dataSet.getCategoryCombo() != null )
+            {
+                categoryComboSet.add( dataSet.getCategoryCombo() );
+            }
+        }
+
+        for ( DataElementCategoryCombo categoryCombo : categoryComboSet )
+        {
+            if ( categoryCombo.getCategories() != null )
+            {
+                categorySet.addAll( categoryCombo.getCategories() );
+            }
+        }
+
+        categoryCombos = new ArrayList<DataElementCategoryCombo>( categoryComboSet );
+        categories = new ArrayList<DataElementCategory>( categorySet );
+
+        for ( DataElementCategory category : categories )
+        {
+            for ( DataElementCategoryOption categoryOption : category.getCategoryOptions() )
+            {
+                if ( aclService.canRead( user, categoryOption ) )
+                {
+                    categoryOptionMap.putValue( category.getUid(), categoryOption );
+                }
+            }
+        }
+
+        Collections.sort( dataSets, IdentifiableObjectNameComparator.INSTANCE );
+        Collections.sort( categoryCombos, IdentifiableObjectNameComparator.INSTANCE );
+        Collections.sort( categories, IdentifiableObjectNameComparator.INSTANCE );
+
+        defaultCategoryCombo = categoryService.getDefaultDataElementCategoryCombo();
 
         return SUCCESS;
     }

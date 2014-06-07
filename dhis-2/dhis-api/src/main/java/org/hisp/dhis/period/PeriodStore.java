@@ -1,19 +1,20 @@
 package org.hisp.dhis.period;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,12 +28,10 @@ package org.hisp.dhis.period;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.common.GenericStore;
-import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.organisationunit.OrganisationUnit;
-
 import java.util.Collection;
 import java.util.Date;
+
+import org.hisp.dhis.common.GenericStore;
 
 /**
  * Defines the functionality for persisting Periods and PeriodTypes.
@@ -107,8 +106,8 @@ public interface PeriodStore
 
     /**
      * Returns all intersecting Periods between the startDate and endDate based on PeriodType
-     * For example if the startDate is 2007-05-01 and endDate is 2007-08-01 and periodType is Quartely
-     * then it retuns the periods for Q2,Q3
+     * For example if the startDate is 2007-05-01 and endDate is 2007-08-01 and periodType is Quarterly
+     * then it returns the periods for Q2,Q3
      *
      * @param periodType is the ultimate period type
      * @param startDate  is intercepting startDate
@@ -134,18 +133,6 @@ public interface PeriodStore
      *         no Periods match.
      */
     Collection<Period> getPeriodsByPeriodType( PeriodType periodType );
-
-    /**
-     * Returns all intersecting Periods for the given Period which have assosiated DataValues for
-     * the given collection of DataElements and Sources.
-     *
-     * @param period       the Period.
-     * @param dataElements the collection of DataElements.
-     * @param sources      the collection of Sources.
-     * @return all intersecting Periods for the given Period which have assosiated DataValues for
-     *         the given collection of DataElements and Sources.
-     */
-    Collection<Period> getPeriods( Period period, Collection<DataElement> dataElements, Collection<OrganisationUnit> sources );
 
     /**
      * Checks if the given period is associated with the current session and loads

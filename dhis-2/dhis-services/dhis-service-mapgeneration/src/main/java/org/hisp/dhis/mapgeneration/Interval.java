@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapgeneration;
 
 /*
- * Copyright (c) 2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,7 +29,7 @@ package org.hisp.dhis.mapgeneration;
  */
 
 import java.awt.Color;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,22 +49,62 @@ public class Interval
     private Color color;
 
     /**
-     * The low and high boundaries of values this interval covers.
+     * The low boundary of values this interval covers.
      */
-    private double valueLow, valueHigh;
+    private double valueLow;
+
+    /**
+     * The high boundary of values this interval covers.
+     */
+    private double valueHigh;
 
     /**
      * The map object members that fall into this interval category.
      */
     private List<InternalMapObject> members;
 
+    // -------------------------------------------------------------------------
+    // Constructors
+    // -------------------------------------------------------------------------
+
     public Interval( double valueLow, double valueHigh )
     {
         this.valueLow = valueLow;
         this.valueHigh = valueHigh;
-
-        this.members = new LinkedList<InternalMapObject>();
+        this.members = new ArrayList<InternalMapObject>();
     }
+
+    public Interval( Color color, double valueLow, double valueHigh )
+    {
+        this.color = color;
+        this.valueLow = valueLow;
+        this.valueHigh = valueHigh;
+        this.members = new ArrayList<InternalMapObject>();
+    }
+
+    // -------------------------------------------------------------------------
+    // Logic
+    // -------------------------------------------------------------------------
+
+    /**
+     * Adds a map object to this interval category.
+     * 
+     * @param member the member to add
+     */
+    public void addMember( InternalMapObject member )
+    {
+        this.members.add( member );
+    }
+
+    @Override
+    public String toString()
+    {
+        return "[Low value: " + valueLow + ", high value: " + valueHigh + ", color: " + color + "]";
+    }
+
+    // -------------------------------------------------------------------------
+    // Getters and setters
+    // -------------------------------------------------------------------------
 
     /**
      * Gets the low value of this interval.
@@ -72,7 +113,7 @@ public class Interval
      */
     public double getValueLow()
     {
-        return this.valueLow;
+        return valueLow;
     }
 
     /**
@@ -92,7 +133,7 @@ public class Interval
      */
     public double getValueHigh()
     {
-        return this.valueHigh;
+        return valueHigh;
     }
 
     /**
@@ -112,7 +153,7 @@ public class Interval
      */
     public Color getColor()
     {
-        return this.color;
+        return color;
     }
 
     /**
@@ -126,16 +167,6 @@ public class Interval
     }
 
     /**
-     * Adds a map object to this interval category.
-     * 
-     * @param member the member to add
-     */
-    public void addMember( InternalMapObject member )
-    {
-        this.members.add( member );
-    }
-
-    /**
      * Returns a list of the members that have fallen into this interval
      * category, or null if none.
      * 
@@ -143,6 +174,6 @@ public class Interval
      */
     public List<InternalMapObject> getMembers()
     {
-        return this.members;
+        return members;
     }
 }

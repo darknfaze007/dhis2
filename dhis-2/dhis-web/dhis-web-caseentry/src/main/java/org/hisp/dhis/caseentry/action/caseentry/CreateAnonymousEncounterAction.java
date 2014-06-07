@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.caseentry;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,13 +28,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.caseentry;
-
 import java.util.Date;
 
-import org.hisp.dhis.caseentry.state.SelectedStateManager;
 import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.i18n.I18nFormat;
+import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramInstanceService;
@@ -54,13 +55,13 @@ public class CreateAnonymousEncounterAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private SelectedStateManager selectedStateManager;
+    private OrganisationUnitSelectionManager selectionManager;
 
-    public void setSelectedStateManager( SelectedStateManager selectedStateManager )
+    public void setSelectionManager( OrganisationUnitSelectionManager selectionManager )
     {
-        this.selectedStateManager = selectedStateManager;
+        this.selectionManager = selectionManager;
     }
-
+    
     private ProgramService programService;
 
     public void setProgramService( ProgramService programService )
@@ -100,9 +101,9 @@ public class CreateAnonymousEncounterAction
     // Input/Output
     // -------------------------------------------------------------------------
 
-    private Integer programId;
+    private String programId;
 
-    public void setProgramId( Integer programId )
+    public void setProgramId( String programId )
     {
         this.programId = programId;
     }
@@ -147,7 +148,7 @@ public class CreateAnonymousEncounterAction
             programStageInstance.setProgramStage( programStage );
             programStageInstance.setDueDate( date );
             programStageInstance.setExecutionDate( date );
-            programStageInstance.setOrganisationUnit( selectedStateManager.getSelectedOrganisationUnit() );
+            programStageInstance.setOrganisationUnit( selectionManager.getSelectedOrganisationUnit() );
 
             int id = programStageInstanceService.addProgramStageInstance( programStageInstance );
 

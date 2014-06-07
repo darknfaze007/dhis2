@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.dxf.converter;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,16 +28,12 @@ package org.hisp.dhis.importexport.dxf.converter;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import static org.hisp.dhis.importexport.dxf.converter.DXFConverter.MINOR_VERSION_12;
-
 import java.util.Collection;
 import java.util.Map;
 
 import org.amplecode.quick.BatchHandler;
 import org.amplecode.staxwax.reader.XMLReader;
 import org.amplecode.staxwax.writer.XMLWriter;
-import org.hisp.dhis.concept.Concept;
-import org.hisp.dhis.concept.ConceptService;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.importexport.ExportParams;
@@ -44,7 +41,6 @@ import org.hisp.dhis.importexport.ImportObjectService;
 import org.hisp.dhis.importexport.ImportParams;
 import org.hisp.dhis.importexport.XMLConverter;
 import org.hisp.dhis.importexport.importer.DataElementCategoryImporter;
-import org.hisp.dhis.importexport.mapping.NameMappingUtil;
 
 /**
  * @author Lars Helge Overland
@@ -61,11 +57,6 @@ public class DataElementCategoryConverter
     private static final String FIELD_UID = "uid";
     private static final String FIELD_CODE = "code";
     private static final String FIELD_NAME = "name";
-    private static final String FIELD_CONCEPT_ID = "conceptid";
-    
-    private static final String BLANK = "";
-
-    private ConceptService conceptService;
 
     // -------------------------------------------------------------------------
     // Constructor
@@ -88,13 +79,11 @@ public class DataElementCategoryConverter
      * @param conceptService the ConceptService to use.
      */
     public DataElementCategoryConverter( BatchHandler<DataElementCategory> batchHandler,
-        ImportObjectService importObjectService, DataElementCategoryService categoryService,
-        ConceptService conceptService )
+        ImportObjectService importObjectService, DataElementCategoryService categoryService )
     {
         this.batchHandler = batchHandler;
         this.importObjectService = importObjectService;
         this.categoryService = categoryService;
-        this.conceptService = conceptService;
     }
 
     // -------------------------------------------------------------------------
@@ -117,8 +106,6 @@ public class DataElementCategoryConverter
                 writer.writeElement( FIELD_UID, category.getUid() );
                 writer.writeElement( FIELD_CODE, category.getCode() );
                 writer.writeElement( FIELD_NAME, category.getName() );
-                writer.writeElement( FIELD_CONCEPT_ID, String.valueOf( category.getConcept() == null ? BLANK : category
-                    .getConcept().getId() ) );
 
                 writer.closeElement();
             }
@@ -129,10 +116,6 @@ public class DataElementCategoryConverter
 
     public void read( XMLReader reader, ImportParams params )
     {
-        Map<Object, String> conceptMap = NameMappingUtil.getConceptMap();
-
-        Concept defaultConcept = conceptService.getConceptByName( Concept.DEFAULT_CONCEPT_NAME );
-
         while ( reader.moveToStartElement( ELEMENT_NAME, COLLECTION_NAME ) )
         {
             final Map<String, String> values = reader.readElements( ELEMENT_NAME );
@@ -147,19 +130,6 @@ public class DataElementCategoryConverter
             }
 
             category.setName( values.get( FIELD_NAME ) );
-
-            if ( params.minorVersionGreaterOrEqual( MINOR_VERSION_12 ) && values.get( FIELD_CONCEPT_ID ) != null )
-            {
-                log.debug( "reading category dxf version >1.2" );
-                int conceptid = Integer.parseInt( values.get( FIELD_CONCEPT_ID ) );
-                String conceptName = conceptMap.get( conceptid );
-                category.setConcept( conceptService.getConceptByName( conceptName ) );
-            }
-            else
-            {
-                log.debug( "reading category dxf version 1.0" );
-                category.setConcept( defaultConcept );
-            }
 
             importObject( category, params );
         }

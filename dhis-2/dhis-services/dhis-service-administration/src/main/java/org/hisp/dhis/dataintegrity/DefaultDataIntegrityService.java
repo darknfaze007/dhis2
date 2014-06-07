@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataintegrity;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -359,10 +360,11 @@ public class DefaultDataIntegrityService
         Set<String> dataElements = new HashSet<String>( getUids( dataElementService.getAllDataElements() ) );
         Set<String> categoryOptionCombos = new HashSet<String>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
         Set<String> constants = new HashSet<String>( getUids( constantService.getAllConstants() ) );
+        Set<String> orgUnitGroups = new HashSet<String>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
         
         for ( Indicator indicator : indicatorService.getAllIndicators() )
         {
-            String result = expressionService.expressionIsValid( indicator.getNumerator(), dataElements, categoryOptionCombos, constants );
+            String result = expressionService.expressionIsValid( indicator.getNumerator(), dataElements, categoryOptionCombos, constants, orgUnitGroups );
 
             if ( !result.equals( ExpressionService.VALID ) )
             {
@@ -380,10 +382,11 @@ public class DefaultDataIntegrityService
         Set<String> dataElements = new HashSet<String>( getUids( dataElementService.getAllDataElements() ) );
         Set<String> categoryOptionCombos = new HashSet<String>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
         Set<String> constants = new HashSet<String>( getUids( constantService.getAllConstants() ) );
+        Set<String> orgUnitGroups = new HashSet<String>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
         
         for ( Indicator indicator : indicatorService.getAllIndicators() )
         {
-            String result = expressionService.expressionIsValid( indicator.getDenominator(), dataElements, categoryOptionCombos, constants );
+            String result = expressionService.expressionIsValid( indicator.getDenominator(), dataElements, categoryOptionCombos, constants, orgUnitGroups );
 
             if ( !result.equals( ExpressionService.VALID ) )
             {
@@ -439,7 +442,7 @@ public class DefaultDataIntegrityService
         {
             parent = unit;
 
-            while ( (parent = parent.getParent()) != null )
+            while ( ( parent = parent.getParent() ) != null )
             {
                 if ( parent.equals( unit ) ) // Cyclic reference
                 {
@@ -540,10 +543,11 @@ public class DefaultDataIntegrityService
         Set<String> dataElements = new HashSet<String>( getUids( dataElementService.getAllDataElements() ) );
         Set<String> categoryOptionCombos = new HashSet<String>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
         Set<String> constants = new HashSet<String>( getUids( constantService.getAllConstants() ) );
+        Set<String> orgUnitGroups = new HashSet<String>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
         
         for ( ValidationRule rule : validationRuleService.getAllValidationRules() )
         {
-            String result = expressionService.expressionIsValid( rule.getLeftSide().getExpression(), dataElements, categoryOptionCombos, constants );
+            String result = expressionService.expressionIsValid( rule.getLeftSide().getExpression(), dataElements, categoryOptionCombos, constants, orgUnitGroups );
 
             if ( !result.equals( ExpressionService.VALID ) )
             {
@@ -562,10 +566,11 @@ public class DefaultDataIntegrityService
         Set<String> dataElements = new HashSet<String>( getUids( dataElementService.getAllDataElements() ) );
         Set<String> categoryOptionCombos = new HashSet<String>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
         Set<String> constants = new HashSet<String>( getUids( constantService.getAllConstants() ) );
+        Set<String> orgUnitGroups = new HashSet<String>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
         
         for ( ValidationRule rule : validationRuleService.getAllValidationRules() )
         {
-            String result = expressionService.expressionIsValid( rule.getRightSide().getExpression(), dataElements, categoryOptionCombos, constants );
+            String result = expressionService.expressionIsValid( rule.getRightSide().getExpression(), dataElements, categoryOptionCombos, constants, orgUnitGroups );
 
             if ( !result.equals( ExpressionService.VALID ) )
             {

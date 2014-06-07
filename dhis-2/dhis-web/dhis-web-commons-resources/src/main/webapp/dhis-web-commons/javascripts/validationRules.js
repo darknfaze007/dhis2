@@ -4,6 +4,9 @@ var validationRules = {
             "required" : true,
             "rangelength" : [ 2, 140 ]
         },
+        "inviteUsername" : {
+            "rangelength" : [ 2, 140 ]
+        },
         "firstName" : {
             "required" : true,
             "rangelength" : [ 2, 140 ]
@@ -31,10 +34,15 @@ var validationRules = {
             "email" : true,
             "rangelength" : [ 0, 160 ]
         },
+        "inviteEmail" : {
+            "required" : true,
+            "email" : true,
+            "rangelength" : [ 4, 160 ]
+        },
         "phoneNumber" : {
             "rangelength" : [ 0, 80 ]
         },
-        "roleValidator" : {
+        "urValidator" : {
             "required" : true
         }
     },
@@ -51,10 +59,6 @@ var validationRules = {
         "name" : {
             "required" : true,
             "rangelength" : [ 2, 140 ]
-        },
-        "description" : {
-            "required" : true,
-            "rangelength" : [ 2, 210 ]
         }
     },
     "userGroup" : {
@@ -77,7 +81,7 @@ var validationRules = {
             "rangelength" : [ 2, 50 ]
         },
         "code" : {
-            "rangelength" : [ 0, 25 ],
+            "rangelength" : [ 0, 50 ],
             "alphanumericwithbasicpuncspaces" : true,
             "notOnlyDigits" : false
         },
@@ -120,12 +124,12 @@ var validationRules = {
         "shortName" : {
             "required" : true,
             "alphanumericwithbasicpuncspaces" : true,
-            "rangelength" : [ 2, 40 ]
+            "rangelength" : [ 2, 50 ]
         },
         "code" : {
             "alphanumericwithbasicpuncspaces" : true,
             "notOnlyDigits" : false,
-            "rangelength" : [ 0, 25 ]
+            "rangelength" : [ 0, 50 ]
         }
     },
     "organisationUnitGroupSet" : {
@@ -141,7 +145,7 @@ var validationRules = {
     "dataEntry" : {
         "name" : {
             "required" : true,
-            "rangelength" : [ 4, 100 ]
+            "rangelength" : [ 2, 100 ]
         }
     },
     "section" : {
@@ -157,17 +161,17 @@ var validationRules = {
         "name" : {
             "required" : true,
             "alphanumericwithbasicpuncspaces" : true,
-            "rangelength" : [ 4, 150 ]
+            "rangelength" : [ 2, 150 ]
         },
         "shortName" : {
             "required" : true,
             "alphanumericwithbasicpuncspaces" : true,
-            "rangelength" : [ 2, 40 ]
+            "rangelength" : [ 2, 50 ]
         },
         "code" : {
             "alphanumericwithbasicpuncspaces" : true,
             "notOnlyDigits" : false,
-            "rangelength" : [ 0, 25 ]
+            "rangelength" : [ 0, 50 ]
         },
         "expiryDays": {
             "digits" : true
@@ -180,9 +184,6 @@ var validationRules = {
         "name" : {
             "required" : true,
             "rangelength" : [ 2, 50 ]
-        },
-        "description" : {
-            "required" : true
         },
         "sqlquery" : {
             "required" : true
@@ -218,23 +219,23 @@ var validationRules = {
     "dataElement" : {
         "name" : {
             "required" : true,
-            "rangelength" : [ 3, 150 ],
+            "rangelength" : [ 2, 150 ],
             "alphanumericwithbasicpuncspaces" : true,
             "notOnlyDigits" : true
         },
         "shortName" : {
             "required" : true,
-            "rangelength" : [ 2, 40 ],
+            "rangelength" : [ 2, 50 ],
             "alphanumericwithbasicpuncspaces" : true,
             "notOnlyDigits" : true
         },
         "alternativeName" : {
-            "rangelength" : [ 3, 150 ],
+            "rangelength" : [ 2, 150 ],
             "alphanumericwithbasicpuncspaces" : true,
             "notOnlyDigits" : true
         },
         "code" : {
-            "rangelength" : [ 0, 25 ],
+            "rangelength" : [ 0, 50 ],
             "alphanumericwithbasicpuncspaces" : true,
             "notOnlyDigits" : false
         },
@@ -278,14 +279,14 @@ var validationRules = {
         },
         "shortName" : {
             "required" : true,
-            "rangelength" : [ 2, 40 ],
+            "rangelength" : [ 2, 50 ],
             "alphanumericwithbasicpuncspaces" : true,
             "notOnlyDigits" : true
         },
         "code" : {
             "alphanumericwithbasicpuncspaces" : true,
             "notOnlyDigits" : false,
-            "rangelength" : [ 0, 25 ]
+            "rangelength" : [ 0, 50 ]
         }
     },
     "dataElementGroupSet" : {
@@ -313,21 +314,21 @@ var validationRules = {
     "indicator" : {
         "name" : {
             "required" : true,
-            "rangelength" : [ 3, 150 ],
+            "rangelength" : [ 2, 150 ],
             "alphanumericwithbasicpuncspaces" : true,
             "nostartwhitespace" : true
         },
         "shortName" : {
             "required" : true,
-            "rangelength" : [ 2, 40 ],
+            "rangelength" : [ 2, 50 ],
             "alphanumericwithbasicpuncspaces" : true
         },
         "alternativeName" : {
-            "rangelength" : [ 3, 150 ],
+            "rangelength" : [ 2, 150 ],
             "alphanumericwithbasicpuncspaces" : true
         },
         "code" : {
-            "rangelength" : [ 0, 25 ],
+            "rangelength" : [ 0, 50 ],
             "alphanumericwithbasicpuncspaces" : true,
             "notOnlyDigits" : false
         },
@@ -362,7 +363,7 @@ var validationRules = {
     "indicatorType" : {
         "name" : {
             "required" : true,
-            "rangelength" : [ 3, 150 ],
+            "rangelength" : [ 2, 150 ],
             "alphanumericwithbasicpuncspaces" : true
         },
         "factor" : {
@@ -379,8 +380,39 @@ var validationRules = {
         "description" : {
             "rangelength" : [ 2, 160 ]
         },
+        "importance" : {
+            "required" : true
+        },
+        "ruleType" : {
+            "required" : true
+        },
+        "organisationUnitLevel" : {
+        	"number" : true,
+        	"min": 1,
+        	"max": 999
+        },
         "periodTypeName" : {
             "required" : true
+        },
+        "sequentialSampleCount" : {
+        	"number" : true,
+        	"min": 0,
+        	"max": 10
+        },
+        "annualSampleCount" : {
+        	"number" : true,
+        	"min": 0,
+        	"max": 10
+        },
+        "highOutliers" : {
+        	"number" : true,
+        	"min": 0,
+        	"max": 99
+        },
+        "lowOutliers" : {
+        	"number" : true,
+        	"min": 0,
+        	"max": 99
         },
         "operator" : {
             "required" : true
@@ -408,27 +440,6 @@ var validationRules = {
         },
         "value" : {
             "required" : true
-        }
-    },
-    "chartGroup" : {
-        "name" : {
-            "required" : true,
-            "rangelength" : [ 3, 230 ],
-            "alphanumericwithbasicpuncspaces" : true
-        }
-    },
-    "reportGroup" : {
-        "name" : {
-            "required" : true,
-            "rangelength" : [ 3, 230 ],
-            "alphanumericwithbasicpuncspaces" : true
-        }
-    },
-    "reportTableGroup" : {
-        "name" : {
-            "required" : true,
-            "rangelength" : [ 3, 230 ],
-            "alphanumericwithbasicpuncspaces" : true
         }
     },
     "attribute" : {
@@ -460,11 +471,6 @@ var validationRules = {
 			"rangelength" : [ 2, 255 ]
 		}
 	},
-	"emailSettings" : {
-		"smtpHostName" : {
-			"required" : true
-		}
-	},
 	"SMSConfig" : {
 		"pollingInterval" : {
 			"required" : true,
@@ -479,5 +485,10 @@ var validationRules = {
 			"required" : true,
 			"number" : true
 		}
-	}
+	},
+    "dataApprovalLevel" : {
+        "organisationUnitLevel" : {
+            "required" : true
+        }
+    }
 };

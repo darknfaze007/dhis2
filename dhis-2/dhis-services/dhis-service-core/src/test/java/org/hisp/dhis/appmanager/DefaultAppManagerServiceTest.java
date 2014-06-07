@@ -1,19 +1,20 @@
 package org.hisp.dhis.appmanager;
 
 /*
- * Copyright (c) 2004-2013, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -26,14 +27,13 @@ package org.hisp.dhis.appmanager;
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import java.util.List;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+
 import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  *
@@ -41,31 +41,6 @@ import org.junit.Ignore;
  */
 public class DefaultAppManagerServiceTest
 {
-
-    public DefaultAppManagerServiceTest()
-    {
-    }
-
-    @BeforeClass
-    public static void setUpClass()
-    {
-    }
-
-    @AfterClass
-    public static void tearDownClass()
-    {
-    }
-
-    @Before
-    public void setUp()
-    {
-    }
-
-    @After
-    public void tearDown()
-    {
-    }
-
     /**
      * Test of getAppFolderPath method, of class DefaultAppManagerService.
      */
@@ -73,8 +48,7 @@ public class DefaultAppManagerServiceTest
     @Ignore
     public void testGetAppFolderPath()
     {
-        System.out.println( "getAppFolderPath" );
-        DefaultAppManagerService instance = new DefaultAppManagerService();
+        DefaultAppManager instance = new DefaultAppManager();
         String expResult = "";
         String result = instance.getAppFolderPath();
         assertEquals( expResult, result );
@@ -89,8 +63,7 @@ public class DefaultAppManagerServiceTest
     @Ignore
     public void testGetAppStoreUrl()
     {
-        System.out.println( "getAppStoreUrl" );
-        DefaultAppManagerService instance = new DefaultAppManagerService();
+        DefaultAppManager instance = new DefaultAppManager();
         String expResult = "";
         String result = instance.getAppStoreUrl();
         assertEquals( expResult, result );
@@ -105,10 +78,9 @@ public class DefaultAppManagerServiceTest
     @Ignore
     public void testGetInstalledApps()
     {
-        System.out.println( "getInstalledApps" );
-        DefaultAppManagerService instance = new DefaultAppManagerService();
-        List expResult = null;
-        List result = instance.getInstalledApps();
+        DefaultAppManager instance = new DefaultAppManager();
+        List<App> expResult = null;
+        List<App> result = instance.getApps();
         assertEquals( expResult, result );
         // TODO review the generated test code and remove the default call to fail.
         fail( "The test case is a prototype." );
@@ -121,9 +93,8 @@ public class DefaultAppManagerServiceTest
     @Ignore
     public void testSetAppFolderPath()
     {
-        System.out.println( "setAppFolderPath" );
         String appFolderPath = "";
-        DefaultAppManagerService instance = new DefaultAppManagerService();
+        DefaultAppManager instance = new DefaultAppManager();
         instance.setAppFolderPath( appFolderPath );
         // TODO review the generated test code and remove the default call to fail.
         fail( "The test case is a prototype." );
@@ -136,27 +107,9 @@ public class DefaultAppManagerServiceTest
     @Ignore
     public void testSetAppStoreUrl()
     {
-        System.out.println( "setAppStoreUrl" );
         String appStoreUrl = "";
-        DefaultAppManagerService instance = new DefaultAppManagerService();
+        DefaultAppManager instance = new DefaultAppManager();
         instance.setAppStoreUrl( appStoreUrl );
-        // TODO review the generated test code and remove the default call to fail.
-        fail( "The test case is a prototype." );
-    }
-
-    /**
-     * Test of getAppFolderName method, of class DefaultAppManagerService.
-     */
-    @Test
-    @Ignore
-    public void testGetAppFolderName()
-    {
-        System.out.println( "getAppFolderName" );
-        App app = null;
-        DefaultAppManagerService instance = new DefaultAppManagerService();
-        String expResult = "";
-        String result = instance.getAppFolderName( app );
-        assertEquals( expResult, result );
         // TODO review the generated test code and remove the default call to fail.
         fail( "The test case is a prototype." );
     }

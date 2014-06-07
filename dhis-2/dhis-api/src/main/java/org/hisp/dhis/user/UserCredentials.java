@@ -1,19 +1,20 @@
 package org.hisp.dhis.user;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,44 +28,49 @@ package org.hisp.dhis.user;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.hisp.dhis.common.BaseIdentifiableObject;
-import org.hisp.dhis.common.DxfNamespaces;
-import org.hisp.dhis.common.IdentifiableObjectUtils;
-import org.hisp.dhis.common.view.DetailedView;
-import org.hisp.dhis.common.view.ExportView;
-import org.hisp.dhis.dataset.DataSet;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import org.hisp.dhis.common.BaseIdentifiableObject;
+import org.hisp.dhis.common.DimensionType;
+import org.hisp.dhis.common.DimensionalObject;
+import org.hisp.dhis.common.DxfNamespaces;
+import org.hisp.dhis.common.IdentifiableObject;
+import org.hisp.dhis.common.IdentifiableObjectUtils;
+import org.hisp.dhis.common.annotation.Scanned;
+import org.hisp.dhis.common.view.DetailedView;
+import org.hisp.dhis.common.view.ExportView;
+import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
+import org.hisp.dhis.dataelement.DataElementCategory;
+import org.hisp.dhis.dataset.DataSet;
+import org.springframework.util.StringUtils;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Nguyen Hong Duc
  */
-@JacksonXmlRootElement( localName = "userCredentials", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement(localName = "userCredentials", namespace = DxfNamespaces.DXF_2_0)
 public class UserCredentials
-    implements Serializable
+    extends BaseIdentifiableObject
 {
     /**
      * Determines if a de-serialized file is compatible with this class.
      */
     private static final long serialVersionUID = -8919501679702302098L;
 
-    private int id;
-
     /**
      * Required and unique.
+     * TODO: This must be renamed before we start using idObjectStore for UserCredentials
      */
-    private User user;
+    //private User user;
 
     /**
      * Required and unique.
@@ -72,20 +78,43 @@ public class UserCredentials
     private String username;
 
     /**
+     * Unique OpenID.
+     */
+    private String openId;
+
+    /**
      * Required. Will be stored as a hash.
      */
     private String password;
 
     /**
+     * Date when password was changed.
+     */
+    private Date passwordLastUpdated;
+
+    /**
      * Set of user roles.
      */
+    @Scanned
     private Set<UserAuthorityGroup> userAuthorityGroups = new HashSet<UserAuthorityGroup>();
+
+    /**
+     * Category option group set dimensions to constrain data analytics aggregation.
+     */
+    @Scanned
+    private Set<CategoryOptionGroupSet> cogsDimensionConstraints = new HashSet<CategoryOptionGroupSet>();
+
+    /**
+     * Category dimensions to constrain data analytics aggregation.
+     */
+    @Scanned
+    private Set<DataElementCategory> catDimensionConstraints = new HashSet<DataElementCategory>();
 
     /**
      * Date of the user's last login.
      */
     private Date lastLogin;
-    
+
     /**
      * The token used for a user account restore. Will be stored as a hash.
      */
@@ -95,27 +124,22 @@ public class UserCredentials
      * The code used for a user account restore. Will be stored as a hash.
      */
     private String restoreCode;
-    
+
     /**
      * The timestamp representing when the restore window expires.
      */
     private Date restoreExpiry;
-    
+
     /**
      * Indicates whether this user was originally self registered.
      */
     private boolean selfRegistered;
-    
+
     /**
      * Indicates whether this is user is disabled, which means the user cannot
      * be authenticated.
      */
     private boolean disabled;
-    
-    /**
-     * The date this credentials was created.
-     */
-    private Date created;
 
     // -------------------------------------------------------------------------
     // Constructor
@@ -123,10 +147,12 @@ public class UserCredentials
 
     public UserCredentials()
     {
+        setAutoFields();
+        this.name = this.getClass().getSimpleName(); // Used to avoid JSR-303 issues
         this.lastLogin = new Date();
-        this.created = new Date();
+        this.passwordLastUpdated = new Date();
     }
-    
+
     // -------------------------------------------------------------------------
     // Logic
     // -------------------------------------------------------------------------
@@ -139,7 +165,7 @@ public class UserCredentials
     {
         return IdentifiableObjectUtils.join( userAuthorityGroups );
     }
-    
+
     /**
      * Returns a set of the aggregated authorities for all user authority groups
      * of this user credentials.
@@ -155,11 +181,11 @@ public class UserCredentials
 
         return authorities;
     }
-    
+
     /**
      * Tests whether this user credentials has any of the authorities in the
      * given set.
-     * 
+     *
      * @param auths the authorities to compare with.
      * @return true or false.
      */
@@ -167,6 +193,22 @@ public class UserCredentials
     {
         Set<String> all = new HashSet<String>( getAllAuthorities() );
         return all.removeAll( auths );
+    }
+
+    /**
+     * Tests whether the user has the given authority. Returns true in any case
+     * if the user has the ALL authority.
+     */
+    public boolean isAuthorized( String auth )
+    {
+        if ( auth == null )
+        {
+            return false;
+        }
+
+        final Set<String> auths = getAllAuthorities();
+
+        return auths.contains( UserAuthorityGroup.AUTHORITY_ALL ) || auths.contains( auth );
     }
 
     /**
@@ -178,7 +220,7 @@ public class UserCredentials
     {
         for ( UserAuthorityGroup group : userAuthorityGroups )
         {
-            if ( group.getAuthorities().contains( UserAuthorityGroup.AUTHORITY_ALL ) )
+            if ( group.isSuper() )
             {
                 return true;
             }
@@ -211,9 +253,11 @@ public class UserCredentials
      * of this user credentials, or this user credentials must have the ALL
      * authority.
      *
-     * @param group the user authority group.
+     * @param group                          the user authority group.
+     * @param canGrantOwnUserAuthorityGroups indicates whether this users can grant
+     *                                       its own authoritiy groups to others.
      */
-    public boolean canIssue( UserAuthorityGroup group )
+    public boolean canIssue( UserAuthorityGroup group, boolean canGrantOwnUserAuthorityGroups )
     {
         if ( group == null )
         {
@@ -227,14 +271,19 @@ public class UserCredentials
             return true;
         }
 
-        return !userAuthorityGroups.contains( group ) && authorities.containsAll( group.getAuthorities() );
+        if ( !canGrantOwnUserAuthorityGroups && userAuthorityGroups.contains( group ) )
+        {
+            return false;
+        }
+
+        return authorities.containsAll( group.getAuthorities() );
     }
-    
+
     /**
-     * Indicates whether this user credentials can modify the given user 
+     * Indicates whether this user credentials can modify the given user
      * credentials. This user credentials must have the ALL authority or possess
      * all user authorities of the other user credentials to do so.
-     * 
+     *
      * @param other the user credentials to modify.
      */
     public boolean canModify( UserCredentials other )
@@ -243,14 +292,14 @@ public class UserCredentials
         {
             return false;
         }
-        
+
         final Set<String> authorities = getAllAuthorities();
 
         if ( authorities.contains( UserAuthorityGroup.AUTHORITY_ALL ) )
         {
             return true;
-        }      
-        
+        }
+
         return authorities.containsAll( other.getAllAuthorities() );
     }
 
@@ -258,13 +307,15 @@ public class UserCredentials
      * Indicates whether this user credentials can issue all of the user authority
      * groups in the given collection.
      *
-     * @param groups the collection of user authority groups.
+     * @param groups                         the collection of user authority groups.
+     * @param canGrantOwnUserAuthorityGroups indicates whether this users can grant
+     *                                       its own authoritiy groups to others.
      */
-    public boolean canIssueAll( Collection<UserAuthorityGroup> groups )
+    public boolean canIssueAll( Collection<UserAuthorityGroup> groups, boolean canGrantOwnUserAuthorityGroups )
     {
         for ( UserAuthorityGroup group : groups )
         {
-            if ( !canIssue( group ) )
+            if ( !canIssue( group, canGrantOwnUserAuthorityGroups ) )
             {
                 return false;
             }
@@ -285,6 +336,11 @@ public class UserCredentials
         return user != null ? user.getName() : username;
     }
 
+    public String getCode()
+    {
+        return username;
+    }
+
     /**
      * Tests whether the given input arguments can perform a valid restore of the
      * user account for these credentials. Returns false if any of the input arguments
@@ -292,10 +348,10 @@ public class UserCredentials
      * if the expiry date arguement is after the expiry date of the credentials.
      * Returns false if any of the given token or code arguments are not equal to
      * the respective properties the the credentials. Returns true otherwise.
-     * 
+     *
      * @param token the restore token.
-     * @param code the restore code.
-     * @param expiry the expiry date.
+     * @param code  the restore code.
+     * @param date  the expiry date.
      * @return true or false.
      */
     public boolean canRestore( String token, String code, Date date )
@@ -304,20 +360,52 @@ public class UserCredentials
         {
             return false;
         }
-        
+
         if ( token == null || code == null || date == null )
         {
             return false;
         }
-        
+
         if ( date.after( this.restoreExpiry ) )
         {
             return false;
         }
-        
+
         return token.equals( this.restoreToken ) && code.equals( this.restoreCode );
     }
-    
+
+    /**
+     * Returns the dimensions to use as constrains (filters) in data analytics
+     * aggregation.
+     */
+    public Set<DimensionalObject> getDimensionConstraints()
+    {
+        Set<DimensionalObject> constraints = new HashSet<DimensionalObject>();
+
+        for ( CategoryOptionGroupSet cogs : cogsDimensionConstraints )
+        {
+            cogs.setDimensionType( DimensionType.CATEGORYOPTION_GROUPSET );
+            constraints.add( cogs );
+        }
+
+        for ( DataElementCategory cat : catDimensionConstraints )
+        {
+            cat.setDimensionType( DimensionType.CATEGORY );
+            constraints.add( cat );
+        }
+
+        return constraints;
+    }
+
+    /**
+     * Indicates whether this user has dimension constraints.
+     */
+    public boolean hasDimensionConstraints()
+    {
+        Set<DimensionalObject> constraints = getDimensionConstraints();
+        return constraints != null && !constraints.isEmpty();
+    }
+
     // -------------------------------------------------------------------------
     // hashCode and equals
     // -------------------------------------------------------------------------
@@ -352,50 +440,46 @@ public class UserCredentials
     }
 
     @Override
-    public String toString()
+    public boolean haveUniqueNames()
     {
-        return "[" + username + "]";
+        return false;
     }
 
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
 
-    public int getId()
-    {
-        return id;
-    }
-
-    public void setId( int id )
-    {
-        this.id = id;
-    }
-
+    @JsonIgnore
     public String getPassword()
     {
         return password;
     }
 
+    @JsonProperty
+    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
     public void setPassword( String password )
     {
         this.password = password;
     }
 
-    public User getUser()
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Date getPasswordLastUpdated()
     {
-        return user;
+        return passwordLastUpdated;
     }
 
-    public void setUser( User user )
+    public void setPasswordLastUpdated( Date passwordLastUpdated )
     {
-        this.user = user;
+        this.passwordLastUpdated = passwordLastUpdated;
     }
 
     @JsonProperty
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlElementWrapper( localName = "userAuthorityGroups", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty( localName = "userAuthorityGroup", namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "userAuthorityGroups", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "userAuthorityGroup", namespace = DxfNamespaces.DXF_2_0 )
     public Set<UserAuthorityGroup> getUserAuthorityGroups()
     {
         return userAuthorityGroups;
@@ -407,8 +491,38 @@ public class UserCredentials
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "catDimensionConstraints", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "catDimensionConstraint", namespace = DxfNamespaces.DXF_2_0 )
+    public Set<DataElementCategory> getCatDimensionConstraints()
+    {
+        return catDimensionConstraints;
+    }
+
+    public void setCatDimensionConstraints( Set<DataElementCategory> catDimensionConstraints )
+    {
+        this.catDimensionConstraints = catDimensionConstraints;
+    }
+
+    @JsonProperty
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "cogsDimensionConstraints", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "cogsDimensionConstraint", namespace = DxfNamespaces.DXF_2_0 )
+    public Set<CategoryOptionGroupSet> getCogsDimensionConstraints()
+    {
+        return cogsDimensionConstraints;
+    }
+
+    public void setCogsDimensionConstraints( Set<CategoryOptionGroupSet> cogsDimensionConstraints )
+    {
+        this.cogsDimensionConstraints = cogsDimensionConstraints;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getUsername()
     {
         return username;
@@ -420,8 +534,21 @@ public class UserCredentials
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public String getOpenId()
+    {
+        return openId;
+    }
+
+    public void setOpenId( String openId )
+    {
+        this.openId = openId;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Date getLastLogin()
     {
         return lastLogin;
@@ -463,8 +590,8 @@ public class UserCredentials
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isSelfRegistered()
     {
         return selfRegistered;
@@ -476,8 +603,8 @@ public class UserCredentials
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isDisabled()
     {
         return disabled;
@@ -488,13 +615,46 @@ public class UserCredentials
         this.disabled = disabled;
     }
 
-    public Date getCreated()
+    @Override
+    public void mergeWith( IdentifiableObject other )
     {
-        return created;
+        super.mergeWith( other );
+
+        if ( other.getClass().isInstance( this ) )
+        {
+            UserCredentials userCredentials = (UserCredentials) other;
+
+            openId = userCredentials.getOpenId();
+            disabled = userCredentials.isDisabled();
+            selfRegistered = userCredentials.isSelfRegistered();
+            password = StringUtils.isEmpty( userCredentials.getPassword() ) ? password : userCredentials.getPassword();
+
+            catDimensionConstraints.clear();
+            catDimensionConstraints.addAll( userCredentials.getCatDimensionConstraints() );
+
+            cogsDimensionConstraints.clear();
+            cogsDimensionConstraints.addAll( userCredentials.getCogsDimensionConstraints() );
+
+            userAuthorityGroups.clear();
+            userAuthorityGroups.addAll( userCredentials.getUserAuthorityGroups() );
+        }
     }
 
-    public void setCreated( Date created )
+    @Override
+    public String toString()
     {
-        this.created = created;
+        return "UserCredentials{" +
+            "username='" + username + '\'' +
+            ", openId='" + openId + '\'' +
+            ", password='" + password + '\'' +
+            ", passwordLastUpdated=" + passwordLastUpdated +
+            ", userAuthorityGroups=" + userAuthorityGroups +
+            ", lastLogin=" + lastLogin +
+            ", restoreToken='" + restoreToken + '\'' +
+            ", restoreCode='" + restoreCode + '\'' +
+            ", restoreExpiry=" + restoreExpiry +
+            ", selfRegistered=" + selfRegistered +
+            ", disabled=" + disabled +
+            '}';
     }
 }

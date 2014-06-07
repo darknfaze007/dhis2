@@ -1,19 +1,20 @@
 package org.hisp.dhis.organisationunit;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,17 +34,21 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
 import org.apache.commons.lang.StringUtils;
 import org.hisp.dhis.attribute.AttributeValue;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.BaseNameableObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.IdentifiableObject;
+import org.hisp.dhis.common.adapter.JacksonOrganisationUnitChildrenSerializer;
 import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
+import org.hisp.dhis.common.view.UuidView;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataset.DataSet;
+import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.user.User;
 
 import java.util.ArrayList;
@@ -51,8 +56,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -75,6 +82,7 @@ public class OrganisationUnit
 
     public static final String KEY_USER_ORGUNIT = "USER_ORGUNIT";
     public static final String KEY_USER_ORGUNIT_CHILDREN = "USER_ORGUNIT_CHILDREN";
+    public static final String KEY_USER_ORGUNIT_GRANDCHILDREN = "USER_ORGUNIT_GRANDCHILDREN";
     public static final String KEY_LEVEL = "LEVEL-";
     public static final String KEY_ORGUNIT_GROUP = "OU_GROUP-";
 
@@ -98,8 +106,6 @@ public class OrganisationUnit
     private boolean active;
 
     private String comment;
-
-    private String geoCode;
 
     private String featureType;
 
@@ -150,6 +156,7 @@ public class OrganisationUnit
     public OrganisationUnit()
     {
         this.uuid = UUID.randomUUID().toString();
+        setAutoFields();
     }
 
     public OrganisationUnit( String name )
@@ -307,9 +314,26 @@ public class OrganisationUnit
         return grandChildren;
     }
 
+    public List<OrganisationUnit> getSortedGrandChildren()
+    {
+        List<OrganisationUnit> grandChildren = new ArrayList<OrganisationUnit>();
+
+        for ( OrganisationUnit child : getSortedChildren() )
+        {
+            grandChildren.addAll( child.getSortedChildren() );
+        }
+
+        return grandChildren;
+    }
+
     public boolean hasChild()
     {
         return !this.children.isEmpty();
+    }
+    
+    public boolean isLeaf()
+    {
+        return children == null || children.isEmpty();
     }
 
     public boolean hasChildrenWithCoordinates()
@@ -322,6 +346,41 @@ public class OrganisationUnit
             }
         }
 
+        return false;
+    }
+
+    public boolean isEqualOrChildOf( Set<OrganisationUnit> ancestors )
+    {
+        if ( ancestors == null || ancestors.isEmpty() )
+        {
+            return false;
+        }
+        
+        OrganisationUnit unit = this;
+
+        while ( unit != null )
+        {
+            if ( ancestors.contains( unit ) )
+            {
+                return true;
+            }
+            
+            unit = unit.getParent();
+        }
+        
+        return false;        
+    }
+
+    public boolean hasCoordinatesUp()
+    {
+        if ( parent != null )
+        {
+            if ( parent.getParent() != null )
+            {
+                return parent.getParent().hasChildrenWithCoordinates();
+            }
+        }
+        
         return false;
     }
 
@@ -488,7 +547,7 @@ public class OrganisationUnit
         Collections.reverse( units );
         return units;
     }
-
+    
     public Set<DataElement> getDataElementsInDataSets()
     {
         Set<DataElement> dataElements = new HashSet<DataElement>();
@@ -499,6 +558,26 @@ public class OrganisationUnit
         }
 
         return dataElements;
+    }
+
+    public Map<PeriodType, Set<DataElement>> getDataElementsInDataSetsByPeriodType()
+    {
+    	Map<PeriodType,Set<DataElement>> map = new HashMap<PeriodType,Set<DataElement>>();
+    	
+        for ( DataSet dataSet : dataSets )
+        {
+            Set<DataElement> dataElements = map.get( dataSet.getPeriodType() );
+            
+            if ( dataElements == null )
+            {
+                dataElements = new HashSet<DataElement>();
+                map.put( dataSet.getPeriodType(), dataElements );
+            }
+            
+            dataElements.addAll( dataSet.getDataElements() );
+        }
+        
+        return map;
     }
 
     public void updateParent( OrganisationUnit newParent )
@@ -545,7 +624,7 @@ public class OrganisationUnit
         }
 
         this.level = currentLevel;
-        
+
         return currentLevel;
     }
 
@@ -573,6 +652,25 @@ public class OrganisationUnit
         return builder.toString();
     }
 
+    public String getParentNameGraph( boolean includeThis )
+    {
+        StringBuilder builder = new StringBuilder();
+
+        List<OrganisationUnit> ancestors = getAncestors();
+
+        for ( OrganisationUnit unit : ancestors )
+        {
+            builder.append( "/" ).append( unit.getName() );
+        }
+
+        if ( includeThis )
+        {
+            builder.append( "/" ).append( name );
+        }
+        
+        return builder.toString();
+    }
+
     public Set<DataSet> getAllDataSets()
     {
         Set<DataSet> allDataSets = new HashSet<DataSet>( dataSets );
@@ -585,43 +683,62 @@ public class OrganisationUnit
         return allDataSets;
     }
 
-    // -------------------------------------------------------------------------
-    // hashCode, equals and toString
-    // -------------------------------------------------------------------------
-
-    @Override
-    public boolean equals( Object o )
+    /**
+     * Returns a mapping between the uid and the uid parent graph of the given
+     * organisation units.
+     */
+    public static Map<String, String> getParentGraphMap( List<OrganisationUnit> organisationUnits )
     {
-        if ( this == o )
+        Map<String, String> map = new HashMap<String, String>();
+        
+        if ( organisationUnits != null )
         {
-            return true;
+            for ( OrganisationUnit unit : organisationUnits )
+            {
+                map.put( unit.getUid(), unit.getParentGraph() );
+            }
         }
-
-        if ( o == null )
-        {
-            return false;
-        }
-
-        if ( !(o instanceof OrganisationUnit) )
-        {
-            return false;
-        }
-
-        final OrganisationUnit other = (OrganisationUnit) o;
-
-        return name.equals( other.getName() );
+        
+        return map;
     }
 
-    // -------------------------------------------------------------------------
-    // Getters and setters
-    // -------------------------------------------------------------------------
+    /**
+     * Returns a mapping between the uid and the uid parent graph of the given
+     * organisation units.
+     */
+    public static Map<String, String> getParentNameGraphMap( List<OrganisationUnit> organisationUnits, boolean includeThis )
+    {
+        Map<String, String> map = new HashMap<String, String>();
+        
+        if ( organisationUnits != null )
+        {
+            for ( OrganisationUnit unit : organisationUnits )
+            {
+                map.put( unit.getName(), unit.getParentNameGraph( includeThis ) );
+            }
+        }
+        
+        return map;
+    }
 
+    public boolean hasLevel()
+    {
+        return level > 0;
+    }
+    
     @Override
     public boolean haveUniqueNames()
     {
         return false;
     }
 
+    // -------------------------------------------------------------------------
+    // Getters and setters
+    // -------------------------------------------------------------------------
+
+    @JsonProperty
+    @JsonView( UuidView.class )
+    @JacksonXmlProperty( isAttribute = true, namespace = DxfNamespaces.DXF_2_0 )
     public String getUuid()
     {
         return uuid;
@@ -647,7 +764,7 @@ public class OrganisationUnit
     }
 
     @JsonProperty
-    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonSerialize( contentUsing = JacksonOrganisationUnitChildrenSerializer.class)
     @JsonView( { DetailedView.class } )
     @JacksonXmlElementWrapper( localName = "children", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "child", namespace = DxfNamespaces.DXF_2_0 )
@@ -720,19 +837,6 @@ public class OrganisationUnit
     public void setComment( String comment )
     {
         this.comment = comment;
-    }
-
-    @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
-    public String getGeoCode()
-    {
-        return geoCode;
-    }
-
-    public void setGeoCode( String geoCode )
-    {
-        this.geoCode = geoCode;
     }
 
     @JsonProperty
@@ -873,7 +977,7 @@ public class OrganisationUnit
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class } )
     @JacksonXmlElementWrapper( localName = "users", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "user", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "userItem", namespace = DxfNamespaces.DXF_2_0 )
     public Set<User> getUsers()
     {
         return users;
@@ -884,10 +988,10 @@ public class OrganisationUnit
         this.users = users;
     }
 
-    @JsonProperty( value = "attributes" )
+    @JsonProperty( value = "attributeValues" )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "attributes", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "attribute", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlElementWrapper( localName = "attributeValues", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( localName = "attributeValue", namespace = DxfNamespaces.DXF_2_0)
     public Set<AttributeValue> getAttributeValues()
     {
         return attributeValues;
@@ -955,7 +1059,6 @@ public class OrganisationUnit
             closedDate = organisationUnit.getClosedDate() == null ? closedDate : organisationUnit.getClosedDate();
             active = organisationUnit.isActive();
             comment = organisationUnit.getComment() == null ? comment : organisationUnit.getComment();
-            geoCode = organisationUnit.getGeoCode() == null ? geoCode : organisationUnit.getGeoCode();
             featureType = organisationUnit.getFeatureType() == null ? featureType : organisationUnit.getFeatureType();
             coordinates = organisationUnit.getCoordinates() == null ? coordinates : organisationUnit.getCoordinates();
             url = organisationUnit.getUrl() == null ? url : organisationUnit.getUrl();

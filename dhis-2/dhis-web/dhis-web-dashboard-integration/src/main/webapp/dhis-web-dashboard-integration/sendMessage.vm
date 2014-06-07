@@ -46,6 +46,8 @@ jQuery(function() {
 #organisationUnitSelectionTree( true true false )
 </td>
 </tr>
+#else
+<input type="hidden" name="ignoreTree" value="true">
 #end
 
 <tr>
@@ -63,7 +65,7 @@ jQuery(function() {
 </tr>
 
 <tr>
-<td>label>$i18n.getString( "text" )</label></td>
+<td><label>$i18n.getString( "text" )</label></td>
 <td><textarea id="text" name="text" style="width:619px; height:220px;"></textarea></td>
 </tr>
 

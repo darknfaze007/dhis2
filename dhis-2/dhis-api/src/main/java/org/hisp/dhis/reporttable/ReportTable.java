@@ -1,19 +1,20 @@
 package org.hisp.dhis.reporttable;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -88,6 +89,10 @@ public class ReportTable
 
     public static final String TOTAL_COLUMN_NAME = "total";
     public static final String TOTAL_COLUMN_PRETTY_NAME = "Total";
+    
+    public static final String AGGREGATION_TYPE_DEFAULT = "default";
+    public static final String AGGREGATION_TYPE_COUNT = "count";
+    public static final String AGGREGATION_TYPE_SUM = "sum";
 
     public static final String DISPLAY_DENSITY_COMFORTABLE = "comfortable";
     public static final String DISPLAY_DENSITY_NORMAL = "normal";
@@ -96,14 +101,6 @@ public class ReportTable
     public static final String FONT_SIZE_LARGE = "large";
     public static final String FONT_SIZE_NORMAL = "normal";
     public static final String FONT_SIZE_SMALL = "small";
-
-    public static final String NUMBER_FORMATTING_COMMA = "comma";
-    public static final String NUMBER_FORMATTING_SPACE = "space";
-    public static final String NUMBER_FORMATTING_NONE = "none";
-    
-    public static final int ASC = -1;
-    public static final int DESC = 1;
-    public static final int NONE = 0;
 
     public static final NameableObject[] IRT = new NameableObject[0];
     public static final NameableObject[][] IRT2D = new NameableObject[0][];
@@ -154,19 +151,14 @@ public class ReportTable
     private ReportParams reportParams;
 
     /**
-     * The sort order based on the last column of the table, 0 if none. 
+     * Indicates rendering of sub-totals for the table.
      */
-    private int sortOrder;
-
-    /**
-     * Indicates whether the table should be limited from top, 0 if none.
-     */
-    private int topLimit;
+    private boolean rowTotals;
 
     /**
      * Indicates rendering of sub-totals for the table.
      */
-    private boolean totals;
+    private boolean colTotals;
 
     /**
      * Indicates rendering of sub-totals for the table.
@@ -177,11 +169,6 @@ public class ReportTable
      * Indicates rendering of empty rows for the table.
      */
     private boolean hideEmptyRows;
-    
-    /**
-     * Indicates rendering of number formatting for the table.
-     */
-    private String digitGroupSeparator;
     
     /**
      * The display density of the text in the table.
@@ -197,6 +184,16 @@ public class ReportTable
      * The legend set in the table.
      */
     private MapLegendSet legendSet;
+    
+    /**
+     * Indicates showing organisation unit hierarchy names.
+     */
+    private boolean showHierarchy;
+    
+    /**
+     * Indicates the aggregation type.
+     */
+    private String aggregationType;
     
     // -------------------------------------------------------------------------
     // Transient properties
@@ -300,7 +297,8 @@ public class ReportTable
     // -------------------------------------------------------------------------
 
     @Override
-    public void init( User user, Date date, OrganisationUnit organisationUnit, List<OrganisationUnit> organisationUnitsAtLevel, I18nFormat format )
+    public void init( User user, Date date, OrganisationUnit organisationUnit, 
+        List<OrganisationUnit> organisationUnitsAtLevel, List<OrganisationUnit> organisationUnitsInGroups, I18nFormat format )
     {
         verify( ( periods != null && !periods.isEmpty() ) || hasRelativePeriods(), "Must contain periods or relative periods" );
 
@@ -337,14 +335,15 @@ public class ReportTable
         
         // Populate grid
         
-        this.populateGridColumnsAndRows( date, user, organisationUnitsAtLevel, format );
+        this.populateGridColumnsAndRows( date, user, organisationUnitsAtLevel, organisationUnitsInGroups, format );
     }
     
     // -------------------------------------------------------------------------
     // Public methods
     // -------------------------------------------------------------------------
     
-    public void populateGridColumnsAndRows( Date date, User user, List<OrganisationUnit> organisationUnitsAtLevel, I18nFormat format )
+    public void populateGridColumnsAndRows( Date date, User user, 
+        List<OrganisationUnit> organisationUnitsAtLevel, List<OrganisationUnit> organisationUnitsInGroups, I18nFormat format )
     {
         List<NameableObject[]> tableColumns = new ArrayList<NameableObject[]>();
         List<NameableObject[]> tableRows = new ArrayList<NameableObject[]>();
@@ -352,17 +351,17 @@ public class ReportTable
         
         for ( String dimension : columnDimensions )
         {
-            tableColumns.add( getDimensionalObject( dimension, date, user, false, organisationUnitsAtLevel, format ).getItems().toArray( IRT ) );
+            tableColumns.add( getDimensionalObject( dimension, date, user, false, organisationUnitsAtLevel, organisationUnitsInGroups, format ).getItems().toArray( IRT ) );
         }
         
         for ( String dimension : rowDimensions )
         {
-            tableRows.add( getDimensionalObject( dimension, date, user, true, organisationUnitsAtLevel, format ).getItems().toArray( IRT ) );
+            tableRows.add( getDimensionalObject( dimension, date, user, true, organisationUnitsAtLevel, organisationUnitsInGroups, format ).getItems().toArray( IRT ) );
         }
         
         for ( String filter : filterDimensions )
         {
-            filterItems.addAll( getDimensionalObject( filter, date, user, true, organisationUnitsAtLevel, format ).getItems() );
+            filterItems.addAll( getDimensionalObject( filter, date, user, true, organisationUnitsAtLevel, organisationUnitsInGroups, format ).getItems() );
         }
 
         gridColumns = new CombinationGenerator<NameableObject>( tableColumns.toArray( IRT2D ) ).getCombinations();
@@ -565,6 +564,7 @@ public class ReportTable
      * @param paramColumns whether to include report parameter columns.
      * @return a grid.
      */
+    @SuppressWarnings("unchecked")
     public Grid getGrid( Grid grid, Map<String, Double> valueMap, boolean paramColumns )
     {
         valueMap = new HashMap<String, Double>( valueMap );
@@ -589,9 +589,12 @@ public class ReportTable
         // Headers
         // ---------------------------------------------------------------------
 
+        Map<String, String> metaData = getMetaData();
+        metaData.putAll( DimensionalObject.PRETTY_NAMES );
+        
         for ( String row : rowDimensions )
         {
-            String name = StringUtils.defaultIfEmpty( DimensionalObject.PRETTY_NAMES.get( row ), row );            
+            String name = StringUtils.defaultIfEmpty( metaData.get( row ), row );            
             String col = StringUtils.defaultIfEmpty( COLUMN_NAMES.get( row ), row );
             
             grid.addHeader( new GridHeader( name + " ID", col + "id", String.class.getName(), true, true ) );
@@ -650,13 +653,22 @@ public class ReportTable
             // Row data values
             // -----------------------------------------------------------------
 
+            boolean hasValue = false;
+            
             for ( List<NameableObject> column : gridColumns )
             {
-                String key = getIdentifer( column, row );
+                String key = getIdentifier( column, row );
                 
                 Double value = valueMap.get( key );
                 
                 grid.addValue( value );
+                
+                hasValue = !hasValue ? value != null : true;
+            }
+            
+            if ( hideEmptyRows && !hasValue )
+            {
+                grid.removeCurrentWriteRow();
             }
         }
 
@@ -674,7 +686,7 @@ public class ReportTable
         // Sort and limit
         // ---------------------------------------------------------------------
 
-        if ( sortOrder != ReportTable.NONE )
+        if ( sortOrder != BaseAnalyticalObject.NONE )
         {
             grid.sortGrid( grid.getWidth(), sortOrder );
         }
@@ -682,6 +694,17 @@ public class ReportTable
         if ( topLimit > 0 )
         {
             grid.limitGrid( topLimit );
+        }
+
+        // ---------------------------------------------------------------------
+        // Show hierarchy option
+        // ---------------------------------------------------------------------
+
+        if ( showHierarchy && rowDimensions.indexOf( ORGUNIT_DIM_ID ) != -1 && grid.hasMetaDataKey( "ouNameHierarchy" ) )
+        {
+            int ouNameIndex = ( rowDimensions.indexOf( ORGUNIT_DIM_ID ) * 4 ) + 1; // Ou name position            
+            Map<Object, Object> hierarchyNameMap = (Map<Object, Object>) grid.getMetaData().get( "ouNameHierarchy" );
+            grid.substituteMetaData( ouNameIndex, hierarchyNameMap );
         }
 
         return grid;
@@ -853,14 +876,27 @@ public class ReportTable
     @JsonProperty
     @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
-    public boolean isTotals()
+    public boolean isRowTotals()
     {
-        return totals;
+        return rowTotals;
     }
 
-    public void setTotals( boolean totals )
+    public void setRowTotals( boolean rowTotals )
     {
-        this.totals = totals;
+        this.rowTotals = rowTotals;
+    }
+
+    @JsonProperty
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    public boolean isColTotals()
+    {
+        return colTotals;
+    }
+
+    public void setColTotals( boolean colTotals )
+    {
+        this.colTotals = colTotals;
     }
 
     @JsonProperty
@@ -892,14 +928,14 @@ public class ReportTable
     @JsonProperty
     @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
-    public String getDigitGroupSeparator()
+    public String getAggregationType()
     {
-        return digitGroupSeparator;
+        return aggregationType;
     }
 
-    public void setDigitGroupSeparator( String digitGroupSeparator )
+    public void setAggregationType( String aggregationType )
     {
-        this.digitGroupSeparator = digitGroupSeparator;
+        this.aggregationType = aggregationType;
     }
 
     @JsonProperty
@@ -939,6 +975,19 @@ public class ReportTable
     public void setLegendSet( MapLegendSet legendSet )
     {
         this.legendSet = legendSet;
+    }
+
+    @JsonProperty
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    public boolean isShowHierarchy()
+    {
+        return showHierarchy;
+    }
+
+    public void setShowHierarchy( boolean showHierarchy )
+    {
+        this.showHierarchy = showHierarchy;
     }
 
     // -------------------------------------------------------------------------
@@ -1004,10 +1053,12 @@ public class ReportTable
             reportParams = reportTable.getReportParams() == null ? reportParams : reportTable.getReportParams();
             sortOrder = reportTable.getSortOrder();
             topLimit = reportTable.getTopLimit();
-            totals = reportTable.isTotals();
+            rowTotals = reportTable.isRowTotals();
+            colTotals = reportTable.isColTotals();
             subtotals = reportTable.isSubtotals();
             hideEmptyRows = reportTable.isHideEmptyRows();
-            digitGroupSeparator = reportTable.getDigitGroupSeparator();
+            showHierarchy = reportTable.isShowHierarchy();
+            aggregationType = reportTable.getAggregationType();
             displayDensity = reportTable.getDisplayDensity();
             fontSize = reportTable.getFontSize();
             legendSet = reportTable.getLegendSet();

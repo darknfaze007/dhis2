@@ -1,19 +1,20 @@
 package org.hisp.dhis.option;
 
 /*
- * Copyright (c) 2004-2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -46,13 +47,18 @@ import java.util.regex.Pattern;
 /**
  * @author Lars Helge Overland
  */
-@JacksonXmlRootElement( localName = "optionSet", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement( localName = "optionSet", namespace = DxfNamespaces.DXF_2_0 )
 public class OptionSet
     extends BaseIdentifiableObject
 {
     private static final Pattern OPTION_PATTERN = Pattern.compile( "\\[(.*)\\]" );
 
-    private List<String> options = new ArrayList<String>();
+    private List<String> options = new ArrayList<>();
+
+    /**
+     * Indicating version number.
+     */
+    private Integer version = 1;
 
     public OptionSet()
     {
@@ -63,38 +69,15 @@ public class OptionSet
         this.name = name;
     }
 
-    @Override
-    public boolean equals( Object o )
-    {
-        if ( this == o )
-        {
-            return true;
-        }
-
-        if ( o == null )
-        {
-            return false;
-        }
-
-        if ( !(o instanceof OptionSet) )
-        {
-            return false;
-        }
-
-        final OptionSet other = (OptionSet) o;
-
-        return name.equals( other.getName() );
-    }
-
     public void removeAllOptions()
     {
         options.clear();
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlElementWrapper( localName = "options", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty( localName = "option", namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "options", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "option", namespace = DxfNamespaces.DXF_2_0 )
     public List<String> getOptions()
     {
         return options;
@@ -103,6 +86,18 @@ public class OptionSet
     public void setOptions( List<String> options )
     {
         this.options = options;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( localName = "version", namespace = DxfNamespaces.DXF_2_0 )
+    public Integer getVersion()
+    {
+        return version;
+    }
+
+    public void setVersion( Integer version )
+    {
+        this.version = version;
     }
 
     public static String optionEncode( String option )

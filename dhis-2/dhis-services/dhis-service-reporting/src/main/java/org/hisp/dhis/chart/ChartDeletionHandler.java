@@ -1,19 +1,20 @@
 package org.hisp.dhis.chart;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,17 +28,11 @@ package org.hisp.dhis.chart;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.Iterator;
-
 import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
-import org.hisp.dhis.period.Period;
 import org.hisp.dhis.system.deletion.DeletionHandler;
-import org.hisp.dhis.user.User;
 
 /**
  * @author Lars Helge Overland
@@ -68,101 +63,26 @@ public class ChartDeletionHandler
     }
 
     @Override
-    public String allowDeletePeriod( Period period )
+    public String allowDeleteDataSet( DataSet dataSet )
     {
-        for ( Chart chart : chartService.getAllCharts() )
-        {
-            if ( chart.getPeriods().contains( period ) )
-            {
-                return chart.getName();
-            }
-        }
-        
-        return null;
+        return chartService.countDataSetCharts( dataSet ) == 0 ? null : ERROR;
     }
 
     @Override
-    public void deleteIndicator( Indicator indicator )
+    public String allowDeleteIndicator( Indicator indicator )
     {
-        for ( Chart chart : chartService.getAllCharts() )
-        {
-            if ( chart.getIndicators().remove( indicator ) )
-            {
-                chartService.updateChart( chart );
-            }
-        }
+        return chartService.countIndicatorCharts( indicator ) == 0 ? null : ERROR;
     }
 
     @Override
-    public void deleteDataElement( DataElement dataElement )
+    public String allowDeleteDataElement( DataElement dataElement )
     {
-        for ( Chart chart : chartService.getAllCharts() )
-        {
-            if ( chart.getDataElements().remove( chart ) )
-            {
-                chartService.updateChart( chart );
-            }
-        }
-    }
-
-    @Override
-    public void deleteDataSet( DataSet dataSet )
-    {
-        for ( Chart chart : chartService.getAllCharts() )
-        {
-            if ( chart.getDataSets().remove( chart ) )
-            {
-                chartService.updateChart( chart );
-            }
-        }
+        return chartService.countDataElementCharts( dataElement ) == 0 ? null : ERROR;
     }
     
     @Override
-    public void deleteOrganisationUnit( OrganisationUnit unit )
+    public String allowDeleteOrganisationUnit( OrganisationUnit organisationUnit )
     {
-        for ( Chart chart : chartService.getAllCharts() )
-        {
-            if ( chart.getOrganisationUnits().remove( unit ) )
-            {
-                chartService.updateChart( chart );
-            }
-        }
-    }
-    
-    @Override
-    public void deleteUser( User user )
-    {
-        Iterator<Chart> iterator = chartService.getChartsByUser( user ).iterator();
-        
-        while ( iterator.hasNext() )
-        {
-            Chart chart = iterator.next();
-            iterator.remove();
-            chartService.deleteChart( chart );
-        }
-    }
-
-    @Override
-    public void deleteDataElementGroup( DataElementGroup group )
-    {
-        for ( Chart chart : chartService.getAllCharts() )
-        {
-            if ( chart.getDataElementGroups().remove( group ) )
-            {
-                chartService.updateChart( chart );
-            }
-        }
-    }
-    
-    @Override
-    public void deleteOrganisationUnitGroup( OrganisationUnitGroup group )
-    {
-        for ( Chart chart : chartService.getAllCharts() )
-        {
-            if ( chart.getOrganisationUnitGroups().remove( group ) )
-            {
-                chartService.updateChart( chart );
-            }
-        }
+        return chartService.countOrganisationUnitCharts( organisationUnit ) == 0 ? null : ERROR;
     }
 }

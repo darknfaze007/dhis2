@@ -1,19 +1,20 @@
 package org.hisp.dhis.datavalue;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -44,7 +45,7 @@ public class DataValueAudit
 
     private String storedBy;
 
-    private Date timeStamp;
+    private Date timestamp;
 
     private String comment;
 
@@ -56,12 +57,12 @@ public class DataValueAudit
 
     }
 
-    public DataValueAudit( DataValue dataValue, String value, String storedBy, Date timeStamp, String comment )
+    public DataValueAudit( DataValue dataValue, String value, String storedBy, Date timestamp, String comment )
     {
         this.dataValue = dataValue;
         this.value = value;
         this.storedBy = storedBy;
-        this.timeStamp = timeStamp;
+        this.timestamp = timestamp;
         this.comment = comment;
     }
 
@@ -109,14 +110,14 @@ public class DataValueAudit
         this.storedBy = storedBy;
     }
 
-    public Date getTimeStamp()
+    public Date getTimestamp()
     {
-        return timeStamp;
+        return timestamp;
     }
 
-    public void setTimeStamp( Date timeStamp )
+    public void setTimestamp( Date timeStamp )
     {
-        this.timeStamp = timeStamp;
+        this.timestamp = timeStamp;
     }
 
     public String getComment()
@@ -128,5 +129,4 @@ public class DataValueAudit
     {
         this.comment = comment;
     }
-
 }

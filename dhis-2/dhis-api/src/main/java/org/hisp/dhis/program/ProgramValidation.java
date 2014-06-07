@@ -1,17 +1,20 @@
+package org.hisp.dhis.program;
+
 /*
- * Copyright (c) 2004-2010, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,53 +28,37 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.program;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.hisp.dhis.common.BaseIdentifiableObject;
+import org.hisp.dhis.common.DxfNamespaces;
+import org.hisp.dhis.common.IdentifiableObject;
+import org.hisp.dhis.common.view.DetailedView;
+import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.expression.Operator;
 
 /**
  * @author Chau Thu Tran
- * @version $ ProgramValidation.java Apr 28, 2011 10:27:29 AM $
  */
+@JacksonXmlRootElement( localName = "programValidation", namespace = DxfNamespaces.DXF_2_0 )
 public class ProgramValidation
     extends BaseIdentifiableObject
 {
+    public static final String SEPARATOR_OBJECT = ":";
     /**
      * Determines if a de-serialized file is compatible with this class.
      */
     private static final long serialVersionUID = 4785165717118297802L;
 
-    public static final String SEPARATOR_ID = "\\.";
-
-    public static final String SEPARATOR_OBJECT = ":";
-
     public static String OBJECT_PROGRAM_STAGE_DATAELEMENT = "DE";
-
-    public static final int BEFORE_CURRENT_DATE = 1;
-
-    public static final int BEFORE_OR_EQUALS_TO_CURRENT_DATE = 2;
-
-    public static final int AFTER_CURRENT_DATE = 3;
-
-    public static final int AFTER_OR_EQUALS_TO_CURRENT_DATE = 4;
-
-    public static final int BEFORE_DUE_DATE = -1;
-
-    public static final int BEFORE_OR_EQUALS_TO_DUE_DATE = -2;
-
-    public static final int AFTER_DUE_DATE = -3;
-
-    public static final int AFTER_OR_EQUALS_TO_DUE_DATE = -4;
-
-    public static final int BEFORE_DUE_DATE_PLUS_OR_MINUS_MAX_DAYS = -5;
-
-    public static final String NOT_NULL_VALUE_IN_EXPRESSION = "{NOT-NULL-VALUE}";
 
     // -------------------------------------------------------------------------
     // Fields
     // -------------------------------------------------------------------------
-    
+
     private ProgramExpression leftSide;
 
     private Operator operator;
@@ -99,83 +86,12 @@ public class ProgramValidation
     }
 
     // -------------------------------------------------------------------------
-    // hashCode() and equals()
-    // -------------------------------------------------------------------------
-
-    @Override
-    public int hashCode()
-    {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((leftSide == null) ? 0 : leftSide.hashCode());
-        result = prime * result + ((program == null) ? 0 : program.hashCode());
-        result = prime * result + ((rightSide == null) ? 0 : rightSide.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals( Object obj )
-    {
-        if ( this == obj )
-        {
-            return true;
-        }
-
-        if ( obj == null )
-        {
-            return false;
-        }
-
-        if ( getClass() != obj.getClass() )
-        {
-            return false;
-        }
-
-        ProgramValidation other = (ProgramValidation) obj;
-
-        if ( leftSide == null )
-        {
-            if ( other.leftSide != null )
-            {
-                return false;
-            }
-        }
-        else if ( !leftSide.equals( other.leftSide ) )
-        {
-            return false;
-        }
-
-        if ( program == null )
-        {
-            if ( other.program != null )
-            {
-                return false;
-            }
-        }
-        else if ( !program.equals( other.program ) )
-        {
-            return false;
-        }
-
-        if ( rightSide == null )
-        {
-            if ( other.rightSide != null )
-            {
-                return false;
-            }
-        }
-        else if ( !rightSide.equals( other.rightSide ) )
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    // -------------------------------------------------------------------------
     // Getters && Setters
     // -------------------------------------------------------------------------
-    
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public ProgramExpression getLeftSide()
     {
         return leftSide;
@@ -186,6 +102,9 @@ public class ProgramValidation
         this.leftSide = leftSide;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public ProgramExpression getRightSide()
     {
         return rightSide;
@@ -196,6 +115,10 @@ public class ProgramValidation
         this.rightSide = rightSide;
     }
 
+    @JsonProperty
+    @JsonSerialize( as = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Program getProgram()
     {
         return program;
@@ -206,6 +129,9 @@ public class ProgramValidation
         this.program = program;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Operator getOperator()
     {
         return operator;
@@ -214,5 +140,21 @@ public class ProgramValidation
     public void setOperator( Operator operator )
     {
         this.operator = operator;
+    }
+
+    @Override
+    public void mergeWith( IdentifiableObject other )
+    {
+        super.mergeWith( other );
+
+        if ( other.getClass().isInstance( this ) )
+        {
+            ProgramValidation programValidation = (ProgramValidation) other;
+
+            leftSide = programValidation.getLeftSide();
+            operator = programValidation.getOperator();
+            rightSide = programValidation.getRightSide();
+            program = programValidation.getProgram();
+        }
     }
 }

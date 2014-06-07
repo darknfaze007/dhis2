@@ -1,17 +1,20 @@
+package org.hisp.dhis.program;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,7 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.program;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -35,11 +37,13 @@ import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patientcomment.PatientComment;
+import org.hisp.dhis.message.MessageConversation;
 import org.hisp.dhis.sms.outbound.OutboundSms;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentitycomment.TrackedEntityComment;
+import org.springframework.util.Assert;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -47,44 +51,36 @@ import java.util.Set;
 
 /**
  * @author Abyot Asalefew
- * @version $Id$
  */
 @JacksonXmlRootElement( localName = "programInstance", namespace = DxfNamespaces.DXF_2_0 )
 public class ProgramInstance
-    implements Serializable
+    extends BaseIdentifiableObject
 {
-    public static int STATUS_ACTIVE = 0;
-
-    public static int STATUS_COMPLETED = 1;
-
-    public static int STATUS_CANCELLED = 2;
-
     /**
      * Determines if a de-serialized file is compatible with this class.
      */
     private static final long serialVersionUID = -1235315582356509653L;
-
-    private int id;
-
-    private Date dateOfIncident;
-
-    private Date enrollmentDate;
-
-    private Date endDate;
-
+    public static int STATUS_ACTIVE = 0;
     private Integer status = STATUS_ACTIVE;
-
-    private Patient patient;
+    public static int STATUS_COMPLETED = 1;
+    public static int STATUS_CANCELLED = 2;
+    private int id;
+    private Date dateOfIncident; //TODO rename to incidenceDate
+    private Date enrollmentDate;
+    private Date endDate;
+    private TrackedEntityInstance entityInstance;
 
     private Program program;
 
     private Set<ProgramStageInstance> programStageInstances = new HashSet<ProgramStageInstance>();
 
-    private List<OutboundSms> outboundSms;
+    private List<OutboundSms> outboundSms = new ArrayList<OutboundSms>();
 
-    private Boolean followup;
+    private List<MessageConversation> messageConversations = new ArrayList<MessageConversation>();
 
-    private PatientComment patientComment;
+    private Boolean followup = false;
+
+    private TrackedEntityComment comment;
 
     // -------------------------------------------------------------------------
     // Constructors
@@ -94,59 +90,116 @@ public class ProgramInstance
     {
     }
 
-    public ProgramInstance( Date enrollmentDate, Date endDate, Patient patient, Program program )
+    public ProgramInstance( Date enrollmentDate, Date dateOfIncident, TrackedEntityInstance entityInstance,
+        Program program )
     {
         this.enrollmentDate = enrollmentDate;
-        this.endDate = endDate;
-        this.patient = patient;
+        this.dateOfIncident = dateOfIncident;
+        this.entityInstance = entityInstance;
         this.program = program;
     }
 
     // -------------------------------------------------------------------------
-    // Getters and setters
+    // Logic
     // -------------------------------------------------------------------------
 
     /**
-     * @return the id
+     * Updated the bi-directional associations between this program instance and
+     * the given entity instance and program.
+     *
+     * @param entityInstance the entity instance to enroll.
+     * @param program        the program to enroll the entity instance to.
      */
-    public int getId()
+    public void enrollTrackedEntityInstance( TrackedEntityInstance entityInstance, Program program )
     {
-        return id;
+        Assert.notNull( entityInstance );
+        Assert.notNull( program );
+
+        setEntityInstance( entityInstance );
+        entityInstance.getProgramInstances().add( this );
+
+        setProgram( program );
+        program.getProgramInstances().add( this );
     }
+
+    public ProgramStageInstance getProgramStageInstanceByStage( int stage )
+    {
+        int count = 1;
+
+        for ( ProgramStageInstance programInstanceStage : programStageInstances )
+        {
+            if ( count == stage )
+            {
+                return programInstanceStage;
+            }
+
+            count++;
+        }
+
+        return null;
+    }
+
+    public ProgramStageInstance getActiveProgramStageInstance()
+    {
+        for ( ProgramStageInstance programStageInstance : programStageInstances )
+        {
+            if ( programStageInstance.getProgramStage().getOpenAfterEnrollment()
+                && !programStageInstance.isCompleted()
+                && (programStageInstance.getStatus() != null && programStageInstance.getStatus() != ProgramStageInstance.SKIPPED_STATUS) )
+            {
+                return programStageInstance;
+            }
+        }
+
+        for ( ProgramStageInstance programStageInstance : programStageInstances )
+        {
+            if ( !programStageInstance.isCompleted()
+                && (programStageInstance.getStatus() != null && programStageInstance.getStatus() != ProgramStageInstance.SKIPPED_STATUS) )
+            {
+                return programStageInstance;
+            }
+        }
+
+        return null;
+    }
+
+    // -------------------------------------------------------------------------
+    // equals and hashCode
+    // -------------------------------------------------------------------------
 
     @Override
     public int hashCode()
     {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
 
         result = prime * result + ((dateOfIncident == null) ? 0 : dateOfIncident.hashCode());
         result = prime * result + ((enrollmentDate == null) ? 0 : enrollmentDate.hashCode());
-        result = prime * result + ((patient == null) ? 0 : patient.hashCode());
+        result = prime * result + ((entityInstance == null) ? 0 : entityInstance.hashCode());
         result = prime * result + ((program == null) ? 0 : program.hashCode());
 
         return result;
     }
 
     @Override
-    public boolean equals( Object obj )
+    public boolean equals( Object object )
     {
-        if ( this == obj )
+        if ( this == object )
         {
             return true;
         }
 
-        if ( obj == null )
+        if ( object == null )
         {
             return false;
         }
 
-        if ( getClass() != obj.getClass() )
+        if ( !getClass().isAssignableFrom( object.getClass() ) )
         {
             return false;
         }
 
-        final ProgramInstance other = (ProgramInstance) obj;
+        final ProgramInstance other = (ProgramInstance) object;
 
         if ( dateOfIncident == null )
         {
@@ -172,14 +225,14 @@ public class ProgramInstance
             return false;
         }
 
-        if ( patient == null )
+        if ( entityInstance == null )
         {
-            if ( other.patient != null )
+            if ( other.entityInstance != null )
             {
                 return false;
             }
         }
-        else if ( !patient.equals( other.patient ) )
+        else if ( !entityInstance.equals( other.entityInstance ) )
         {
             return false;
         }
@@ -199,17 +252,20 @@ public class ProgramInstance
         return true;
     }
 
-    /**
-     * @param id the id to set
-     */
+    // -------------------------------------------------------------------------
+    // Getters and setters
+    // -------------------------------------------------------------------------
+
+    public int getId()
+    {
+        return id;
+    }
+
     public void setId( int id )
     {
         this.id = id;
     }
 
-    /**
-     * @return the dateOfIncident
-     */
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -218,17 +274,11 @@ public class ProgramInstance
         return dateOfIncident;
     }
 
-    /**
-     * @param dateOfIncident the dateOfIncident to set
-     */
     public void setDateOfIncident( Date dateOfIncident )
     {
         this.dateOfIncident = dateOfIncident;
     }
 
-    /**
-     * @return the enrollmentDate
-     */
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -237,17 +287,11 @@ public class ProgramInstance
         return enrollmentDate;
     }
 
-    /**
-     * @param enrollmentDate the enrollmentDate to set
-     */
     public void setEnrollmentDate( Date enrollmentDate )
     {
         this.enrollmentDate = enrollmentDate;
     }
 
-    /**
-     * @return the endDate
-     */
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -256,23 +300,17 @@ public class ProgramInstance
         return endDate;
     }
 
-    /**
-     * @param endDate the endDate to set
-     */
     public void setEndDate( Date endDate )
     {
         this.endDate = endDate;
     }
 
-    /**
-     * @return the status
-     */
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public int getStatus()
     {
-        return status.intValue();
+        return status;
     }
 
     public void setStatus( Integer status )
@@ -280,25 +318,20 @@ public class ProgramInstance
         this.status = status;
     }
 
-    /**
-     * @return the patient
-     */
-    public Patient getPatient()
+    @JsonProperty( "trackedEntityInstance" )
+    @JsonSerialize( as = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( localName = "trackedEntityInstance", namespace = DxfNamespaces.DXF_2_0 )
+    public TrackedEntityInstance getEntityInstance()
     {
-        return patient;
+        return entityInstance;
     }
 
-    /**
-     * @param patient the patient to set
-     */
-    public void setPatient( Patient patient )
+    public void setEntityInstance( TrackedEntityInstance entityInstance )
     {
-        this.patient = patient;
+        this.entityInstance = entityInstance;
     }
 
-    /**
-     * @return the program
-     */
     @JsonProperty
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
@@ -308,25 +341,16 @@ public class ProgramInstance
         return program;
     }
 
-    /**
-     * @param program the program to set
-     */
     public void setProgram( Program program )
     {
         this.program = program;
     }
 
-    /**
-     * @return the programStageInstances
-     */
     public Set<ProgramStageInstance> getProgramStageInstances()
     {
         return programStageInstances;
     }
 
-    /**
-     * @param programStageInstances the programStageInstances to set
-     */
     public void setProgramStageInstances( Set<ProgramStageInstance> programStageInstances )
     {
         this.programStageInstances = programStageInstances;
@@ -342,9 +366,6 @@ public class ProgramInstance
         this.outboundSms = outboundSms;
     }
 
-    /**
-     * @return the followup
-     */
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -358,40 +379,27 @@ public class ProgramInstance
         this.followup = followup;
     }
 
-    /**
-     * @return the patientComment
-     */
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
-    public PatientComment getPatientComment()
+    public List<MessageConversation> getMessageConversations()
     {
-        return patientComment;
+        return messageConversations;
     }
 
-    public void setPatientComment( PatientComment patientComment )
+    public void setMessageConversations( List<MessageConversation> messageConversations )
     {
-        this.patientComment = patientComment;
+        this.messageConversations = messageConversations;
     }
 
-    // -------------------------------------------------------------------------
-    // Convenience method
-    // -------------------------------------------------------------------------
-
-    public ProgramStageInstance getProgramStageInstanceByStage( int stage )
+    public TrackedEntityComment getComment()
     {
-        int count = 1;
-
-        for ( ProgramStageInstance programInstanceStage : programStageInstances )
-        {
-            if ( count == stage )
-            {
-                return programInstanceStage;
-            }
-
-            count++;
-        }
-
-        return null;
+        return comment;
     }
+
+    public void setComment( TrackedEntityComment comment )
+    {
+        this.comment = comment;
+    }
+
 }

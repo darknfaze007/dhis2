@@ -1,19 +1,20 @@
 package org.hisp.dhis.resourcetable;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,6 +30,7 @@ package org.hisp.dhis.resourcetable;
 
 import static org.hisp.dhis.resourcetable.ResourceTableStore.TABLE_NAME_CATEGORY_OPTION_COMBO_NAME;
 import static org.hisp.dhis.resourcetable.ResourceTableStore.TABLE_NAME_DATA_ELEMENT_STRUCTURE;
+import static org.hisp.dhis.resourcetable.ResourceTableStore.TABLE_NAME_DATE_PERIOD_STRUCTURE;
 import static org.hisp.dhis.resourcetable.ResourceTableStore.TABLE_NAME_ORGANISATION_UNIT_STRUCTURE;
 import static org.hisp.dhis.resourcetable.ResourceTableStore.TABLE_NAME_PERIOD_STRUCTURE;
 
@@ -43,38 +45,38 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
+import org.hisp.dhis.dataelement.CategoryOptionGroup;
+import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
-import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataelement.DataElementGroupSet;
 import org.hisp.dhis.dataelement.DataElementService;
-import org.hisp.dhis.indicator.Indicator;
-import org.hisp.dhis.indicator.IndicatorGroup;
+import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.indicator.IndicatorGroupSet;
 import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
+import org.hisp.dhis.period.Cal;
+import org.hisp.dhis.period.DailyPeriodType;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodService;
 import org.hisp.dhis.period.PeriodType;
+import org.hisp.dhis.resourcetable.statement.CreateCategoryOptionGroupSetTableStatement;
 import org.hisp.dhis.resourcetable.statement.CreateCategoryTableStatement;
-import org.hisp.dhis.resourcetable.statement.CreateDataElementGroupSetTableStatement;
-import org.hisp.dhis.resourcetable.statement.CreateIndicatorGroupSetTableStatement;
-import org.hisp.dhis.resourcetable.statement.CreateOrganisationUnitGroupSetTableStatement;
+import org.hisp.dhis.sqlview.SqlView;
 import org.hisp.dhis.sqlview.SqlViewService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 /**
  * @author Lars Helge Overland
  */
-@Transactional
 public class DefaultResourceTableService
     implements ResourceTableService
 {
@@ -132,56 +134,19 @@ public class DefaultResourceTableService
     {
         this.periodService = periodService;
     }
-
-    private SqlViewService sqlViewService;
     
+    private SqlViewService sqlViewService;
+
     public void setSqlViewService( SqlViewService sqlViewService )
     {
         this.sqlViewService = sqlViewService;
     }
 
     // -------------------------------------------------------------------------
-    // All
-    // -------------------------------------------------------------------------
-
-    public void generateAll()
-    {
-        sqlViewService.dropAllSqlViewTables();
-
-        generateOrganisationUnitStructures();
-        log.info( "Organisation unit structure table generated" );
-        
-        generateCategoryOptionComboNames();
-        log.info( "Category option combo name table generated" );
-        
-        generateDataElementGroupSetTable();
-        log.info( "Data element group set table generated" );
-        
-        generateIndicatorGroupSetTable();
-        log.info( "Indicator group set table generated" );
-
-        generateOrganisationUnitGroupSetTable();
-        log.info( "Organisation unit group set table generated" );
-
-        generateCategoryTable();
-        log.info( "Category table generated" );
-
-        generateDataElementTable();
-        log.info( "Data element table generated" );
-        
-        generatePeriodTable();
-        log.info( "Period table generated" );
-        
-        generateDataElementCategoryOptionComboTable();
-        log.info( "Data element category option combo table generated" );
-        
-        sqlViewService.createAllViewTables();
-    }
-    
-    // -------------------------------------------------------------------------
     // OrganisationUnitStructure
     // -------------------------------------------------------------------------
 
+    @Transactional
     public void generateOrganisationUnitStructures()
     {
         int maxLevel = organisationUnitService.getMaxOfOrganisationUnitLevels();
@@ -201,6 +166,7 @@ public class DefaultResourceTableService
                 List<Object> values = new ArrayList<Object>();
 
                 values.add( unit.getId() );
+                values.add( unit.getUid() );
                 values.add( level );
 
                 Map<Integer, Integer> identifiers = new HashMap<Integer, Integer>();
@@ -224,13 +190,16 @@ public class DefaultResourceTableService
             }
         }
 
-        resourceTableStore.batchUpdate( ( maxLevel * 2 ) + 2, TABLE_NAME_ORGANISATION_UNIT_STRUCTURE, batchArgs );
+        resourceTableStore.batchUpdate( ( maxLevel * 2 ) + 3, TABLE_NAME_ORGANISATION_UNIT_STRUCTURE, batchArgs );
+        
+        log.info( "Organisation unit structure table generated" );
     }
 
     // -------------------------------------------------------------------------
     // DataElementCategoryOptionComboName
     // -------------------------------------------------------------------------
 
+    @Transactional
     public void generateCategoryOptionComboNames()
     {
         resourceTableStore.createDataElementCategoryOptionComboName();
@@ -253,117 +222,97 @@ public class DefaultResourceTableService
         }
         
         resourceTableStore.batchUpdate( 2, TABLE_NAME_CATEGORY_OPTION_COMBO_NAME, batchArgs );
+        
+        log.info( "Category option combo name table generated" );
     }
 
-    // -------------------------------------------------------------------------
-    // DataElementGroupSetTable
-    // -------------------------------------------------------------------------
-
-    public void generateDataElementGroupSetTable()
+    @Transactional
+    public void generateCategoryOptionGroupSetTable()
     {
         // ---------------------------------------------------------------------
         // Create table
         // ---------------------------------------------------------------------
 
-        List<DataElement> dataElements = new ArrayList<DataElement>( dataElementService.getAllDataElements() );
+        List<DataElementCategoryOptionCombo> categoryOptionCombos = 
+            new ArrayList<DataElementCategoryOptionCombo>( categoryService.getAllDataElementCategoryOptionCombos() );
         
-        Collections.sort( dataElements, IdentifiableObjectNameComparator.INSTANCE );
+        List<CategoryOptionGroupSet> groupSets = new ArrayList<CategoryOptionGroupSet>( categoryService.getAllCategoryOptionGroupSets() );
         
+        Collections.sort( groupSets, IdentifiableObjectNameComparator.INSTANCE );
+
+        resourceTableStore.createCategoryOptionGroupSetStructure( groupSets );
+
+        // ---------------------------------------------------------------------
+        // Populate table
+        // ---------------------------------------------------------------------
+
+        List<Object[]> batchArgs = new ArrayList<Object[]>();
+        
+        for ( DataElementCategoryOptionCombo categoryOptionCombo : categoryOptionCombos )
+        {
+            List<Object> values = new ArrayList<Object>();
+
+            values.add( categoryOptionCombo.getId() );
+            
+            for ( CategoryOptionGroupSet groupSet : groupSets )
+            {
+                CategoryOptionGroup group = groupSet.getGroup( categoryOptionCombo );
+                
+                values.add( group != null ? group.getName() : null );
+                values.add( group != null ? group.getUid() : null );
+            }
+            
+            batchArgs.add( values.toArray() );
+        }
+        
+        resourceTableStore.batchUpdate( ( groupSets.size() * 2 ) + 1, CreateCategoryOptionGroupSetTableStatement.TABLE_NAME, batchArgs );
+        
+        log.info( "Category option group set table generated" );
+    }
+    
+    // -------------------------------------------------------------------------
+    // DataElementGroupSetTable
+    // -------------------------------------------------------------------------
+
+    @Transactional
+    public void generateDataElementGroupSetTable()
+    {
         List<DataElementGroupSet> groupSets = new ArrayList<DataElementGroupSet>( dataElementService.getAllDataElementGroupSets() );
         
         Collections.sort( groupSets, IdentifiableObjectNameComparator.INSTANCE );
         
         resourceTableStore.createDataElementGroupSetStructure( groupSets );
 
-        // ---------------------------------------------------------------------
-        // Populate table
-        // ---------------------------------------------------------------------
-
-        List<Object[]> batchArgs = new ArrayList<Object[]>();
+        resourceTableStore.populateDataElementGroupSetStructure( groupSets );
         
-        for ( DataElement dataElement : dataElements )
-        {
-            List<Object> values = new ArrayList<Object>();
-
-            values.add( dataElement.getId() );
-            values.add( dataElement.getName() );
-            
-            for ( DataElementGroupSet groupSet : groupSets )
-            {
-                DataElementGroup group = groupSet.getGroup( dataElement );
-                
-                values.add( group != null ? group.getName() : null );
-                values.add( group != null ? group.getUid() : null );
-            }
-            
-            batchArgs.add( values.toArray() );
-        }
-        
-        resourceTableStore.batchUpdate( ( groupSets.size() * 2 ) + 2, CreateDataElementGroupSetTableStatement.TABLE_NAME, batchArgs );
+        log.info( "Data element group set table generated" );
     }
 
     // -------------------------------------------------------------------------
     // IndicatorGroupSetTable
     // -------------------------------------------------------------------------
 
+    @Transactional
     public void generateIndicatorGroupSetTable()
     {
-        // ---------------------------------------------------------------------
-        // Create table
-        // ---------------------------------------------------------------------
-
-        List<Indicator> indicators = new ArrayList<Indicator>( indicatorService.getAllIndicators() );
-        
-        Collections.sort( indicators, IdentifiableObjectNameComparator.INSTANCE );
-        
         List<IndicatorGroupSet> groupSets = new ArrayList<IndicatorGroupSet>( indicatorService.getAllIndicatorGroupSets() );
         
         Collections.sort( groupSets, IdentifiableObjectNameComparator.INSTANCE );
         
         resourceTableStore.createIndicatorGroupSetStructure( groupSets );
 
-        // ---------------------------------------------------------------------
-        // Populate table
-        // ---------------------------------------------------------------------
-
-        List<Object[]> batchArgs = new ArrayList<Object[]>();
+        resourceTableStore.populateIndicatorGroupSetStructure( groupSets );
         
-        for ( Indicator indicator : indicators )
-        {
-            List<Object> values = new ArrayList<Object>();
-
-            values.add( indicator.getId() );
-            values.add( indicator.getName() );
-            
-            for ( IndicatorGroupSet groupSet : groupSets )
-            {
-                IndicatorGroup group = groupSet.getGroup( indicator );
-                
-                values.add( group != null ? group.getName() : null );
-                values.add( group != null ? group.getUid() : null );
-            }
-            
-            batchArgs.add( values.toArray() );
-        }
-        
-        resourceTableStore.batchUpdate( ( groupSets.size() * 2 ) + 2, CreateIndicatorGroupSetTableStatement.TABLE_NAME, batchArgs );
+        log.info( "Indicator group set table generated" );
     }
     
     // -------------------------------------------------------------------------
     // OrganisationUnitGroupSetTable
     // -------------------------------------------------------------------------
 
+    @Transactional
     public void generateOrganisationUnitGroupSetTable()
     {
-        // ---------------------------------------------------------------------
-        // Create table
-        // ---------------------------------------------------------------------
-
-        List<OrganisationUnit> units = new ArrayList<OrganisationUnit>( organisationUnitService
-            .getAllOrganisationUnits() );
-
-        Collections.sort( units, IdentifiableObjectNameComparator.INSTANCE );
-
         List<OrganisationUnitGroupSet> groupSets = new ArrayList<OrganisationUnitGroupSet>(
             organisationUnitGroupService.getAllOrganisationUnitGroupSets() );
 
@@ -371,37 +320,16 @@ public class DefaultResourceTableService
 
         resourceTableStore.createOrganisationUnitGroupSetStructure( groupSets );
 
-        // ---------------------------------------------------------------------
-        // Populate table
-        // ---------------------------------------------------------------------
-
-        List<Object[]> batchArgs = new ArrayList<Object[]>();
+        resourceTableStore.populateOrganisationUnitGroupSetStructure( groupSets );
         
-        for ( OrganisationUnit unit : units )
-        {
-            List<Object> values = new ArrayList<Object>();
-
-            values.add( unit.getId() );
-            values.add( unit.getName() );
-
-            for ( OrganisationUnitGroupSet groupSet : groupSets )
-            {
-                OrganisationUnitGroup group = groupSet.getGroup( unit );
-                
-                values.add( group != null ? group.getName() : null );
-                values.add( group != null ? group.getUid() : null );
-            }
-
-            batchArgs.add( values.toArray() );
-        }
-
-        resourceTableStore.batchUpdate( ( groupSets.size() * 2 ) + 2, CreateOrganisationUnitGroupSetTableStatement.TABLE_NAME, batchArgs );
+        log.info( "Organisation unit group set table generated" );
     }
     
     // -------------------------------------------------------------------------
     // CategoryTable
     // -------------------------------------------------------------------------
 
+    @Transactional
     public void generateCategoryTable()
     {
         // ---------------------------------------------------------------------
@@ -442,12 +370,15 @@ public class DefaultResourceTableService
         }
         
         resourceTableStore.batchUpdate( ( categories.size() * 2 ) + 2, CreateCategoryTableStatement.TABLE_NAME, batchArgs );
+        
+        log.info( "Category table generated" );
     }
 
     // -------------------------------------------------------------------------
     // DataElementTable
     // -------------------------------------------------------------------------
 
+    @Transactional
     public void generateDataElementTable()
     {
         // ---------------------------------------------------------------------
@@ -468,23 +399,76 @@ public class DefaultResourceTableService
         {
             List<Object> values = new ArrayList<Object>();
 
+            final DataSet dataSet = dataElement.getDataSet();
             final PeriodType periodType = dataElement.getPeriodType();
             
             values.add( dataElement.getId() );
+            values.add( dataElement.getUid() );
             values.add( dataElement.getName() );
+            values.add( dataSet != null ? dataSet.getId() : null );
+            values.add( dataSet != null ? dataSet.getUid() : null );
+            values.add( dataSet != null ? dataSet.getName() : null );
             values.add( periodType != null ? periodType.getId() : null );
             values.add( periodType != null ? periodType.getName() : null );
             
             batchArgs.add( values.toArray() );
         }
         
-        resourceTableStore.batchUpdate( 4, TABLE_NAME_DATA_ELEMENT_STRUCTURE, batchArgs );
+        resourceTableStore.batchUpdate( 8, TABLE_NAME_DATA_ELEMENT_STRUCTURE, batchArgs );
+        
+        log.info( "Data element table generated" );
     }
 
     // -------------------------------------------------------------------------
     // PeriodTable
     // -------------------------------------------------------------------------
 
+    @Transactional
+    public void generateDatePeriodTable()
+    {
+        // ---------------------------------------------------------------------
+        // Create table
+        // ---------------------------------------------------------------------
+
+        resourceTableStore.createDatePeriodStructure();
+
+        // ---------------------------------------------------------------------
+        // Populate table
+        // ---------------------------------------------------------------------
+
+        List<PeriodType> periodTypes = PeriodType.getAvailablePeriodTypes();
+        
+        List<Object[]> batchArgs = new ArrayList<Object[]>();
+        
+        Date startDate = new Cal( 1970, 1, 1 ).time(); //TODO
+        Date endDate = new Cal( 2030, 1 , 1 ).time();
+        
+        List<Period> days = new DailyPeriodType().generatePeriods( startDate, endDate );
+        
+        for ( Period day : days )
+        {
+            List<Object> values = new ArrayList<Object>();
+            
+            values.add( day.getStartDate() );
+            
+            for ( PeriodType periodType : periodTypes )
+            {
+                Period period = periodType.createPeriod( day.getStartDate() );
+                
+                Assert.notNull( period );
+                
+                values.add( period.getIsoDate() );
+            }
+            
+            batchArgs.add( values.toArray() );
+        }
+        
+        resourceTableStore.batchUpdate( PeriodType.PERIOD_TYPES.size() + 1, TABLE_NAME_DATE_PERIOD_STRUCTURE, batchArgs );
+        
+        log.info( "Period table generated" );
+    }    
+
+    @Transactional
     public void generatePeriodTable()
     {
         // ---------------------------------------------------------------------
@@ -528,14 +512,49 @@ public class DefaultResourceTableService
         }
 
         resourceTableStore.batchUpdate( PeriodType.PERIOD_TYPES.size() + 3, TABLE_NAME_PERIOD_STRUCTURE, batchArgs );
+        
+        log.info( "Date period table generated" );
     }
 
     // -------------------------------------------------------------------------
     // DataElementCategoryOptionComboTable
     // -------------------------------------------------------------------------
 
+    @Transactional
     public void generateDataElementCategoryOptionComboTable()
     {
         resourceTableStore.createAndGenerateDataElementCategoryOptionCombo();
+        
+        log.info( "Data element category option combo table generated" );
+    }
+
+    // -------------------------------------------------------------------------
+    // SQL views
+    // -------------------------------------------------------------------------
+
+    @Override
+    public void createAllSqlViews()
+    {
+        List<SqlView> sqlViews = new ArrayList<SqlView>( sqlViewService.getAllSqlViews() );
+        Collections.sort( sqlViews, IdentifiableObjectNameComparator.INSTANCE );
+
+        for ( SqlView sqlView : sqlViews )
+        {
+            sqlViewService.createViewTable( sqlView );
+        }
+    }
+
+
+    @Override
+    public void dropAllSqlViews()
+    {
+        List<SqlView> views = new ArrayList<SqlView>( sqlViewService.getAllSqlViews() );
+        Collections.sort( views, IdentifiableObjectNameComparator.INSTANCE );
+        Collections.reverse( views );
+
+        for ( SqlView view : views )
+        {
+            sqlViewService.dropViewTable( view.getViewName() );
+        }
     }
 }

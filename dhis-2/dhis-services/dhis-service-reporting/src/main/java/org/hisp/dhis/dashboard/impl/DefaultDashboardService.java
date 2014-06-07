@@ -1,19 +1,20 @@
 package org.hisp.dhis.dashboard.impl;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,179 +28,284 @@ package org.hisp.dhis.dashboard.impl;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import static org.hisp.dhis.common.IdentifiableObjectUtils.getUids;
+import static org.hisp.dhis.dashboard.DashboardItem.TYPE_CHART;
+import static org.hisp.dhis.dashboard.DashboardItem.TYPE_MAP;
+import static org.hisp.dhis.dashboard.DashboardItem.TYPE_MESSAGES;
+import static org.hisp.dhis.dashboard.DashboardItem.TYPE_REPORTS;
+import static org.hisp.dhis.dashboard.DashboardItem.TYPE_REPORT_TABLE;
+import static org.hisp.dhis.dashboard.DashboardItem.TYPE_REPORT_TABLES;
+import static org.hisp.dhis.dashboard.DashboardItem.TYPE_RESOURCES;
+import static org.hisp.dhis.dashboard.DashboardItem.TYPE_USERS;
 
-import org.hisp.dhis.chart.ChartService;
-import org.hisp.dhis.common.IdentifiableObject;
-import org.hisp.dhis.dashboard.DashboardContent;
-import org.hisp.dhis.dashboard.DashboardContentStore;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.hisp.dhis.chart.Chart;
+import org.hisp.dhis.common.IdentifiableObjectManager;
+import org.hisp.dhis.common.hibernate.HibernateIdentifiableObjectStore;
+import org.hisp.dhis.dashboard.Dashboard;
+import org.hisp.dhis.dashboard.DashboardItem;
+import org.hisp.dhis.dashboard.DashboardItemStore;
+import org.hisp.dhis.dashboard.DashboardSearchResult;
 import org.hisp.dhis.dashboard.DashboardService;
 import org.hisp.dhis.document.Document;
-import org.hisp.dhis.document.DocumentService;
 import org.hisp.dhis.mapping.Map;
-import org.hisp.dhis.mapping.MappingService;
 import org.hisp.dhis.report.Report;
-import org.hisp.dhis.report.ReportService;
 import org.hisp.dhis.reporttable.ReportTable;
-import org.hisp.dhis.reporttable.ReportTableService;
 import org.hisp.dhis.user.User;
-import org.hisp.dhis.user.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Note: The remove associations methods must be altered if caching is introduced.
- * 
+ *
  * @author Lars Helge Overland
  */
 @Transactional
 public class DefaultDashboardService
     implements DashboardService
 {
-    private static final int MAX_PER_OBJECT = 5;
-    private static final int MAX_OBJECTS = 15;
-    
+    private static final int HITS_PER_OBJECT = 5;
+    private static final int MAX_HITS_PER_OBJECT = 25;
+
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private DashboardContentStore dashboardContentStore;
+    private HibernateIdentifiableObjectStore<Dashboard> dashboardStore;
 
-    public void setDashboardContentStore( DashboardContentStore dashboardContentStore )
+    public void setDashboardStore( HibernateIdentifiableObjectStore<Dashboard> dashboardStore )
     {
-        this.dashboardContentStore = dashboardContentStore;
-    }
-    
-    private UserService userService;
-    
-    public void setUserService( UserService userService )
-    {
-        this.userService = userService;
+        this.dashboardStore = dashboardStore;
     }
 
-    private ChartService chartService;
+    @Autowired
+    private IdentifiableObjectManager objectManager;
 
-    public void setChartService( ChartService chartService )
-    {
-        this.chartService = chartService;
-    }
-
-    private MappingService mappingService;
-
-    public void setMappingService( MappingService mappingService )
-    {
-        this.mappingService = mappingService;
-    }
-
-    private ReportService reportService;
-
-    public void setReportService( ReportService reportService )
-    {
-        this.reportService = reportService;
-    }
-    
-    private ReportTableService reportTableService;
-
-    public void setReportTableService( ReportTableService reportTableService )
-    {
-        this.reportTableService = reportTableService;
-    }
-    
-    private DocumentService documentService;
-
-    public void setDocumentService( DocumentService documentService )
-    {
-        this.documentService = documentService;
-    }
+    @Autowired
+    private DashboardItemStore dashboardItemStore;
 
     // -------------------------------------------------------------------------
     // DashboardService implementation
     // -------------------------------------------------------------------------
 
-    public List<IdentifiableObject> search( String query )
+    @Override
+    public DashboardSearchResult search( String query )
     {
-        List<IdentifiableObject> objects = new ArrayList<IdentifiableObject>();
-        
-        int remaining = 0;
-        
-        objects.addAll( userService.getAllUsersBetweenByName( query, 0, MAX_PER_OBJECT ) );
-        objects.addAll( chartService.getChartsBetweenByName( query, 0, MAX_PER_OBJECT ) );
-        objects.addAll( mappingService.getMapsBetweenLikeName( query, 0, MAX_PER_OBJECT ) );
+        return search( query, new HashSet<String>() );
+    }
 
-        remaining = MAX_OBJECTS - objects.size();
-        
-        if ( remaining > 0 )
+    @Override
+    public DashboardSearchResult search( String query, Set<String> maxTypes )
+    {
+        DashboardSearchResult result = new DashboardSearchResult();
+
+        result.setUsers( objectManager.getBetweenByName( User.class, query, 0, getMax( TYPE_USERS, maxTypes ) ) );
+        result.setCharts( objectManager.getBetweenByName( Chart.class, query, 0, getMax( TYPE_CHART, maxTypes ) ) );
+        result.setMaps( objectManager.getBetweenByName( Map.class, query, 0, getMax( TYPE_MAP, maxTypes ) ) );
+        result.setReportTables( objectManager.getBetweenByName( ReportTable.class, query, 0, getMax( TYPE_REPORT_TABLE, maxTypes ) ) );
+        result.setReports( objectManager.getBetweenByName( Report.class, query, 0, getMax( TYPE_REPORTS, maxTypes ) ) );
+        result.setResources( objectManager.getBetweenByName( Document.class, query, 0, getMax( TYPE_RESOURCES, maxTypes ) ) );
+
+        return result;
+    }
+
+    @Override
+    public boolean addItemContent( String dashboardUid, String type, String contentUid )
+    {
+        Dashboard dashboard = getDashboard( dashboardUid );
+
+        if ( dashboard == null )
         {
-            objects.addAll( reportService.getReportsBetweenByName( query, 0, MAX_PER_OBJECT ) );
+            return false;
         }
-        
-        remaining = MAX_OBJECTS - objects.size();
-        
-        if ( remaining > 0 )
+
+        if ( TYPE_CHART.equals( type ) )
         {
-            objects.addAll( reportTableService.getReportTablesBetweenByName( query, 0, Math.min( remaining, MAX_PER_OBJECT ) ) );
+            DashboardItem item = new DashboardItem();
+            item.setChart( objectManager.get( Chart.class, contentUid ) );
+            dashboard.getItems().add( 0, item );
         }
-
-        remaining = MAX_OBJECTS - objects.size();
-        
-        if ( remaining > 0 )
+        else if ( TYPE_MAP.equals( type ) )
         {
-            objects.addAll( documentService.getDocumentsBetweenByName( query, 0, Math.min( remaining, MAX_PER_OBJECT ) ) );
+            DashboardItem item = new DashboardItem();
+            item.setMap( objectManager.get( Map.class, contentUid ) );
+            dashboard.getItems().add( 0, item );
         }
-        
-        return objects;
-    }
-    
-    public void saveDashboardContent( DashboardContent dashboardContent )
-    {
-        dashboardContentStore.save( dashboardContent );
+        else if ( TYPE_REPORT_TABLE.equals( type ) )
+        {
+            DashboardItem item = new DashboardItem();
+            item.setReportTable( objectManager.get( ReportTable.class, contentUid ) );
+            dashboard.getItems().add( 0, item );
+        }
+        else if ( TYPE_MESSAGES.equals( type ) )
+        {
+            DashboardItem item = new DashboardItem();
+            item.setMessages( true );
+            dashboard.getItems().add( 0, item );
+        }
+        else // Link item
+        {
+            DashboardItem availableItem = dashboard.getAvailableItemByType( type );
+
+            DashboardItem item = availableItem == null ? new DashboardItem() : availableItem;
+
+            if ( TYPE_USERS.equals( type ) )
+            {
+                item.getUsers().add( objectManager.get( User.class, contentUid ) );
+            }
+            else if ( TYPE_REPORT_TABLES.equals( type ) )
+            {
+                item.getReportTables().add( objectManager.get( ReportTable.class, contentUid ) );
+            }
+            else if ( TYPE_REPORTS.equals( type ) )
+            {
+                item.getReports().add( objectManager.get( Report.class, contentUid ) );
+            }
+            else if ( TYPE_RESOURCES.equals( type ) )
+            {
+                item.getResources().add( objectManager.get( Document.class, contentUid ) );
+            }
+            
+            if ( availableItem == null )
+            {
+                dashboard.getItems().add( 0, item );
+            }
+        }
+
+        if ( dashboard.getItemCount() > Dashboard.MAX_ITEMS )
+        {
+            return false;
+        }
+
+        updateDashboard( dashboard );
+
+        return true;
     }
 
-    public void updateDashboardContent( DashboardContent dashboardContent )
+    public void mergeDashboard( Dashboard dashboard )
     {
-        dashboardContentStore.update( dashboardContent );
-    }
-    
-    public DashboardContent getDashboardContent( int id )
-    {
-        return dashboardContentStore.get( id );
-    }
-
-    public DashboardContent getDashboardContent( User user )
-    {
-        DashboardContent content = dashboardContentStore.get( user.getId() );
-
-        return content != null ? content : new DashboardContent( user );
+        if ( dashboard.getItems() != null )
+        {
+            for ( DashboardItem item : dashboard.getItems() )
+            {
+                mergeDashboardItem( item );
+            }
+        }
     }
 
-    public Collection<DashboardContent> getAllDashboardContent()
+    public void mergeDashboardItem( DashboardItem item )
     {
-        return dashboardContentStore.getAll();
+        if ( item.getChart() != null )
+        {
+            item.setChart( objectManager.get( Chart.class, item.getChart().getUid() ) );
+        }
+
+        if ( item.getMap() != null )
+        {
+            item.setMap( objectManager.get( Map.class, item.getMap().getUid() ) );
+        }
+
+        if ( item.getReportTable() != null )
+        {
+            item.setReportTable( objectManager.get( ReportTable.class, item.getReportTable().getUid() ) );
+        }
+
+        if ( item.getUsers() != null )
+        {
+            item.setUsers( objectManager.getByUid( User.class, getUids( item.getUsers() ) ) );
+        }
+
+        if ( item.getReportTables() != null )
+        {
+            item.setReportTables( objectManager.getByUid( ReportTable.class, getUids( item.getReportTables() ) ) );
+        }
+
+        if ( item.getReports() != null )
+        {
+            item.setReports( objectManager.getByUid( Report.class, getUids( item.getReports() ) ) );
+        }
+
+        if ( item.getResources() != null )
+        {
+            item.setResources( objectManager.getByUid( Document.class, getUids( item.getResources() ) ) );
+        }
     }
-    
-    public void deleteDashboardContent( DashboardContent content )
+
+    @Override
+    public int saveDashboard( Dashboard dashboard )
     {
-        dashboardContentStore.delete( content );
+        return dashboardStore.save( dashboard );
     }
-    
-    public Collection<DashboardContent> getByDocument( Document document )
+
+    @Override
+    public void updateDashboard( Dashboard dashboard )
     {
-        return dashboardContentStore.getByDocument( document );
+        dashboardStore.update( dashboard );
     }
-    
-    public Collection<DashboardContent> getByMap( Map map )
+
+    @Override
+    public void deleteDashboard( Dashboard dashboard )
     {
-        return dashboardContentStore.getByMap( map );
+        dashboardStore.delete( dashboard );
     }
-    
-    public Collection<DashboardContent> getByReport( Report report )
+
+    @Override
+    public Dashboard getDashboard( int id )
     {
-        return dashboardContentStore.getByReport( report );
+        return dashboardStore.get( id );
     }
-    
-    public Collection<DashboardContent> getByReportTable( ReportTable reportTable )
+
+    @Override
+    public Dashboard getDashboard( String uid )
     {
-        return dashboardContentStore.getByReportTable( reportTable );
+        return dashboardStore.getByUid( uid );
+    }
+
+    @Override
+    public List<Dashboard> getByUser( User user )
+    {
+        return dashboardStore.getByUser( user );
+    }
+
+    @Override
+    public int countMapDashboardItems( Map map )
+    {
+        return dashboardItemStore.countMapDashboardItems( map );
+    }
+
+    @Override
+    public int countChartDashboardItems( Chart chart )
+    {
+        return dashboardItemStore.countChartDashboardItems( chart );
+    }
+
+    @Override
+    public int countReportTableDashboardItems( ReportTable reportTable )
+    {
+        return dashboardItemStore.countReportTableDashboardItems( reportTable );
+    }
+
+    @Override
+    public int countReportDashboardItems( Report report )
+    {
+        return dashboardItemStore.countReportDashboardItems( report );
+    }
+
+    @Override
+    public int countDocumentDashboardItems( Document document )
+    {
+        return dashboardItemStore.countDocumentDashboardItems( document );
+    }
+
+    // -------------------------------------------------------------------------
+    // Supportive methods
+    // -------------------------------------------------------------------------
+
+    private int getMax( String type, Set<String> maxTypes )
+    {
+        return maxTypes != null && maxTypes.contains( type ) ? MAX_HITS_PER_OBJECT : HITS_PER_OBJECT;
     }
 }

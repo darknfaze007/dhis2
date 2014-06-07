@@ -1,19 +1,20 @@
 package org.hisp.dhis.i18n.locale;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.hisp.dhis.i18n.resourcebundle.ResourceBundleManager;
+import org.hisp.dhis.i18n.resourcebundle.ResourceBundleManagerException;
 import org.hisp.dhis.user.UserSettingService;
 
 /**
@@ -41,20 +44,6 @@ import org.hisp.dhis.user.UserSettingService;
 public class UserSettingLocaleManager
     implements LocaleManager
 {
-    private String userSettingKey;
-
-    public void setUserSettingKey( String userSettingKey )
-    {
-        this.userSettingKey = userSettingKey;
-    }
-
-    private Locale defaultLocale;
-
-    public void setDefaultLocale( Locale defaultLocale )
-    {
-        this.defaultLocale = defaultLocale;
-    }
-
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
@@ -64,6 +53,13 @@ public class UserSettingLocaleManager
     public void setUserSettingService( UserSettingService userSettingService )
     {
         this.userSettingService = userSettingService;
+    }
+    
+    private ResourceBundleManager resourceBundleManager;
+
+    public void setResourceBundleManager( ResourceBundleManager resourceBundleManager )
+    {
+        this.resourceBundleManager = resourceBundleManager;
     }
 
     // -------------------------------------------------------------------------
@@ -79,17 +75,12 @@ public class UserSettingLocaleManager
             return locale;
         }
 
-        if ( defaultLocale != null )
-        {
-            return defaultLocale;
-        }
-
         return DHIS_STANDARD_LOCALE;
     }
 
     public void setCurrentLocale( Locale locale )
     {
-        userSettingService.saveUserSetting( userSettingKey, locale );
+        userSettingService.saveUserSetting( UserSettingService.KEY_UI_LOCALE, locale );
     }
 
     public List<Locale> getLocalesOrderedByPriority()
@@ -110,11 +101,23 @@ public class UserSettingLocaleManager
 
     private Locale getUserSelectedLocale()
     {
-        return (Locale) userSettingService.getUserSetting( userSettingKey, null );
+        return (Locale) userSettingService.getUserSetting( UserSettingService.KEY_UI_LOCALE );
     }
 
     public Locale getFallbackLocale()
     {
         return DHIS_STANDARD_LOCALE;
+    }
+    
+    public List<Locale> getAvailableLocales()
+    {
+        try
+        {
+            return resourceBundleManager.getAvailableLocales();
+        }
+        catch ( ResourceBundleManagerException ex )
+        {
+            throw new RuntimeException( ex );
+        }
     }
 }

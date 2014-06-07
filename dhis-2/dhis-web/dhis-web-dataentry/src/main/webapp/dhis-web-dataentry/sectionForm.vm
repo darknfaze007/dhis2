@@ -1,6 +1,7 @@
 
 #set( $tabIndex = 1 )
 #set( $hasAccess = $auth.hasAccess( "dhis-web-dataentry", "saveValue" ) )
+#set( $decoration = $dataSet.dataElementDecoration )
 
 #if( $dataSet.renderAsTabs )
     <div id="tabs">
@@ -16,14 +17,14 @@
         #foreach( $section in $sections )
             <div id="tab-${section.uid}">
                 #set( $categoryComboId = $sectionCombos.get( $section.id ) )
-                #renderSection( $categoryComboId, $section.dataElements )
+                #renderSection( $categoryComboId $section.dataElements )
             </div>
         #end
     </div>
 #else
     #foreach( $section in $sections )
         #set( $categoryComboId = $sectionCombos.get( $section.id ) )
-        #renderSection( $categoryComboId, $section.dataElements, $section.displayName )
+        #renderSection( $categoryComboId $section.dataElements $section.displayName )
     #end
 #end
 
@@ -78,25 +79,30 @@
     #end
     #set( $count = $count + 1 )
     <tr>
-    <td id="${dataElement.uid}-cell" #if( $mark == 1 )class="alt"#else class="reg"#end><span id="${dataElement.uid}-dataelement">${encoder.htmlEncode( $dataElement.getFormNameFallback() )}</span></td>
+    <td id="${dataElement.uid}-cell" #if( $mark == 1 )class="alt"#else class="reg"#end>
+    <span id="${dataElement.uid}-dataelement" #if( $decoration && $dataElement.hasDescription() ) title="$!{dataElement.description}"#end >
+    #if( $decoration && $!dataElement.hasUrl() )<a href="${dataElement.url}" target="_blank">#end${encoder.htmlEncode( $dataElement.getFormNameFallback() )}#if( $decoration && $dataElement.hasUrl() )</a>#end
+    </span></td>    
     #foreach( $optionCombo in $optionCombos )
     #set( $dataEntryId = "${dataElement.uid}-${optionCombo.uid}-val" )
     #set( $commentId = "${dataElement.uid}-${optionCombo.uid}-comment" )
     #set( $greyedField = false )
     #set( $greyedField = $greyedFields.get( "${dataElement.uid}:${optionCombo.uid}" ) )
     #if( $dataElement.type == "bool" )
-    <td><select name="entryselect" id="$dataEntryId" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end>
+    <td><select name="entryselect" class="entryselect" id="$dataEntryId" tabindex="$tabIndex"#if( $greyedField || !$hasAccess ) disabled="disabled"#end>
       <option value="">[$i18n.getString( "no_value" )]</option>
       <option value="true">$i18n.getString( "yes" )</option>
       <option value="false">$i18n.getString( "no" )</option>
-    </select><img name="commentlink" id="${commentId}"></td>
+    </select><img class="commentlink" id="${commentId}"></td>
     #elseif( $dataElement.type == "trueOnly" )
-        <td><input name="entrytrueonly" id="${dataEntryId}" type="checkbox" tabindex="${tabIndex}"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+        <td><input name="entrytrueonly" class="entrytrueonly" id="${dataEntryId}" type="checkbox" tabindex="${tabIndex}"#if( $greyedField || !$hasAccess ) disabled="disabled"#end><img class="commentlink" id="${commentId}"></td>
+    #elseif( $dataElement.type == "string" && "longText" == $dataElement.textType )
+        <td><textarea name="entryfield" class="entryfield entryarea" id="${dataEntryId}" tabindex="${tabIndex}" #if( $greyedField || !$hasAccess ) disabled="disabled"#end></textarea></td>
     #else
         #if( $dataElement.optionSet )
-          <td><input name="entryoptionset" id="${dataEntryId}" type="text" tabindex="${tabIndex}"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+          <td><input name="entryoptionset" class="entryoptionset" id="${dataEntryId}" type="text" tabindex="${tabIndex}"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
         #else
-          <td><input name="entryfield" id="${dataEntryId}" type="text" tabindex="${tabIndex}"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
+          <td><input name="entryfield" class="entryfield" id="${dataEntryId}" type="text" tabindex="${tabIndex}"#if( $greyedField || !$hasAccess ) disabled="disabled"#end></td>
         #end
     #end
     </td>

@@ -1,19 +1,20 @@
 package org.hisp.dhis.webportal.interceptor;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,14 +28,17 @@ package org.hisp.dhis.webportal.interceptor;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import com.opensymphony.xwork2.ActionInvocation;
+import com.opensymphony.xwork2.config.entities.ActionConfig;
+import com.opensymphony.xwork2.interceptor.Interceptor;
+import org.hisp.dhis.system.SystemService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import com.opensymphony.xwork2.ActionInvocation;
-import com.opensymphony.xwork2.config.entities.ActionConfig;
-import com.opensymphony.xwork2.interceptor.Interceptor;
 
 /**
  * @author Torgeir Lorange Ostby
@@ -47,6 +51,18 @@ public class XWorkPortalParamsInterceptor
      * Determines if a de-serialized file is compatible with this class.
      */
     private static final long serialVersionUID = 4915716647953480053L;
+
+    // -------------------------------------------------------------------------
+    // Dependencies
+    // -------------------------------------------------------------------------
+
+    private SystemService systemService;
+
+    @Autowired
+    public void setSystemService( SystemService systemService )
+    {
+        this.systemService = systemService;
+    }
 
     // -------------------------------------------------------------------------
     // External configuration
@@ -86,13 +102,13 @@ public class XWorkPortalParamsInterceptor
         final Map<String, String> staticParams = actionConfig.getParams();
 
         if ( staticParams != null )
-        {            
+        {
             // ---------------------------------------------------------------------
             // Push the specified static parameters onto the value stack
             // ---------------------------------------------------------------------
-    
+
             Map<String, Object> matches = new HashMap<String, Object>();
-    
+
             for ( Map.Entry<String, String> entry : staticParams.entrySet() )
             {
                 if ( standardParams.contains( entry.getKey() ) )
@@ -102,19 +118,32 @@ public class XWorkPortalParamsInterceptor
                 else if ( commaSeparatedParams.contains( entry.getKey() ) )
                 {
                     String[] values = entry.getValue().split( "," );
-    
+
                     for ( int i = 0; i < values.length; i++ )
                     {
                         values[i] = values[i].trim();
                     }
-                    
+
                     matches.put( entry.getKey(), values );
                 }
             }
-    
+
             actionInvocation.getStack().push( matches );
         }
-        
+
+        // TODO: move this to its own systemInfoInterceptor?
+        Map<String, Object> systemInfo = new HashMap<String, Object>();
+
+        String revision = systemService.getSystemInfo().getRevision();
+
+        if ( StringUtils.isEmpty( revision ) )
+        {
+            revision = "__dev__";
+        }
+
+        systemInfo.put( "buildRevision", revision );
+        actionInvocation.getStack().push( systemInfo );
+
         return actionInvocation.invoke();
     }
 }

@@ -1,19 +1,20 @@
 package org.hisp.dhis.organisationunit;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -26,8 +27,6 @@ package org.hisp.dhis.organisationunit;
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-import java.util.Iterator;
 
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.system.deletion.DeletionHandler;
@@ -63,29 +62,19 @@ public class OrganisationUnitDeletionHandler
     @Override
     public void deleteDataSet( DataSet dataSet )
     {
-        Iterator<OrganisationUnit> iterator = dataSet.getSources().iterator();
-        
-        while ( iterator.hasNext() )
+        for ( OrganisationUnit unit : dataSet.getSources() )
         {
-            OrganisationUnit unit = iterator.next();
-            
-            unit.getDataSets().remove( unit );
-            
+            unit.getDataSets().remove( dataSet );
             organisationUnitService.updateOrganisationUnit( unit );
-        }        
+        }
     }
 
     @Override
     public void deleteUser( User user )
     {
-        Iterator<OrganisationUnit> iterator = user.getOrganisationUnits().iterator();
-        
-        while ( iterator.hasNext() )
+        for ( OrganisationUnit unit : user.getOrganisationUnits() )
         {
-            OrganisationUnit unit = iterator.next();
-            
             unit.getUsers().remove( user );
-            
             organisationUnitService.updateOrganisationUnit( unit );
         }
     }
@@ -93,15 +82,16 @@ public class OrganisationUnitDeletionHandler
     @Override
     public void deleteOrganisationUnitGroup( OrganisationUnitGroup group )
     {
-        Iterator<OrganisationUnit> iterator = group.getMembers().iterator();
-        
-        while ( iterator.hasNext() )
+        for ( OrganisationUnit unit : group.getMembers() )
         {
-            OrganisationUnit unit = iterator.next();
-            
-            unit.getGroups().remove( unit );
-            
+            unit.getGroups().remove( group );
             organisationUnitService.updateOrganisationUnit( unit );
-        }            
+        }
+    }
+
+    @Override
+    public String allowDeleteOrganisationUnit( OrganisationUnit unit )
+    {
+        return unit.getChildren().isEmpty() ? null : ERROR;
     }
 }

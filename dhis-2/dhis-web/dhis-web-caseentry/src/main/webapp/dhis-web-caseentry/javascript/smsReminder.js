@@ -1,26 +1,28 @@
 isAjax = true;
+var generateResultParams = "";
+
 function orgunitSelected( orgUnits, orgUnitNames )
 {
-	var width = jQuery('#programIdAddPatient').width();
-	jQuery('#programIdAddPatient').width(width-30);
+	var width = jQuery('#program').width();
+	jQuery('#program').width(width-30);
 	showById( "programLoader" );
-	disable('programIdAddPatient');
-	disable('listPatientBtn');
+	disable('program');
+	disable('listEntityInstanceBtn');
 	showById('mainLinkLbl');
 	showById('searchDiv');
 	hideById('listEventDiv');
 	hideById('listEventDiv');
-	hideById('patientDashboard');
+	hideById('entityInstanceDashboard');
 	hideById('smsManagementDiv');
 	hideById('sendSmsFormDiv');
-	hideById('editPatientDiv');
+	hideById('editEntityInstanceDiv');
 	hideById('resultSearchDiv');
 	hideById('enrollmentDiv');
 	hideById('listRelationshipDiv');
 	hideById('addRelationshipDiv');
-	hideById('migrationPatientDiv');
+	hideById('migrationEntityInstanceDiv');
 
-	clearListById('programIdAddPatient');
+	clearListById('program');
 	$('#contentDataRecord').html('');
 	setFieldValue('orgunitName', orgUnitNames[0]);
 	setFieldValue('orgunitId', orgUnits[0]);
@@ -31,21 +33,21 @@ function orgunitSelected( orgUnits, orgUnitNames )
 			for ( i in json.programs ) {
 				if(json.programs[i].type==1){
 					count++;
-					jQuery( '#programIdAddPatient').append( '<option value="' + json.programs[i].id +'" type="' + json.programs[i].type + '">' + json.programs[i].name + '</option>' );
+					jQuery( '#program').append( '<option value="' + json.programs[i].uid +'" type="' + json.programs[i].type + '">' + json.programs[i].name + '</option>' );
 				}
 			}
 			if(count==0){
-				jQuery( '#programIdAddPatient').prepend( '<option value="" selected>' + i18n_none_program + '</option>' );
+				jQuery( '#program').prepend( '<option value="" selected>' + i18n_none_program + '</option>' );
 			}
 			else if(count>1){
-				jQuery( '#programIdAddPatient').prepend( '<option value="" selected>' + i18n_please_select + '</option>' );
-				enable('listPatientBtn');
+				jQuery( '#program').prepend( '<option value="" selected>' + i18n_please_select + '</option>' );
+				enable('listEntityInstanceBtn');
 			}
 			
 			enableBtn();
 			hideById('programLoader');
-			jQuery('#programIdAddPatient').width(width);
-			enable('programIdAddPatient');
+			jQuery('#program').width(width);
+			enable('program');
 		});
 }
 
@@ -55,45 +57,287 @@ selection.setListenerFunction( orgunitSelected );
 // List all events
 // --------------------------------------------------------------------
 
-function listAllPatient()
+function listAllTrackedEntityInstance( page )
 {
 	hideById('listEventDiv');
 	hideById('advanced-search');
 	contentDiv = 'listEventDiv';
 	$('#contentDataRecord').html('');
 	hideById('advanced-search');
-	eventList = 1;
 	
-	var date = new Date();
-	var d = date.getDate() - 1;
-	var m = date.getMonth();
-	var y1 = date.getFullYear() - 100;
-	var y2 = date.getFullYear() + 100;
-	var startDate = jQuery.datepicker.formatDate( dateFormat, new Date(y1, m, d) );
-	var endDate = jQuery.datepicker.formatDate( dateFormat, new Date(y2, m, d) );
+	var params = "ou=" + getFieldValue("orgunitId");
+	params += "&ouMode=SELECTED";
+	params += "&program=" + getFieldValue('program');
+	params += "&programStatus=ACTIVE";
+	params += "&page=" + page;
 	
-	var programId = getFieldValue('programIdAddPatient');
-	var searchTexts = "stat_" + programId + "_" 
-				+ startDate + "_" + endDate + "_" 
-				+ getFieldValue('orgunitId') + "_true_" 
-				+ getFieldValue('statusEvent');
-	var followup = "";
-	if( byId('followup').checked ){
-		followup = "?followup=true";
+	if( $('#followup').attr('checked')=='checked'){
+		params += "followUp=true";
 	}
-	showLoader();
-	jQuery('#listEventDiv').load('getSMSPatientRecords.action' + followup,
-		{
-			programId:programId,
-			listAll:false,
-			searchTexts: searchTexts
-		}, 
-		function()
-		{
-			showById('colorHelpLink');
+	
+	params += '&eventStatus=' + getFieldValue('status');
+	params += "&eventStartDate=1900-01-01";
+	params += "&eventEndDate=3000-01-01";
+	
+	$('#attributeIds option').each(function(i, item){
+		params += "&attribute=" + item.value;
+	});
+	
+	$.ajax({
+		type : "GET",
+		url : "../api/trackedEntityInstances.json",
+		data : params,
+		dataType : "json",
+		success : function(json) {
+			setInnerHTML('listEventDiv', displayEvents(json, page));
 			showById('listEventDiv');
-			hideLoader();
-		});
+			jQuery('#loaderDiv').hide();
+			setTableStyles();
+		}
+	});
+}
+
+function displayEvents(json, page) {
+	var table = "";
+	
+	// Header
+	if (json.metaData.pager.total > 0) {
+		table += "<p>" + i18n_total_result + " : " + json.metaData.pager.total
+				+ "</p>";
+	} else {
+		table += "<p>" + i18n_no_result_found + "</p>";
+	}
+	
+	table += "<table class='listTable' width='100%'>";
+	
+	var idx = 4;
+	if(getFieldValue('program') != '') {
+		idx = 5;
+	}
+	
+	// Yes/No and Yes Only attributes in result
+	
+	var attList = new Array();
+	var attDate = new Array();
+	$('#attributeIds option').each(function(i, item) {
+		var valueType = $(item).attr('valueType');
+		var value = $(item).val();
+		if ( valueType == 'bool' || valueType == 'trueOnly' || valueType == 'trackerAssociate' ) {
+			for (var i = idx; i < json.width; i++) {
+				if( value==json.headers[i].name ){
+					attList.push(i);
+				}
+			}
+		}
+		else if ( valueType == 'date' ) {
+			for (var i = idx; i < json.width; i++) {
+				if( value==json.headers[i].name ){
+					attDate.push(i);
+				}
+			}
+		}
+	});
+	
+	// TEI list
+	
+	table += "<col width='30' />";
+	for (var i = idx; i < json.width; i++) {
+		table += "<col />";
+	}
+	table += "<col width='200' />";
+	table += "<thead><tr><th>#</th>";
+	for (var i = idx; i < json.width; i++) {
+		table += "<th>" + json.headers[i].column + "</th>";
+	}
+	table += "<th>" + i18n_operations + "</th>";
+	table += "</tr></thead>";
+	
+	table += "<tbody id='list'>";
+	for ( var i in json.rows) {
+		var cols = json.rows[i];
+		var uid = cols[0];
+		var no = eval(json.metaData.pager.page);
+		no = (no - 1) * 50 + eval(i) + 1;
+		table += "<tr id='tr" + uid + "'>";
+		table += "<td>" + no + "</td>";
+		for (var j = idx; j < json.width; j++) {
+			var colVal = cols[j];
+			if (j == 4) {
+				colVal = json.metaData.names[colVal];
+			}
+			
+			if( jQuery.inArray( j, attList )>=0 && colVal!="" ){
+				colVal = (colVal=='true')? i18n_yes : i18n_no;
+			}
+			else if( jQuery.inArray( j, attDate )>=0 && colVal!="" ){
+				colVal = colVal.split(' ')[0];
+			}
+			
+			table += "<td onclick=\"javascript:isDashboard=true;showTrackedEntityInstanceDashboardForm( '"
+				+ uid
+				+ "' )\" title='"
+				+ i18n_dashboard
+				+ "'>" + colVal + "</td>";
+		}
+		
+		// Operations column
+		table += "<td>";
+		table += "<a href=\"javascript:isDashboard=false;showEvents(" + isAdvancedSearch + ", '"
+				+ uid
+				+ "' )\" title='"
+				+ i18n_events
+				+ "'><img src='../images/edit_sections.png' alt='"
+				+ i18n_events
+				+ "'></a>";
+		table += "<a href=\"javascript:isDashboard=false;showTrackedEntityInstanceDashboardForm( '"
+				+ uid
+				+ "' )\" title='"
+				+ i18n_dashboard
+				+ "'><img src='../images/enroll.png' alt='"
+				+ i18n_dashboard
+				+ "'></a>";
+		table += "<a href=\"javascript:programTrackingList( '" + uid + "', false ) \" "
+				+ " title='"
+				+ i18n_edit
+				+ "'><img src= '../images/edit.png' alt='"
+				+ i18n_edit
+				+ "'></a>";
+		table += "<a href=\"javascript:showTrackedEntityInstanceHistory( '" + uid + "' ) \" "
+				+ " title='"
+				+ i18n_tracked_entity_instance_details_and_history
+				+ "'><img src= '../images/information.png' alt='"
+				+ i18n_tracked_entity_instance_details_and_history
+				+ "'></a>";
+		table += "</td>";
+		table += "</tr>";
+	}
+	table += "</tbody>";
+	table += "</table>";
+	
+	return table + paging(json, page);
+	
+	if( json.metaData.pager.total > 0 ){
+		// Event list
+		table += "<table class='listTable' width='100%'>";
+		
+		table += "<col width='30' />";// Ordered no.
+		table += "<col />"; // Event-date
+		table += "<col />"; // Data values
+		table += "<col width='200' />"; // Operations
+		
+		table += "<thead><tr><th>#</th>";
+		table += "<th>" + i18n_event_date + "</th>";
+		table += "<th>" + i18n_data_values + "</th>";
+		table += "<th>" + i18n_operations + "</th>";
+		table += "</tr></thead>";
+		
+		table += "<tbody id='list'>";
+		for ( var i in json.events) {
+			var row = json.events[i];
+			var uid = row.event;
+			var teiUid = row.trackedEntityInstance;
+			var no = eval(json.metaData.pager.page);
+			no = (no - 1) * json.metaData.pager.pageSize + eval(i) + 1;
+			table += "<tr id='tr" + uid + "'>";
+			table += "<td>" + no + "</td>";// No.
+			table += "<td>" + row.eventDate + "</td>";// Event-date
+			
+			// Data values
+			table += "<td>";
+			if( row.dataValues!=undefined ){
+				table += "<table>";
+				for (var j in row.dataValues) {
+					var colVal = row.dataValues[j].dataElement;
+					table += "<tr><td>" +  json.metaData.de[colVal] + ": </td>";
+					table += "<td>" +  row.dataValues[j].value + "</td></tr>";
+				}
+				table += "</table>";
+			}
+			else{
+				table += "</td>";
+			}
+			
+			
+		}
+		table += "</tbody>";
+		table += "</table>";
+	
+		table += paging(json, page);
+	}
+	return table;
+}
+
+// Paging
+
+function paging(json, page) {
+	var searchMethod = "listAllTrackedEntityInstance";
+	if( isAdvancedSearch ){
+		searchMethod = "validateAdvancedSearch";
+	}
+	
+	var table = "<table width='100%' style='background-color: #ebf0f6;'><tr><td colspan='"
+			+ json.width + "'>";
+	table += "<div class='paging'>";
+	table += "<span class='first' title='" + i18n_first + "'>««</span>";
+	table += "<span class='prev' title='" + i18n_prev + "'>«</span>";
+	for (var i = 1; i <= json.metaData.pager.pageCount; i++) {
+		if (i == page) {
+			table += "<span class='page' title='" + i18n_page + " " + i + "'>"
+					+ i + "</span>";
+		} else {
+			table += "<a class='page' title='" + i18n_page + " " + i
+					+ "' href='javascript:" + searchMethod + "( " + i
+					+ ");'>" + i + "</a>";
+		}
+		table += "<span class='seperator'>|</span>";
+	}
+	table += "<span class='next' title='" + i18n_next + "'>» </span>";
+	table += "<span class='last' title='" + i18n_last + "'>»»</span>";
+	table += "</div>";
+	table += "</tr></table>";
+	return table;
+}
+
+function showEvents( isAdvancedSearch, teiUid){
+	var params = "orgUnit=" + getFieldValue("orgunitId");
+	params += "&program=" + getFieldValue('program');
+	params += "&trackedEntityInstance=" + teiUid;
+	params += '&status=' + getFieldValue('status');
+	if( isAdvancedSearch ){ // advanced-search
+		params += "&startDate=" + getFieldValue('startDate');
+		params += "&endDate=" + getFieldValue('endDate');
+	}
+	else // list
+	{
+		params += "&startDate=1900-01-01";
+		params += "&endDate=3000-01-01";
+	}
+	
+	$.ajax({
+		type : "GET",
+		url : "../api/events.json",
+		data : params,
+		dataType : "json",
+		success : function(json) {
+			var table = "<table>"
+			for ( var i in json.events) {
+				var row = json.events[i];
+				var uid = row.event;
+				var eventDate = row.eventDate;
+				table += "<tr><td><a href='javascript:programTrackingList( \"" + uid + "\") ' >" + eventDate + "</a></td></tr>";
+			}
+			table += "</table>";
+			$('#eventList').html(table);
+			$('#eventList').dialog({
+				title : i18n_events,
+				maximize : true,
+				closable : true,
+				modal : false,
+				width : 380,
+				height : 290
+			}).show('fast');
+		}
+	});
 }
 
 // --------------------------------------------------------------------
@@ -102,27 +346,50 @@ function listAllPatient()
 
 followup = true;
 
-function advancedSearch( params )
+function advancedSearch( params, page )
 {
 	setFieldValue('listAll', "false");
 	$('#contentDataRecord').html('');
 	$('#listEventDiv').html('');
 	hideById('listEventDiv');
-	showLoader();
-	params += "&programId=" + getFieldValue('programIdAddPatient');
+	showLoader()
+	
+	var params = "ou=" + getFieldValue("orgunitId");
+	params += "&ouMode=" + getFieldValue("ouMode");
+	params += "&program=" + getFieldValue('program');
+	params += "&programStatus=ACTIVE";
+	params += "&page=" + page;
+	
+	if( $('#followup').attr('checked')=='checked'){
+		params += "followUp=true";
+	}
+	
+	params += '&eventStatus=' + getFieldValue('status');
+	params += "&eventStartDate=" + getFieldValue('startDate');
+	params += "&eventEndDate=" + getFieldValue('endDate');
+	
+	$('#attributeIds option').each(function(i, item){
+		params += "&attribute=" + item.value;
+	});
+	
 	$.ajax({
-		url: 'getSMSPatientRecords.action',
-		type:"POST",
-		data: params,
-		success: function( html ){
-			jQuery('#listEventDiv').html(html);
-			showById('colorHelpLink');
+		type : "GET",
+		url : "../api/trackedEntityInstances.json",
+		data : params,
+		dataType : "json",
+		success : function(json) {
+			setInnerHTML('listEventDiv', displayEvents(json, page));
 			showById('listEventDiv');
-			eventList = 2;
+			jQuery('#loaderDiv').hide();
 			setTableStyles();
-			hideLoader();
 		}
 	});
+}
+
+function exportXlsFile()
+{
+	var url = "getActivityPlanRecords.action?type=xls&trackingReport=true&" + generateResultParams;
+	window.location.href = url;
 }
 
 // --------------------------------------------------------------------
@@ -131,6 +398,7 @@ function advancedSearch( params )
 
 function programTrackingList( programStageInstanceId, isSendSMS ) 
 {
+	$('#eventList').dialog('close');
 	hideById('listEventDiv');
 	hideById('searchDiv');
 	showLoader();
@@ -150,49 +418,6 @@ function programTrackingList( programStageInstanceId, isSendSMS )
 }
 
 // --------------------------------------------------------------------
-// Send SMS 
-// --------------------------------------------------------------------
-
-function showSendSmsForm()
-{
-	jQuery('#sendSmsToListForm').dialog({
-			title: i18n_send_message,
-			maximize: true, 
-			closable: true,
-			modal:true,
-			overlay:{background:'#000000', opacity:0.1},
-			width: 420,
-			height: 200
-		});
-}
-
-function sendSmsToList()
-{
-	params = getSearchParams();
-	params += "&msg=" + getFieldValue( 'smsMessage' );
-	params += "&programStageInstanceId=" + getFieldValue('programStageInstanceId');
-	$.ajax({
-		url: 'sendSMSTotList.action',
-		type:"POST",
-		data: params,
-		success: function( json ){
-			if ( json.response == "success" ) {
-				var programStageName = getFieldValue('programStageName');
-				var currentTime = date.getHours() + ":" + date.getMinutes();
-				jQuery('#commentTB').prepend("<tr><td>" + getFieldValue("currentDate") + " " + currentTime + "</td>"
-						+ "<td>" + programStageName + "</td>"
-						+ "<td>" + getFieldValue( 'smsMessage' ) + "</td></tr>");
-				showSuccessMessage( json.message );
-			}
-			else {
-				showErrorMessage( json.message );
-			}
-			jQuery('#sendSmsFormDiv').dialog('close')
-		}
-	});
-}
-
-// --------------------------------------------------------------------
 // Post Comments/Send Message
 // --------------------------------------------------------------------
 
@@ -200,7 +425,7 @@ function keypressOnMessage(event, field, programStageInstanceId )
 {
 	var key = getKeyCode( event );
 	if ( key==13 ){ // Enter
-		sendSmsOnePatient( field, programStageInstanceId );
+		sendSmsOneTrackedEntityInstance( field, programStageInstanceId );
 	}
 }
 
@@ -273,16 +498,17 @@ function onClickBackBtn()
 	showById('mainLinkLbl');
 	showById('searchDiv');
 	showById('listEventDiv');
-	hideById('migrationPatientDiv');
+	hideById('migrationEntityInstanceDiv');
 	hideById('smsManagementDiv');
-	hideById('patientDashboard');
+	hideById('entityInstanceDashboard');
 	
-	if( eventList == 1){
-		listAllPatient();
+	if( isAdvancedSearch ){
+		validateAdvancedSearch(1);
 	}
-	else if( eventList == 2){
-		validateAdvancedSearch();
+	else{
+		listAllTrackedEntityInstance(1);
 	}
+	 
 }
 
 // load program instance history
@@ -303,3 +529,10 @@ function programTrackingReport( programInstanceId )
 		});
 }
 
+function getProgramStageInstanceById(programStageInstanceId)
+{
+	$('#tab-2').load("getProgramStageInstanceById.action", 
+	{
+		programStageInstanceId:programStageInstanceId
+	});
+}

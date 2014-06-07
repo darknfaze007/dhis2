@@ -1,19 +1,20 @@
 package org.hisp.dhis.validation;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,7 +32,9 @@ import java.util.Collection;
 import java.util.Date;
 
 import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataset.DataSet;
+import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.period.Period;
 
@@ -43,7 +46,8 @@ public interface ValidationRuleService
 {
     String ID = ValidationRuleService.class.getName();
 
-    int MAX_VIOLATIONS = 500;
+    int MAX_INTERACTIVE_ALERTS = 500;
+    int MAX_SCHEDULED_ALERTS = 100000;
 
     // -------------------------------------------------------------------------
     // ValidationRule business logic
@@ -53,32 +57,26 @@ public interface ValidationRuleService
      * Validate DataValues.
      *
      * @param startDate the start date.
-     * @param endDate   the end date.
-     * @param sources   a collection of Sources.
+     * @param endDate the end date.
+     * @param sources a collection of Sources.
+     * @param attributeCombo attribute category option combo (null for all).
+     * @param group validation rule group (null for all validationRules).
+     * @param sendAlerts whether to send alerts for surveillance.
+     * @param format the i18n format.
      * @return a collection of ValidationResults for each validation violation.
      */
-    Collection<ValidationResult> validate( Date startDate, Date endDate, Collection<OrganisationUnit> sources );
-
-    /**
-     * Validate DataValues.
-     *
-     * @param startDate the start date.
-     * @param endDate   the end date.
-     * @param sources   a collection of Sources.
-     * @param group     a group of ValidationRules.
-     * @return a collection of ValidationResults for each validation violation.
-     */
-    Collection<ValidationResult> validate( Date startDate, Date endDate, Collection<OrganisationUnit> sources, ValidationRuleGroup group );
+    Collection<ValidationResult> validate( Date startDate, Date endDate, Collection<OrganisationUnit> sources, DataElementCategoryOptionCombo attributeCombo, ValidationRuleGroup group, boolean sendAlerts, I18nFormat format );
 
     /**
      * Validate DataValues.
      *
      * @param dataSet the DataSet.
-     * @param period  the Period.
-     * @param source  the Source.
+     * @param period the Period.
+     * @param source the Organisation unit.
+     * @param attributeCombo attribute category option combo (null for all).
      * @return a collection of ValidationResults for each validation violation.
      */
-    Collection<ValidationResult> validate( DataSet dataSet, Period period, OrganisationUnit source );
+    Collection<ValidationResult> validate( DataSet dataSet, Period period, OrganisationUnit source, DataElementCategoryOptionCombo attributeCombo );
 
     /**
      * Validate DataValues.
@@ -90,6 +88,12 @@ public interface ValidationRuleService
      */
     Collection<ValidationResult> validate( Date startDate, Date endDate, OrganisationUnit source );
 
+    /**
+     * Evaluates all the validation rules that could generate alerts,
+     * and sends results (if any) to users who should be notified.
+     */
+    void scheduledRun();
+    
     // -------------------------------------------------------------------------
     // ValidationRule
     // -------------------------------------------------------------------------
@@ -170,13 +174,6 @@ public interface ValidationRuleService
      * @return a collection of validation rules.
      */
     Collection<ValidationRule> getValidationRulesByDataElements( Collection<DataElement> dataElements );
-
-    /**
-     * Get all data elements associated with any validation rule.
-     *
-     * @return a collection of data elements.
-     */
-    Collection<DataElement> getDataElementsInValidationRules();
 
     // -------------------------------------------------------------------------
     // ValidationRuleGroup

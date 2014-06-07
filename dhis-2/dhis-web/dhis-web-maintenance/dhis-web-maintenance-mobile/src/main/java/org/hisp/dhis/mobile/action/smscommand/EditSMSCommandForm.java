@@ -1,19 +1,20 @@
 package org.hisp.dhis.mobile.action.smscommand;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -42,6 +43,7 @@ import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.smscommand.SMSCode;
 import org.hisp.dhis.smscommand.SMSCommand;
 import org.hisp.dhis.smscommand.SMSCommandService;
+import org.hisp.dhis.smscommand.SMSSpecialCharacter;
 import org.hisp.dhis.user.UserGroupService;
 
 import com.opensymphony.xwork2.Action;
@@ -53,26 +55,26 @@ public class EditSMSCommandForm
     // Dependencies
     // -------------------------------------------------------------------------
     private SMSCommandService smsCommandService;
-    
+
     public void setSmsCommandService( SMSCommandService smsCommandService )
     {
         this.smsCommandService = smsCommandService;
     }
 
     private DataSetService dataSetService;
-    
+
     public void setDataSetService( DataSetService dataSetService )
     {
         this.dataSetService = dataSetService;
     }
 
     private DataElementService dataElementService;
-    
+
     public void setDataElementService( DataElementService dataElementService )
     {
         this.dataElementService = dataElementService;
     }
-    
+
     private UserGroupService userGroupService;
 
     public void setUserGroupService( UserGroupService userGroupService )
@@ -87,18 +89,28 @@ public class EditSMSCommandForm
     private String name;
 
     private int selectedDataSetID;
-    
+
     private Integer userGroupID;
 
     private String codeDataelementOption;
+
+    private String specialCharactersInfo;
 
     private String separator;
 
     private String codeSeparator;
 
     private String defaultMessage;
-    
+
     private String receivedMessage;
+
+    private String wrongFormatMessage;
+
+    private String noUserMessage;
+
+    private String moreThanOneOrgUnitMessage;
+
+    private Integer completenessMethod;
 
     private int selectedCommandID = -1;
 
@@ -125,24 +137,59 @@ public class EditSMSCommandForm
             codeSet.add( c );
         }
 
+        @SuppressWarnings( "unchecked" )
+        List<JSONObject> jsonSpecialCharacters = (List<JSONObject>) JSONObject.fromObject( specialCharactersInfo ).get(
+            "specialCharacters" );
+        Set<SMSSpecialCharacter> specialCharacterSet = new HashSet<SMSSpecialCharacter>();
+        for ( JSONObject x : jsonSpecialCharacters )
+        {
+            String name = x.getString( "name" );
+            String value = x.getString( "value" );
+            SMSSpecialCharacter smsSpecialCharacter = new SMSSpecialCharacter( name, value );
+            specialCharacterSet.add( smsSpecialCharacter );
+        }
+        smsCommandService.saveSpecialCharacterSet( specialCharacterSet );
+
         if ( codeSet.size() > 0 )
         {
             smsCommandService.save( codeSet );
         }
 
         SMSCommand c = getSMSCommand();
+
         if ( selectedDataSetID > -1 && c != null )
         {
             c.setCurrentPeriodUsedForReporting( currentPeriodUsedForReporting );
             c.setName( name );
             c.setSeparator( separator );
+
+            if ( completenessMethod != null )
+            {
+                c.setCompletenessMethod( completenessMethod );
+            }
+
+            // remove codes
+            Set<SMSCode> toRemoveCodes = c.getCodes();
+            smsCommandService.deleteCodeSet( toRemoveCodes );
+
+            // remove special characters
+            Set<SMSSpecialCharacter> toRemoveCharacters = c.getSpecialCharacters();
+            smsCommandService.deleteSpecialCharacterSet( toRemoveCharacters );
+
             c.setCodes( codeSet );
+
+            // message
             c.setDefaultMessage( defaultMessage );
             c.setReceivedMessage( receivedMessage );
-            if( userGroupID != null && userGroupID > -1 )
+            c.setMoreThanOneOrgUnitMessage( moreThanOneOrgUnitMessage );
+            c.setNoUserMessage( noUserMessage );
+            c.setWrongFormatMessage( wrongFormatMessage );
+
+            if ( userGroupID != null && userGroupID > -1 )
             {
                 c.setUserGroup( userGroupService.getUserGroup( userGroupID ) );
             }
+            c.setSpecialCharacters( specialCharacterSet );
             smsCommandService.save( c );
         }
 
@@ -168,7 +215,6 @@ public class EditSMSCommandForm
     {
         return smsCommandService.getSMSCommand( selectedCommandID );
     }
-
 
     public int getSelectedDataSetID()
     {
@@ -265,5 +311,55 @@ public class EditSMSCommandForm
     public void setReceivedMessage( String receivedMessage )
     {
         this.receivedMessage = receivedMessage;
+    }
+
+    public String getSpecialCharactersInfo()
+    {
+        return specialCharactersInfo;
+    }
+
+    public void setSpecialCharactersInfo( String specialCharactersInfo )
+    {
+        this.specialCharactersInfo = specialCharactersInfo;
+    }
+
+    public String getWrongFormatMessage()
+    {
+        return wrongFormatMessage;
+    }
+
+    public void setWrongFormatMessage( String wrongFormatMessage )
+    {
+        this.wrongFormatMessage = wrongFormatMessage;
+    }
+
+    public String getNoUserMessage()
+    {
+        return noUserMessage;
+    }
+
+    public void setNoUserMessage( String noUserMessage )
+    {
+        this.noUserMessage = noUserMessage;
+    }
+
+    public String getMoreThanOneOrgUnitMessage()
+    {
+        return moreThanOneOrgUnitMessage;
+    }
+
+    public void setMoreThanOneOrgUnitMessage( String moreThanOneOrgUnitMessage )
+    {
+        this.moreThanOneOrgUnitMessage = moreThanOneOrgUnitMessage;
+    }
+
+    public int getCompletenessMethod()
+    {
+        return completenessMethod;
+    }
+
+    public void setCompletenessMethod( int completenessMethod )
+    {
+        this.completenessMethod = completenessMethod;
     }
 }

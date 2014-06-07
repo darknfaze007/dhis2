@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataset;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,16 +28,10 @@ package org.hisp.dhis.dataset;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.dataentryform.DataEntryForm;
-import org.hisp.dhis.i18n.I18nService;
-import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.period.Period;
-import org.hisp.dhis.period.PeriodType;
-import org.hisp.dhis.system.util.Filter;
-import org.hisp.dhis.system.util.FilterUtils;
-import org.joda.time.DateTime;
-import org.springframework.transaction.annotation.Transactional;
+import static org.hisp.dhis.i18n.I18nUtils.getCountByName;
+import static org.hisp.dhis.i18n.I18nUtils.getObjectsBetween;
+import static org.hisp.dhis.i18n.I18nUtils.getObjectsBetweenByName;
+import static org.hisp.dhis.i18n.I18nUtils.i18n;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,7 +41,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import static org.hisp.dhis.i18n.I18nUtils.*;
+import org.hisp.dhis.dataapproval.DataApprovalService;
+import org.hisp.dhis.dataapproval.DataApprovalStatus;
+import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
+import org.hisp.dhis.dataentryform.DataEntryForm;
+import org.hisp.dhis.i18n.I18nService;
+import org.hisp.dhis.organisationunit.OrganisationUnit;
+import org.hisp.dhis.organisationunit.OrganisationUnitService;
+import org.hisp.dhis.period.Period;
+import org.hisp.dhis.period.PeriodType;
+import org.hisp.dhis.system.util.Filter;
+import org.hisp.dhis.system.util.FilterUtils;
+import org.hisp.dhis.user.CurrentUserService;
+import org.joda.time.DateTime;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Lars Helge Overland
@@ -79,6 +88,27 @@ public class DefaultDataSetService
     public void setI18nService( I18nService service )
     {
         i18nService = service;
+    }
+
+    private OrganisationUnitService organisationUnitService;
+
+    public void setOrganisationUnitService( OrganisationUnitService organisationUnitService )
+    {
+        this.organisationUnitService = organisationUnitService;
+    }
+
+    private CurrentUserService currentUserService;
+
+    public void setCurrentUserService( CurrentUserService currentUserService )
+    {
+        this.currentUserService = currentUserService;
+    }
+    
+    private DataApprovalService dataApprovalService;
+
+    public void setDataApprovalService( DataApprovalService dataApprovalService )
+    {
+        this.dataApprovalService = dataApprovalService;
     }
 
     // -------------------------------------------------------------------------
@@ -142,6 +172,43 @@ public class DefaultDataSetService
         if ( i18nSections && dataSet.hasSections() )
         {
             i18n( i18nService, dataSet.getSections() );
+
+            for ( Section section : dataSet.getSections() )
+            {
+                i18n( i18nService, section.getDataElements() );
+            }
+        }
+
+        return dataSet;
+    }
+
+    public DataSet getDataSet( String id, boolean i18nDataElements, boolean i18nIndicators, boolean i18nOrgUnits, boolean i18nSections )
+    {
+        DataSet dataSet = getDataSet( id );
+
+        if ( i18nDataElements )
+        {
+            i18n( i18nService, dataSet.getDataElements() );
+        }
+
+        if ( i18nIndicators )
+        {
+            i18n( i18nService, dataSet.getIndicators() );
+        }
+
+        if ( i18nOrgUnits )
+        {
+            i18n( i18nService, dataSet.getSources() );
+        }
+
+        if ( i18nSections && dataSet.hasSections() )
+        {
+            i18n( i18nService, dataSet.getSections() );
+
+            for ( Section section : dataSet.getSections() )
+            {
+                i18n( i18nService, section.getDataElements() );
+            }
         }
 
         return dataSet;
@@ -291,6 +358,11 @@ public class DefaultDataSetService
     {
         return dataSetStore.getByUid( uids );
     }
+    
+    public List<DataSet> getDataSetsByUidNoAcl( Collection<String> uids )
+    {
+        return dataSetStore.getByUidNoAcl( uids );
+    }
 
     public Collection<DataElement> getDataElements( DataSet dataSet )
     {
@@ -390,13 +462,47 @@ public class DefaultDataSetService
     }
 
     @Override
-    public boolean isLocked( DataSet dataSet, Period period, OrganisationUnit organisationUnit, Date now )
+    public boolean isLocked( DataSet dataSet, Period period, OrganisationUnit organisationUnit, DataElementCategoryOptionCombo attributeOptionCombo, Date now )
     {
         now = now != null ? now : new Date();
 
         boolean expired = dataSet.getExpiryDays() != DataSet.NO_EXPIRY && new DateTime( period.getEndDate() ).plusDays( dataSet.getExpiryDays() ).isBefore( new DateTime( now ) );
 
-        return expired && lockExceptionStore.getCount( dataSet, period, organisationUnit ) == 0l;
+        boolean exception = lockExceptionStore.getCount( dataSet, period, organisationUnit ) > 0l;
+        
+        if ( expired && !exception )
+        {
+            return true;
+        }
+
+        DataApprovalStatus dataApprovalStatus = dataApprovalService.getDataApprovalStatus( dataSet, period, organisationUnit, attributeOptionCombo );
+        
+        return dataApprovalStatus.getDataApprovalState().isApproved();
+    }
+
+    @Override
+    public boolean isLocked( DataSet dataSet, Period period, OrganisationUnit organisationUnit, 
+        DataElementCategoryOptionCombo attributeOptionCombo, Date now, boolean useOrgUnitChildren )
+    {
+        if ( !useOrgUnitChildren )
+        {
+            return isLocked( dataSet, period, organisationUnit, attributeOptionCombo, now );
+        }
+        
+        if ( organisationUnit == null || !organisationUnit.hasChild() )
+        {
+            return false;
+        }
+        
+        for ( OrganisationUnit child : organisationUnit.getChildren() )
+        {
+            if ( isLocked( dataSet, period, child, attributeOptionCombo, now ) )
+            {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     @Override
@@ -409,5 +515,25 @@ public class DefaultDataSetService
         boolean expired = expiryDays != DataSet.NO_EXPIRY && new DateTime( period.getEndDate() ).plusDays( expiryDays ).isBefore( new DateTime( now ) );
 
         return expired && lockExceptionStore.getCount( dataElement, period, organisationUnit ) == 0l;
+    }
+
+    @Override
+    public void mergeWithCurrentUserOrganisationUnits( DataSet dataSet, Collection<OrganisationUnit> mergeOrganisationUnits )
+    {
+        Set<OrganisationUnit> organisationUnits = new HashSet<OrganisationUnit>( dataSet.getSources() );
+
+        Set<OrganisationUnit> userOrganisationUnits = new HashSet<OrganisationUnit>();
+
+        for ( OrganisationUnit organisationUnit : currentUserService.getCurrentUser().getOrganisationUnits() )
+        {
+            userOrganisationUnits.addAll( organisationUnitService.getOrganisationUnitsWithChildren( organisationUnit.getUid() ) );
+        }
+
+        organisationUnits.removeAll( userOrganisationUnits );
+        organisationUnits.addAll( mergeOrganisationUnits );
+
+        dataSet.updateOrganisationUnits( organisationUnits );
+
+        updateDataSet( dataSet );
     }
 }

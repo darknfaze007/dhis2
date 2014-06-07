@@ -1,17 +1,20 @@
+package org.hisp.dhis.program;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,7 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.program;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -34,10 +36,11 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
+import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.dataentryform.DataEntryForm;
-import org.hisp.dhis.patient.PatientReminder;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminder;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -54,7 +57,7 @@ public class ProgramStage
     public static final String TYPE_SECTION = "section";
 
     public static final String TYPE_CUSTOM = "custom";
-    
+
     /**
      * Determines if a de-serialized file is compatible with this class.
      */
@@ -64,7 +67,7 @@ public class ProgramStage
 
     private int minDaysFromStart;
 
-    private Boolean irregular;
+    private Boolean irregular = false;
 
     private Program program;
 
@@ -78,15 +81,31 @@ public class ProgramStage
 
     private String reportDateDescription;
 
-    private Set<PatientReminder> patientReminders = new HashSet<PatientReminder>();
+    private Set<TrackedEntityInstanceReminder> reminders = new HashSet<TrackedEntityInstanceReminder>();
 
     private Boolean autoGenerateEvent = true;
 
     private Boolean validCompleteOnly = false;
 
     private Boolean displayGenerateEventBox = true;
-    
+
     private Boolean captureCoordinates = false;
+
+    private Boolean blockEntryForm = false;
+
+    /**
+     * Enabled this property to show a pop-up for confirming Complete a program
+     * after to complete a program-stage
+     */
+    private Boolean remindCompleted = false;
+
+    private Boolean generatedByEnrollmentDate = false;
+
+    private Boolean allowGenerateNextVisit = false;
+
+    private Boolean openAfterEnrollment = false;
+
+    private String reportDateToUse;
 
     // -------------------------------------------------------------------------
     // Constructors
@@ -94,68 +113,76 @@ public class ProgramStage
 
     public ProgramStage()
     {
-
+        setAutoFields();
     }
 
     public ProgramStage( String name, Program program )
     {
+        this();
         this.name = name;
         this.program = program;
-    }
-
-    // -------------------------------------------------------------------------
-    // hashCode, equals and toString
-    // -------------------------------------------------------------------------
-
-    @Override
-    public int hashCode()
-    {
-        return name.hashCode();
-    }
-
-    @Override
-    public boolean equals( Object object )
-    {
-        if ( this == object )
-        {
-            return true;
-        }
-
-        if ( object == null )
-        {
-            return false;
-        }
-
-        if ( getClass() != object.getClass() )
-        {
-            return false;
-        }
-
-        final ProgramStage other = (ProgramStage) object;
-
-        return name.equals( other.getName() );
-    }
-
-    @Override
-    public String toString()
-    {
-        return "[" + name + "]";
     }
 
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
 
-    public Set<PatientReminder> getPatientReminders()
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Boolean getGeneratedByEnrollmentDate()
     {
-        return patientReminders;
+        return generatedByEnrollmentDate;
     }
 
-    public void setPatientReminders( Set<PatientReminder> patientReminders )
+    public void setGeneratedByEnrollmentDate( Boolean generatedByEnrollmentDate )
     {
-        this.patientReminders = patientReminders;
+        this.generatedByEnrollmentDate = generatedByEnrollmentDate;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Boolean getBlockEntryForm()
+    {
+        return blockEntryForm;
+    }
+
+    public void setBlockEntryForm( Boolean blockEntryForm )
+    {
+        this.blockEntryForm = blockEntryForm;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Boolean getRemindCompleted()
+    {
+        return remindCompleted;
+    }
+
+    public void setRemindCompleted( Boolean remindCompleted )
+    {
+        this.remindCompleted = remindCompleted;
+    }
+
+    @JsonProperty( value = "trackedEntityInstanceReminders" )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "trackedEntityInstanceReminders", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "trackedEntityInstanceReminder", namespace = DxfNamespaces.DXF_2_0 )
+    public Set<TrackedEntityInstanceReminder> getReminders()
+    {
+        return reminders;
+    }
+
+    public void setReminders( Set<TrackedEntityInstanceReminder> reminders )
+    {
+        this.reminders = reminders;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public DataEntryForm getDataEntryForm()
     {
         return dataEntryForm;
@@ -174,11 +201,15 @@ public class ProgramStage
         return description;
     }
 
-    @JsonProperty( value = "validationCriterias" )
-    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    public void setDescription( String description )
+    {
+        this.description = description;
+    }
+
+    @JsonProperty( value = "programStageSections" )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "validationCriterias", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "validationCriteria", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlElementWrapper( localName = "programStageSections", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "programStageSection", namespace = DxfNamespaces.DXF_2_0 )
     public Set<ProgramStageSection> getProgramStageSections()
     {
         return programStageSections;
@@ -202,14 +233,9 @@ public class ProgramStage
         this.standardInterval = standardInterval;
     }
 
-    public void setDescription( String description )
-    {
-        this.description = description;
-    }
-
-    @JsonProperty
+    @JsonProperty( "repeatable" )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "repeatable", namespace = DxfNamespaces.DXF_2_0 )
     public Boolean getIrregular()
     {
         return irregular;
@@ -339,6 +365,9 @@ public class ProgramStage
         return "Dear {person-name}, please come to your appointment on {program-stage-name} at {due-date}";
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Boolean getCaptureCoordinates()
     {
         return captureCoordinates;
@@ -348,5 +377,81 @@ public class ProgramStage
     {
         this.captureCoordinates = captureCoordinates;
     }
-    
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Boolean getAllowGenerateNextVisit()
+    {
+        return allowGenerateNextVisit;
+    }
+
+    public void setAllowGenerateNextVisit( Boolean allowGenerateNextVisit )
+    {
+        this.allowGenerateNextVisit = allowGenerateNextVisit;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Boolean getOpenAfterEnrollment()
+    {
+        return openAfterEnrollment;
+    }
+
+    public void setOpenAfterEnrollment( Boolean openAfterEnrollment )
+    {
+        this.openAfterEnrollment = openAfterEnrollment;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public String getReportDateToUse()
+    {
+        return reportDateToUse;
+    }
+
+    public void setReportDateToUse( String reportDateToUse )
+    {
+        this.reportDateToUse = reportDateToUse;
+    }
+
+    @Override
+    public void mergeWith( IdentifiableObject other )
+    {
+        super.mergeWith( other );
+
+        if ( other.getClass().isInstance( this ) )
+        {
+            ProgramStage programStage = (ProgramStage) other;
+
+            description = programStage.getDescription();
+            minDaysFromStart = programStage.getMinDaysFromStart();
+            irregular = programStage.getIrregular();
+            program = programStage.getProgram();
+            dataEntryForm = programStage.getDataEntryForm();
+            standardInterval = programStage.getStandardInterval();
+            reportDateDescription = programStage.getReportDateDescription();
+            autoGenerateEvent = programStage.isAutoGenerated();
+            validCompleteOnly = programStage.getValidCompleteOnly();
+            displayGenerateEventBox = programStage.getDisplayGenerateEventBox();
+            captureCoordinates = programStage.getCaptureCoordinates();
+            blockEntryForm = programStage.getBlockEntryForm();
+            remindCompleted = programStage.getRemindCompleted();
+            generatedByEnrollmentDate = programStage.getGeneratedByEnrollmentDate();
+            allowGenerateNextVisit = programStage.getAllowGenerateNextVisit();
+            openAfterEnrollment = programStage.getOpenAfterEnrollment();
+            reportDateToUse = programStage.getReportDateToUse();
+
+            programStageDataElements.clear();
+            programStageDataElements.addAll( programStage.getProgramStageDataElements() );
+
+            programStageSections.clear();
+            programStageSections.addAll( programStage.getProgramStageSections() );
+
+            reminders.clear();
+            reminders.addAll( programStage.getReminders() );
+        }
+    }
 }

@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.objectmapper;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -50,14 +51,15 @@ public class DataValueRowMapper
         final DataValue dataValue = new DataValue();
         
         dataValue.setDataElement( new DataElement() );
-        dataValue.setOptionCombo( new DataElementCategoryOptionCombo() );
+        dataValue.setCategoryOptionCombo( new DataElementCategoryOptionCombo() );
+        dataValue.setAttributeOptionCombo( new DataElementCategoryOptionCombo() );
         dataValue.setSource( new OrganisationUnit() );
         dataValue.setPeriod( new Period() );
         
         dataValue.getDataElement().setId( resultSet.getInt( 1 ) );
         dataValue.getPeriod().setId( resultSet.getInt( 2 ) );
         dataValue.getSource().setId( resultSet.getInt( 3 ) );
-        dataValue.getOptionCombo().setId( resultSet.getInt( 4 ) );
+        dataValue.getCategoryOptionCombo().setId( resultSet.getInt( 4 ) );
         dataValue.setValue( resultSet.getString( 5 ) );
         dataValue.setStoredBy( resultSet.getString( 6 ) );
         dataValue.setTimestamp( resultSet.getDate( 7 ) );

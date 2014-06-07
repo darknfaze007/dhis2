@@ -1,23 +1,30 @@
 package org.hisp.dhis.coldchain.equipment.action;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.struts2.ServletActionContext;
-import org.hisp.dhis.coldchain.catalog.Catalog;
-import org.hisp.dhis.coldchain.catalog.CatalogService;
-import org.hisp.dhis.coldchain.inventory.Equipment;
-import org.hisp.dhis.coldchain.inventory.EquipmentService;
-import org.hisp.dhis.coldchain.inventory.EquipmentInstance;
-import org.hisp.dhis.coldchain.inventory.EquipmentInstanceService;
-import org.hisp.dhis.coldchain.inventory.InventoryType;
-import org.hisp.dhis.coldchain.inventory.InventoryTypeAttribute;
-import org.hisp.dhis.coldchain.inventory.InventoryTypeAttributeOption;
-import org.hisp.dhis.coldchain.inventory.InventoryTypeAttributeOptionService;
-import org.hisp.dhis.coldchain.inventory.InventoryType_Attribute;
+import org.hisp.dhis.coldchain.model.Model;
+import org.hisp.dhis.coldchain.model.ModelService;
+import org.hisp.dhis.coldchain.equipment.EquipmentAttributeValue;
+import org.hisp.dhis.coldchain.equipment.EquipmentAttributeValueService;
+import org.hisp.dhis.coldchain.equipment.Equipment;
+import org.hisp.dhis.coldchain.equipment.EquipmentService;
+import org.hisp.dhis.coldchain.equipment.EquipmentStatus;
+import org.hisp.dhis.coldchain.equipment.EquipmentStatusService;
+import org.hisp.dhis.coldchain.equipment.EquipmentType;
+import org.hisp.dhis.coldchain.equipment.EquipmentTypeAttribute;
+import org.hisp.dhis.coldchain.equipment.EquipmentTypeAttributeOption;
+import org.hisp.dhis.coldchain.equipment.EquipmentTypeAttributeOptionService;
+import org.hisp.dhis.coldchain.equipment.EquipmentType_Attribute;
+import org.hisp.dhis.i18n.I18nFormat;
+import org.hisp.dhis.option.OptionSet;
+import org.hisp.dhis.user.CurrentUserService;
 
 import com.opensymphony.xwork2.Action;
 
@@ -30,27 +37,48 @@ public class UpdateEquipmentAction implements Action
     // Dependencies
     // -------------------------------------------------------------------------
     
-    private InventoryTypeAttributeOptionService inventoryTypeAttributeOptionService;
+    private EquipmentTypeAttributeOptionService equipmentTypeAttributeOptionService;
     
-    private EquipmentInstanceService equipmentInstanceService;
-
     private EquipmentService equipmentService;
+
+    private EquipmentAttributeValueService equipmentAttributeValueService;
     
-    private CatalogService catalogService;
+    private ModelService modelService;
     
+    private CurrentUserService currentUserService;
+    
+    public void setCurrentUserService( CurrentUserService currentUserService )
+    {
+        this.currentUserService = currentUserService;
+    }
+    
+    private EquipmentStatusService equipmentStatusService;
+    
+    public void setEquipmentStatusService( EquipmentStatusService equipmentStatusService )
+    {
+        this.equipmentStatusService = equipmentStatusService;
+    }
+
+    private I18nFormat format;
+    
+    public void setFormat( I18nFormat format )
+    {
+        this.format = format;
+    }
+
     // -------------------------------------------------------------------------
     // Input/ Output
     // -------------------------------------------------------------------------
     
-    private Integer equipmentInstanceID;
+    private Integer equipmentID;
     
     private String message;
     
-    private Integer catalog;
+    private Integer model;
     
-    public void setCatalog( Integer catalog )
+    public void setModel( Integer model )
     {
-        this.catalog = catalog;
+        this.model = model;
     }
     
     // -------------------------------------------------------------------------
@@ -59,123 +87,208 @@ public class UpdateEquipmentAction implements Action
     public String execute()
     {
 
-        //System.out.println("inside UpdateEquipmentAction : "+ equipmentInstanceID);
+        //System.out.println("inside UpdateEquipmentAction : "+ equipmentID);
         
-        EquipmentInstance equipmentInstance = equipmentInstanceService.getEquipmentInstance( equipmentInstanceID );
+        Equipment equipment = equipmentService.getEquipment( equipmentID );
         
-        InventoryType inventoryType = equipmentInstance.getInventoryType();
+        EquipmentType equipmentType = equipment.getEquipmentType();
         
-        Catalog selCatalog = null;
+        Model selModel = null;
         
-        if( catalog != null )
+        if( model != null )
         {    
-            selCatalog = catalogService.getCatalog( catalog );
+            selModel = modelService.getModel( model );
         }
-        if( selCatalog != null )
+        
+        if( selModel != null )
         {
-            equipmentInstance.setCatalog( selCatalog );
+            equipment.setModel( selModel );
             
-            equipmentInstanceService.updateEquipmentInstance( equipmentInstance );
+            equipmentService.updateEquipment( equipment );
         }
         
         // -----------------------------------------------------------------------------
-        // Preparing Equipment Details
+        // Preparing EquipmentAttributeValue Details
         // -----------------------------------------------------------------------------
         HttpServletRequest request = ServletActionContext.getRequest();
         String value = null;
         
-        List<InventoryTypeAttribute> inventoryTypeAttributes = new ArrayList<InventoryTypeAttribute>( );
+        List<EquipmentTypeAttribute> equipmentTypeAttributes = new ArrayList<EquipmentTypeAttribute>( );
         
-        for( InventoryType_Attribute inventoryType_Attribute : inventoryType.getInventoryType_Attributes() )
+        for( EquipmentType_Attribute equipmentType_Attribute : equipmentType.getEquipmentType_Attributes() )
         {
-            inventoryTypeAttributes.add( inventoryType_Attribute.getInventoryTypeAttribute() );
+            equipmentTypeAttributes.add( equipmentType_Attribute.getEquipmentTypeAttribute() );
         }
         
-        Equipment equipmentDetails = null;
-        for ( InventoryTypeAttribute attribute : inventoryTypeAttributes )
+        EquipmentAttributeValue equipmentAttributeValueDetails = null;
+        for ( EquipmentTypeAttribute attribute : equipmentTypeAttributes )
         {
             value = request.getParameter( PREFIX_ATTRIBUTE + attribute.getId() );
             
-            equipmentDetails = equipmentService.getEquipment( equipmentInstance, attribute );
+            equipmentAttributeValueDetails = equipmentAttributeValueService.getEquipmentAttributeValue( equipment, attribute );
             
-            if( equipmentDetails == null && value != null )
+            if( equipmentAttributeValueDetails == null && value != null )
             {
-                equipmentDetails = new Equipment();
-                equipmentDetails.setEquipmentInstance( equipmentInstance );
-                equipmentDetails.setInventoryTypeAttribute( attribute );
+                equipmentAttributeValueDetails = new EquipmentAttributeValue();
+                equipmentAttributeValueDetails.setEquipment( equipment );
+                equipmentAttributeValueDetails.setEquipmentTypeAttribute( attribute );
 
-                if ( InventoryTypeAttribute.TYPE_COMBO.equalsIgnoreCase( attribute.getValueType() ) )
+                if ( EquipmentTypeAttribute.TYPE_COMBO.equalsIgnoreCase( attribute.getValueType() ) )
                 {
-                    InventoryTypeAttributeOption option = inventoryTypeAttributeOptionService.getInventoryTypeAttributeOption( NumberUtils.toInt( value, 0 ) );
-                    if ( option != null )
+                    //EquipmentTypeAttributeOption option = equipmentTypeAttributeOptionService.getEquipmentTypeAttributeOption( NumberUtils.toInt( value, 0 ) );
+                    
+                    OptionSet equipmentTypeAttributeOption  = attribute.getOptionSet();
+                    
+                    //if ( option != null )
+                    if ( equipmentTypeAttributeOption != null )
                     {
-                        equipmentDetails.setInventoryTypeAttributeOption( option );
-                        equipmentDetails.setValue( option.getName() );
+                       // equipmentAttributeValueDetails.setEquipmentTypeAttributeOption( option );
+                        equipmentAttributeValueDetails.setValue( value );
+                        
+                        if ( EquipmentStatus.WORKING_STATUS.equalsIgnoreCase( attribute.getDescription() ) )
+                        {
+                            //System.out.println( "Option ID is  : " + option.getId() + "---Option Name is : "+option.getName() );
+                            
+                            if ( EquipmentStatus.STATUS_NOT_WORKING.equalsIgnoreCase( value ) )
+                            {
+                                equipment.setWorking( false );
+                                equipmentService.updateEquipment( equipment );
+                            }
+                            else
+                            {
+                                equipment.setWorking( true );
+                                equipmentService.updateEquipment( equipment );
+                            }
+                            
+                            
+                            String storedBy = currentUserService.getCurrentUsername();
+                            
+                            EquipmentStatus equipmentStatus = new EquipmentStatus();
+                            
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");      
+                            String currentDate = sdf.format(new Date());
+
+                            equipmentStatus.setDescription( "Updated from edit equipmentAttributeValue screen" );
+                            equipmentStatus.setEquipment( equipment );
+                            equipmentStatus.setStatus( value );
+                            
+                            equipmentStatus.setReportingDate( format.parseDate( currentDate.trim() ) );
+                            equipmentStatus.setUpdationDate( format.parseDate( currentDate.trim() ) );
+                            equipmentStatus.setStoredBy( storedBy );
+                            
+                            equipmentStatusService.addEquipmentStatus( equipmentStatus );
+                            
+                        }
+                        
                     }
+                    
                     else
                     {
                         // Someone deleted this option ...
                     }
                 }
-                else if ( InventoryTypeAttribute.TYPE_CATALOG.equalsIgnoreCase( attribute.getValueType() ) )
+                else if ( EquipmentTypeAttribute.TYPE_MODEL.equalsIgnoreCase( attribute.getValueType() ) )
                 {
-                    Catalog catalog = catalogService.getCatalog( NumberUtils.toInt( value, 0 ) );
-                    if ( catalog != null )
+                    Model model = modelService.getModel( NumberUtils.toInt( value, 0 ) );
+                    if ( model != null )
                     {
-                        //equipmentDetails.setInventoryTypeAttributeOption( option );
-                        equipmentDetails.setValue( catalog.getName() );
+                        //equipmentAttributeValueDetails.setEquipmentTypeAttributeOption( option );
+                        equipmentAttributeValueDetails.setValue( model.getName() );
                     }
                     else
                     {
-                        // Someone deleted this catalog ...
+                        // Someone deleted this model ...
                     }
                 }
                 else
                 {
-                    equipmentDetails.setValue( value.trim() );
+                    equipmentAttributeValueDetails.setValue( value.trim() );
                 }
                 
-                equipmentService.addEquipment( equipmentDetails );
+                equipmentAttributeValueService.addEquipmentAttributeValue( equipmentAttributeValueDetails );
             }
             else
             {
-                if ( InventoryTypeAttribute.TYPE_COMBO.equalsIgnoreCase( attribute.getValueType() ) )
+                if ( EquipmentTypeAttribute.TYPE_COMBO.equalsIgnoreCase( attribute.getValueType() ) )
                 {
-                    InventoryTypeAttributeOption option = inventoryTypeAttributeOptionService.getInventoryTypeAttributeOption( NumberUtils.toInt( value, 0 ) );
-                    if ( option != null )
+                    //EquipmentTypeAttributeOption option = equipmentTypeAttributeOptionService.getEquipmentTypeAttributeOption( NumberUtils.toInt( value, 0 ) );
+                    
+                    OptionSet equipmentTypeAttributeOption  = attribute.getOptionSet();
+                    
+                    //if ( option != null )
+                   
+                    if (  equipmentTypeAttributeOption != null )
                     {
-                        equipmentDetails.setInventoryTypeAttributeOption( option );
-                        equipmentDetails.setValue( option.getName() );
+                        //equipmentAttributeValueDetails.setEquipmentTypeAttributeOption( option );
+                        equipmentAttributeValueDetails.setValue( value );
+                        
+                        
+                        if ( EquipmentStatus.WORKING_STATUS.equalsIgnoreCase( attribute.getDescription() ) )
+                        {
+                            //System.out.println( " Option ID is  : " + option.getId() + "---Option Name is : " + option.getName() );
+                            
+                            if ( EquipmentStatus.STATUS_NOT_WORKING.equalsIgnoreCase( value ) )
+                            {
+                                equipment.setWorking( false );
+                                equipmentService.updateEquipment( equipment );
+                            }
+                            else
+                            {
+                                equipment.setWorking( true );
+                                equipmentService.updateEquipment( equipment );
+                            }
+                            
+                            String storedBy = currentUserService.getCurrentUsername();
+                            
+                            EquipmentStatus equipmentStatus = new EquipmentStatus();
+                            
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");      
+                            String currentDate = sdf.format(new Date());
+
+                            equipmentStatus.setDescription( "Updated from edit equipmentAttributeValue screen" );
+                            equipmentStatus.setEquipment( equipment );
+                            equipmentStatus.setStatus( value );
+                            
+                            equipmentStatus.setReportingDate( format.parseDate( currentDate.trim() ) );
+                            equipmentStatus.setUpdationDate( format.parseDate( currentDate.trim() ) );
+                            equipmentStatus.setStoredBy( storedBy );
+                            
+                            equipmentStatusService.addEquipmentStatus( equipmentStatus );
+                            
+                        }
+                        
                     }
                     else
                     {
                         // Someone deleted this option ...
+                        equipmentAttributeValueDetails.setValue( value.trim() );
                     }
                 }
-                else if ( InventoryTypeAttribute.TYPE_CATALOG.equalsIgnoreCase( attribute.getValueType() ) )
+                else if ( EquipmentTypeAttribute.TYPE_MODEL.equalsIgnoreCase( attribute.getValueType() ) )
                 {
-                    Catalog catalog = catalogService.getCatalog( NumberUtils.toInt( value, 0 ) );
-                    if ( catalog != null )
+                    Model model = modelService.getModel( NumberUtils.toInt( value, 0 ) );
+                    if ( model != null )
                     {
-                        //equipmentDetails.setInventoryTypeAttributeOption( option );
-                        equipmentDetails.setValue( catalog.getName() );
+                        //equipmentAttributeValueDetails.setEquipmentTypeAttributeOption( option );
+                        equipmentAttributeValueDetails.setValue( model.getName() );
                     }
                     else
                     {
-                        // Someone deleted this catalog ...
+                        // Someone deleted this model ...
+                        equipmentAttributeValueDetails.setValue( value.trim() );
                     }
                 }
                 else
                 {
-                    equipmentDetails.setValue( value.trim() );
+                    equipmentAttributeValueDetails.setValue( value.trim() );
                 }
 
-                equipmentService.updateEquipment( equipmentDetails );
+                equipmentAttributeValueService.updateEquipmentAttributeValue( equipmentAttributeValueDetails );
             }
                 
         }
          
-        message = ""+ equipmentInstanceID;
+        message = ""+ equipmentID;
         
         return SUCCESS;
     }
@@ -189,15 +302,10 @@ public class UpdateEquipmentAction implements Action
         return message;
     }
 
-    public void setInventoryTypeAttributeOptionService(
-        InventoryTypeAttributeOptionService inventoryTypeAttributeOptionService )
+    public void setEquipmentTypeAttributeOptionService(
+        EquipmentTypeAttributeOptionService equipmentTypeAttributeOptionService )
     {
-        this.inventoryTypeAttributeOptionService = inventoryTypeAttributeOptionService;
-    }
-
-    public void setEquipmentInstanceService( EquipmentInstanceService equipmentInstanceService )
-    {
-        this.equipmentInstanceService = equipmentInstanceService;
+        this.equipmentTypeAttributeOptionService = equipmentTypeAttributeOptionService;
     }
 
     public void setEquipmentService( EquipmentService equipmentService )
@@ -205,14 +313,19 @@ public class UpdateEquipmentAction implements Action
         this.equipmentService = equipmentService;
     }
 
-    public void setEquipmentInstanceID( Integer equipmentInstanceID )
+    public void setEquipmentAttributeValueService( EquipmentAttributeValueService equipmentAttributeValueService )
     {
-        this.equipmentInstanceID = equipmentInstanceID;
+        this.equipmentAttributeValueService = equipmentAttributeValueService;
     }
 
-    public void setCatalogService( CatalogService catalogService )
+    public void setEquipmentID( Integer equipmentID )
     {
-        this.catalogService = catalogService;
+        this.equipmentID = equipmentID;
+    }
+
+    public void setModelService( ModelService modelService )
+    {
+        this.modelService = modelService;
     }
 
 }

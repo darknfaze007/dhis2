@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:sec="http://www.springframework.org/schema/security"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
-    http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd">
+    http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd">
 
   <bean id="mappedRedirectStrategy" class="org.hisp.dhis.security.MappedRedirectStrategy">
     <property name="redirectMap">
@@ -26,11 +26,17 @@
   <sec:http pattern="/favicon.ico" security="none" />
 
   <sec:http access-decision-manager-ref="accessDecisionManager" use-expressions="true" realm="DHIS2">
+    <sec:openid-login user-service-ref="userDetailsService" default-target-url="/" always-use-default-target="false"
+      authentication-failure-handler-ref="securityExceptionTranslationHandler"
+      login-processing-url="/dhis-web-commons-security/openid.action"
+      authentication-success-handler-ref="defaultAuthenticationSuccessHandler" />
+
     <sec:form-login default-target-url="/" always-use-default-target="false"
+      authentication-failure-handler-ref="securityExceptionTranslationHandler"
       login-processing-url="/dhis-web-commons-security/login.action"
-      authentication-failure-url="/dhis-web-commons/security/login.action?failed=true"
       login-page="/dhis-web-commons/security/login.action"
       authentication-success-handler-ref="defaultAuthenticationSuccessHandler" />
+
     <sec:http-basic />
     <sec:logout logout-url="/dhis-web-commons-security/logout.action" />
     <sec:intercept-url pattern="/dhis-web-commons/i18nJavaScript.action" access="permitAll()" />
@@ -44,7 +50,18 @@
     <sec:custom-filter ref="customAuthenticationFilter" before="FORM_LOGIN_FILTER" />
   </sec:http>
 
+  <bean id="securityExceptionTranslationHandler"
+    class="org.hisp.dhis.security.CustomExceptionMappingAuthenticationFailureHandler">
+    <property name="exceptionMappings">
+      <props>
+        <prop key="org.springframework.security.authentication.CredentialsExpiredException">/dhis-web-commons/security/expired.action</prop>
+      </props>
+    </property>
+    <property name="defaultFailureUrl" value="/dhis-web-commons/security/login.action?failed=true" />
+  </bean>
+
   <!-- Security : Action -->
+  
   <bean id="restrictOrganisationUnitsAction" class="org.hisp.dhis.security.action.RestrictOrganisationUnitsAction"
     scope="prototype">
     <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
@@ -68,6 +85,16 @@
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
   </bean>
 
+  <!-- Security : Authentication providers -->
+
+  <sec:authentication-manager alias="authenticationManager">
+    <sec:authentication-provider user-service-ref="userDetailsService">
+      <sec:password-encoder hash="md5">
+        <sec:salt-source ref="usernameSaltSource" />
+      </sec:password-encoder>
+    </sec:authentication-provider>
+  </sec:authentication-manager>
+
   <!-- Security : AccessProvider -->
 
   <bean id="databaseAutomaticAccessProvider" class="org.hisp.dhis.security.DatabaseAutomaticAccessProvider">
@@ -83,12 +110,17 @@
 
   <!-- Security : AccessDecision/Voter -->
 
+  <bean id="authenticatedVoter" class="org.springframework.security.access.vote.AuthenticatedVoter" />
+  <bean id="webExpressionVoter" class="org.springframework.security.web.access.expression.WebExpressionVoter" />
+  <bean id="externalAccessVoter" class="org.hisp.dhis.security.vote.ExternalAccessVoter" />
+
   <bean id="accessDecisionManager" class="org.hisp.dhis.security.vote.LogicalOrAccessDecisionManager">
     <property name="accessDecisionManagers">
       <list>
         <ref local="adminAccessDecisionVoting" />
         <ref local="regularAccessDecisionVoting" />
         <ref local="webAccessDecisionVoting" />
+        <ref local="externalAccessDecisionVoting" />
       </list>
     </property>
   </bean>
@@ -113,6 +145,14 @@
     </constructor-arg>
   </bean>
 
+  <bean id="externalAccessDecisionVoting" class="org.springframework.security.access.vote.UnanimousBased">
+    <constructor-arg name="decisionVoters">
+      <list>
+        <ref local="externalAccessVoter" />
+      </list>
+    </constructor-arg>
+  </bean>
+
   <bean id="regularAccessDecisionVoting" class="org.springframework.security.access.vote.UnanimousBased">
     <constructor-arg name="decisionVoters">
       <list>
@@ -122,9 +162,6 @@
       </list>
     </constructor-arg>
   </bean>
-
-  <bean id="authenticatedVoter" class="org.springframework.security.access.vote.AuthenticatedVoter" />
-  <bean id="webExpressionVoter" class="org.springframework.security.web.access.expression.WebExpressionVoter" />
 
   <bean id="actionAccessVoter" class="org.hisp.dhis.security.vote.ActionAccessVoter">
     <property name="attributePrefix" value="F_" />
@@ -239,12 +276,21 @@
     <property name="authorities">
       <set>
         <value>ALL</value>
+        <value>F_DASHBOARD_PUBLIC_ADD</value>
         <value>F_CHART_PUBLIC_ADD</value>
         <value>F_MAP_PUBLIC_ADD</value>
         <value>F_USERGROUP_PUBLIC_ADD</value>
         <value>F_REPORTTABLE_PUBLIC_ADD</value>
+        <value>F_MAP_EXTERNAL</value>
+        <value>F_CHART_EXTERNAL</value>
+        <value>F_REPORTTABLE_EXTERNAL</value>
         <value>F_METADATA_EXPORT</value>
         <value>F_METADATA_IMPORT</value>
+        <value>F_METADATA_SUBSET_IMPORT</value>
+        <value>F_METADATA_SUBSET_EXPORT</value>
+        <value>F_APPROVE_DATA</value>
+        <value>F_APPROVE_DATA_LOWER_LEVELS</value>
+        <value>F_ACCEPT_DATA_LOWER_LEVELS</value>
       </set>
     </property>
   </bean>

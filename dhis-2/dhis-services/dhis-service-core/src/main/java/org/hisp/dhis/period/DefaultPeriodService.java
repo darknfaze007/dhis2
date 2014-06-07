@@ -1,19 +1,20 @@
 package org.hisp.dhis.period;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -38,9 +39,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.i18n.I18nFormat;
-import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.system.util.DateUtils;
 import org.hisp.dhis.system.util.Filter;
 import org.hisp.dhis.system.util.FilterUtils;
@@ -119,23 +118,6 @@ public class DefaultPeriodService
         } );
     }
 
-    public Period getPeriodByExternalId( String externalId )
-    {
-        return periodStore.reloadForceAddPeriod( new Period( externalId ) );
-    }
-
-    public Collection<Period> getPeriodsByExternalIds( Collection<String> externalIds )
-    {
-        Collection<Period> periods = new ArrayList<Period>();
-
-        for ( String id : externalIds )
-        {
-            periods.add( getPeriodByExternalId( id ) );
-        }
-
-        return periods;
-    }
-    
     public Collection<Period> getPeriodsByPeriodType( PeriodType periodType )
     {
         return periodStore.getPeriodsByPeriodType( periodType );
@@ -218,12 +200,6 @@ public class DefaultPeriodService
         return immutablePeriods;
     }
 
-    public Collection<Period> getPeriods( Period period, Collection<DataElement> dataElements,
-                                          Collection<OrganisationUnit> sources )
-    {
-        return periodStore.getPeriods( period, dataElements, sources );
-    }
-
     public List<Period> reloadPeriods( List<Period> periods )
     {
         List<Period> reloaded = new ArrayList<Period>();
@@ -278,6 +254,30 @@ public class DefaultPeriodService
     public Period reloadPeriod( Period period )
     {
         return periodStore.reloadForceAddPeriod( period );
+    }
+    
+    public Period reloadIsoPeriod( String isoPeriod )
+    {
+        Period period = PeriodType.getPeriodFromIsoString( isoPeriod );
+        
+        return period != null ? reloadPeriod( period ) : null;
+    }
+    
+    public List<Period> reloadIsoPeriods( List<String> isoPeriods )
+    {
+        List<Period> periods = new ArrayList<Period>();
+        
+        for ( String iso : isoPeriods )
+        {
+            Period period = reloadIsoPeriod( iso );
+            
+            if ( period != null )
+            {
+                periods.add( period );
+            }
+        }
+        
+        return periods;
     }
     
     public PeriodHierarchy getPeriodHierarchy( Collection<Period> periods )

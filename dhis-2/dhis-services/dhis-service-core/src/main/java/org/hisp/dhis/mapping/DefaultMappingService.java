@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapping;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,10 +35,10 @@ import java.util.Set;
 
 import org.hisp.dhis.common.GenericIdentifiableObjectStore;
 import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.organisationunit.OrganisationUnitLevel;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodService;
@@ -62,9 +63,9 @@ public class DefaultMappingService
         this.mapStore = mapStore;
     }
 
-    private GenericIdentifiableObjectStore<MapView> mapViewStore;
+    private MapViewStore mapViewStore;
 
-    public void setMapViewStore( GenericIdentifiableObjectStore<MapView> mapViewStore )
+    public void setMapViewStore( MapViewStore mapViewStore )
     {
         this.mapViewStore = mapViewStore;
     }
@@ -76,16 +77,16 @@ public class DefaultMappingService
         this.mapLayerStore = mapLayerStore;
     }
 
-    private MapLegendStore mapLegendStore;
+    private GenericIdentifiableObjectStore<MapLegend> mapLegendStore;
 
-    public void setMapLegendStore( MapLegendStore mapLegendStore )
+    public void setMapLegendStore( GenericIdentifiableObjectStore<MapLegend> mapLegendStore )
     {
         this.mapLegendStore = mapLegendStore;
     }
 
-    private MapLegendSetStore mapLegendSetStore;
+    private GenericIdentifiableObjectStore<MapLegendSet> mapLegendSetStore;
 
-    public void setMapLegendSetStore( MapLegendSetStore mapLegendSetStore )
+    public void setMapLegendSetStore( GenericIdentifiableObjectStore<MapLegendSet> mapLegendSetStore )
     {
         this.mapLegendSetStore = mapLegendSetStore;
     }
@@ -259,9 +260,19 @@ public class DefaultMappingService
         return mapStore.getByUid( uid );
     }
 
+    public Map getMapNoAcl( String uid )
+    {
+        return mapStore.getByUidNoAcl( uid );
+    }
+
     public void deleteMap( Map map )
     {
         mapStore.delete( map );
+    }
+
+    public List<Map> getAllMaps()
+    {
+        return mapStore.getAll();
     }
 
     public List<Map> getMapsBetweenLikeName( String name, int first, int max )
@@ -310,8 +321,10 @@ public class DefaultMappingService
     {
         if ( mapView != null )
         {
-            mapView.getParentOrganisationUnit().setLevel(
-                organisationUnitService.getLevelOfOrganisationUnit( mapView.getParentOrganisationUnit().getId() ) );
+            for ( OrganisationUnit unit : mapView.getOrganisationUnits() )
+            {
+                unit.setLevel( organisationUnitService.getLevelOfOrganisationUnit( unit.getId() ) );
+            }
         }
     }
 
@@ -330,12 +343,11 @@ public class DefaultMappingService
         Indicator indicator = indicatorService.getIndicator( indicatorUid );
         OrganisationUnit unit = organisationUnitService.getOrganisationUnit( organisationUnitUid );
 
-        mapView.setIndicator( indicator );
-        mapView.setPeriod( period );
-        mapView.setParentOrganisationUnit( unit );
-        mapView.setOrganisationUnitLevel( new OrganisationUnitLevel( level, "" ) );
+        mapView.getIndicators().add( indicator );
+        mapView.getPeriods().add( period );
+        mapView.getOrganisationUnits().add( unit );
+        mapView.getOrganisationUnitLevels().add( level );
         mapView.setName( indicator.getName() );
-        mapView.setValueType( MapView.VALUE_TYPE_INDICATOR );
 
         return mapView;
     }
@@ -350,10 +362,9 @@ public class DefaultMappingService
             {
                 //TODO poor performance, fix
 
-                if ( mapView.getParentOrganisationUnit() != null )
+                for ( OrganisationUnit unit : mapView.getOrganisationUnits() )
                 {
-                    mapView.getParentOrganisationUnit().setLevel(
-                        organisationUnitService.getLevelOfOrganisationUnit( mapView.getParentOrganisationUnit().getId() ) );
+                    unit.setLevel( organisationUnitService.getLevelOfOrganisationUnit( unit.getId() ) );
                 }
             }
         }
@@ -439,5 +450,41 @@ public class DefaultMappingService
     public Collection<MapLayer> getAllMapLayers()
     {
         return mapLayerStore.getAll();
+    }
+
+    @Override
+    public int countMapViewMaps( MapView mapView )
+    {
+        return mapStore.countMapViewMaps( mapView );
+    }
+
+    @Override
+    public int countDataSetMapViews( DataSet dataSet )
+    {
+        return mapViewStore.countDataSetAnalyticalObject( dataSet );
+    }
+
+    @Override
+    public int countIndicatorMapViews( Indicator indicator )
+    {
+        return mapViewStore.countIndicatorAnalyticalObject( indicator );
+    }
+
+    @Override
+    public int countDataElementMapViews( DataElement dataElement )
+    {
+        return mapViewStore.countDataElementAnalyticalObject( dataElement );
+    }
+    
+    @Override
+    public int countOrganisationUnitMapViews( OrganisationUnit organisationUnit )
+    {
+        return mapViewStore.countOrganisationUnitAnalyticalObject( organisationUnit );
+    }
+
+    @Override
+    public int countMapLegendSetMapViews( MapLegendSet mapLegendSet )
+    {
+        return mapViewStore.countMapLegendSetMapViews( mapLegendSet );
     }
 }

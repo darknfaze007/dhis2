@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -126,8 +127,8 @@ public class DimensionItem
 
     /**
      * Returns the period dimension item object from the given list of
-     * dimension items. If no items are given, items are null or there are 
-     * no period dimension, null is returned.
+     * dimension items. If no items are given, items are null or there are no 
+     * period dimension, null is returned.
      */
     public static NameableObject getPeriodItem( List<DimensionItem> items )
     {
@@ -136,6 +137,27 @@ public class DimensionItem
             for ( DimensionItem item : items )
             {
                 if ( DimensionalObject.PERIOD_DIM_ID.equals( item.getDimension() ) )
+                {
+                    return item.getItem();
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Returns the organisation unit dimension item object from the given list of
+     * dimension items. If no items are given, items are null or there are no 
+     * period dimension, null is returned.
+     */
+    public static NameableObject getOrganisationUnitItem( List<DimensionItem> items )
+    {
+        if ( items != null && !items.isEmpty() )
+        {
+            for ( DimensionItem item : items )
+            {
+                if ( DimensionalObject.ORGUNIT_DIM_ID.equals( item.getDimension() ) )
                 {
                     return item.getItem();
                 }

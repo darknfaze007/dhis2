@@ -1,19 +1,20 @@
 package org.hisp.dhis.mobile.action.smscommand;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -38,6 +39,8 @@ import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.comparator.DataElementSortOrderComparator;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
+import org.hisp.dhis.program.Program;
+import org.hisp.dhis.program.ProgramService;
 import org.hisp.dhis.sms.parse.ParserType;
 import org.hisp.dhis.smscommand.SMSCode;
 import org.hisp.dhis.smscommand.SMSCommand;
@@ -50,41 +53,47 @@ import com.opensymphony.xwork2.Action;
 public class SMSCommandAction
     implements Action
 {
-    
+
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
-    
+
     private SMSCommandService smsCommandService;
-    
+
     public void setSmsCommandService( SMSCommandService smsCommandService )
     {
         this.smsCommandService = smsCommandService;
     }
 
     private DataSetService dataSetService;
-    
+
     public void setDataSetService( DataSetService dataSetService )
     {
         this.dataSetService = dataSetService;
     }
-    
+
     private UserGroupService userGroupService;
-    
 
     public void setUserGroupService( UserGroupService userGroupService )
     {
         this.userGroupService = userGroupService;
     }
-    
+
+    private ProgramService programService;
+
+    public void setProgramService( ProgramService programService )
+    {
+        this.programService = programService;
+    }
+
     // -------------------------------------------------------------------------
     // Input & Output
     // -------------------------------------------------------------------------
-    
+
     private SMSCommand smsCommand;
-    
+
     private List<DataElement> dataElements;
-    
+
     private List<UserGroup> userGroupList;
 
     public List<UserGroup> getUserGroupList()
@@ -92,8 +101,9 @@ public class SMSCommandAction
         return userGroupList;
     }
 
+    public List<Program> anonymousProgramList;
+
     private int selectedCommandID = -1;
-    
 
     public int getSelectedCommandID()
     {
@@ -106,7 +116,6 @@ public class SMSCommandAction
     }
 
     private Map<String, String> codes = new HashMap<String, String>();
-    
 
     public Map<String, String> getCodes()
     {
@@ -117,8 +126,9 @@ public class SMSCommandAction
     {
         this.codes = codes;
     }
-    
-    public ParserType[] getParserType(){       
+
+    public ParserType[] getParserType()
+    {
         return ParserType.values();
     }
 
@@ -133,7 +143,7 @@ public class SMSCommandAction
         {
             smsCommand = smsCommandService.getSMSCommand( selectedCommandID );
         }
-        
+
         if ( smsCommand != null && smsCommand.getCodes() != null )
         {
             for ( SMSCode x : smsCommand.getCodes() )
@@ -141,15 +151,16 @@ public class SMSCommandAction
                 codes.put( "" + x.getDataElement().getId() + x.getOptionId(), x.getCode() );
             }
         }
-        
-        userGroupList = new ArrayList<UserGroup>(userGroupService.getAllUserGroups());
+        userGroupList = new ArrayList<UserGroup>( userGroupService.getAllUserGroups() );
+        anonymousProgramList = new ArrayList<Program>(
+            programService.getPrograms( Program.SINGLE_EVENT_WITHOUT_REGISTRATION ) );
         return SUCCESS;
     }
 
     // -------------------------------------------------------------------------
     // Supporting methods
     // -------------------------------------------------------------------------
-    
+
     public List<DataElement> getDataElements()
     {
         if ( smsCommand != null )
@@ -164,7 +175,6 @@ public class SMSCommandAction
         }
         return null;
     }
-    
 
     public Collection<DataSet> getDataSets()
     {
@@ -175,9 +185,9 @@ public class SMSCommandAction
     {
         return smsCommandService.getSMSCommands();
     }
-    
+
     public SMSCommand getSmsCommand()
     {
         return smsCommand;
-    }   
+    }
 }

@@ -22,49 +22,49 @@ function SelectionTreeSelection()
 
     var multipleSelectionAllowed = true;
 
-    this.setOnSelectFunction = function( onSelectFunction_ )
+    this.setOnSelectFunction = function( onSelectFunction_ ) 
     {
         onSelectFunction = onSelectFunction_;
-    };
+    }
 
-    this.setListenerFunction = function( listenerFunction_ )
+    this.setListenerFunction = function( listenerFunction_ ) 
     {
         listenerFunction = listenerFunction_;
-    };
+    }
 
-    this.setMultipleSelectionAllowed = function( allowed )
+    this.setMultipleSelectionAllowed = function( allowed ) 
     {
         multipleSelectionAllowed = allowed;
-    };
-	
-	this.getSelected = function()
-	{
-		return selectedOrganisationUnit;
-	};
-	
-	this.getSelectedUid = function()
-	{
-		return selectedOrganisationUnitUid;
-	}
-	
-	this.isSelected = function()
-	{
-		return selectedOrganisationUnit && selectedOrganisationUnit.length > 0;
-	}
+    }
+
+    this.getSelected = function() 
+    {
+        return selectedOrganisationUnit;
+    }
+
+    this.getSelectedUid = function() 
+    {
+        return selectedOrganisationUnit;
+    }
+
+    this.isSelected = function() 
+    {
+        return selectedOrganisationUnit && selectedOrganisationUnit.length > 0;
+    }
 
     this.select = function( unitId )
     {
-       if ( onSelectFunction )
+        if ( onSelectFunction )
         {
             onSelectFunction();
         }
 		
-        var unitTag = document.getElementById( getTagId( unitId ));
+        var unitTag = document.getElementById( getTagId( unitId ) );
         var linkTags = $(unitTag).find( 'a' );
 
         if ( linkTags[0].className == 'selected' )
         {
-			$.post( selectionTreePath + 'removeorgunit.action', { id:unitId }, responseReceived );
+            $.post( selectionTreePath + 'removeorgunit.action', { id:unitId }, responseReceived );
 				
             linkTags[0].className = '';			
         }
@@ -74,7 +74,7 @@ function SelectionTreeSelection()
             {
                 $.post( selectionTreePath + 'addorgunit.action', { id:unitId }, responseReceived );
 				
-				linkTags[0].className = 'selected';
+                linkTags[0].className = 'selected';
             }
             else
             {
@@ -90,7 +90,7 @@ function SelectionTreeSelection()
                 }
 
                 // Set new select mark
-                var unitTag = document.getElementById( getTagId( unitId ));
+                var unitTag = document.getElementById( getTagId( unitId ) );
                 linkTags = $(unitTag).find( 'a' );
                 linkTags[0].className = 'selected';
             }
@@ -99,26 +99,26 @@ function SelectionTreeSelection()
 
     function responseReceived( json )
     {
-		selectedOrganisationUnit = new Array();
-		selectedOrganisationUnitUid = new Array();
+        selectedOrganisationUnit = [];
+        selectedOrganisationUnitUid = [];
 
-		var unitIds = new Array();
-		var unitUids = new Array();
+        var unitIds = [];
+        var unitUids = [];
 
-        for ( i in json.selectedUnits )
+        for ( i in json.selectedUnits ) 
         {
             unitIds[i] = json.selectedUnits[i].id;
-			selectedOrganisationUnit.push( unitIds[i] );
-			
-			unitUids[i] = json.selectedUnits[i].uid;
-			selectedOrganisationUnitUid.push( unitUids[i] );
+            selectedOrganisationUnit.push(unitIds[i]);
+
+            unitUids[i] = json.selectedUnits[i].uid;
+            selectedOrganisationUnitUid.push(unitUids[i]);
         }
 
-        jQuery( 'body' ).trigger( 'oust.selected', selectedOrganisationUnit);
-        
-        if ( listenerFunction )
+        jQuery('body').trigger('oust.selected', selectedOrganisationUnit);
+
+        if ( listenerFunction ) 
         {
-        	listenerFunction( unitIds );
+            listenerFunction(unitIds);
         }
     }
 
@@ -160,30 +160,31 @@ function SelectionTree()
 
     this.buildSelectionTree = function()
     {
-		selectedOrganisationUnit = new Array();
-		selectedOrganisationUnitUid = new Array();
-		
-        var treeTag = document.getElementById( 'selectionTree' );
-        
-        setLoadingMessage( treeTag );
-        
-        var children = $(treeTag).find( 'ul' );
-        if ( children.length > 0 )
-        {
-            treeTag.removeChild( children[0] );
+        selectedOrganisationUnit = [];
+        selectedOrganisationUnitUid = [];
+
+        var treeTag = document.getElementById('selectionTree');
+
+        setLoadingMessage(treeTag);
+
+        var children = $(treeTag).find('ul');
+
+        if( children.length > 0 ) {
+            treeTag.removeChild(children[0]);
         }
-		
-		$.ajax({
-			url: selectionTreePath + 'getExpandedTree.action',
-			cache: false,
-			dataType: "xml",
-			success: treeReceived
-		});
+
+        $.ajax({
+            url: selectionTreePath + 'getExpandedTree.action',
+            cache: false,
+            dataType: "xml",
+            success: treeReceived
+        });
     };
 
     function processExpand( rootElement )
     {
-        var parentElements = $(rootElement).find( 'parent' );
+        var xml = $.parseXML(rootElement);
+        var parentElements = $(xml).find( 'parent' );
 
         for ( var i = 0, parentElement; ( parentElement = parentElements[i] ); ++i )
         {
@@ -270,7 +271,7 @@ function SelectionTree()
 
         if ( hasChildren )
         {
-            toggleTag.onclick = new Function( 'selectionTree.toggle( ' + childId + ' )' );
+            toggleTag.onclick = new Function( 'selectionTree.toggle( \"' + childId + '\" )' );
             toggleTag.appendChild( getToggleExpand() );
         }
         else
@@ -279,7 +280,7 @@ function SelectionTree()
         }
 
         var linkTag = document.createElement( 'a' );
-        linkTag.href = 'javascript:void selectionTreeSelection.select( ' + childId + ' )';
+        linkTag.href = 'javascript:void selectionTreeSelection.select( \"' + childId + '\" )';
         linkTag.appendChild( document.createTextNode( child.firstChild.nodeValue ));
 
         if ( child.getAttribute( 'selected' ) == 'true' )

@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataset;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,6 +29,7 @@ package org.hisp.dhis.dataset;
  */
 
 import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
@@ -100,6 +102,18 @@ public interface DataSetService
      * @return The DataSet with the given id or null if it does not exist.
      */
     DataSet getDataSet( int id, boolean i18nDataElements, boolean i18nIndicators, boolean i18nOrgUnits, boolean i18nSections );
+
+    /**
+     * Get a DataSet
+     *
+     * @param id               The unique identifier for the DataSet to get.
+     * @param i18nDataElements whether to i18n the data elements of this data set.
+     * @param i18nIndicators   whether to i18n the indicators of this data set.
+     * @param i18nOrgUnits     whether to i18n the org units of this data set.
+     * @param i18nSections     whether to i18n the sections of this data set.
+     * @return The DataSet with the given id or null if it does not exist.
+     */
+    DataSet getDataSet( String id, boolean i18nDataElements, boolean i18nIndicators, boolean i18nOrgUnits, boolean i18nSections );
 
     /**
      * Returns the DataSet with the given UID.
@@ -230,6 +244,14 @@ public interface DataSetService
     List<DataSet> getDataSetsByUid( Collection<String> uids );
 
     /**
+     * Returns a list of data sets with the given uids. Bypasses the ACL system.
+     *
+     * @param uids the collection of uids.
+     * @return a list of data sets.
+     */
+    List<DataSet> getDataSetsByUidNoAcl( Collection<String> uids );
+
+    /**
      * Returns a collection of data elements associated with the given
      * corresponding data set.
      *
@@ -335,22 +357,44 @@ public interface DataSetService
     /**
      * Checks whether the system is locked for data entry for the given input.
      *
-     * @param dataSet          the data set
-     * @param period           Period the period.s
+     * @param dataSet the data set
+     * @param period the period.
      * @param organisationUnit the organisation unit.
-     * @param now              the base date for deciding locked date, current date if null.
+     * @param attributeOptionCombo the attribute option combo.
+     * @param now the base date for deciding locked date, current date if null.
      * @return true or false indicating whether the system is locked or not.
      */
-    boolean isLocked( DataSet dataSet, Period period, OrganisationUnit organisationUnit, Date now );
+    boolean isLocked( DataSet dataSet, Period period, OrganisationUnit organisationUnit, DataElementCategoryOptionCombo attributeOptionCombo, Date now );
+
+    /**
+     * Checks whether the system is locked for data entry for the given input.
+     * The status u
+     *
+     * @param dataSet the data set
+     * @param period the period.
+     * @param organisationUnit the organisation unit.
+     * @param attributeOptionCombo the attribute option combo.
+     * @param now the base date for deciding locked date, current date if null.
+     * @param useOrgUnitChildren whether to check children of the given org unit or the org unit only.
+     * @return true or false indicating whether the system is locked or not.
+     */
+    boolean isLocked( DataSet dataSet, Period period, OrganisationUnit organisationUnit, DataElementCategoryOptionCombo attributeOptionCombo, Date now, boolean useOrgUnitChildren );
 
     /**
      * Checks whether the system is locked for data entry for the given input.
      *
-     * @param dataElement      the data element.
-     * @param period           the period.
+     * @param dataElement the data element.
+     * @param period the period.
      * @param organisationUnit the organisation unit.
-     * @param now              the base date for deciding locked date, current date if null.
+     * @param now the base date for deciding locked date, current date if null.
      * @return true or false indicating whether the system is locked or not.
      */
     boolean isLocked( DataElement dataElement, Period period, OrganisationUnit organisationUnit, Date now );
+
+    /**
+     * Take
+     * @param dataSet
+     * @param organisationUnits
+     */
+    void mergeWithCurrentUserOrganisationUnits( DataSet dataSet, Collection<OrganisationUnit> organisationUnits );
 }

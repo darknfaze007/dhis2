@@ -1,17 +1,20 @@
+package org.hisp.dhis.relationship;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,28 +27,113 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.relationship;
 
 import java.util.Collection;
+
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
 
 /**
  * @author Abyot Asalefew
  * @version $Id$
  */
 public interface RelationshipTypeService
-{    
+{
     String ID = RelationshipTypeService.class.getName();
-    
-    int saveRelationshipType( RelationshipType relationshipType );
-    
+
+    /**
+     * Adds an {@link RelationshipType}
+     * 
+     * @param relationshipType The to RelationshipType add.
+     * 
+     * @return A generated unique id of the added {@link RelationshipType}.
+     */
+    int addRelationshipType( RelationshipType relationshipType );
+
+    /**
+     * Deletes a {@link RelationshipType}.
+     * 
+     * @param relationshipType the RelationshipType to delete.
+     */
     void deleteRelationshipType( RelationshipType relationshipType );
-    
+
+    /**
+     * Updates an {@link RelationshipType}.
+     * 
+     * @param relationshipType the RelationshipType to update.
+     */
     void updateRelationshipType( RelationshipType relationshipType );
-    
-    RelationshipType getRelationshipType( int id );    
-    
+
+    /**
+     * Returns a {@link RelationshipType}.
+     * 
+     * @param id the id of the RelationshipType to return.
+     * 
+     * @return the RelationshipType with the given id
+     */
+    RelationshipType getRelationshipType( int id );
+
+    /**
+     * Returns a {@link RelationshipType}.
+     * 
+     * @param uid the uid of the RelationshipType to return.
+     * 
+     * @return the RelationshipType with the given id
+     */
+    RelationshipType getRelationshipType( String uid );
+
+    /**
+     * Retrieve a relationship
+     * 
+     * @param aIsToB The A side
+     * @param bIsToA The B side
+     * 
+     * @return RelationshipType
+     */
     RelationshipType getRelationshipType( String aIsToB, String bIsToA );
-    
-    Collection<RelationshipType> getAllRelationshipTypes();    
-    
+
+    /**
+     * Returns all {@link RelationshipType}
+     * 
+     * @return a collection of all RelationshipType, or an empty collection if
+     *         there are no RelationshipTypes.
+     */
+    Collection<RelationshipType> getAllRelationshipTypes();
+
+    /**
+     * Returns The number of RelationshipTypes with the key searched
+     * 
+     * @param name Keyword for searching by name
+     * 
+     * @return A number
+     * 
+     */
+    Integer getRelationshipTypeCountByName( String name );
+
+    /**
+     * Returns {@link TrackedEntityAttribute} list with paging
+     * 
+     * @param name Keyword for searching by name
+     * @param min
+     * @param max
+     * @return a collection of all TrackedEntityAttribute, or an empty
+     *         collection if there are no TrackedEntityAttributes.
+     */
+    Collection<? extends RelationshipType> getRelationshipTypesBetweenByName( String name,
+        int min, int max );
+
+    /**
+     * Returns The number of all TrackedEntityAttribute available
+     * 
+     */
+    Integer getRelationshipTypeCount();
+
+    /**
+     * Returns {@link TrackedEntityAttribute} list with paging
+     * 
+     * @param min
+     * @param max
+     * @return a collection of all TrackedEntityAttribute, or an empty
+     *         collection if there are no TrackedEntityAttributes.
+     */
+    Collection<RelationshipType> getRelationshipTypesBetween( int min, int max );
 }

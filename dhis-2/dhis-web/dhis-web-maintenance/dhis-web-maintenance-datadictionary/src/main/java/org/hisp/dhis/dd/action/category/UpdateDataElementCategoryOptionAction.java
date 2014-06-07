@@ -1,19 +1,20 @@
 package org.hisp.dhis.dd.action.category;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,11 +29,15 @@ package org.hisp.dhis.dd.action.category;
  */
 
 import org.apache.commons.lang.StringUtils;
-import org.hisp.dhis.concept.ConceptService;
+import org.hisp.dhis.calendar.CalendarService;
+import org.hisp.dhis.calendar.DateUnit;
 import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 
 import com.opensymphony.xwork2.Action;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.Date;
 
 /**
  * @author Chau Thu Tran
@@ -42,7 +47,7 @@ public class UpdateDataElementCategoryOptionAction
     implements Action
 {
     // -------------------------------------------------------------------------
-    // Dependency
+    // Dependencies
     // -------------------------------------------------------------------------
 
     private DataElementCategoryService dataElementCategoryService;
@@ -52,12 +57,8 @@ public class UpdateDataElementCategoryOptionAction
         this.dataElementCategoryService = dataElementCategoryService;
     }
 
-    private ConceptService conceptService;
-
-    public void setConceptService( ConceptService conceptService )
-    {
-        this.conceptService = conceptService;
-    }
+    @Autowired
+    private CalendarService calendarService;
 
     // -------------------------------------------------------------------------
     // Input
@@ -84,11 +85,29 @@ public class UpdateDataElementCategoryOptionAction
         this.code = code;
     }
 
-    private Integer conceptId;
+    private String startDate;
 
-    public void setConceptId( Integer conceptId )
+    public void setStartDate( String startDate )
     {
-        this.conceptId = conceptId;
+        this.startDate = startDate;
+    }
+
+    private String endDate;
+
+    public void setEndDate( String endDate )
+    {
+        this.endDate = endDate;
+    }
+
+    // -------------------------------------------------------------------------
+    // Output
+    // -------------------------------------------------------------------------
+
+    private String message;
+
+    public String getMessage()
+    {
+        return message;
     }
 
     // -------------------------------------------------------------------------
@@ -99,10 +118,26 @@ public class UpdateDataElementCategoryOptionAction
     {
         code = StringUtils.trimToNull( code );
         
+        Date sDate = null;
+        Date eDate = null;
+
+        if ( startDate != null && startDate.trim().length() != 0 )
+        {
+            DateUnit isoStartDate = calendarService.getSystemCalendar().toIso( startDate );
+            sDate = isoStartDate.toJdkCalendar().getTime();
+        }
+
+        if ( endDate != null && endDate.trim().length() != 0 )
+        {
+            DateUnit isoEndDate = calendarService.getSystemCalendar().toIso( endDate );
+            eDate = isoEndDate.toJdkCalendar().getTime();
+        }
+
         DataElementCategoryOption categoryOption = dataElementCategoryService.getDataElementCategoryOption( id );
         categoryOption.setName( name );
         categoryOption.setCode( code );
-        categoryOption.setConcept( conceptService.getConcept( conceptId ) );
+        categoryOption.setStartDate( sDate );
+        categoryOption.setEndDate( eDate );
 
         dataElementCategoryService.updateDataElementCategoryOption( categoryOption );
 

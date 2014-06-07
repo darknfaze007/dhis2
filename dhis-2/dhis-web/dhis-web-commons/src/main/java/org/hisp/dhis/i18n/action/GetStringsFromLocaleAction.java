@@ -1,19 +1,20 @@
 package org.hisp.dhis.i18n.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -30,9 +31,13 @@ package org.hisp.dhis.i18n.action;
 import com.opensymphony.xwork2.Action;
 import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.i18n.I18nManager;
+import org.hisp.dhis.setting.TranslateSystemSettingManager;
+import org.hisp.dhis.system.util.LocaleUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Hashtable;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author Lars Helge Overland
@@ -40,21 +45,34 @@ import java.util.Locale;
 public class GetStringsFromLocaleAction
     implements Action
 {
+    // -------------------------------------------------------------------------
+    // Dependency
+    // -------------------------------------------------------------------------
     @Autowired
     private I18nManager manager;
 
-    private String language;
+    @Autowired
+    private TranslateSystemSettingManager translateSystemSettingManager;
 
-    public void setLanguage( String language )
+    // -------------------------------------------------------------------------
+    // Input
+    // -------------------------------------------------------------------------
+    private String loc;
+
+    public void setLoc( String loc )
     {
-        this.language = language;
+        this.loc = loc;
     }
+    
+    // -------------------------------------------------------------------------
+    // Output
+    // -------------------------------------------------------------------------
 
-    private String country;
+    private Map<String, String> translations = new Hashtable<String, String>();
 
-    public void setCountry( String country )
+    public Map<String, String> getTranslations()
     {
-        this.country = country;
+        return translations;
     }
 
     private I18n i18nObject;
@@ -71,26 +89,15 @@ public class GetStringsFromLocaleAction
     public String execute()
         throws Exception
     {
-        Locale locale;
-
-        if ( language != null )
+        if ( loc != null )
         {
-            if ( country != null )
-            {
-                locale = new Locale( language, country );
-            }
-            else
-            {
-                locale = new Locale( language );
-            }
+            Locale locale = LocaleUtils.getLocale( loc );
+    
+            i18nObject = manager.getI18n( this.getClass(), locale );
+        
+            translations = translateSystemSettingManager.getTranslation_SystemAppearanceSetting( loc );
         }
-        else
-        {
-            locale = null;
-        }
-
-        i18nObject = manager.getI18n( this.getClass(), locale );
-
+        
         return SUCCESS;
     }
 }

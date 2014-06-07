@@ -13,7 +13,7 @@ jQuery(document).ready(function()
 		title: "Expression"
 	});
 		
-	jQuery( "#periodTypeName" ).change(function(){
+	jQuery( "#periodTypeName, #ruleType" ).change(function(){
 		getOperandsPage();
 	});
 	
@@ -52,7 +52,7 @@ function getConstantsPage()
 	
 	jQuery.get( '../api/constants.json?paging=false&links=false', {}, function( json ) 
 	{
-		if ( json.constants.length == 0 )
+		if ( !json.constants || json.constants.length == 0 )
 		{
 			setInnerHTML( 'constantHeader', "<i style='color:red'>"+i18n_no_constant_to_select+"</i>" );
 			return;
@@ -69,8 +69,11 @@ function getOperandsPage()
 	var key = getFieldValue( "expression-container input[id=filter]" );
 	
 	var periodType = getFieldValue( "periodTypeName" );
+	var ruleType = getFieldValue( "ruleType" );
+	var periodTypeAllowAverage = ( ruleType && ruleType == "surveillance" ) ? true : false;
 
-	dataDictionary.loadOperands( "#expression-container select[id=dataElementId]", {usePaging: true, key: key, periodType: periodType} );	
+	dataDictionary.loadOperands( "#expression-container select[id=dataElementId]", 
+		{usePaging: true, key: key, periodType: periodType, periodTypeAllowAverage: periodTypeAllowAverage } );	
 }
 
 function clearSearchText()

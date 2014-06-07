@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.report;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,18 +28,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.report;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patientdatavalue.PatientDataValue;
-import org.hisp.dhis.patientdatavalue.PatientDataValueService;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
 
 import com.opensymphony.xwork2.Action;
 
@@ -51,11 +52,11 @@ public class ViewRecordsAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private PatientDataValueService patientDataValueService;
+    private TrackedEntityDataValueService dataValueService;
 
-    public void setPatientDataValueService( PatientDataValueService patientDataValueService )
+    public void setDataValueService( TrackedEntityDataValueService dataValueService )
     {
-        this.patientDataValueService = patientDataValueService;
+        this.dataValueService = dataValueService;
     }
 
     private ProgramStageInstanceService programStageInstanceService;
@@ -76,11 +77,11 @@ public class ViewRecordsAction
         this.id = id;
     }
 
-    private Collection<PatientDataValue> patientDataValues = new ArrayList<PatientDataValue>();
+    private Collection<TrackedEntityDataValue> dataValues = new ArrayList<TrackedEntityDataValue>();
 
-    public Collection<PatientDataValue> getPatientDataValues()
+    public Collection<TrackedEntityDataValue> getDataValues()
     {
-        return patientDataValues;
+        return dataValues;
     }
 
     private Map<Integer, String> optionValueMap = new HashMap<Integer, String>();
@@ -90,11 +91,11 @@ public class ViewRecordsAction
         return optionValueMap;
     }
 
-    private Patient patient;
+    private TrackedEntityInstance entityInstance;
 
-    public Patient getPatient()
+    public TrackedEntityInstance getEntityInstance()
     {
-        return patient;
+        return entityInstance;
     }
 
     private ProgramStageInstance programStageInstance;
@@ -113,13 +114,13 @@ public class ViewRecordsAction
     {
         programStageInstance = programStageInstanceService.getProgramStageInstance( id );
 
-        patient = programStageInstance.getProgramInstance().getPatient();
+        entityInstance = programStageInstance.getProgramInstance().getEntityInstance();
 
-        patientDataValues = patientDataValueService.getPatientDataValues( programStageInstance );
+        dataValues = dataValueService.getTrackedEntityDataValues( programStageInstance );
 
-        for ( PatientDataValue patientDataValue : patientDataValues )
+        for ( TrackedEntityDataValue dataValue : dataValues )
         {
-            optionValueMap.put( patientDataValue.getDataElement().getId(), patientDataValue.getValue() );
+            optionValueMap.put( dataValue.getDataElement().getId(), dataValue.getValue() );
         }
 
         return SUCCESS;

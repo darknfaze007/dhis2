@@ -26,6 +26,7 @@ package org.hisp.dhis.i18nresourceeditor.gui;
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -64,8 +65,10 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.JTree;
+import javax.swing.SwingConstants;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
+import javax.swing.WindowConstants;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -83,7 +86,7 @@ import org.hisp.dhis.i18nresourceeditor.tree.ResourceNode;
  */
 public class I18nResourceEditorGUI extends JFrame {
 
-    static final String dhisName = "DHIS 2.0";
+    static final String dhisName = "DHIS 2";
     static final String programName = dhisName + " i18n Resource Editor";
     static final String programVersion = "0.3";
     static final Font headerFont = new Font(null, Font.BOLD, 15); // Used as standard header
@@ -144,7 +147,7 @@ public class I18nResourceEditorGUI extends JFrame {
     private JFileChooser fcDHIS2resource = new JFileChooser();
     // Help tab
     private JEditorPane txtHelp = new JEditorPane();
-    private JFrame parent = (JFrame) this;
+    private JFrame parent = this;
     private JPanel panelHelp = new JPanel();
     private JButton cmdHelp = new JButton("Basic help");
     private JButton cmdHelpAdvanced = new JButton("More help ");
@@ -164,9 +167,10 @@ public class I18nResourceEditorGUI extends JFrame {
     private JPanel panelDialogStartSimple = new JPanel();
     private JTabbedPane tabDialogStart = new JTabbedPane();
     private JTextArea txtDialogStartBody = new JTextArea("Please select the " + dhisName +
-            " repository directory root, " + "this directory tree will be searched for i18n resources\n\n" +
-            "If it fails to detect any resources you can reset the directory in Settings\n\n" +
-            "See Help for more on how to use this program\n");
+            " source code root directory, ie. the \"dhis-2\" directory inside the repository checkout. " +
+            "The directory tree will be searched for i18n resources.\n\n" +
+            "You can later reset the directory under Settings.\n\n" +
+            "See Help for more information about this program.\n");
     private JTextArea txtDialogStartBodyS = new JTextArea("Please select a " + dhisName +
             " compatible resource bundle, " + "you can then simply edit this resource for all locales.\n\n");
     private JPanel panelDialogStartBottom = new JPanel();
@@ -273,10 +277,10 @@ public class I18nResourceEditorGUI extends JFrame {
         FlowLayout refFlowLayout = new FlowLayout();
         refFlowLayout.setAlignment(FlowLayout.LEFT);
         panelMainReferencesTop.setLayout(refFlowLayout);
-        lblReferenceTop.setAlignmentX(JLabel.LEFT);
+        lblReferenceTop.setAlignmentX(SwingConstants.LEFT);
         lblMainTop.setPreferredSize(new Dimension(50, 50));
         lblMainTop.setText("No data is saved until you hit the save button on the toolbar (top menu)");
-        lblMainTop.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+        lblMainTop.setAlignmentX(Component.CENTER_ALIGNMENT);
         cmdSave.setIcon(getIcon("save.gif"));
         cmdSetLocale.setIcon(getIcon("locale.gif"));
 
@@ -332,7 +336,7 @@ public class I18nResourceEditorGUI extends JFrame {
         cmdDialogStartOkS.setEnabled(false);
         cmdDialogStartOk.addActionListener(new UpdateDHIS2dirListener());
         cmdDialogStartOkS.addActionListener(new UpdateDHIS2dirListener());
-        dialogStart.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialogStart.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         // Help
         txtHelp.setContentType("text/html");
@@ -372,7 +376,7 @@ public class I18nResourceEditorGUI extends JFrame {
         panelDialogAdvancedLookup.setBorder(new TitledBorder("Automatically updated lookups from the Java API:"));
         lblDialogAdvancedHeader.setFont(headerFont2);
         lblDialogAdvancedHeader.setPreferredSize(new Dimension(40, 40));
-        lblDialogAdvancedHeader.setHorizontalAlignment(JLabel.CENTER);
+        lblDialogAdvancedHeader.setHorizontalAlignment(SwingConstants.CENTER);
         cmdDialogAdvancedSelect.setEnabled(false);
 
         // Global
@@ -998,7 +1002,7 @@ public class I18nResourceEditorGUI extends JFrame {
             if (currentLocale != null) {
                 // Then we should see what the list contains
                 String localestr = (String) cmbRefLocaleSelect.getModel().getSelectedItem();
-                currentRefLocale = (Locale) mapReflocales.get(localestr); // The string points to a locale in the map
+                currentRefLocale = mapReflocales.get(localestr); // The string points to a locale in the map
                 // Update the translation
                 try {
                     ResourceNode resource = getSelectedResource();

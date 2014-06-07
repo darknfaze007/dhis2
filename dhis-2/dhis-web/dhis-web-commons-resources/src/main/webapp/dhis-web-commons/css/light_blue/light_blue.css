@@ -5,14 +5,14 @@
 
 * 
 {
-  font-family: LiberationSansRegular, arial, sans-serif;
+  font-family: LiberationSans, arial, sans-serif;
   line-height: 140%;
 }
 
 html,body 
 {
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
   background-color: white;
 }
 
@@ -23,7 +23,7 @@ img
 
 ul,ol 
 {
-  padding: 0px;
+  padding: 0;
 }
 
 a
@@ -58,10 +58,10 @@ input[type=text],input[type=password],textarea
   height: 44px;
   position: fixed;
   z-index: 10;
-  top: 0px;
-  left: 0px;
-  right: 0px;
-  box-shadow: 0 0 2px #000;
+  top: 0;
+  left: 0;
+  right: 0;
+  box-shadow: 0 0 3px #222;
 }
 
 #headerBanner
@@ -75,131 +75,129 @@ input[type=text],input[type=password],textarea
 {
   position: absolute;
   top: 12px;
-  left: 240px;
-  font-family: LiberationSansBold, arial;
+  left: 175px;
+  font-weight: bold;
   color: #fff;
   font-size: 16px;
 }
 
-#menuLinkArea
+/*----------------------------------------------------------------------------*/
+/* DropDown Menu                                                              */
+/*----------------------------------------------------------------------------*/
+
+.gearDropDown 
 {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
+  background-color : #f7f7f7;
+  float            : right;
+  border           : 1px solid #eaeaea;
+  padding          : 4px 10px;
+  cursor           : pointer;
+  border-top-left-radius  : 3px;
+  border-top-right-radius : 3px;
 }
 
-.menuLink
+.gearDropDown.active 
 {
-  height: 44px;
-  width: 100px;
-  font-size: 9pt;
-  text-align: center;
-  line-height: 44px;
-  cursor: pointer;
-  color: #fff;
+  background-color : #ddd;
 }
 
-a.menuLink:hover
+.dropDown 
 {
-  text-decoration: none;
+  position                   : absolute;
+  display                    : none;
+  font-size                  : 9pt;
+  color                      : #000;
+  border                     : 1px solid #ddd;
+  padding-left               : 2px;
+  padding-right              : 2px;
+  width                      : 70px;
+  max-height                 : 610px;
+  overflow-y                 : auto;
+  background-color           : #f7f7f7;
+  z-index                    : 9;
+  border-bottom-left-radius  : 3px;
+  border-bottom-right-radius : 3px;
+  box-shadow                 : #ccc 0 1px 1px 0;
 }
 
-#menuLink1
+.dropDown > ul 
 {
-  position: absolute;
-  left: 595px;
+  margin: 6px 0;
 }
 
-#menuLink2
+.dropDown > ul > li 
 {
-  position: absolute;
-  left: 695px;
+  list-style-type : none;
+  padding         : 0;
+  margin          : 0;
 }
 
-#menuLink3
+.dropDown > ul > li > a 
 {
-  position: absolute;
-  left: 795px;
+  display       : block;
+  padding       : 8px 5px;
+  color         : #000;
+  border-radius : 3px;
+  cursor        : pointer;
 }
 
-#menuLink4
+.dropDown > ul > li > a:hover 
 {
-  position: absolute;
-  left: 895px;
+  text-decoration  : none;
+  background-color : #eee;
 }
 
-#menuDropDown1
+/*----------------------------------------------------------------------------*/
+/* Context Menu                                                               */
+/*----------------------------------------------------------------------------*/
+
+.contextMenu 
 {
-  position: absolute;
-  top: 44px;
-  left: 595px;
+  position                   : absolute;
+  font-size                  : 9pt;
+  color                      : #000;
+  border                     : 1px solid #ddd;
+  padding-left               : 4px;
+  padding-right              : 4px;
+  width                      : 189px;
+  max-height                 : 610px;
+  overflow-y                 : auto;
+  background-color           : #f7f7f7;
+  display                    : none;
+  z-index                    : 9;
+  filter                     : alpha(opacity=98);
+  opacity                    : 0.98;
+  border-bottom-left-radius  : 3px;
+  border-bottom-right-radius : 3px;
+  box-shadow                 : #ccc 0 1px 1px 0;
 }
 
-#menuDropDown2
+.contextMenuItems 
 {
-  position: absolute;
-  top: 44px;
-  left: 695px;
+  list-style-type : none;
+  padding         : 0;
+  margin          : 10px 0;
 }
 
-#menuDropDown3
+.contextMenuItems a 
 {
-  position: absolute;
-  top: 44px;
-  left: 795px;
+  display       : block;
+  padding       : 10px 10px;
+  color         : #000;
+  border-radius : 3px;
+  cursor        : pointer;
 }
 
-#menuDropDown4
+.contextMenuItems a:hover 
 {
-  position: absolute;
-  top: 44px;
-  left: 795px;
+  text-decoration  : none;
+  background-color : #eee;
 }
 
-.menuDropDownArea
+.contextMenuItemActive 
 {
-  font-size: 9pt;
-  color: #fff;
-  border-right: 1px solid #888;
-  border-bottom: 1px solid #888;
-  border-left: 1px solid #888; 
-  padding-left: 5px;
-  padding-right: 5px;
-  width: 189px;
-  background-color: #276696;
-  display: none;
-  z-index: 10;
-  filter: alpha(opacity=94);
-  opacity: 0.94;
-  border-bottom-left-radius: 3px;
-  border-bottom-right-radius: 3px;
-  box-shadow: #ccc 0px 1px 1px 0px;
-}
-
-.menuDropDownBox
-{
-  list-style-type: none;
-  padding: 0;
-  margin: 10px 0;
-}
-
-.menuDropDownBox a
-{
-  display: block;
-  width: 169px;
-  padding-top: 8px;
-  padding-left: 10px;
-  padding-bottom: 7px;
-  padding-right: 10px;
-  color: #fff;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.menuDropDownBox a:hover
-{
-  text-decoration: none;
-  background-color: #4A89BA;
+  background-color: #246BA1 !important;
+  color: #fff !important;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -209,13 +207,14 @@ a.menuLink:hover
 #leftBar
 {
   height: 100%;
-  background-color: #fafafa;
+  background-color: #f7f7f7;
   width: 235px;
   position: fixed;
   top: 46px;
-  left: 0px;
+  left: 0;
   padding-top: 6px;
-  border-right: 1px solid #e8e8e8;
+  border-right: 1px solid #ddd;
+  box-shadow: #ddd 0 0 2px 0;
 }
 
 #leftBarContents
@@ -225,34 +224,34 @@ a.menuLink:hover
 
 #leftBarContents h2
 {
+  color: #333;
   font-size: 9pt;
-  margin: 16px 20px 2px 20px;
-  padding: 7px 0 7px 0;
-  font-weight: normal;
-  font-family: LiberationSansBold, arial;
+  margin: 16px 20px 1px 20px;
+  padding: 8px 0 8px 0;
+  font-weight: bold;
 }
 
 #leftBarContents ul
 {
   list-style-type: none;
   padding: 0;
-  margin: 0 13px;
+  margin: 0 8px;
 }
 
 #leftBarContents ul a
 {
   display: block;
-  color: #303030;
+  color: #333;
   text-decoration: none;
-  padding: 8px 7px;
+  padding: 8px 12px;
   cursor: pointer;
-  border-bottom: 1px solid #e8e8e8;
 }
 
 #leftBarContents a:hover
 {
-  text-decoration: underline;
-  background-color: #f4f4f4;
+  text-decoration: none;
+  background-color: #ededed;
+  border-radius: 4px;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -264,7 +263,7 @@ a.menuLink:hover
   width: 100%;
 }
 
-.page 
+.page
 {
   font-size: 9pt;
 }
@@ -273,42 +272,42 @@ a.menuLink:hover
 {
   font-size: 16pt;
   font-weight: normal;
-  color: #606060;
+  color: #585D61;
 }
 
 .page h2 
 {
   font-size: 15pt;
   font-weight: normal;
-  color: #606060;
+  color: #585D61;
 }
 
 .page h3 
 {
   font-size: 14pt;
   font-weight: normal;
-  color: #606060;
+  color: #585D61;
 }
 
 .page h4 
 {
   font-size: 13pt;
   font-weight: normal;
-  color: #606060;
+  color: #585D61;
 }
 
 .page h5 
 {
   font-size: 12pt;
   font-weight: normal;
-  color: #606060;
+  color: #585D61;
 }
 
 .page h6 
 {
   font-size: 11pt;
   font-weight: normal;
-  color: #606060;
+  color: #585D61;
 }
 
 .page p,.page td,.page th,.page input,.page select,.page textarea 
@@ -318,15 +317,13 @@ a.menuLink:hover
 
 .page th
 {
-  background-color: #cbddeb;
   text-align: left;
   color: #39547d;
-  padding: 3px 0 2px 6px;
-  border: 0;
-  font-family: LiberationSansBold, arial;
+  padding: 3px 0 3px 1px;
   font-size: 13px;
-  font-weight: normal;
+  font-weight: bold;
   border-collapse: collapse;
+  border-bottom: 1px solid #cad5e5;
   min-height: 28px;
 }
 
@@ -346,11 +343,12 @@ a.menuLink:hover
   width: 100%;
   border-collapse: collapse;
   padding-top: 10px;
+  cursor: pointer;
 }
 
 .listTable th
 {
-  background-color: #fff;
+  background-color: rgba( 0, 0, 0, 0 );
   border-bottom: 1px solid #cad5e5;
   padding: 6px 0 3px 5px;
 }
@@ -358,6 +356,11 @@ a.menuLink:hover
 .listTable td
 {
   padding: 2px 2px 2px 5px;
+}
+
+.listTable > tbody > tr > td
+{
+  padding: 11px 0 10px 5px;
 }
 
 .listRow
@@ -378,12 +381,12 @@ a.menuLink:hover
 
 .bold, .bold td
 {
-  font-family: LiberationSansBold, arial, sans-serif;
+  font-weight: bold;
 }
 
 .normal
 {
-  font-family: LiberationSansRegular, arial, sans-serif;
+  font-weight: normal;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -393,19 +396,33 @@ a.menuLink:hover
 .introList
 {
   list-style-type:none;
-  width: 490px;
+  width: 100%;
+  max-width: 1100px;
   padding-top: 10px;
   padding-bottom: 20px;
-  padding-left: 5px;
-  padding-right: 5px;
   color: #444;
 }
 
-.introTwoColList
+.moduleList
 {
-  padding-left: 0;
-  padding-right: 0;
-  width: 347px;
+  list-style-type:none;
+  width: 100%;
+  max-width: 1100px;
+  padding-top: 10px;
+  padding-bottom: 20px;
+  color: #444;
+}
+
+.introList li
+{
+  width: 435px;
+  margin-right: 30px;
+}
+
+.moduleList li
+{
+  width: 305px;
+  margin-right: 20px;
 }
 
 .introIcon
@@ -415,20 +432,21 @@ a.menuLink:hover
 
 .introItem
 {
-  padding: 18px;
+  padding: 15px;
   cursor: pointer;
   min-height: 44px;
-  border-bottom: 1px solid #e0e0e0;
+  float: left;
 }
 
 .introItem:hover
 {
-  background-color: #f6f6f6;
+  background-color: #edf2f2;
+  border-radius: 4px;
 }
 
 .introItemHeader
 {
-  font-family: LiberationSansBold, arial;
+  font-weight: bold;
   color: #3F693F;
   font-size: 13px;
 }
@@ -443,7 +461,7 @@ a.menuLink:hover
 /*----------------------------------------------------------------------------*/
 
 @font-face {
-    font-family: 'LiberationSansRegular';
+    font-family: 'LiberationSans';
     src: url('../../fonts/LiberationSans-Regular-webfont.eot');
     src: url('../../fonts/LiberationSans-Regular-webfont.eot?#iefix') format('eot'),
          url('../../fonts/LiberationSans-Regular-webfont.woff') format('woff'),
@@ -454,12 +472,12 @@ a.menuLink:hover
 }
 
 @font-face {
-    font-family: 'LiberationSansBold';
+    font-family: 'LiberationSans';
     src: url('../../fonts/LiberationSans-Bold-webfont.eot');
     src: url('../../fonts/LiberationSans-Bold-webfont.eot?#iefix') format('eot'),
          url('../../fonts/LiberationSans-Bold-webfont.woff') format('woff'),
          url('../../fonts/LiberationSans-Bold-webfont.ttf') format('truetype'),
          url('../../fonts/LiberationSans-Bold-webfont.svg#webfontHyWb8e07') format('svg');
-    font-weight: normal;
+    font-weight: bold;
     font-style: normal;
 }

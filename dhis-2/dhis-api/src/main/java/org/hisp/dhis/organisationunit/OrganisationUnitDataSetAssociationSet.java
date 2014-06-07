@@ -1,19 +1,20 @@
 package org.hisp.dhis.organisationunit;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -42,48 +43,48 @@ public class OrganisationUnitDataSetAssociationSet
     /**
      * List of data set association sets.
      */
-    private List<Set<Integer>> dataSetAssociationSets = new ArrayList<Set<Integer>>();
-    
+    private List<Set<String>> dataSetAssociationSets = new ArrayList<Set<String>>();
+
     /**
      * Mapping between organisation unit identifier and index of association set in list.
      */
-    private Map<Integer, Integer> organisationUnitAssociationSetMap = new HashMap<Integer, Integer>();
+    private Map<String, Integer> organisationUnitAssociationSetMap = new HashMap<String, Integer>();
 
     /**
      * Set of distinct data sets in all association sets.
      */
-    private Set<Integer> distinctDataSets = new HashSet<Integer>();
-    
+    private Set<String> distinctDataSets = new HashSet<String>();
+
     public OrganisationUnitDataSetAssociationSet()
     {
     }
 
-    public List<Set<Integer>> getDataSetAssociationSets()
+    public List<Set<String>> getDataSetAssociationSets()
     {
         return dataSetAssociationSets;
     }
 
-    public void setDataSetAssociationSets( List<Set<Integer>> dataSetAssociationSets )
+    public void setDataSetAssociationSets( List<Set<String>> dataSetAssociationSets )
     {
         this.dataSetAssociationSets = dataSetAssociationSets;
     }
 
-    public Map<Integer, Integer> getOrganisationUnitAssociationSetMap()
+    public Map<String, Integer> getOrganisationUnitAssociationSetMap()
     {
         return organisationUnitAssociationSetMap;
     }
 
-    public void setOrganisationUnitAssociationSetMap( Map<Integer, Integer> organisationUnitAssociationSetMap )
+    public void setOrganisationUnitAssociationSetMap( Map<String, Integer> organisationUnitAssociationSetMap )
     {
         this.organisationUnitAssociationSetMap = organisationUnitAssociationSetMap;
     }
 
-    public Set<Integer> getDistinctDataSets()
+    public Set<String> getDistinctDataSets()
     {
         return distinctDataSets;
     }
 
-    public void setDistinctDataSets( Set<Integer> distinctDataSets )
+    public void setDistinctDataSets( Set<String> distinctDataSets )
     {
         this.distinctDataSets = distinctDataSets;
     }

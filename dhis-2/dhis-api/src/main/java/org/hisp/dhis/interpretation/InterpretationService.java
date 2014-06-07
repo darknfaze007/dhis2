@@ -1,19 +1,20 @@
 package org.hisp.dhis.interpretation;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,9 +28,12 @@ package org.hisp.dhis.interpretation;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.List;
+import org.hisp.dhis.chart.Chart;
+import org.hisp.dhis.mapping.Map;
+import org.hisp.dhis.reporttable.ReportTable;
 
-import org.hisp.dhis.user.User;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Lars Helge Overland
@@ -37,22 +41,30 @@ import org.hisp.dhis.user.User;
 public interface InterpretationService
 {
     int saveInterpretation( Interpretation interpretation );
-    
+
     Interpretation getInterpretation( int id );
-    
+
     Interpretation getInterpretation( String uid );
-    
+
     void updateInterpretation( Interpretation interpretation );
-    
+
     void deleteInterpretation( Interpretation interpretation );
-    
+
+    List<Interpretation> getInterpretations();
+
+    List<Interpretation> getInterpretations( Date lastUpdated );
+
     List<Interpretation> getInterpretations( int first, int max );
 
-    List<Interpretation> getInterpretations( User user, int first, int max );
-    
-    void addInterpretationComment( String uid, String text );
-    
+    InterpretationComment addInterpretationComment( String uid, String text );
+
     void updateCurrentUserLastChecked();
-    
+
     long getNewInterpretationCount();
+
+    int countMapInterpretations( Map map );
+
+    int countChartInterpretations( Chart chart );
+
+    int countReportTableInterpretations( ReportTable reportTable );
 }

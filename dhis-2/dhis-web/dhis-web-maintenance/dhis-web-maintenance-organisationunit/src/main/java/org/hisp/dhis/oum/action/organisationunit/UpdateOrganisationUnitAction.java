@@ -1,19 +1,20 @@
 package org.hisp.dhis.oum.action.organisationunit;
 
 /*
- * Copyright (c) 2004-2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -38,9 +39,11 @@ import java.util.List;
 import java.util.Set;
 
 import org.hisp.dhis.attribute.AttributeService;
+import org.hisp.dhis.calendar.CalendarService;
+import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.common.IdentifiableObjectManager;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
-import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
@@ -48,6 +51,7 @@ import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.system.util.AttributeUtils;
 import org.hisp.dhis.system.util.ValidationUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.opensymphony.xwork2.Action;
 
@@ -60,13 +64,6 @@ public class UpdateOrganisationUnitAction
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
-
-    private I18nFormat format;
-
-    public void setFormat( I18nFormat format )
-    {
-        this.format = format;
-    }
 
     private OrganisationUnitService organisationUnitService;
 
@@ -95,6 +92,17 @@ public class UpdateOrganisationUnitAction
     {
         this.attributeService = attributeService;
     }
+
+    private IdentifiableObjectManager manager;
+
+    @Autowired
+    public void setManager( IdentifiableObjectManager manager )
+    {
+        this.manager = manager;
+    }
+
+    @Autowired
+    private CalendarService calendarService;
 
     // -------------------------------------------------------------------------
     // Input & Output
@@ -264,13 +272,15 @@ public class UpdateOrganisationUnitAction
         email = nullIfEmpty( email );
         phoneNumber = nullIfEmpty( phoneNumber );
 
-        Date oDate = format.parseDate( openingDate );
+        DateUnit isoOpeningDate = calendarService.getSystemCalendar().toIso( openingDate );
+        Date oDate = isoOpeningDate.toJdkCalendar().getTime();
 
         Date cDate = null;
 
         if ( closedDate != null && closedDate.trim().length() != 0 )
         {
-            cDate = format.parseDate( closedDate );
+            DateUnit isoClosingDate = calendarService.getSystemCalendar().toIso( closedDate );
+            cDate = isoClosingDate.toJdkCalendar().getTime();
         }
 
         OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( id );
@@ -351,15 +361,17 @@ public class UpdateOrganisationUnitAction
             if ( oldGroup != null && oldGroup.getMembers().remove( organisationUnit ) )
             {
                 oldGroup.removeOrganisationUnit( organisationUnit );
-                organisationUnitGroupService.updateOrganisationUnitGroup( oldGroup );
+                manager.updateNoAcl( oldGroup );
             }
 
             if ( newGroup != null && newGroup.getMembers().add( organisationUnit ) )
             {
                 newGroup.addOrganisationUnit( organisationUnit );
-                organisationUnitGroupService.updateOrganisationUnitGroup( newGroup );
+                manager.updateNoAcl( newGroup );
             }
         }
+
+        organisationUnitService.updateOrganisationUnitVersion();
 
         return SUCCESS;
     }

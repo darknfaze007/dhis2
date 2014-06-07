@@ -1,19 +1,20 @@
 package org.hisp.dhis.indicator;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -72,10 +73,12 @@ public class IndicatorGroup
 
     public IndicatorGroup()
     {
+        setAutoFields();
     }
 
     public IndicatorGroup( String name )
     {
+        this();
         this.name = name;
     }
 
@@ -109,39 +112,6 @@ public class IndicatorGroup
         {
             addIndicator( indicator );
         }
-    }
-
-    // -------------------------------------------------------------------------
-    // hashCode and equals
-    // -------------------------------------------------------------------------
-
-    @Override
-    public boolean equals( Object o )
-    {
-        if ( this == o )
-        {
-            return true;
-        }
-
-        if ( o == null )
-        {
-            return false;
-        }
-
-        if ( !(o instanceof IndicatorGroup) )
-        {
-            return false;
-        }
-
-        final IndicatorGroup other = (IndicatorGroup) o;
-
-        return name.equals( other.getName() );
-    }
-
-    @Override
-    public String toString()
-    {
-        return "[" + name + "]";
     }
 
     // -------------------------------------------------------------------------
@@ -193,10 +163,10 @@ public class IndicatorGroup
         this.groupSet = groupSet;
     }
 
-    @JsonProperty( value = "attributes" )
+    @JsonProperty( value = "attributeValues" )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "attributes", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty( localName = "attribute", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlElementWrapper( localName = "attributeValues", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( localName = "attributeValue", namespace = DxfNamespaces.DXF_2_0)
     public Set<AttributeValue> getAttributeValues()
     {
         return attributeValues;

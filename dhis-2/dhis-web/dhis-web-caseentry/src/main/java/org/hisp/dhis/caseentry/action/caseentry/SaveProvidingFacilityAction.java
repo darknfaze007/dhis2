@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.caseentry;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,14 +28,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.caseentry;
-
-import org.hisp.dhis.caseentry.state.SelectedStateManager;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementService;
-import org.hisp.dhis.patientdatavalue.PatientDataValue;
-import org.hisp.dhis.patientdatavalue.PatientDataValueService;
 import org.hisp.dhis.program.ProgramStageInstance;
+import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
 
 import com.opensymphony.xwork2.Action;
 
@@ -47,13 +48,6 @@ public class SaveProvidingFacilityAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private SelectedStateManager selectedStateManager;
-
-    public void setSelectedStateManager( SelectedStateManager selectedStateManager )
-    {
-        this.selectedStateManager = selectedStateManager;
-    }
-
     private DataElementService dataElementService;
 
     public void setDataElementService( DataElementService dataElementService )
@@ -61,22 +55,36 @@ public class SaveProvidingFacilityAction
         this.dataElementService = dataElementService;
     }
 
-    private PatientDataValueService patientDataValueService;
+    private TrackedEntityDataValueService dataValueService;
 
-    public void setPatientDataValueService( PatientDataValueService patientDataValueService )
+    public void setDataValueService( TrackedEntityDataValueService dataValueService )
     {
-        this.patientDataValueService = patientDataValueService;
+        this.dataValueService = dataValueService;
+    }
+
+    private ProgramStageInstanceService programStageInstanceService;
+
+    public void setProgramStageInstanceService( ProgramStageInstanceService programStageInstanceService )
+    {
+        this.programStageInstanceService = programStageInstanceService;
     }
 
     // -------------------------------------------------------------------------
     // Input/Output
     // -------------------------------------------------------------------------
 
-    private int dataElementId;
+    private String dataElementId;
 
-    public void setDataElementId( int dataElementId )
+    public void setDataElementId( String dataElementId )
     {
         this.dataElementId = dataElementId;
+    }
+
+    private Integer programStageInstanceId;
+
+    public void setProgramStageInstanceId( Integer programStageInstanceId )
+    {
+        this.programStageInstanceId = programStageInstanceId;
     }
 
     private Boolean providedElsewhere;
@@ -100,18 +108,19 @@ public class SaveProvidingFacilityAction
     public String execute()
         throws Exception
     {
-        ProgramStageInstance programStageInstance = selectedStateManager.getSelectedProgramStageInstance();
+        ProgramStageInstance programStageInstance = programStageInstanceService
+            .getProgramStageInstance( programStageInstanceId );
 
         DataElement dataElement = dataElementService.getDataElement( dataElementId );
 
-        PatientDataValue patientDataValue = patientDataValueService.getPatientDataValue( programStageInstance,
-            dataElement );
+        TrackedEntityDataValue DataValue = dataValueService.getTrackedEntityDataValue(
+            programStageInstance, dataElement );
 
-        if ( patientDataValue != null )
+        if ( DataValue != null )
         {
-            patientDataValue.setProvidedElsewhere( providedElsewhere );
+            DataValue.setProvidedElsewhere( providedElsewhere );
 
-            patientDataValueService.updatePatientDataValue( patientDataValue );
+            dataValueService.updateTrackedEntityDataValue( DataValue );
         }
 
         return SUCCESS;

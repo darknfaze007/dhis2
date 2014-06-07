@@ -1,19 +1,20 @@
 package org.hisp.dhis.smscommand;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,14 +28,30 @@ package org.hisp.dhis.smscommand;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.Set;
-
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.sms.parse.ParserType;
 import org.hisp.dhis.user.UserGroup;
 
+import java.util.Set;
+
 public class SMSCommand
 {
+    //Default message
+    
+    public static final String WRONG_FORMAT_MESSAGE = "Wrong format for command";
+    
+    public static final String MORE_THAN_ONE_ORGUNIT_MESSAGE = "Found more than one org unit for this number. Please specify one organisation unit";
+    
+    public static final String NO_USER_MESSAGE = "No user associated with this phone number. Please contact your supervisor.";
+    
+    //Completeness method code
+    
+    public static final int RECEIVE_ALL_DATAVALUE = 1;
+    
+    public static final int RECEIVE_AT_LEAST_ONE_DATAVALUE = 2;
+    
+    public static final int DO_NOT_MARK_COMPLETE = 3;
+    
     private int id;
 
     private String name;
@@ -51,13 +68,42 @@ public class SMSCommand
 
     private String codeSeparator;
 
-    private String defaultMessage;
-    
-    private String receivedMessage;
-    
     private UserGroup userGroup;
 
+    private Set<SMSSpecialCharacter> specialCharacters;
+
     private boolean currentPeriodUsedForReporting = false; // default is prev
+    
+    private Integer completenessMethod;
+    
+    //Messages
+    
+    private String defaultMessage;
+
+    private String receivedMessage;
+    
+    private String wrongFormatMessage;
+    
+    private String noUserMessage;
+    
+    private String moreThanOneOrgUnitMessage;
+
+    public SMSCommand( String name, String parser, ParserType parserType, String separator, DataSet dataset,
+        Set<SMSCode> codes, String codeSeparator, String defaultMessage, UserGroup userGroup, String receivedMessage, Set<SMSSpecialCharacter> specialCharacters )
+    {
+        super();
+        this.name = name;
+        this.parser = parser;
+        this.parserType = parserType;
+        this.separator = separator;
+        this.dataset = dataset;
+        this.codes = codes;
+        this.codeSeparator = codeSeparator;
+        this.defaultMessage = defaultMessage;
+        this.userGroup = userGroup;
+        this.receivedMessage = receivedMessage;
+        this.specialCharacters = specialCharacters;
+    }
 
     public SMSCommand( String name, String parser, ParserType parserType, String separator, DataSet dataset,
         Set<SMSCode> codes, String codeSeparator, String defaultMessage, UserGroup userGroup, String receivedMessage )
@@ -74,9 +120,9 @@ public class SMSCommand
         this.userGroup = userGroup;
         this.receivedMessage = receivedMessage;
     }
-    
+
     public SMSCommand( String name, String parser, ParserType parserType, String separator, DataSet dataset,
-        Set<SMSCode> codes, String codeSeparator, String defaultMessage)
+        Set<SMSCode> codes, String codeSeparator, String defaultMessage )
     {
         super();
         this.name = name;
@@ -265,4 +311,56 @@ public class SMSCommand
     {
         this.receivedMessage = receivedMessage;
     }
+
+    public Set<SMSSpecialCharacter> getSpecialCharacters()
+    {
+        return specialCharacters;
+    }
+
+    public void setSpecialCharacters( Set<SMSSpecialCharacter> specialCharacters )
+    {
+        this.specialCharacters = specialCharacters;
+    }
+
+    public String getWrongFormatMessage()
+    {
+        return wrongFormatMessage;
+    }
+
+    public void setWrongFormatMessage( String wrongFormatMessage )
+    {
+        this.wrongFormatMessage = wrongFormatMessage;
+    }
+
+    public String getNoUserMessage()
+    {
+        return noUserMessage;
+    }
+
+    public void setNoUserMessage( String noUserMessage )
+    {
+        this.noUserMessage = noUserMessage;
+    }
+
+    public String getMoreThanOneOrgUnitMessage()
+    {
+        return moreThanOneOrgUnitMessage;
+    }
+
+    public void setMoreThanOneOrgUnitMessage( String moreThanOneOrgUnitMessage )
+    {
+        this.moreThanOneOrgUnitMessage = moreThanOneOrgUnitMessage;
+    }
+
+    public Integer getCompletenessMethod()
+    {
+        return completenessMethod;
+    }
+
+    public void setCompletenessMethod( Integer completenessMethod )
+    {
+        this.completenessMethod = completenessMethod;
+    }
+    
+    
 }

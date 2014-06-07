@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.caseentry;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,11 +28,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.caseentry;
-
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
-import org.hisp.dhis.system.util.ValidationUtils;
 
 import com.opensymphony.xwork2.Action;
 
@@ -63,16 +63,16 @@ public class SaveCoordinatesEventAction
         this.programStageInstanceId = programStageInstanceId;
     }
 
-    private String longitude;
+    private Double longitude;
 
-    public void setLongitude( String longitude )
+    public void setLongitude( Double longitude )
     {
         this.longitude = longitude;
     }
 
-    private String latitude;
+    private Double latitude;
 
-    public void setLatitude( String latitude )
+    public void setLatitude( Double latitude )
     {
         this.latitude = latitude;
     }
@@ -84,9 +84,6 @@ public class SaveCoordinatesEventAction
     public String execute()
         throws Exception
     {
-        longitude = (longitude == null || longitude.isEmpty() ) ? null : longitude;
-        latitude = (latitude == null || latitude.isEmpty() ) ? null : latitude;
-        
         // ---------------------------------------------------------------------
         // Set coordinates and feature type to point if valid
         // ---------------------------------------------------------------------
@@ -96,20 +93,12 @@ public class SaveCoordinatesEventAction
 
         if ( longitude != null && latitude != null )
         {
-            String coordinates = ValidationUtils.getCoordinate( longitude, latitude );
-
-            if ( ValidationUtils.coordinateIsValid( coordinates ) )
-            {
-                programStageInstance.setCoordinates( coordinates );
-            }
-        }
-        else
-        {
-            programStageInstance.setCoordinates( null );
+            programStageInstance.setLongitude( longitude );
+            programStageInstance.setLatitude( latitude );
         }
 
         programStageInstanceService.updateProgramStageInstance( programStageInstance );
-        
+
         return SUCCESS;
     }
 }

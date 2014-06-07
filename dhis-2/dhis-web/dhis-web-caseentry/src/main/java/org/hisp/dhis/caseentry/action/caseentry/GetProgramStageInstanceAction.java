@@ -1,19 +1,20 @@
 package org.hisp.dhis.caseentry.action.caseentry;
 
 /*
- * Copyright (c) 2004-2013, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,22 +28,23 @@ package org.hisp.dhis.caseentry.action.caseentry;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.opensymphony.xwork2.Action;
-import org.hisp.dhis.patientdatavalue.PatientDataValue;
-import org.hisp.dhis.patientdatavalue.PatientDataValueService;
-import org.hisp.dhis.program.ProgramStageInstance;
-import org.hisp.dhis.program.ProgramStageInstanceService;
-import org.hisp.dhis.system.util.ValidationUtils;
-import org.hisp.dhis.user.CurrentUserService;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hisp.dhis.program.ProgramStageInstance;
+import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
+import org.hisp.dhis.user.CurrentUserService;
+
+import com.opensymphony.xwork2.Action;
+
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
-public class GetProgramStageInstanceAction implements Action
+public class GetProgramStageInstanceAction
+    implements Action
 {
 
     // -------------------------------------------------------------------------
@@ -63,11 +65,11 @@ public class GetProgramStageInstanceAction implements Action
         this.currentUserService = currentUserService;
     }
 
-    private PatientDataValueService patientDataValueService;
+    private TrackedEntityDataValueService dataValueService;
 
-    public void setPatientDataValueService( PatientDataValueService patientDataValueService )
+    public void setDataValueService( TrackedEntityDataValueService dataValueService )
     {
-        this.patientDataValueService = patientDataValueService;
+        this.dataValueService = dataValueService;
     }
 
     // -------------------------------------------------------------------------
@@ -88,16 +90,16 @@ public class GetProgramStageInstanceAction implements Action
         return programStageInstance;
     }
 
-    private String latitude;
+    private Double latitude;
 
-    public String getLatitude()
+    public Double getLatitude()
     {
         return latitude;
     }
 
-    private String longitude;
+    private Double longitude;
 
-    public String getLongitude()
+    public Double getLongitude()
     {
         return longitude;
     }
@@ -109,9 +111,9 @@ public class GetProgramStageInstanceAction implements Action
         return currentUsername;
     }
 
-    private Map<String, PatientDataValue> dataValueMap = new HashMap<String, PatientDataValue>();
+    private Map<String, TrackedEntityDataValue> dataValueMap = new HashMap<String, TrackedEntityDataValue>();
 
-    public Map<String, PatientDataValue> getDataValueMap()
+    public Map<String, TrackedEntityDataValue> getDataValueMap()
     {
         return dataValueMap;
     }
@@ -121,7 +123,8 @@ public class GetProgramStageInstanceAction implements Action
     // -------------------------------------------------------------------------
 
     @Override
-    public String execute() throws Exception
+    public String execute()
+        throws Exception
     {
         if ( programStageInstanceId == null )
         {
@@ -137,6 +140,10 @@ public class GetProgramStageInstanceAction implements Action
         return SUCCESS;
     }
 
+    // -------------------------------------------------------------------------
+    // Supportive methods
+    // -------------------------------------------------------------------------
+
     private void populateCurrentUsername()
     {
         currentUsername = currentUserService.getCurrentUsername();
@@ -147,22 +154,21 @@ public class GetProgramStageInstanceAction implements Action
         if ( programStageInstance != null && programStageInstance.getProgramStage() != null
             && programStageInstance.getProgramStage().getCaptureCoordinates() )
         {
-            longitude = ValidationUtils.getLongitude( programStageInstance.getCoordinates() );
-            latitude = ValidationUtils.getLatitude( programStageInstance.getCoordinates() );
+            longitude = programStageInstance.getLongitude();
+            latitude = programStageInstance.getLatitude();
         }
     }
 
     private void populateDataValueMap()
     {
-        Collection<PatientDataValue> patientDataValues = patientDataValueService
-            .getPatientDataValues( programStageInstance );
+        Collection<TrackedEntityDataValue> dataValues = dataValueService
+            .getTrackedEntityDataValues( programStageInstance );
 
-        dataValueMap = new HashMap<String, PatientDataValue>( patientDataValues.size() );
+        dataValueMap = new HashMap<String, TrackedEntityDataValue>( dataValues.size() );
 
-        for ( PatientDataValue patientDataValue : patientDataValues )
+        for ( TrackedEntityDataValue dataValue : dataValues )
         {
-            dataValueMap.put( patientDataValue.getDataElement().getUid(), patientDataValue );
+            dataValueMap.put( dataValue.getDataElement().getUid(), dataValue );
         }
     }
 }
-

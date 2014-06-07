@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.util;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,9 +28,14 @@ package org.hisp.dhis.system.util;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author Lars Helge Overland
@@ -38,6 +44,8 @@ public class TextUtils
 {
     public static final TextUtils INSTANCE = new TextUtils();
     public static final String EMPTY = "";
+    public static final String SPACE = "";
+    public static final String LN = System.getProperty( "line.separator" );
     
     private static final Pattern LINK_PATTERN = Pattern.compile( "((http://|https://|www\\.).+?)($|\\n|\\r|\\r\\n| )" );
     private static final String DELIMITER = ", ";
@@ -108,10 +116,26 @@ public class TextUtils
     }
     
     /**
+     * Returns a list of tokens based on the given string.
+     * 
+     * @param string the string.
+     * @return the list of tokens.
+     */
+    public static List<String> getTokens( String string )
+    {
+        if ( string == null )
+        {
+            return null;
+        }
+        
+        return new ArrayList<String>( Arrays.asList( string.split( "\\s" ) ) );
+    }
+    
+    /**
      * Gets the sub string of the given string. If the beginIndex is larger than
      * the length of the string, the empty string is returned. If the beginIndex +
      * the length is larger than the length of the string, the part of the string
-     * following the beginIndex is returned.
+     * following the beginIndex is returned. Method is out-of-range safe.
      * 
      * @param string the string.
      * @param beginIndex the zero-based begin index.
@@ -133,6 +157,72 @@ public class TextUtils
         }
         
         return string.substring( beginIndex, endIndex );
+    }
+    
+    /**
+     * Removes the last given number of characters from the given string. Returns
+     * null if the string is null. Returns an empty string if characters is less
+     * than zero or greater than the length of the string.
+     * 
+     * @param string the string.
+     * @param characters number of characters to remove.
+     * @return the substring.
+     */
+    public static String removeLast( String string, int characters )
+    {
+        if ( string == null )
+        {
+            return null;
+        }
+        
+        if ( characters < 0 || characters > string.length() )
+        {
+            return EMPTY;
+        }
+        
+        return string.substring( 0, string.length() - characters );
+    }
+    
+    /**
+     * Removes the last occurence of the word "or" from the given string,
+     * including potential trailing spaces, case-insentitive.
+     * 
+     * @param string the string.
+     * @return the chopped string.
+     */
+    public static String removeLastOr( String string )
+    {
+        string = StringUtils.stripEnd( string, " " );
+        
+        return StringUtils.removeEndIgnoreCase( string, "or" );
+    }
+
+    /**
+     * Removes the last occurence of the word "and" from the given string,
+     * including potential trailing spaces, case-insentitive.
+     * 
+     * @param string the string.
+     * @return the chopped string.
+     */
+    public static String removeLastAnd( String string )
+    {
+        string = StringUtils.stripEnd( string, " " );
+        
+        return StringUtils.removeEndIgnoreCase( string, "and" );
+    }
+
+    /**
+     * Removes the last occurence of comma (",") from the given string,
+     * including potential trailing spaces.
+     * 
+     * @param string the string.
+     * @return the chopped string.
+     */
+    public static String removeLastComma( String string )
+    {
+        string = StringUtils.stripEnd( string, " " );
+        
+        return StringUtils.removeEndIgnoreCase( string, "," );
     }
     
     /**
@@ -330,5 +420,17 @@ public class TextUtils
         }
         
         return builder.toString();
+    }
+    
+    /**
+     * Returns the string representation of the object, or null if the object is
+     * null.
+     * 
+     * @param object the object.
+     * @return the string representation.
+     */
+    public static String toString( Object object )
+    {
+        return object != null ? object.toString() : null;
     }
 }

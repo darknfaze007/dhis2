@@ -1,19 +1,20 @@
 package org.hisp.dhis.dd.action.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,15 +29,13 @@ package org.hisp.dhis.dd.action.dataelement;
  */
 
 import static org.apache.commons.lang.StringUtils.isNotBlank;
-import static org.hisp.dhis.user.UserSettingService.KEY_CURRENT_DATADICTIONARY;
+import static org.hisp.dhis.user.UserSettingService.KEY_CURRENT_DOMAIN_TYPE;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
-import org.hisp.dhis.datadictionary.DataDictionary;
-import org.hisp.dhis.datadictionary.DataDictionaryService;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.paging.ActionPagingSupport;
@@ -66,13 +65,6 @@ public class GetDataElementListAction
         this.userSettingService = userSettingService;
     }
 
-    private DataDictionaryService dataDictionaryService;
-
-    public void setDataDictionaryService( DataDictionaryService dataDictionaryService )
-    {
-        this.dataDictionaryService = dataDictionaryService;
-    }
-
     // -------------------------------------------------------------------------
     // Output
     // -------------------------------------------------------------------------
@@ -84,31 +76,24 @@ public class GetDataElementListAction
         return dataElements;
     }
 
-    private List<DataDictionary> dataDictionaries;
-
-    public List<DataDictionary> getDataDictionaries()
-    {
-        return dataDictionaries;
-    }
-
     // -------------------------------------------------------------------------
     // Input & Output
     // -------------------------------------------------------------------------
 
-    private Integer dataDictionaryId;
+    private String domainType;
 
-    public Integer getDataDictionaryId()
+    public String getDomainType()
     {
-        return dataDictionaryId;
+        return domainType;
     }
 
-    public void setDataDictionaryId( Integer dataDictionaryId )
+    public void setDomainType( String domainType )
     {
-        this.dataDictionaryId = dataDictionaryId;
+        this.domainType = domainType;
     }
 
     private String key;
-    
+
     public String getKey()
     {
         return key;
@@ -125,24 +110,20 @@ public class GetDataElementListAction
 
     public String execute()
     {
-        if ( dataDictionaryId == null ) // None, get current data dictionary
+        if ( domainType == null ) // None, get current domain type
         {
-            dataDictionaryId = (Integer) userSettingService.getUserSetting( KEY_CURRENT_DATADICTIONARY );
+            domainType = (String) userSettingService.getUserSetting( KEY_CURRENT_DOMAIN_TYPE );
         }
-        else if ( dataDictionaryId == -1 ) // All, reset current data dictionary
+        else if ( "all".equals( domainType ) ) // All, reset current domain type
         {
-            userSettingService.saveUserSetting( KEY_CURRENT_DATADICTIONARY, null );
+            userSettingService.saveUserSetting( KEY_CURRENT_DOMAIN_TYPE, null );
 
-            dataDictionaryId = null;
+            domainType = null;
         }
-        else  // Specified, set current data dictionary
+        else  // Specified, set current domain type
         {
-            userSettingService.saveUserSetting( KEY_CURRENT_DATADICTIONARY, dataDictionaryId );
+            userSettingService.saveUserSetting( KEY_CURRENT_DOMAIN_TYPE, domainType );
         }
-
-        dataDictionaries = new ArrayList<DataDictionary>( dataDictionaryService.getAllDataDictionaries() );
-
-        Collections.sort( dataDictionaries, IdentifiableObjectNameComparator.INSTANCE );
 
         // ---------------------------------------------------------------------
         // Criteria
@@ -151,21 +132,19 @@ public class GetDataElementListAction
         if ( isNotBlank( key ) ) // Filter on key only if set
         {
             this.paging = createPaging( dataElementService.getDataElementCountByName( key ) );
-            
+
             dataElements = new ArrayList<DataElement>( dataElementService.getDataElementsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
         }
-        else if ( dataDictionaryId != null )
+        else if ( domainType != null )
         {
-            dataElements = new ArrayList<DataElement>( dataDictionaryService.getDataElementsByDictionaryId( dataDictionaryId ) );
-            
-            this.paging = createPaging( dataElements.size() );
-            
-            dataElements = getBlockElement( dataElements, paging.getStartPos(), paging.getPageSize() );
+            this.paging = createPaging( dataElementService.getDataElementCountByDomainType( domainType ) );
+
+            dataElements = new ArrayList<DataElement>( dataElementService.getDataElementsByDomainType( domainType, paging.getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( dataElementService.getDataElementCount() );
-            
+
             dataElements = new ArrayList<DataElement>( dataElementService.getDataElementsBetween( paging.getStartPos(), paging.getPageSize() ) );
         }
 

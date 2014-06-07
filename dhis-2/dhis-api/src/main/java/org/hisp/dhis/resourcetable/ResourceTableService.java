@@ -1,19 +1,20 @@
 package org.hisp.dhis.resourcetable;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -35,11 +36,6 @@ public interface ResourceTableService
     String ID = ResourceTableService.class.getName();
 
     /**
-     * Generates all resource tables.
-     */
-    void generateAll();
-    
-    /**
      * Generates a resource table containing the hierarchy graph for each
      * OrganisationUnit.
      */
@@ -50,6 +46,11 @@ public interface ResourceTableService
      * all DataElementCategoryOptionCombos.
      */
     void generateCategoryOptionComboNames();
+    
+    /**
+     * Generates a resource table for all category options.
+     */
+    void generateCategoryOptionGroupSetTable();
     
     /**
      * Generates a resource table for all data elements.
@@ -75,6 +76,11 @@ public interface ResourceTableService
      * Generates a resource table for all data elements.
      */
     void generateDataElementTable();
+
+    /**
+     * Generates a resource table for dates and associated periods.
+     */
+    void generateDatePeriodTable();
     
     /**
      * Generates a resource table for all periods.
@@ -86,4 +92,14 @@ public interface ResourceTableService
      * option combinations.
      */
     void generateDataElementCategoryOptionComboTable();
+    
+    /**
+     * Create all sql views in the database.
+     */
+    void createAllSqlViews();
+    
+    /**
+     * Drop all sql views in the database.
+     */
+    void dropAllSqlViews();
 }

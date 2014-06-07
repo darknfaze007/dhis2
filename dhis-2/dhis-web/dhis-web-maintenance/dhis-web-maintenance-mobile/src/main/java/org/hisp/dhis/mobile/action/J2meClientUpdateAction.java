@@ -1,17 +1,20 @@
+package org.hisp.dhis.mobile.action;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,13 +28,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.mobile.action;
-
-import java.util.List;
-
-import org.hisp.dhis.api.mobile.PatientMobileSettingService;
-import org.hisp.dhis.patient.PatientMobileSetting;
-
 import com.opensymphony.xwork2.Action;
 
 /**
@@ -40,21 +36,11 @@ import com.opensymphony.xwork2.Action;
 public class J2meClientUpdateAction
     implements Action
 {
-    // -------------------------------------------------------------------------
-    // Dependencies
-    // -------------------------------------------------------------------------
-    
-    PatientMobileSettingService patientMobileSettingService;
 
-    public void setPatientMobileSettingService( PatientMobileSettingService patientMobileSettingService )
-    {
-        this.patientMobileSettingService = patientMobileSettingService;
-    }
-    
     // -------------------------------------------------------------------------
     // Input & Output
     // -------------------------------------------------------------------------
-    
+/*
     private double version;
 
     public void setVersion( double version )
@@ -63,54 +49,48 @@ public class J2meClientUpdateAction
     }
 
     private String autoUpdate;
-    
+
     public void setAutoUpdate( String autoUpdate )
     {
         this.autoUpdate = autoUpdate;
-    }
-    
-    private PatientMobileSetting patientMobileSetting;
-
-    public PatientMobileSetting getPatientMobileSetting()
-    {
-        return patientMobileSetting;
-    }
+    }*/
 
     @Override
     public String execute()
         throws Exception
-    { 
-        List<PatientMobileSetting> list;
+    {
+
+        //TO DO: reimplement using SystemSetting
         
-        list = (List<PatientMobileSetting>) patientMobileSettingService.getCurrentSetting();
-        
-        if( list.size() == 0 )
-        {
-            this.patientMobileSetting = new PatientMobileSetting();
-            patientMobileSetting.setGender( false );
-            patientMobileSetting.setDobtype( false );
-            patientMobileSetting.setBirthdate( false );
-            patientMobileSetting.setRegistrationdate( false );
-        }
-        else
-        {
-            this.patientMobileSetting = list.get( 0 );
-        }    
-        if ( this.version != 0 )
-        {
-            this.patientMobileSetting.setVersionToUpdate( this.version );
-        }
-        if ( autoUpdate != null && autoUpdate.equals( "yes" ) )
-        {
-            this.patientMobileSetting.setAutoUpdateClient( true );
-        }
-        
-        if ( autoUpdate != null && autoUpdate.equals( "no" ) )
-        {
-            this.patientMobileSetting.setAutoUpdateClient( false );
-        }
-        patientMobileSettingService.savePatientMobileSetting( this.patientMobileSetting );
+        // List<TrackedEntityMobileSetting> list;
+        //
+        // list = (List<TrackedEntityMobileSetting>)
+        // mobileSettingService.getCurrentSetting();
+        //
+        // if( list.size() == 0 )
+        // {
+        // trackedEntityMobileSetting = new TrackedEntityMobileSetting();
+        // }
+        // else
+        // {
+        // trackedEntityMobileSetting = list.get( 0 );
+        // }
+        // if ( this.version != 0 )
+        // {
+        // trackedEntityMobileSetting.setVersionToUpdate( this.version );
+        // }
+        // if ( autoUpdate != null && autoUpdate.equals( "yes" ) )
+        // {
+        // trackedEntityMobileSetting.setAutoUpdateClient( true );
+        // }
+        //
+        // if ( autoUpdate != null && autoUpdate.equals( "no" ) )
+        // {
+        // trackedEntityMobileSetting.setAutoUpdateClient( false );
+        // }
+        //
+        // mobileSettingService.saveTrackedEntityMobileSetting(
+        // this.trackedEntityMobileSetting );
         return SUCCESS;
     }
-
 }

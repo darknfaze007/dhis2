@@ -1,17 +1,20 @@
+package org.hisp.dhis.light.namebaseddataentry.action;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,8 +28,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.light.namebaseddataentry.action;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -37,13 +38,10 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.struts2.StrutsStatics;
-import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.light.utils.NamebasedUtils;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientService;
-import org.hisp.dhis.patientdatavalue.PatientDataValue;
-import org.hisp.dhis.patientdatavalue.PatientDataValueService;
+import org.hisp.dhis.organisationunit.OrganisationUnit;
+import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramExpressionService;
 import org.hisp.dhis.program.ProgramStage;
@@ -57,6 +55,10 @@ import org.hisp.dhis.program.ProgramStageService;
 import org.hisp.dhis.program.ProgramValidation;
 import org.hisp.dhis.program.ProgramValidationResult;
 import org.hisp.dhis.program.ProgramValidationService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
 import org.hisp.dhis.user.UserService;
 import org.hisp.dhis.util.ContextUtils;
 
@@ -77,7 +79,7 @@ public class SaveProgramStageFormAction
     // -------------------------------------------------------------------------
 
     private UserService userService;
-    
+
     public UserService getUserService()
     {
         return userService;
@@ -87,7 +89,7 @@ public class SaveProgramStageFormAction
     {
         this.userService = userService;
     }
-    
+
     private NamebasedUtils util;
 
     public NamebasedUtils getUtil()
@@ -107,36 +109,14 @@ public class SaveProgramStageFormAction
         this.dataElementService = dataElementService;
     }
 
-    private PatientService patientService;
+    private TrackedEntityInstanceService patientService;
 
-    public PatientService getPatientService()
-    {
-        return patientService;
-    }
-
-    public void setPatientService( PatientService patientService )
+    public void setPatientService( TrackedEntityInstanceService patientService )
     {
         this.patientService = patientService;
     }
 
-    private DataElementCategoryService dataElementCategoryService;
-
-    public DataElementCategoryService getDataElementCategoryService()
-    {
-        return dataElementCategoryService;
-    }
-
-    public void setDataElementCategoryService( DataElementCategoryService dataElementCategoryService )
-    {
-        this.dataElementCategoryService = dataElementCategoryService;
-    }
-
     private ProgramStageService programStageService;
-
-    public ProgramStageService getProgramStageService()
-    {
-        return programStageService;
-    }
 
     public void setProgramStageService( ProgramStageService programStageService )
     {
@@ -145,34 +125,19 @@ public class SaveProgramStageFormAction
 
     private ProgramStageDataElementService programStageDataElementService;
 
-    public ProgramStageDataElementService getProgramStageDataElementService()
-    {
-        return programStageDataElementService;
-    }
-
     public void setProgramStageDataElementService( ProgramStageDataElementService programStageDataElementService )
     {
         this.programStageDataElementService = programStageDataElementService;
     }
 
-    private PatientDataValueService patientDataValueService;
+    private TrackedEntityDataValueService patientDataValueService;
 
-    public PatientDataValueService getPatientDataValueService()
-    {
-        return patientDataValueService;
-    }
-
-    public void setPatientDataValueService( PatientDataValueService patientDataValueService )
+    public void setPatientDataValueService( TrackedEntityDataValueService patientDataValueService )
     {
         this.patientDataValueService = patientDataValueService;
     }
 
     private ProgramValidationService programValidationService;
-
-    public ProgramValidationService getProgramValidationService()
-    {
-        return programValidationService;
-    }
 
     public void setProgramValidationService( ProgramValidationService programValidationService )
     {
@@ -180,11 +145,6 @@ public class SaveProgramStageFormAction
     }
 
     private ProgramStageInstanceService programStageInstanceService;
-
-    public ProgramStageInstanceService getProgramStageInstanceService()
-    {
-        return programStageInstanceService;
-    }
 
     public void setProgramStageInstanceService( ProgramStageInstanceService programStageInstanceService )
     {
@@ -200,14 +160,16 @@ public class SaveProgramStageFormAction
 
     private ProgramExpressionService programExpressionService;
 
-    public ProgramExpressionService getProgramExpressionService()
-    {
-        return programExpressionService;
-    }
-
     public void setProgramExpressionService( ProgramExpressionService programExpressionService )
     {
         this.programExpressionService = programExpressionService;
+    }
+
+    private OrganisationUnitService organisationUnitService;
+
+    public void setOrganisationUnitService( OrganisationUnitService organisationUnitService )
+    {
+        this.organisationUnitService = organisationUnitService;
     }
 
     // -------------------------------------------------------------------------
@@ -346,14 +308,14 @@ public class SaveProgramStageFormAction
         this.program = program;
     }
 
-    private Patient patient;
+    private TrackedEntityInstance patient;
 
-    public Patient getPatient()
+    public TrackedEntityInstance getPatient()
     {
         return patient;
     }
 
-    public void setPatient( Patient patient )
+    public void setPatient( TrackedEntityInstance patient )
     {
         this.patient = patient;
     }
@@ -426,14 +388,15 @@ public class SaveProgramStageFormAction
     {
         programStage = util.getProgramStage( programId, programStageId );
         program = programStageService.getProgramStage( programStageId ).getProgram();
+
         org.hisp.dhis.program.ProgramStage dhisProgramStage = programStageService.getProgramStage( programStageId );
 
         ProgramStageInstance programStageInstance = programStageInstanceService
             .getProgramStageInstance( programStageInstanceId );
 
-        List<PatientDataValue> patientDataValues = new ArrayList<PatientDataValue>();
+        List<TrackedEntityDataValue> patientDataValues = new ArrayList<TrackedEntityDataValue>();
 
-        patient = patientService.getPatient( patientId );
+        patient = patientService.getTrackedEntityInstance( patientId );
 
         if ( programStageSectionId != null && programStageSectionId != 0 )
         {
@@ -446,8 +409,7 @@ public class SaveProgramStageFormAction
             dataElements = new ArrayList<ProgramStageDataElement>( programStage.getProgramStageDataElements() );
         }
 
-        HttpServletRequest request = (HttpServletRequest) ActionContext.getContext().get(
-            StrutsStatics.HTTP_REQUEST );
+        HttpServletRequest request = (HttpServletRequest) ActionContext.getContext().get( StrutsStatics.HTTP_REQUEST );
         Map<String, String> parameterMap = ContextUtils.getParameterMap( request );
 
         // List<DataValue> dataValues = new ArrayList<DataValue>();
@@ -487,7 +449,7 @@ public class SaveProgramStageFormAction
                 prevDataValues.put( "CB" + dataElement.getId(), parameterMap.get( "CB" + dataElement.getId() ) );
 
                 // build patient data value
-                PatientDataValue patientDataValue = new PatientDataValue( programStageInstance, dataElement,
+                TrackedEntityDataValue patientDataValue = new TrackedEntityDataValue( programStageInstance, dataElement,
                     new Date(), value );
 
                 String providedElseWhereValue = parameterMap.get( "CB" + dataElementId );
@@ -542,31 +504,33 @@ public class SaveProgramStageFormAction
         }
     }
 
-    private void savePatientDataValues( List<PatientDataValue> patientDataValues,
+    private void savePatientDataValues( List<TrackedEntityDataValue> patientDataValues,
         ProgramStageInstance programStageInstance )
     {
-        for ( PatientDataValue patientDataValue : patientDataValues )
+        OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( orgUnitId );
+
+        for ( TrackedEntityDataValue patientDataValue : patientDataValues )
         {
-            PatientDataValue previousPatientDataValue = patientDataValueService.getPatientDataValue(
+            TrackedEntityDataValue previousPatientDataValue = patientDataValueService.getTrackedEntityDataValue(
                 patientDataValue.getProgramStageInstance(), patientDataValue.getDataElement() );
 
             if ( previousPatientDataValue == null )
             {
                 if ( patientDataValue.getValue() != null && !patientDataValue.getValue().trim().equals( "" ) )
-                    patientDataValueService.savePatientDataValue( patientDataValue );
+                    patientDataValueService.saveTrackedEntityDataValue( patientDataValue );
             }
             else
             {
                 if ( patientDataValue.getValue().trim().equals( "" ) )
                 {
-                    patientDataValueService.deletePatientDataValue( previousPatientDataValue );
+                    patientDataValueService.deleteTrackedEntityDataValue( previousPatientDataValue );
                 }
                 else
                 {
                     previousPatientDataValue.setValue( patientDataValue.getValue() );
                     previousPatientDataValue.setTimestamp( new Date() );
                     previousPatientDataValue.setProvidedElsewhere( patientDataValue.getProvidedElsewhere() );
-                    patientDataValueService.updatePatientDataValue( previousPatientDataValue );
+                    patientDataValueService.updateTrackedEntityDataValue( previousPatientDataValue );
                 }
             }
 
@@ -579,6 +543,7 @@ public class SaveProgramStageFormAction
         else
         {
             programStageInstance.setCompleted( true );
+            programStageInstance.setOrganisationUnit( organisationUnit );
         }
         programStageInstance.setExecutionDate( new Date() );
         programStageInstanceService.updateProgramStageInstance( programStageInstance );

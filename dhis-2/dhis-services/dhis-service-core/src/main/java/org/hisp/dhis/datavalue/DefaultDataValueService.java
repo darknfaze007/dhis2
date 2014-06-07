@@ -1,19 +1,20 @@
 package org.hisp.dhis.datavalue;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,10 +32,17 @@ import static org.hisp.dhis.system.util.ValidationUtils.dataValueIsValid;
 
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Map;
+import java.util.Date;
+import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hisp.dhis.common.MapMap;
+import org.hisp.dhis.dataelement.CategoryOptionGroup;
 import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
+import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementOperand;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.period.Period;
@@ -48,6 +56,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class DefaultDataValueService
     implements DataValueService
 {
+    private static final Log log = LogFactory.getLog( DefaultDataValueService.class );
+    
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
@@ -59,16 +69,46 @@ public class DefaultDataValueService
         this.dataValueStore = dataValueStore;
     }
 
+    private DataElementCategoryService categoryService;
+
+    public void setCategoryService( DataElementCategoryService categoryService )
+    {
+        this.categoryService = categoryService;
+    }
+
     // -------------------------------------------------------------------------
     // Basic DataValue
     // -------------------------------------------------------------------------
 
-    public void addDataValue( DataValue dataValue )
+    public boolean addDataValue( DataValue dataValue )
     {
-        if ( !dataValue.isNullValue() && dataValueIsValid( dataValue.getValue(), dataValue.getDataElement() ) == null )
+        if ( dataValue == null || dataValue.isNullValue() )
         {
-            dataValueStore.addDataValue( dataValue );
+            log.info( "Data value is null" );
+            return false;
         }
+        
+        String result = dataValueIsValid( dataValue.getValue(), dataValue.getDataElement() );
+        
+        if ( result != null )
+        {
+            log.info( "Data value is not valid: " +  result );
+            return false;
+        }
+        
+        if ( dataValue.getCategoryOptionCombo() == null )
+        {
+            dataValue.setCategoryOptionCombo( categoryService.getDefaultDataElementCategoryOptionCombo() );
+        }
+        
+        if ( dataValue.getAttributeOptionCombo() == null )
+        {
+            dataValue.setAttributeOptionCombo( categoryService.getDefaultDataElementCategoryOptionCombo() );
+        }
+        
+        dataValueStore.addDataValue( dataValue );
+        
+        return true;
     }
 
     public void updateDataValue( DataValue dataValue )
@@ -101,15 +141,24 @@ public class DefaultDataValueService
         return dataValueStore.deleteDataValuesByDataElement( dataElement );
     }
 
-    public DataValue getDataValue( OrganisationUnit source, DataElement dataElement, Period period,
-        DataElementCategoryOptionCombo optionCombo )
+    public DataValue getDataValue( DataElement dataElement, Period period, OrganisationUnit source, DataElementCategoryOptionCombo categoryOptionCombo )
     {
-        return dataValueStore.getDataValue( source, dataElement, period, optionCombo );
+        DataElementCategoryOptionCombo defaultOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
+        
+        return dataValueStore.getDataValue( dataElement, period, source, categoryOptionCombo, defaultOptionCombo );
+    }
+
+    public DataValue getDataValue( DataElement dataElement, Period period, OrganisationUnit source, 
+        DataElementCategoryOptionCombo categoryOptionCombo, DataElementCategoryOptionCombo attributeOptionCombo )
+    {
+        return dataValueStore.getDataValue( dataElement, period, source, categoryOptionCombo, attributeOptionCombo );
     }
     
-    public DataValue getDataValue( int dataElementId, int categoryOptionComboId, int periodId, int sourceId )
+    public DataValue getDataValue( int dataElementId, int periodId, int sourceId, int categoryOptionComboId )
     {
-        return dataValueStore.getDataValue( dataElementId, categoryOptionComboId, periodId, sourceId );
+        DataElementCategoryOptionCombo defaultOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
+        
+        return dataValueStore.getDataValue( dataElementId, periodId, sourceId, categoryOptionComboId, defaultOptionCombo.getId() );
     }
     
     // -------------------------------------------------------------------------
@@ -139,6 +188,12 @@ public class DefaultDataValueService
     public Collection<DataValue> getDataValues( OrganisationUnit source, Period period, Collection<DataElement> dataElements )
     {
         return dataValueStore.getDataValues( source, period, dataElements );
+    }
+
+    public Collection<DataValue> getDataValues( OrganisationUnit source, Period period, 
+        Collection<DataElement> dataElements, DataElementCategoryOptionCombo attributeOptionCombo )
+    {
+        return dataValueStore.getDataValues( source, period, dataElements, attributeOptionCombo );
     }
 
     public Collection<DataValue> getDataValues( OrganisationUnit source, Period period, Collection<DataElement> dataElements,
@@ -189,9 +244,13 @@ public class DefaultDataValueService
         return dataValueStore.getDataValueCount( cal.getTime() );
     }
     
-    public Map<DataElementOperand, Double> getDataValueMap( Collection<DataElement> dataElements, Period period, OrganisationUnit unit )
+    public MapMap<Integer, DataElementOperand, Double> getDataValueMapByAttributeCombo( Collection<DataElement> dataElements, Date date,
+            OrganisationUnit source, Collection<PeriodType> periodTypes, DataElementCategoryOptionCombo attributeCombo,
+            Set<CategoryOptionGroup> cogDimensionConstraints, Set<DataElementCategoryOption> coDimensionConstraints,
+            MapMap<Integer, DataElementOperand, Date> lastUpdatedMap )
     {
-        return dataValueStore.getDataValueMap( dataElements, period, unit );
+        return dataValueStore.getDataValueMapByAttributeCombo( dataElements, date, source, periodTypes, attributeCombo,
+               cogDimensionConstraints, coDimensionConstraints, lastUpdatedMap );
     }
     
     public Collection<DeflatedDataValue> getDeflatedDataValues( int dataElementId, int periodId, Collection<Integer> sourceIds )

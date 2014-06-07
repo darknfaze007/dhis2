@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.deletion;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,7 +34,11 @@ import org.hisp.dhis.caseaggregation.CaseAggregationCondition;
 import org.hisp.dhis.chart.Chart;
 import org.hisp.dhis.concept.Concept;
 import org.hisp.dhis.constant.Constant;
+import org.hisp.dhis.dashboard.DashboardItem;
+import org.hisp.dhis.dataapproval.DataApprovalLevel;
 import org.hisp.dhis.datadictionary.DataDictionary;
+import org.hisp.dhis.dataelement.CategoryOptionGroup;
+import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
@@ -49,10 +54,12 @@ import org.hisp.dhis.dataset.Section;
 import org.hisp.dhis.datavalue.DataValue;
 import org.hisp.dhis.document.Document;
 import org.hisp.dhis.expression.Expression;
+import org.hisp.dhis.i18n.locale.I18nLocale;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.indicator.IndicatorGroup;
 import org.hisp.dhis.indicator.IndicatorGroupSet;
 import org.hisp.dhis.indicator.IndicatorType;
+import org.hisp.dhis.interpretation.Interpretation;
 import org.hisp.dhis.mapping.Map;
 import org.hisp.dhis.mapping.MapLegend;
 import org.hisp.dhis.mapping.MapLegendSet;
@@ -63,18 +70,10 @@ import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitLevel;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientAttribute;
-import org.hisp.dhis.patient.PatientAttributeGroup;
-import org.hisp.dhis.patient.PatientAudit;
-import org.hisp.dhis.patient.PatientIdentifier;
-import org.hisp.dhis.patient.PatientIdentifierType;
-import org.hisp.dhis.patient.PatientRegistrationForm;
-import org.hisp.dhis.patientattributevalue.PatientAttributeValue;
-import org.hisp.dhis.patientdatavalue.PatientDataValue;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.RelativePeriods;
 import org.hisp.dhis.program.Program;
+import org.hisp.dhis.program.ProgramIndicator;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramStage;
 import org.hisp.dhis.program.ProgramStageDataElement;
@@ -85,9 +84,17 @@ import org.hisp.dhis.relationship.Relationship;
 import org.hisp.dhis.relationship.RelationshipType;
 import org.hisp.dhis.report.Report;
 import org.hisp.dhis.reporttable.ReportTable;
+import org.hisp.dhis.sqlview.SqlView;
+import org.hisp.dhis.trackedentity.TrackedEntity;
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeGroup;
+import org.hisp.dhis.trackedentity.TrackedEntityAudit;
+import org.hisp.dhis.trackedentity.TrackedEntityForm;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentityattributevalue.TrackedEntityAttributeValue;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
 import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserAuthorityGroup;
-import org.hisp.dhis.user.UserCredentials;
 import org.hisp.dhis.user.UserGroup;
 import org.hisp.dhis.user.UserSetting;
 import org.hisp.dhis.validation.ValidationCriteria;
@@ -123,26 +130,35 @@ public abstract class DeletionHandler
     public void deleteAttribute( Attribute attribute )
     {
     }
-    
+
     public String allowDeleteAttribute( Attribute attribute )
     {
         return null;
     }
-    
+
     public void deleteAttributeValue( AttributeValue attributeValue )
     {
     }
-    
+
     public String allowDeleteAttributeValue( AttributeValue attributeValue )
     {
         return null;
     }
-    
+
     public void deleteChart( Chart chart )
     {
     }
 
     public String allowDeleteChart( Chart chart )
+    {
+        return null;
+    }
+
+    public void deleteDataApprovalLevel( DataApprovalLevel dataApprovalLevel )
+    {
+    }
+
+    public String allowDeleteDataApprovalLevel( DataApprovalLevel dataApprovalLevel )
     {
         return null;
     }
@@ -321,12 +337,12 @@ public abstract class DeletionHandler
     public void deleteRelativePeriods( RelativePeriods relativePeriods )
     {
     }
-    
+
     public String allowDeleteRelativePeriods( RelativePeriods relativePeriods )
     {
         return null;
     }
-    
+
     public void deleteValidationRule( ValidationRule validationRule )
     {
     }
@@ -335,7 +351,7 @@ public abstract class DeletionHandler
     {
         return null;
     }
-
+    
     public void deleteValidationRuleGroup( ValidationRuleGroup validationRuleGroup )
     {
     }
@@ -417,15 +433,6 @@ public abstract class DeletionHandler
         return null;
     }
 
-    public void deleteUserCredentials( UserCredentials credentials )
-    {
-    }
-
-    public String allowDeleteUserCredentials( UserCredentials credentials )
-    {
-        return null;
-    }
-
     public void deleteUserAuthorityGroup( UserAuthorityGroup authorityGroup )
     {
     }
@@ -483,12 +490,12 @@ public abstract class DeletionHandler
     public void deleteMap( Map map )
     {
     }
-    
+
     public String allowDeleteMap( Map map )
     {
         return null;
     }
-    
+
     public void deleteMapView( MapView mapView )
     {
     }
@@ -507,60 +514,42 @@ public abstract class DeletionHandler
         return null;
     }
 
-    public void deletePatient( Patient patient )
+    public void deleteTrackedEntityInstance( TrackedEntityInstance entityInstance )
     {
     }
 
-    public String allowDeletePatient( Patient patient )
-    {
-        return null;
-    }
-
-    public String allowDeletePatientAttribute( PatientAttribute patientAttribute )
+    public String allowDeleteTrackedEntityInstance( TrackedEntityInstance entityInstance )
     {
         return null;
     }
 
-    public void deletePatientAttribute( PatientAttribute patientAttribute )
-    {
-    }
-
-    public String allowDeletePatientAttributeValue( PatientAttributeValue patientAttributeValue )
+    public String allowDeleteTrackedEntityAttribute( TrackedEntityAttribute attribute )
     {
         return null;
     }
 
-    public void deletePatientAttributeValue( PatientAttributeValue patientAttributeValue )
+    public void deleteTrackedEntityAttribute( TrackedEntityAttribute attribute )
     {
     }
 
-    public String allowDeletePatientAttributeGroup( PatientAttributeGroup patientAttributeGroup )
-    {
-        return null;
-    }
-
-    public void deletePatientAttributeGroup( PatientAttributeGroup patientAttributeGroup )
-    {
-    }
-
-    public String allowDeletePatientIdentifier( PatientIdentifier patientIdentifier )
+    public String allowDeleteTrackedEntityAttributeValue( TrackedEntityAttributeValue attributeValue )
     {
         return null;
     }
 
-    public void deletePatientIdentifier( PatientIdentifier patientIdentifier )
+    public void deleteTrackedEntityAttributeValue( TrackedEntityAttributeValue attributeValue )
     {
     }
 
-    public String allowDeletePatientIdentifierType( PatientIdentifierType patientIdentifierType )
+    public String allowDeleteTrackedEntityAttributeGroup( TrackedEntityAttributeGroup attributeGroup )
     {
         return null;
     }
 
-    public void deletePatientIdentifierType( PatientIdentifierType patientIdentifierType )
+    public void deleteTrackedEntityAttributeGroup( TrackedEntityAttributeGroup attributeGroup )
     {
     }
-
+   
     public String allowDeleteRelationship( Relationship relationship )
     {
         return null;
@@ -605,11 +594,11 @@ public abstract class DeletionHandler
     public void deleteProgramStage( ProgramStage programStage )
     {
     }
-    
+
     public void deleteProgramStageSection( ProgramStageSection programStageSection )
     {
     }
-    
+
     public String allowDeleteProgramStageSection( ProgramStageSection programStageSection )
     {
         return null;
@@ -633,12 +622,12 @@ public abstract class DeletionHandler
     {
     }
 
-    public String allowDeletePatientDataValue( PatientDataValue patientDataValue )
+    public String allowDeleteTrackedEntityDataValue( TrackedEntityDataValue dataValue )
     {
         return null;
     }
 
-    public void deletePatientDataValue( PatientDataValue patientDataValue )
+    public void deleteTrackedEntityDataValue( TrackedEntityDataValue dataValue )
     {
     }
 
@@ -650,7 +639,16 @@ public abstract class DeletionHandler
     public void deleteProgramValidation( ProgramValidation programValidation )
     {
     }
-
+    
+    public void deleteProgramIndicator( ProgramIndicator programIndicator )
+    {
+    }
+    
+    public String allowDeleteProgramIndicator( ProgramIndicator programIndicator )
+    {
+        return null;
+    }
+    
     public String allowDeleteValidationCriteria( ValidationCriteria validationCriteria )
     {
         return null;
@@ -660,15 +658,15 @@ public abstract class DeletionHandler
     {
     }
 
-    public String allowDeletePatientRegistrationForm( PatientRegistrationForm patientRegistrationForm )
+    public String allowDeleteTrackedEntityForm( TrackedEntityForm entityForm )
     {
         return null;
     }
 
-    public void deletePatientRegistrationForm( PatientRegistrationForm patientRegistrationForm )
+    public void deleteTrackedEntityForm( TrackedEntityForm entityForm )
     {
     }
-    
+
     public String allowDeleteConstant( Constant constant )
     {
         return null;
@@ -704,14 +702,76 @@ public abstract class DeletionHandler
     public void deleteLockException( LockException lockException )
     {
     }
-    
-    public void deletePatientAudit( PatientAudit patientAudit )
+
+    public void deleteTrackedEntityAudit( TrackedEntityAudit audit )
     {
     }
 
-    public String allowDeletePatientAudit( PatientAudit patientAudit )
+    public String allowDeleteTrackedEntityAudit( TrackedEntityAudit audit )
     {
         return null;
     }
 
+    public void deleteIntepretation( Interpretation interpretation )
+    {
+    }
+
+    public String allowDeleteInterpretation( Interpretation interpretation )
+    {
+        return null;
+    }
+
+    public void deleteI18nLocale( I18nLocale i18nLocale )
+    {
+    }
+
+    public String allowDeleteI18nLocale( I18nLocale i18nLocale )
+    {
+        return null;
+    }
+
+    public void deleteSqlView( SqlView sqlView )
+    {
+    }
+
+    public String allowDeleteSqlView( SqlView sqlView )
+    {
+        return null;
+    }
+
+    public void deleteDashboardItem( DashboardItem dashboardItem )
+    {
+    }
+
+    public String allowDeleteDashboardItem( DashboardItem dashboardItem )
+    {
+        return null;
+    }
+    
+    public void deleteCategoryOptionGroup( CategoryOptionGroup categoryOptionGroup )
+    {
+    }
+
+    public String allowDeleteCategoryOptionGroup( CategoryOptionGroup categoryOptionGroup )
+    {
+        return null;
+    }
+    
+    public void deleteCategoryOptionGroupSet( CategoryOptionGroupSet categoryOptionGroupSet )
+    {
+    }
+    
+    public String allowDeleteCategoryOptionGroupSet( CategoryOptionGroupSet categoryOptionGroupSet )
+    {
+        return null;
+    }
+    
+    public void deleteTrackedEntity( TrackedEntity trackedEntity )
+    {
+    }
+    
+    public String allowDeleteTrackedEntity( TrackedEntity trackedEntity )
+    {
+        return null;
+    }
 }

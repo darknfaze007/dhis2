@@ -8,6 +8,8 @@
   <bean id="org.hisp.dhis.mapgeneration.MapGenerationService" class="org.hisp.dhis.mapgeneration.GeoToolsMapGenerationService">
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="analyticsService" ref="org.hisp.dhis.analytics.AnalyticsService" />
+    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
+    <property name="i18nManager" ref="org.hisp.dhis.i18n.I18nManager" />
   </bean>
 
 </beans>

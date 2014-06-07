@@ -1,3 +1,4 @@
+
 var validationRules = {
 	rules: {
 		code: {

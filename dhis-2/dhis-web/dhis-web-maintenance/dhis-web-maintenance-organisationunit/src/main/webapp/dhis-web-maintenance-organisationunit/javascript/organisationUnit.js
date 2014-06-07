@@ -2,16 +2,14 @@
 // Organisation unit selection listener
 // -----------------------------------------------------------------------------
 
-$( document ).ready( function()
-{
-    selection.setAutoSelectRoot( false );
-    selection.setRootUnselectAllowed( true );
-    selection.setListenerFunction( organisationUnitSelected, true );
-} );
+$( document ).ready( function() {
+  selection.setAutoSelectRoot( false );
+  selection.setRootUnselectAllowed( true );
+  selection.setListenerFunction( organisationUnitSelected, true );
+});
 
-function organisationUnitSelected( orgUnitIds )
-{
-    window.location.href = 'organisationUnit.action';
+function organisationUnitSelected( orgUnitIds ) {
+  window.location.href = 'organisationUnit.action';
 }
 
 // -----------------------------------------------------------------------------
@@ -29,10 +27,13 @@ function exportPDF( type )
 // View details
 // -----------------------------------------------------------------------------
 
-function showOrganisationUnitDetails( unitId )
-{
+function showUpdateOrganisationUnitForm( context ) {
+  location.href = 'showUpdateOrganisationUnitForm.action?id=' + context.id;
+}
+
+function showOrganisationUnitDetails( context ) {
     jQuery.post( '../dhis-web-commons-ajax-json/getOrganisationUnit.action',
-		{ id: unitId }, function ( json ) {
+		{ id: context.uid }, function ( json ) {
 		setInnerHTML( 'nameField', json.organisationUnit.name );
 		setInnerHTML( 'shortNameField', json.organisationUnit.shortName );
 		setInnerHTML( 'descriptionField', json.organisationUnit.description );
@@ -64,7 +65,7 @@ function showOrganisationUnitDetails( unitId )
 // Remove organisation unit
 // -----------------------------------------------------------------------------
 
-function removeOrganisationUnit( unitId, unitName )
+function removeOrganisationUnit( context )
 {
-    removeItem( unitId, unitName, confirm_to_delete_org_unit, 'removeOrganisationUnit.action', subtree.refreshTree );
+    removeItem( context.id, context.name, confirm_to_delete_org_unit, 'removeOrganisationUnit.action', subtree.refreshTree );
 }

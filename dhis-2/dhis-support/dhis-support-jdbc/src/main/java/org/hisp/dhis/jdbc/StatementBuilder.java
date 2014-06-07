@@ -1,19 +1,20 @@
 package org.hisp.dhis.jdbc;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,8 +28,9 @@ package org.hisp.dhis.jdbc;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.period.Period;
 import java.util.List;
+
+import org.hisp.dhis.period.Period;
 
 /**
  * @author Lars Helge Overland
@@ -41,14 +43,53 @@ public interface StatementBuilder
     //--------------------------------------------------------------------------
     // General
     //--------------------------------------------------------------------------
-
+    
     /**
-     * Encodes the provided SQL value.
+     * Encodes the provided SQL value. Value will be wrapped in quotes.
      * 
      * @param value the value.
      * @return the SQL encoded value.
      */
     String encode( String value );
+
+    /**
+     * Encodes the provided SQL value.
+     * 
+     * @param value the value.
+     * @param quote whether to wrap the resulting value in quotes.
+     * @return the SQL encoded value.
+     */
+    String encode( String value, boolean quote );
+    
+    /**
+     * Returns the character used to quote database table and column names.
+     * 
+     * @return a quote character.
+     */
+    String getColumnQuote();
+    
+    /**
+     * Wraps the given column or table in quotes.
+     * 
+     * @param column the column or table name.
+     * @return the column or table name wrapped in quotes.
+     */
+    String columnQuote( String column );
+    
+    /**
+     * Returns a limit and offset clause.
+     * 
+     * @param offset the offset / start position for the records to return.
+     * @param limit the limit on max number of records to return.
+     * @return a limit and offset clause.
+     */
+    String limitRecord( int offset, int limit );
+    
+    /**
+     * Returns the value to use in insert statements for auto-increment columns.
+     * @return value to use in insert statements for auto-increment columns.
+     */
+    String getAutoIncrementValue();
     
     /**
      * Returns statement for vacuum and analyze operations for a table. Returns
@@ -60,16 +101,36 @@ public interface StatementBuilder
     String getVacuum( String table );
     
     /**
+     * Returns a sql statement to include in create table statements with applies
+     * options to the table. Returns an empty string if all options are set to the
+     * default value.
+     * 
+     * @param autoVacuum whether to enable automatic vacuum, default is true.
+     * @return a sql option string.
+     */
+    String getTableOptions( boolean autoVacuum );
+    
+    /**
      * Returns the name of a double column type.
      * @return the name of a double column type.
      */
     String getDoubleColumnType();
     
     /**
-     * Returns the value used to match a column to a regular expression.
-     * @return the value used to match a column to a regular expression.
+     * Returns the value used to match a column to a regular expression. Matching
+     * is case insensitive.
      */
     String getRegexpMatch();
+
+    /**
+     * Returns the regular expression marker for end of a word.
+     */
+    String getRegexpWordStart();
+    
+    /**
+     * Returns the regular expression marker for start of a word.
+     */
+    String getRegexpWordEnd();
     
     /**
      * Creates a SELECT statement returning the identifier of the given Period.
@@ -113,6 +174,11 @@ public interface StatementBuilder
     String getCreateOrgUnitDataSetCompletenessTable();
     
     /**
+     * Returns the number of columns part of the primary key for the given table.
+     */
+    String getNumberOfColumnsInPrimaryKey( String table );
+    
+    /**
      * Creates a delete datavalue statement.
      * @return a delete datavalue statement.
      */
@@ -135,13 +201,15 @@ public interface StatementBuilder
     String getDeflatedDataValues( int dataElementId, String dataElementName, int categoryOptionComboId,
     	String periodIds, int organisationUnitId, String organisationUnitName, int lowerBound, int upperBound );
     
-    String limitRecord( int min, int max );
-    
     String getAddDate( String dateField, int days );
     
-    String getPatientFullName();
-
     String queryDataElementStructureForOrgUnit();
 
     String queryRawDataElementsForOrgUnitBetweenPeriods( Integer orgUnitId, List<Integer> betweenPeriodIds );
+    
+    String getDropPrimaryKey( String table );
+    
+    String getAddPrimaryKeyToExistingTable( String table, String column );
+    
+    String getDropNotNullConstraint( String table, String column, String type );
 }

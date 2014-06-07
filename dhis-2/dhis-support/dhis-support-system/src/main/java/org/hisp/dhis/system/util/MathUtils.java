@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.util;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.regex.Pattern;
 
+import org.hisp.dhis.datavalue.DataValue;
 import org.hisp.dhis.expression.Operator;
 import org.nfunk.jep.JEP;
 
@@ -46,13 +48,14 @@ public class MathUtils
     
     private static final double TOLERANCE = 0.01; 
     
-    public static final String NUMERIC_REGEXP = "^(0|-?[1-9]\\d*)(\\.\\d+)?$";    
-    public static final String NUMERIC_LENIENT_REGEXP = "^(-?[0-9]+)(\\.[0-9]+)?$";
+    public static final String NUMERIC_REGEXP = "^(-?0|-?[1-9]\\d*)(\\.\\d+)?(E\\d+)?$";
+    public static final String NUMERIC_LENIENT_REGEXP = "^(-?[0-9]+)(\\.[0-9]+)?(E\\d+)?$";
     
     private static final Pattern NUMERIC_PATTERN = Pattern.compile( NUMERIC_REGEXP );
     private static final Pattern NUMERIC_LENIENT_PATTERN = Pattern.compile( NUMERIC_LENIENT_REGEXP );
     private static final Pattern INT_PATTERN = Pattern.compile( "^(0|-?[1-9]\\d*)$" );
     private static final Pattern POSITIVE_INT_PATTERN = Pattern.compile( "^[1-9]\\d*$" );
+    private static final Pattern POSITIVE_OR_ZERO_INT_PATTERN = Pattern.compile( "(^0$)|(^[1-9]\\d*$)" );
     private static final Pattern NEGATIVE_INT_PATTERN = Pattern.compile( "^-[1-9]\\d*$" );
     private static final Pattern ZERO_PATTERN = Pattern.compile( "^0(\\.0*)?$" );
 
@@ -68,8 +71,7 @@ public class MathUtils
     {
         final String expression = leftSide + operator.getMathematicalOperator() + rightSide;
         
-        final JEP parser = new JEP();
-        
+        final JEP parser = getJep();
         parser.parseExpression( expression );
         
         return ( parser.getValue() == 1.0 );
@@ -83,8 +85,7 @@ public class MathUtils
      */
     public static double calculateExpression( String expression )   
     {
-        final JEP parser = new JEP();
-        
+        final JEP parser = getJep();
         parser.parseExpression( expression );
         
         double result = parser.getValue();
@@ -100,8 +101,7 @@ public class MathUtils
      */
     public static boolean expressionHasErrors( String expression )
     {
-        final JEP parser = new JEP();
-        
+        final JEP parser = getJep();
         parser.parseExpression( expression );
         
         return parser.hasError();
@@ -116,11 +116,21 @@ public class MathUtils
      */
     public static String getExpressionErrorInfo( String expression )
     {
-        final JEP parser = new JEP();
-        
+        final JEP parser = getJep();
         parser.parseExpression( expression );
         
         return parser.getErrorInfo();
+    }
+    
+    /**
+     * Returns an JEP parser instance.
+     */
+    private static JEP getJep()
+    {
+        final JEP parser = new JEP();
+        parser.addStandardFunctions();
+        parser.addStandardConstants();
+        return parser;
     }
     
     /**
@@ -147,10 +157,81 @@ public class MathUtils
         
         return Math.round( value * factor ) / factor;
     }
+    
+    /**
+     * Return a rounded off number.
+     * 
+     * <ul>
+     * <li>If value is exclusively between 1 and -1 it will have 2 decimals.</li>
+     * <li>If value if greater or equal to 1 the value will have 1 decimal.</li>
+     * </ul>
+     * 
+     * @param value the value to round off.
+     * @return a rounded off number.
+     */
+    public static double getRounded( double value )
+    {
+        if ( value < 1d && value > -1d )
+        {
+            return getRounded( value, 2 );
+        }
+        else
+        {
+            return getRounded( value, 1 );
+        }
+    }
 
     /**
-     * Returns a string representation of number rounded to given number
-     * of significant figures
+     * Rounds a number, keeping at least 3 significant digits.
+     * 
+     * <ul>
+     * <li>If value is >= 10 or <= -10 it will have 1 decimal.</li>
+     * <li>If value is between -10 and 10 it will have three significant digits.</li>
+     * </ul>
+     * 
+     * @param value the value to round off.
+     * @return a rounded off number.
+     */
+    public static double roundSignificant( double value )
+    {
+        if ( value >= 10.0 || value <= -10.0 )
+        {
+            return getRounded( value, 1 );
+        }
+        else
+        {
+            return roundToSignificantDigits( value, 3 );
+        }
+    }
+
+    /**
+     * Rounds a number to a given number of significant decimal digits.
+     * Note that the number will be left with *only* this number of
+     * significant digits regardless of magnitude, e.g. 12345 to 3 digits
+     * will be 12300, whereas 0.12345 will be 0.123.
+     * 
+     * @param value the value to round off.
+     * @param n the number of significant decimal digits desired.
+     * @return a rounded off number.
+     */
+    public static double roundToSignificantDigits( double value, int n )
+    {
+        if( value == 0.0 )
+        {
+            return 0.0;
+        }
+
+        final double d = Math.ceil( Math.log10( value < 0.0 ? - value: value ) );
+        final int power = n - (int) d;
+
+        final double magnitude = Math.pow( 10.0, power );
+        final long shifted = Math.round( value * magnitude );
+        return shifted / magnitude;
+    }
+    
+    /**
+     * Returns a string representation of number rounded to given number of
+     * significant figures
      * 
      * @param value
      * @param significantFigures
@@ -158,8 +239,8 @@ public class MathUtils
      */
     public static String roundToString( double value, int significantFigures )
     {
-        MathContext mc = new MathContext(significantFigures);
-        BigDecimal num = new BigDecimal(value);
+        MathContext mc = new MathContext( significantFigures );
+        BigDecimal num = new BigDecimal( value );
         return num.round( mc ).toPlainString();
     }
 
@@ -225,6 +306,26 @@ public class MathUtils
     {
         return value != null && NUMERIC_LENIENT_PATTERN.matcher( value ).matches();
     }
+    
+    /**
+     * Returns true if the provided string argument is to be considered a unit
+     * interval, which implies that the value is numeric and inclusive between 0 
+     * and 1.
+     * 
+     * @param value the value.
+     * @return true if the provided string argument is to be considered a unit interval.
+     */
+    public static boolean isUnitInterval( String value )
+    {
+        if ( !isNumeric( value ) )
+        {
+            return false;
+        }
+        
+        Double dbl = Double.parseDouble( value );
+        
+        return dbl >= 0d && dbl <= 1d;
+    }
 
     /**
      * Returns true if the provided string argument is to be considered an integer. 
@@ -248,6 +349,19 @@ public class MathUtils
     public static boolean isPositiveInteger( String value )
     {
         return value != null && POSITIVE_INT_PATTERN.matcher( value ).matches();
+    }    
+    
+    /**
+     * Returns true if the provided string argument is to be considered a positive
+     * or zero integer.
+     * 
+     * @param value the value.
+     * @return true if the provided string argument is to be considered a positive 
+     *         integer. 
+     */
+    public static boolean isZeroOrPositiveInteger( String value )
+    {
+        return value != null && POSITIVE_OR_ZERO_INT_PATTERN.matcher( value ).matches();
     }
 
     /**
@@ -272,6 +386,18 @@ public class MathUtils
     public static boolean isZero( String value )
     {
         return value != null && ZERO_PATTERN.matcher( value ).matches();
+    }
+    
+    /**
+     * Indicates if the provided string argument is to be considered as a boolean,
+     * more specifically if it equals "true" or "false".
+     * 
+     * @param value the value.
+     * @return if the provided string argument is to be considered as a boolean.
+     */
+    public static boolean isBool( String value )
+    {
+        return value != null && ( value.equals( DataValue.TRUE ) || value.equals( DataValue.FALSE ) );
     }
     
     /**

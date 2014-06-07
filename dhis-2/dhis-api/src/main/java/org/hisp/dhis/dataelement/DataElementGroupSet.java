@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,11 +28,12 @@ package org.hisp.dhis.dataelement;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.hisp.dhis.common.BaseDimensionalObject;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
@@ -43,12 +45,10 @@ import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.DimensionalView;
 import org.hisp.dhis.common.view.ExportView;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * DataElementGroupSet is a set of DataElementGroups. It is by default
@@ -57,7 +57,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
  *
  * @author Lars Helge Overland
  */
-@JacksonXmlRootElement( localName = "dataElementGroupSet", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement(localName = "dataElementGroupSet", namespace = DxfNamespaces.DXF_2_0)
 public class DataElementGroupSet
     extends BaseDimensionalObject
 {
@@ -66,12 +66,12 @@ public class DataElementGroupSet
      */
     private static final long serialVersionUID = -2118690320625221749L;
 
-    private String description;
-
     private Boolean compulsory = false;
 
     @Scanned
     private List<DataElementGroup> members = new ArrayList<DataElementGroup>();
+
+    private boolean dataDimension = true;
 
     // -------------------------------------------------------------------------
     // Constructors
@@ -79,25 +79,32 @@ public class DataElementGroupSet
 
     public DataElementGroupSet()
     {
+        setAutoFields();
     }
 
     public DataElementGroupSet( String name )
     {
+        this();
         this.name = name;
         this.compulsory = false;
     }
 
     public DataElementGroupSet( String name, Boolean compulsory )
     {
-        this.name = name;
+        this( name );
         this.compulsory = compulsory;
     }
 
     public DataElementGroupSet( String name, String description, Boolean compulsory )
     {
-        this.name = name;
+        this( name, compulsory );
         this.description = description;
-        this.compulsory = compulsory;
+    }
+
+    public DataElementGroupSet( String name, String description, boolean compulsory, boolean dataDimension )
+    {
+        this( name, description, compulsory );
+        this.dataDimension = dataDimension;
     }
 
     // -------------------------------------------------------------------------
@@ -110,11 +117,17 @@ public class DataElementGroupSet
         dataElementGroup.setGroupSet( this );
     }
 
+    public void removeDataElementGroup( DataElementGroup dataElementGroup )
+    {
+        members.remove( dataElementGroup );
+        dataElementGroup.setGroupSet( null );
+    }
+
     public void removeAllDataElementGroups()
     {
         for ( DataElementGroup dataElementGroup : members )
         {
-            if ( dataElementGroup.getGroupSet() == this )
+            if ( dataElementGroup.getGroupSet() != null && dataElementGroup.getGroupSet().equals( this ) )
             {
                 dataElementGroup.setGroupSet( null );
             }
@@ -181,74 +194,36 @@ public class DataElementGroupSet
 
     @Override
     @JsonProperty
-    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( { DimensionalView.class } )
-    @JacksonXmlElementWrapper( localName = "items", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "item", namespace = DxfNamespaces.DXF_2_0 )
+    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
+    @JsonView({ DimensionalView.class })
+    @JacksonXmlElementWrapper(localName = "items", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty(localName = "item", namespace = DxfNamespaces.DXF_2_0)
     public List<NameableObject> getItems()
     {
         return new ArrayList<NameableObject>( members );
-    }
-    
-    // -------------------------------------------------------------------------
-    // equals and hashCode
-    // -------------------------------------------------------------------------
-
-    @Override
-    public int hashCode()
-    {
-        return name.hashCode();
-    }
-
-    @Override
-    public boolean equals( Object o )
-    {
-        if ( this == o )
-        {
-            return true;
-        }
-
-        if ( o == null )
-        {
-            return false;
-        }
-
-        if ( !(o instanceof DataElementGroupSet) )
-        {
-            return false;
-        }
-
-        final DataElementGroupSet other = (DataElementGroupSet) o;
-
-        return name.equals( other.getName() );
-    }
-
-    @Override
-    public String toString()
-    {
-        return "[" + name + "]";
     }
 
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
 
-    @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
-    public String getDescription()
+
+    @Override
+    public String getShortName()
     {
-        return description;
+        if ( getName().length() <= 50 )
+        {
+            return getName();
+        }
+        else
+        {
+            return getName().substring( 0, 49 );
+        }
     }
 
-    public void setDescription( String description )
-    {
-        this.description = description;
-    }
-
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
     public Boolean isCompulsory()
     {
         if ( compulsory == null )
@@ -264,11 +239,11 @@ public class DataElementGroupSet
         this.compulsory = compulsory;
     }
 
-    @JsonProperty( value = "dataElementGroups" )
-    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlElementWrapper( localName = "dataElementGroups", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty( localName = "dataElementGroup", namespace = DxfNamespaces.DXF_2_0)
+    @JsonProperty(value = "dataElementGroups")
+    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlElementWrapper(localName = "dataElementGroups", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty(localName = "dataElementGroup", namespace = DxfNamespaces.DXF_2_0)
     public List<DataElementGroup> getMembers()
     {
         return members;
@@ -277,6 +252,19 @@ public class DataElementGroupSet
     public void setMembers( List<DataElementGroup> members )
     {
         this.members = members;
+    }
+
+    @JsonProperty
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    public boolean isDataDimension()
+    {
+        return dataDimension;
+    }
+
+    public void setDataDimension( boolean dataDimension )
+    {
+        this.dataDimension = dataDimension;
     }
 
     @Override
@@ -290,6 +278,7 @@ public class DataElementGroupSet
 
             description = dataElementGroupSet.getDescription() == null ? description : dataElementGroupSet.getDescription();
             compulsory = dataElementGroupSet.isCompulsory() == null ? compulsory : dataElementGroupSet.isCompulsory();
+            dataDimension = dataElementGroupSet.isDataDimension();
 
             removeAllDataElementGroups();
 

@@ -1,17 +1,20 @@
+package org.hisp.dhis.relationship;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,11 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.relationship;
 
 import java.io.Serializable;
 
-import org.hisp.dhis.patient.Patient;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
 
 /**
  * @author Abyot Asalefew
@@ -44,12 +46,11 @@ public class Relationship
 
     private int id;
 
-    private Patient patientA;
+    private TrackedEntityInstance entityInstanceA;
 
     private RelationshipType relationshipType;
 
-    private Patient patientB;    
-    
+    private TrackedEntityInstance entityInstanceB;
 
     // -------------------------------------------------------------------------
     // Constructors
@@ -59,11 +60,12 @@ public class Relationship
     {
     }
 
-    public Relationship( Patient patientA, RelationshipType relationshipType, Patient patientB )
+    public Relationship( TrackedEntityInstance entityInstanceA, RelationshipType relationshipType,
+        TrackedEntityInstance entityInstanceB )
     {
-        this.patientA = patientA;
+        this.entityInstanceA = entityInstanceA;
         this.relationshipType = relationshipType;
-        this.patientB = patientB;
+        this.entityInstanceB = entityInstanceB;
     }
 
     // -------------------------------------------------------------------------
@@ -71,28 +73,27 @@ public class Relationship
     // -------------------------------------------------------------------------
 
     @Override
-    public boolean equals( Object o )
+    public boolean equals( Object object )
     {
-        if ( this == o )
+        if ( this == object )
         {
             return true;
         }
 
-        if ( o == null )
+        if ( object == null )
         {
             return false;
         }
 
-        if ( !(o instanceof Relationship) )
+        if ( getClass() != object.getClass() )
         {
             return false;
         }
 
-        final Relationship other = (Relationship) o;
+        final Relationship other = (Relationship) object;
 
-        return patientA.equals( other.getPatientA() ) && relationshipType.equals( other.getRelationshipType() )
-            && patientB.equals( other.getPatientB() );
-
+        return entityInstanceA.equals( other.getEntityInstanceA() ) && relationshipType.equals( other.getRelationshipType() )
+            && entityInstanceB.equals( other.getEntityInstanceB() );
     }
 
     @Override
@@ -101,8 +102,8 @@ public class Relationship
         final int prime = 31;
         int result = 1;
 
-        result = result * prime + patientA.hashCode();
-        result = result * prime + patientB.hashCode();
+        result = result * prime + entityInstanceA.hashCode();
+        result = result * prime + entityInstanceB.hashCode();
         result = result * prime + relationshipType.hashCode();
 
         return result;
@@ -129,22 +130,6 @@ public class Relationship
     }
 
     /**
-     * @return the patientA
-     */
-    public Patient getPatientA()
-    {
-        return patientA;
-    }
-
-    /**
-     * @param patientA the patientA to set
-     */
-    public void setPatientA( Patient patientA )
-    {
-        this.patientA = patientA;
-    }
-
-    /**
      * @return the relationshipType
      */
     public RelationshipType getRelationshipType()
@@ -160,20 +145,24 @@ public class Relationship
         this.relationshipType = relationshipType;
     }
 
-    /**
-     * @return the patientB
-     */
-    public Patient getPatientB()
+    public TrackedEntityInstance getEntityInstanceA()
     {
-        return patientB;
+        return entityInstanceA;
     }
 
-    /**
-     * @param patientB the patientB to set
-     */
-    public void setPatientB( Patient patientB )
+    public void setEntityInstanceA( TrackedEntityInstance entityInstanceA )
     {
-        this.patientB = patientB;
+        this.entityInstanceA = entityInstanceA;
+    }
+
+    public TrackedEntityInstance getEntityInstanceB()
+    {
+        return entityInstanceB;
+    }
+
+    public void setEntityInstanceB( TrackedEntityInstance entityInstanceB )
+    {
+        this.entityInstanceB = entityInstanceB;
     }
 
 }

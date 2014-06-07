@@ -1,5 +1,33 @@
 package org.hisp.dhis.api.mobile.controller;
 
+/*
+ * Copyright (c) 2004-2014, University of Oslo
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -10,17 +38,23 @@ import org.hisp.dhis.api.mobile.ActivityReportingService;
 import org.hisp.dhis.api.mobile.FacilityReportingService;
 import org.hisp.dhis.api.mobile.IProgramService;
 import org.hisp.dhis.api.mobile.NotAllowedException;
-import org.hisp.dhis.api.mobile.model.ActivityPlan;
 import org.hisp.dhis.api.mobile.model.ActivityValue;
 import org.hisp.dhis.api.mobile.model.Contact;
+import org.hisp.dhis.api.mobile.model.Conversation;
 import org.hisp.dhis.api.mobile.model.DataSetList;
 import org.hisp.dhis.api.mobile.model.DataSetValue;
+import org.hisp.dhis.api.mobile.model.DataSetValueList;
 import org.hisp.dhis.api.mobile.model.DataStreamSerializable;
+import org.hisp.dhis.api.mobile.model.Message;
 import org.hisp.dhis.api.mobile.model.MobileModel;
 import org.hisp.dhis.api.mobile.model.ModelList;
+import org.hisp.dhis.api.mobile.model.Recipient;
 import org.hisp.dhis.api.mobile.model.SMSCode;
 import org.hisp.dhis.api.mobile.model.SMSCommand;
+import org.hisp.dhis.api.mobile.model.LWUITmodel.LostEvent;
+import org.hisp.dhis.api.mobile.model.LWUITmodel.Notification;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.Patient;
+import org.hisp.dhis.api.mobile.model.LWUITmodel.PatientList;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.PatientIdentifierAndAttribute;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.Program;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.ProgramStage;
@@ -80,7 +114,9 @@ public class MobileOrganisationUnitController
     // For client version 2.8 and lower
     @RequestMapping( method = RequestMethod.GET, value = "orgUnits/{id}/all" )
     @ResponseBody
-    public MobileModel getAllDataForOrgUnit2_8( @PathVariable int id, @RequestHeader( "accept-language" ) String locale )
+    public MobileModel getAllDataForOrgUnit2_8( @PathVariable
+    int id, @RequestHeader( "accept-language" )
+    String locale )
     {
         MobileModel mobileModel = new MobileModel();
         mobileModel.setClientVersion( DataStreamSerializable.TWO_POINT_EIGHT );
@@ -95,8 +131,10 @@ public class MobileOrganisationUnitController
 
     @RequestMapping( method = RequestMethod.POST, value = "orgUnits/{id}/updateDataSets" )
     @ResponseBody
-    public DataSetList checkUpdatedDataSet2_8( @PathVariable int id, @RequestBody DataSetList dataSetList,
-        @RequestHeader( "accept-language" ) String locale )
+    public DataSetList checkUpdatedDataSet2_8( @PathVariable
+    int id, @RequestBody
+    DataSetList dataSetList, @RequestHeader( "accept-language" )
+    String locale )
     {
         DataSetList returnList = facilityReportingService.getUpdatedDataSet( dataSetList, getUnit( id ), locale );
         returnList.setClientVersion( DataStreamSerializable.TWO_POINT_EIGHT );
@@ -111,7 +149,9 @@ public class MobileOrganisationUnitController
      */
     @RequestMapping( method = RequestMethod.POST, value = "orgUnits/{id}/dataSets" )
     @ResponseBody
-    public String saveDataSetValues2_8( @PathVariable int id, @RequestBody DataSetValue dataSetValue )
+    public String saveDataSetValues2_8( @PathVariable
+    int id, @RequestBody
+    DataSetValue dataSetValue )
         throws NotAllowedException
     {
         facilityReportingService.saveDataSetValues( getUnit( id ), dataSetValue );
@@ -127,7 +167,9 @@ public class MobileOrganisationUnitController
      */
     @RequestMapping( method = RequestMethod.POST, value = "orgUnits/{id}/activities" )
     @ResponseBody
-    public String saveActivityReport2_8( @PathVariable int id, @RequestBody ActivityValue activityValue )
+    public String saveActivityReport2_8( @PathVariable
+    int id, @RequestBody
+    ActivityValue activityValue )
         throws NotAllowedException
     {
         // FIXME set the last argument to 0 to fix compilation error
@@ -137,8 +179,10 @@ public class MobileOrganisationUnitController
 
     @RequestMapping( method = RequestMethod.POST, value = "orgUnits/{id}/activitiyplan" )
     @ResponseBody
-    public MobileModel updatePrograms2_8( @PathVariable int id, @RequestHeader( "accept-language" ) String locale,
-        @RequestBody ModelList programsFromClient )
+    public MobileModel updatePrograms2_8( @PathVariable
+    int id, @RequestHeader( "accept-language" )
+    String locale, @RequestBody
+    ModelList programsFromClient )
     {
         MobileModel model = new MobileModel();
         model.setClientVersion( DataStreamSerializable.TWO_POINT_EIGHT );
@@ -148,19 +192,11 @@ public class MobileOrganisationUnitController
         return model;
     }
 
-    @RequestMapping( method = RequestMethod.GET, value = "orgUnits/{id}/search" )
-    @ResponseBody
-    public ActivityPlan search2_8( @PathVariable int id, @RequestHeader( "identifier" ) String identifier )
-        throws NotAllowedException
-    {
-        ActivityPlan activityPlan = activityReportingService.getActivitiesByIdentifier( identifier );
-        activityPlan.setClientVersion( DataStreamSerializable.TWO_POINT_EIGHT );
-        return activityPlan;
-    }
-
     @RequestMapping( method = RequestMethod.GET, value = "orgUnits/{id}/changeLanguageDataSet" )
     @ResponseBody
-    public DataSetList changeLanguageDataSet2_8( @PathVariable int id, @RequestHeader( "accept-language" ) String locale )
+    public DataSetList changeLanguageDataSet2_8( @PathVariable
+    int id, @RequestHeader( "accept-language" )
+    String locale )
     {
         return facilityReportingService.getDataSetsForLocale( getUnit( id ), locale );
     }
@@ -169,14 +205,18 @@ public class MobileOrganisationUnitController
 
     @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/orgUnits/{id}/all" )
     @ResponseBody
-    public MobileModel getAllDataForOrgUnit( @PathVariable String clientVersion, @PathVariable int id,
-        @RequestHeader( "accept-language" ) String locale )
+    public MobileModel getAllDataForOrgUnit( @PathVariable
+    String clientVersion, @PathVariable
+    int id, @RequestHeader( "accept-language" )
+    String locale )
     {
         MobileModel mobileModel = new MobileModel();
         mobileModel.setClientVersion( clientVersion );
         OrganisationUnit unit = getUnit( id );
-        mobileModel.setActivityPlan( activityReportingService.getCurrentActivityPlan( unit, locale ) );
-        mobileModel.setPrograms( programService.getPrograms( unit, locale ) );
+        // mobileModel.setActivityPlan(
+        // activityReportingService.getCurrentActivityPlan( unit, locale ) );
+        // mobileModel.setPrograms( programService.getPrograms( unit, locale )
+        // );
         mobileModel.setDatasets( facilityReportingService.getMobileDataSetsForUnit( unit, locale ) );
         mobileModel.setServerCurrentDate( new Date() );
         mobileModel.setLocales( getLocalStrings( i18nService.getAvailableLocales() ) );
@@ -186,8 +226,11 @@ public class MobileOrganisationUnitController
 
     @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/orgUnits/{id}/updateDataSets" )
     @ResponseBody
-    public DataSetList checkUpdatedDataSet( @PathVariable String clientVersion, @PathVariable int id,
-        @RequestBody DataSetList dataSetList, @RequestHeader( "accept-language" ) String locale )
+    public DataSetList checkUpdatedDataSet( @PathVariable
+    String clientVersion, @PathVariable
+    int id, @RequestBody
+    DataSetList dataSetList, @RequestHeader( "accept-language" )
+    String locale )
     {
         DataSetList returnList = facilityReportingService.getUpdatedDataSet( dataSetList, getUnit( id ), locale );
         returnList.setClientVersion( clientVersion );
@@ -203,17 +246,32 @@ public class MobileOrganisationUnitController
 
     @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/orgUnits/{id}/dataSets" )
     @ResponseBody
-    public String saveDataSetValues( @PathVariable int id, @RequestBody DataSetValue dataSetValue )
+    public String saveDataSetValues( @PathVariable
+    int id, @RequestBody
+    DataSetValue dataSetValue )
         throws NotAllowedException
     {
         facilityReportingService.saveDataSetValues( getUnit( id ), dataSetValue );
         return DATASET_REPORT_UPLOADED;
     }
 
+    @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/orgUnits/{id}/dataSetValue" )
+    @ResponseBody
+    public DataSetValueList getDataSetValues( @PathVariable
+    int id, @RequestBody
+    DataSetList dataSetList )
+        throws NotAllowedException
+    {
+        return facilityReportingService.getDataSetValues( getUnit( id ), dataSetList );
+    }
+
     @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/orgUnits/{id}/activitiyplan" )
     @ResponseBody
-    public MobileModel updatePrograms( @PathVariable String clientVersion, @PathVariable int id,
-        @RequestHeader( "accept-language" ) String locale, @RequestBody ModelList programsFromClient )
+    public MobileModel updatePrograms( @PathVariable
+    String clientVersion, @PathVariable
+    int id, @RequestHeader( "accept-language" )
+    String locale, @RequestBody
+    ModelList programsFromClient )
     {
         MobileModel model = new MobileModel();
         model.setClientVersion( clientVersion );
@@ -221,17 +279,6 @@ public class MobileOrganisationUnitController
         model.setActivityPlan( activityReportingService.getCurrentActivityPlan( getUnit( id ), locale ) );
         model.setServerCurrentDate( new Date() );
         return model;
-    }
-
-    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/orgUnits/{id}/search" )
-    @ResponseBody
-    public ActivityPlan search( @PathVariable String clientVersion, @PathVariable int id,
-        @RequestHeader( "identifier" ) String identifier )
-        throws NotAllowedException
-    {
-        ActivityPlan activityPlan = activityReportingService.getActivitiesByIdentifier( identifier );
-        activityPlan.setClientVersion( clientVersion );
-        return activityPlan;
     }
 
     /**
@@ -262,7 +309,9 @@ public class MobileOrganisationUnitController
      */
     @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/orgUnits/{id}/activities" )
     @ResponseBody
-    public String saveActivityReport( @PathVariable int id, @RequestBody ActivityValue activityValue )
+    public String saveActivityReport( @PathVariable
+    int id, @RequestBody
+    ActivityValue activityValue )
         throws NotAllowedException
     {
         // FIXME set the last argument to 0 to fix compilation error
@@ -272,7 +321,9 @@ public class MobileOrganisationUnitController
 
     @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/orgUnits/{id}/changeLanguageDataSet" )
     @ResponseBody
-    public DataSetList changeLanguageDataSet( @PathVariable int id, @RequestHeader( "accept-language" ) String locale )
+    public DataSetList changeLanguageDataSet( @PathVariable
+    int id, @RequestHeader( "accept-language" )
+    String locale )
     {
         return facilityReportingService.getDataSetsForLocale( getUnit( id ), locale );
     }
@@ -286,8 +337,9 @@ public class MobileOrganisationUnitController
 
     @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/all" )
     @ResponseBody
-    public org.hisp.dhis.api.mobile.model.LWUITmodel.MobileModel getAllDataForOrgUnitLWUIT(
-        @PathVariable String clientVersion, @PathVariable int id )
+    public org.hisp.dhis.api.mobile.model.LWUITmodel.MobileModel getAllDataForOrgUnitLWUIT( @PathVariable
+    String clientVersion, @PathVariable
+    int id )
     {
         org.hisp.dhis.api.mobile.model.LWUITmodel.MobileModel mobileModel = new org.hisp.dhis.api.mobile.model.LWUITmodel.MobileModel();
         mobileModel.setClientVersion( clientVersion );
@@ -306,51 +358,124 @@ public class MobileOrganisationUnitController
 
     @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/findPatient" )
     @ResponseBody
-    public Patient findPatientByName( @PathVariable int id, @RequestHeader( "name" ) String keyword )
+    public Patient findPatientByName( @PathVariable
+    int id, @RequestHeader( "patientId" )
+    String patientId )
         throws NotAllowedException
     {
-        return activityReportingService.findPatient( keyword, id );
+        return activityReportingService.findPatient( Integer.parseInt( patientId ) );
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/findPatients" )
+    @ResponseBody
+    public PatientList findPatientsById( @PathVariable
+    int id, @RequestHeader( "patientIds" )
+    String patientIds )
+        throws NotAllowedException
+    {
+        return activityReportingService.findPatients( patientIds );
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/findPatientInAdvanced/{programId}" )
+    @ResponseBody
+    public String findPatientInAdvanced( @PathVariable
+    int programId, @PathVariable
+    int id, @RequestHeader( "name" )
+    String keyword )
+        throws NotAllowedException
+    {
+        return activityReportingService.findPatientInAdvanced( keyword, id, programId );
     }
 
     @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/LWUIT/orgUnits/{id}/uploadProgramStage/{patientId}" )
     @ResponseBody
-    public String saveProgramStage( @PathVariable int patientId, @PathVariable int id,
-        @RequestBody ProgramStage programStage )
+    public String saveProgramStage( @PathVariable
+    int patientId, @PathVariable
+    int id, @RequestBody
+    ProgramStage programStage )
         throws NotAllowedException
     {
         return activityReportingService.saveProgramStage( programStage, patientId, id );
     }
 
-    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/enrollProgram" )
+    @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/LWUIT/orgUnits/{id}/uploadSingleEventWithoutRegistration" )
     @ResponseBody
-    public Patient enrollProgram( @PathVariable int id, @RequestHeader( "enrollInfo" ) String enrollInfo )
+    public String saveSingleEventWithoutRegistration( @PathVariable
+    int id, @RequestBody
+    ProgramStage programStage )
         throws NotAllowedException
     {
-        return activityReportingService.enrollProgram( enrollInfo );
+        return activityReportingService.saveSingleEventWithoutRegistration( programStage, id );
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/enrollProgram" )
+    @ResponseBody
+    public Patient enrollProgram( @PathVariable
+    int id, @RequestHeader( "enrollInfo" )
+    String enrollInfo )
+        throws NotAllowedException
+    {
+        return activityReportingService.enrollProgram( enrollInfo, null, new Date() );
     }
 
     @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/LWUIT/orgUnits/{id}/addRelationship" )
     @ResponseBody
-    public Patient addRelationship( @PathVariable int id, @RequestBody Relationship enrollmentRelationship )
+    public Patient addRelationship( @PathVariable
+    int id, @RequestBody
+    Relationship enrollmentRelationship )
         throws NotAllowedException
     {
         return activityReportingService.addRelationship( enrollmentRelationship, id );
     }
 
-    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/downloadAnonymousProgramUrl" )
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/downloadAnonymousProgram" )
     @ResponseBody
-    public Program getAnonymousProgram( @PathVariable int id, @RequestHeader( "useless-part" ) String enrollInfo )
+    public Program getAnonymousProgram( @PathVariable
+    int id, @RequestHeader( "programType" )
+    String programType )
         throws NotAllowedException
     {
-        return activityReportingService.getAllAnonymousProgram( id );
+        return activityReportingService.getAllProgramByOrgUnit( id, programType );
     }
 
     @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/findProgram" )
     @ResponseBody
-    public Program findProgram( @PathVariable int id, @RequestHeader( "info" ) String programInfo )
+    public Program findProgram( @PathVariable
+    int id, @RequestHeader( "info" )
+    String programInfo )
         throws NotAllowedException
     {
         return activityReportingService.findProgram( programInfo );
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/findLostToFollowUp" )
+    @ResponseBody
+    public String findLostToFollowUp( @PathVariable
+    int id, @RequestHeader( "searchEventInfos" )
+    String searchEventInfos )
+        throws NotAllowedException
+    {
+        return activityReportingService.findLostToFollowUp( id, searchEventInfos );
+    }
+
+    @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/LWUIT/orgUnits/{id}/handleLostToFollowUp" )
+    @ResponseBody
+    public Notification handleLostToFollowUp( @PathVariable
+    int id, @RequestBody
+    LostEvent lostEvent )
+        throws NotAllowedException
+    {
+        return activityReportingService.handleLostToFollowUp( lostEvent );
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/generateRepeatableEvent" )
+    @ResponseBody
+    public Patient generateRepeatableEvent( @PathVariable
+    int id, @RequestHeader( "eventInfo" )
+    String eventInfo )
+        throws NotAllowedException
+    {
+        return activityReportingService.generateRepeatableEvent( id, eventInfo );
     }
 
     // Supportive methods
@@ -405,33 +530,186 @@ public class MobileOrganisationUnitController
 
     @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/LWUIT/orgUnits/{id}/registerPerson" )
     @ResponseBody
-    public String savePatient( @PathVariable int id, @RequestBody Patient patient )
+    public Patient savePatient( @PathVariable
+    int id, @RequestBody
+    Patient patient, @RequestHeader( "programid" )
+    String programId )
         throws NotAllowedException
     {
-
-        return activityReportingService.savePatient( patient, id );
-
+        return activityReportingService.savePatient( patient, id, programId );
     }
 
     @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/getVariesInfo" )
     @ResponseBody
-    public PatientIdentifierAndAttribute getVariesInfo( @PathVariable String clientVersion, @PathVariable int id,
-        @RequestHeader( "accept-language" ) String locale )
+    public PatientIdentifierAndAttribute getVariesInfo( @PathVariable
+    String clientVersion, @PathVariable
+    int id, @RequestHeader( "accept-language" )
+    String locale, @RequestHeader( "programid" )
+    String programId )
     {
         PatientIdentifierAndAttribute patientIdentifierAndAttribute = new PatientIdentifierAndAttribute();
         patientIdentifierAndAttribute.setClientVersion( clientVersion );
-        patientIdentifierAndAttribute.setPatientIdentifiers( activityReportingService.getIdentifiersForMobile() );
-        patientIdentifierAndAttribute.setPatientAttributes( activityReportingService.getPatientAttributesForMobile() );
+        patientIdentifierAndAttribute.setPatientAttributes( activityReportingService
+            .getPatientAttributesForMobile( programId ) );
 
         return patientIdentifierAndAttribute;
-
     }
 
-    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/findLatestPerson" )
+    @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/orgUnits/{id}/sendFeedback" )
     @ResponseBody
-    public Patient findLatestPerson()
+    public String sendFeedback( @PathVariable
+    int id, @RequestBody
+    Message message )
         throws NotAllowedException
     {
-        return activityReportingService.findLatestPatient();
+        return activityReportingService.sendFeedback( message );
+
     }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/orgUnits/{id}/findUser" )
+    @ResponseBody
+    public Recipient findUser( String clientVersion, @PathVariable
+    int id, @RequestHeader( "name" )
+    String keyword )
+        throws NotAllowedException
+    {
+        Recipient recipient = new Recipient();
+        recipient.setUsers( activityReportingService.findUser( keyword ) );
+        return recipient;
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/findVisitSchedule/{programId}" )
+    @ResponseBody
+    public String findVisitSchedule( @PathVariable
+    int programId, @PathVariable
+    int id, @RequestHeader( "details" )
+    String info )
+        throws NotAllowedException
+    {
+        return activityReportingService.findVisitSchedule( id, programId, info );
+    }
+
+    @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/orgUnits/{id}/sendMessage" )
+    @ResponseBody
+    public String sendMessage( @PathVariable
+    int id, @RequestBody
+    Message message )
+        throws NotAllowedException
+    {
+        return activityReportingService.sendMessage( message );
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/orgUnits/{id}/downloadMessageConversation" )
+    @ResponseBody
+    public Conversation downloadConversation( String clientVersion )
+        throws NotAllowedException
+    {
+
+        Conversation conversation = new Conversation();
+        conversation.setClientVersion( clientVersion );
+        conversation.setConversations( activityReportingService.downloadMessageConversation() );
+
+        return conversation;
+
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/orgUnits/{id}/getMessage" )
+    @ResponseBody
+    public Conversation getMessage( String clientVersion, @PathVariable
+    int id, @RequestHeader( "id" )
+    String conversationId )
+        throws NotAllowedException
+    {
+
+        Conversation conversation = new Conversation();
+        conversation.setMessages( activityReportingService.getMessage( conversationId ) );
+
+        return conversation;
+
+    }
+
+    @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/orgUnits/{id}/replyMessage" )
+    @ResponseBody
+    public String replyMessage( @PathVariable
+    int id, @RequestBody
+    Message message )
+        throws NotAllowedException
+    {
+        return activityReportingService.replyMessage( message );
+
+    }
+
+    @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/LWUIT/orgUnits/{id}/sendFeedback" )
+    @ResponseBody
+    public String sendFeedbackTracker( @PathVariable
+    int id, @RequestBody
+    Message message )
+        throws NotAllowedException
+    {
+        return activityReportingService.sendFeedback( message );
+
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/findUser" )
+    @ResponseBody
+    public Recipient findUserTracker( String clientVersion, @PathVariable
+    int id, @RequestHeader( "name" )
+    String keyword )
+        throws NotAllowedException
+    {
+        Recipient recipient = new Recipient();
+        recipient.setUsers( activityReportingService.findUser( keyword ) );
+        return recipient;
+    }
+
+    @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/LWUIT/orgUnits/{id}/sendMessage" )
+    @ResponseBody
+    public String sendMessageTracker( @PathVariable
+    int id, @RequestBody
+    Message message )
+        throws NotAllowedException
+    {
+        return activityReportingService.sendMessage( message );
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/downloadMessageConversation" )
+    @ResponseBody
+    public Conversation downloadConversationTracker( String clientVersion )
+        throws NotAllowedException
+    {
+
+        Conversation conversation = new Conversation();
+        conversation.setClientVersion( clientVersion );
+        conversation.setConversations( activityReportingService.downloadMessageConversation() );
+
+        return conversation;
+
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/getMessage" )
+    @ResponseBody
+    public Conversation getMessageTracker( String clientVersion, @PathVariable
+    int id, @RequestHeader( "id" )
+    String conversationId )
+        throws NotAllowedException
+    {
+
+        Conversation conversation = new Conversation();
+        conversation.setMessages( activityReportingService.getMessage( conversationId ) );
+
+        return conversation;
+
+    }
+
+    @RequestMapping( method = RequestMethod.POST, value = "{clientVersion}/LWUIT/orgUnits/{id}/replyMessage" )
+    @ResponseBody
+    public String replyMessageTracker( @PathVariable
+    int id, @RequestBody
+    Message message )
+        throws NotAllowedException
+    {
+        return activityReportingService.replyMessage( message );
+
+    }
+
 }

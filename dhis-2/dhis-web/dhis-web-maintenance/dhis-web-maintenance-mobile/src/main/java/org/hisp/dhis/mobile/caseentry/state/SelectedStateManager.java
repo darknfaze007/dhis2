@@ -1,19 +1,20 @@
 package org.hisp.dhis.mobile.caseentry.state;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,9 +29,9 @@ package org.hisp.dhis.mobile.caseentry.state;
  */
 
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.patient.Patient;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramStageInstance;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
 
 /**
  * @author Abyot Asalefew
@@ -40,12 +41,12 @@ public interface SelectedStateManager
     OrganisationUnit getSelectedOrganisationUnit();
 
     // -------------------------------------------------------------------------
-    // Patient
+    // TrackedEntityInstance
     // -------------------------------------------------------------------------
 
-    void setSelectedPatient( Patient patient );
+    void setSelectedPatient( TrackedEntityInstance patient );
 
-    Patient getSelectedPatient();
+    TrackedEntityInstance getSelectedPatient();
 
     void clearSelectedPatient();
 

@@ -1,19 +1,20 @@
 package org.hisp.dhis.user;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,10 +28,10 @@ package org.hisp.dhis.user;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import org.hisp.dhis.organisationunit.OrganisationUnit;
+
 import java.util.Collection;
 import java.util.Date;
-
-import org.hisp.dhis.organisationunit.OrganisationUnit;
 
 /**
  * @author Lars Helge Overland
@@ -38,14 +39,14 @@ import org.hisp.dhis.organisationunit.OrganisationUnit;
 public interface UserCredentialsStore
 {
     String ID = UserCredentialsStore.class.getName();
-    
+
     // -------------------------------------------------------------------------
     // UserCredentials
     // -------------------------------------------------------------------------
 
     /**
      * Adds a UserCredentials.
-     * 
+     *
      * @param userCredentials the UserCredentials to add.
      * @return the User which the UserCredentials is associated with.
      */
@@ -53,14 +54,14 @@ public interface UserCredentialsStore
 
     /**
      * Updates a UserCredentials.
-     * 
+     *
      * @param userCredentials the UserCredentials to update.
      */
     void updateUserCredentials( UserCredentials userCredentials );
 
     /**
      * Retrieves the UserCredentials of the given User.
-     * 
+     *
      * @param user the User.
      * @return the UserCredentials.
      */
@@ -69,7 +70,7 @@ public interface UserCredentialsStore
     /**
      * Retrieves the UserCredentials associated with the User with the given
      * name.
-     * 
+     *
      * @param username the name of the User.
      * @return the UserCredentials.
      */
@@ -77,19 +78,21 @@ public interface UserCredentialsStore
 
     /**
      * Retrieves all UserCredentials.
-     * 
+     *
      * @return a Collection of UserCredentials.
      */
     Collection<UserCredentials> getAllUserCredentials();
 
     /**
      * Deletes a UserCredentials.
-     * 
+     *
      * @param userCredentials the UserCredentials.
      */
     void deleteUserCredentials( UserCredentials userCredentials );
 
     Collection<UserCredentials> searchUsersByName( String key );
+
+    Collection<UserCredentials> searchUsersByName( String key, int first, int max );
 
     Collection<UserCredentials> getUsersBetween( int first, int max );
 
@@ -105,11 +108,11 @@ public interface UserCredentialsStore
         int first, int max );
 
     Collection<UserCredentials> getSelfRegisteredUserCredentials( int first, int max );
-    
+
     int getSelfRegisteredUserCredentialsCount();
-    
+
     Collection<UserCredentials> getInactiveUsers( Date date );
-    
+
     Collection<UserCredentials> getInactiveUsers( Date date, int first, int max );
 
     int getInactiveUsersCount( Date date );
@@ -134,14 +137,14 @@ public interface UserCredentialsStore
 
     /**
      * Adds a UserSetting.
-     * 
+     *
      * @param userSetting the UserSetting to add.
      */
     void addUserSetting( UserSetting userSetting );
 
     /**
      * Updates a UserSetting.
-     * 
+     *
      * @param userSetting the UserSetting to update.
      */
     void updateUserSetting( UserSetting userSetting );
@@ -149,7 +152,7 @@ public interface UserCredentialsStore
     /**
      * Retrieves the UserSetting associated with the given User for the given
      * UserSetting name.
-     * 
+     *
      * @param user the User.
      * @param name the name of the UserSetting.
      * @return the UserSetting.
@@ -158,7 +161,7 @@ public interface UserCredentialsStore
 
     /**
      * Retrieves all UserSettings for the given User.
-     * 
+     *
      * @param user the User.
      * @return a Collection of UserSettings.
      */
@@ -166,19 +169,20 @@ public interface UserCredentialsStore
 
     /**
      * Deletes a UserSetting.
-     * 
+     *
      * @param userSetting the UserSetting to delete.
      */
     void deleteUserSetting( UserSetting userSetting );
-    
+
     /**
      * Returns all UserSettings with the given name.
-     * 
+     *
      * @param name the name.
      * @return a Collection of UserSettings.
      */
     Collection<UserSetting> getUserSettings( String name );
-    
+
     Collection<String> getUsernames( String key, Integer max );
 
+    UserCredentials getUserCredentialsByOpenID( String openId );
 }

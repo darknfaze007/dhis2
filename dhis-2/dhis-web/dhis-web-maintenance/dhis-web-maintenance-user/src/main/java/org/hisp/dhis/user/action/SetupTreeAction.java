@@ -1,19 +1,20 @@
 package org.hisp.dhis.user.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,19 +28,32 @@ package org.hisp.dhis.user.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.opensymphony.xwork2.Action;
+import static org.hisp.dhis.user.UserSettingService.KEY_DB_LOCALE;
+import static org.hisp.dhis.user.UserSettingService.KEY_UI_LOCALE;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import org.hisp.dhis.attribute.Attribute;
 import org.hisp.dhis.attribute.AttributeService;
+import org.hisp.dhis.attribute.comparator.AttributeSortOrderComparator;
 import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
+import org.hisp.dhis.i18n.I18nService;
+import org.hisp.dhis.i18n.locale.LocaleManager;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.oust.manager.SelectionTreeManager;
 import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
-import org.hisp.dhis.system.filter.UserAuthorityGroupCanIssueFilter;
 import org.hisp.dhis.system.util.AttributeUtils;
-import org.hisp.dhis.system.util.FilterUtils;
-import org.hisp.dhis.user.*;
+import org.hisp.dhis.user.User;
+import org.hisp.dhis.user.UserAuthorityGroup;
+import org.hisp.dhis.user.UserCredentials;
+import org.hisp.dhis.user.UserService;
 
-import java.util.*;
+import com.opensymphony.xwork2.Action;
 
 /**
  * @author Nguyen Hong Duc
@@ -73,18 +87,25 @@ public class SetupTreeAction
         this.userService = userService;
     }
 
-    private CurrentUserService currentUserService;
-
-    public void setCurrentUserService( CurrentUserService currentUserService )
-    {
-        this.currentUserService = currentUserService;
-    }
-
     private AttributeService attributeService;
 
     public void setAttributeService( AttributeService attributeService )
     {
         this.attributeService = attributeService;
+    }
+
+    private I18nService i18nService;
+
+    public void setI18nService( I18nService i18nService )
+    {
+        this.i18nService = i18nService;
+    }
+
+    private LocaleManager localeManager;
+
+    public void setLocaleManager( LocaleManager localeManager )
+    {
+        this.localeManager = localeManager;
     }
 
     // -------------------------------------------------------------------------
@@ -105,9 +126,16 @@ public class SetupTreeAction
         return userCredentials;
     }
 
-    private Collection<UserAuthorityGroup> userAuthorityGroups;
+    private User user;
 
-    public Collection<UserAuthorityGroup> getUserAuthorityGroups()
+    public User getUser()
+    {
+        return user;
+    }
+
+    private List<UserAuthorityGroup> userAuthorityGroups;
+
+    public List<UserAuthorityGroup> getUserAuthorityGroups()
     {
         return userAuthorityGroups;
     }
@@ -117,6 +145,34 @@ public class SetupTreeAction
     public List<OrganisationUnitGroup> getOrganisationUnitGroups()
     {
         return organisationUnitGroups;
+    }
+
+    private List<Locale> availableLocales;
+
+    public List<Locale> getAvailableLocales()
+    {
+        return availableLocales;
+    }
+
+    private Locale currentLocale;
+
+    public Locale getCurrentLocale()
+    {
+        return currentLocale;
+    }
+
+    private List<Locale> availableLocalesDb;
+
+    public List<Locale> getAvailableLocalesDb()
+    {
+        return availableLocalesDb;
+    }
+
+    private Locale currentLocaleDb;
+
+    public Locale getCurrentLocaleDb()
+    {
+        return currentLocaleDb;
     }
 
     private List<Attribute> attributes;
@@ -142,35 +198,53 @@ public class SetupTreeAction
     {
         userAuthorityGroups = new ArrayList<UserAuthorityGroup>( userService.getAllUserAuthorityGroups() );
 
-        FilterUtils.filter( userAuthorityGroups,
-            new UserAuthorityGroupCanIssueFilter( currentUserService.getCurrentUser() ) );
-
+        userService.canIssueFilter( userAuthorityGroups );
+        
+        availableLocales = localeManager.getAvailableLocales();
+        
+        availableLocalesDb = i18nService.getAvailableLocales();
+        
         if ( id != null )
         {
-            User user = userService.getUser( id );
+            user = userService.getUser( id );
 
-            if ( user.getOrganisationUnits().size() > 0 )
+            if ( user.hasOrganisationUnit() )
             {
-                selectionTreeManager.setSelectedOrganisationUnits( user.getOrganisationUnits() );
+                selectionManager.setSelectedOrganisationUnits( user.getOrganisationUnits() );
             }
-
+            else
+            {
+                selectionManager.clearSelectedOrganisationUnits();
+            }
+            
+            if ( user.hasDataViewOrganisationUnit() )
+            {
+                selectionTreeManager.setSelectedOrganisationUnits( user.getDataViewOrganisationUnits() );
+            }
+            else
+            {
+                selectionTreeManager.clearSelectedOrganisationUnits();
+            }
+            
             userCredentials = userService.getUserCredentials( userService.getUser( id ) );
 
             userAuthorityGroups.removeAll( userCredentials.getUserAuthorityGroups() );
 
             attributeValues = AttributeUtils.getAttributeValueMap( user.getAttributeValues() );
+            
+            currentLocale = (Locale) userService.getUserSettingValue( user, KEY_UI_LOCALE, LocaleManager.DHIS_STANDARD_LOCALE );
+            
+            currentLocaleDb = (Locale) userService.getUserSettingValue( user, KEY_DB_LOCALE, null );
         }
         else
-        {
-            if ( selectionManager.getSelectedOrganisationUnits().size() > 0 )
-            {
-                selectionTreeManager.setSelectedOrganisationUnits( selectionManager.getSelectedOrganisationUnits() );
-            }
+        {            
+            currentLocale = LocaleManager.DHIS_STANDARD_LOCALE;
         }
 
+        Collections.sort( userAuthorityGroups, IdentifiableObjectNameComparator.INSTANCE );
+        
         attributes = new ArrayList<Attribute>( attributeService.getUserAttributes() );
-
-        Collections.sort( attributes, IdentifiableObjectNameComparator.INSTANCE );
+        Collections.sort( attributes, AttributeSortOrderComparator.INSTANCE );
 
         return SUCCESS;
     }

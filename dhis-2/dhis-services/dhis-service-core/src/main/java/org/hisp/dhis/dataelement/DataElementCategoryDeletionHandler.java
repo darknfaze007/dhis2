@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,11 +28,9 @@ package org.hisp.dhis.dataelement;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.concept.Concept;
-import org.hisp.dhis.concept.ConceptService;
-import org.hisp.dhis.system.deletion.DeletionHandler;
-
 import java.util.Set;
+
+import org.hisp.dhis.system.deletion.DeletionHandler;
 
 /**
  * @author Dang Duy Hieu
@@ -50,13 +49,6 @@ public class DataElementCategoryDeletionHandler
         this.categoryService = categoryService;
     }
 
-    private ConceptService conceptService;
-
-    public void setConceptService( ConceptService conceptService )
-    {
-        this.conceptService = conceptService;
-    }
-
     // -------------------------------------------------------------------------
     // DeletionHandler implementation
     // -------------------------------------------------------------------------
@@ -65,45 +57,6 @@ public class DataElementCategoryDeletionHandler
     public String getClassName()
     {
         return DataElementCategory.class.getSimpleName();
-    }
-
-    @Override
-    public String allowDeleteConcept( Concept concept )
-    {
-        for ( DataElementCategory category : categoryService.getAllDataElementCategories() )
-        {
-            Concept categoryConcept = category.getConcept();
-
-            if ( categoryConcept != null )
-            {
-                if ( categoryConcept.equals( concept ) )
-                {
-                    return category.getName();
-                }
-            }
-        }
-
-        return null;
-    }
-
-    @Override
-    public void deleteConcept( Concept concept )
-    {
-        Concept conceptDefault = conceptService.getConceptByName( Concept.DEFAULT_CONCEPT_NAME );
-
-        for ( DataElementCategory category : categoryService.getAllDataElementCategories() )
-        {
-            Concept categoryConcept = category.getConcept();
-
-            if ( categoryConcept != null )
-            {
-                if ( categoryConcept.equals( concept ) )
-                {
-                    category.setConcept( conceptDefault );
-                    categoryService.updateDataElementCategory( category );
-                }
-            }
-        }
     }
 
     @Override

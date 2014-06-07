@@ -1,17 +1,20 @@
+package org.hisp.dhis.light.dataentry.action;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,8 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-package org.hisp.dhis.light.dataentry.action;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,10 +55,12 @@ import org.hisp.dhis.datavalue.DataValueService;
 import org.hisp.dhis.datavalue.DeflatedDataValue;
 import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.light.utils.FormUtils;
+import org.hisp.dhis.light.utils.ValueUtils;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodService;
+import org.hisp.dhis.system.util.MathUtils;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.util.ContextUtils;
 
@@ -165,16 +168,16 @@ public class SaveSectionFormAction
         return organisationUnitId;
     }
 
-    private String periodId;
+    private String isoPeriod;
 
-    public void setPeriodId( String periodId )
+    public String getIsoPeriod()
     {
-        this.periodId = periodId;
+        return isoPeriod;
     }
 
-    public String getPeriodId()
+    public void setIsoPeriod( String isoPeriod )
     {
-        return periodId;
+        this.isoPeriod = isoPeriod;
     }
 
     private Integer dataSetId;
@@ -275,12 +278,12 @@ public class SaveSectionFormAction
     public String execute()
     {
         Validate.notNull( organisationUnitId );
-        Validate.notNull( periodId );
+        Validate.notNull( isoPeriod );
         Validate.notNull( dataSetId );
 
         OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( organisationUnitId );
 
-        Period period = periodService.getPeriodByExternalId( periodId );
+        Period period = periodService.getPeriod( isoPeriod );
 
         boolean needsValidation = false;
 
@@ -293,8 +296,7 @@ public class SaveSectionFormAction
             storedBy = "[unknown]";
         }
 
-        HttpServletRequest request = (HttpServletRequest) ActionContext.getContext().get(
-            StrutsStatics.HTTP_REQUEST );
+        HttpServletRequest request = (HttpServletRequest) ActionContext.getContext().get( StrutsStatics.HTTP_REQUEST );
         Map<String, String> parameterMap = ContextUtils.getParameterMap( request );
 
         for ( String key : parameterMap.keySet() )
@@ -307,11 +309,11 @@ public class SaveSectionFormAction
                 String value = parameterMap.get( key );
 
                 DataElement dataElement = dataElementService.getDataElement( dataElementId );
-                DataElementCategoryOptionCombo optionCombo = categoryService
+                DataElementCategoryOptionCombo categoryOptionCombo = categoryService
                     .getDataElementCategoryOptionCombo( optionComboId );
 
                 DataValue dataValue = dataValueService
-                    .getDataValue( organisationUnit, dataElement, period, optionCombo );
+                    .getDataValue( dataElement, period, organisationUnit, categoryOptionCombo );
 
                 value = value.trim();
                 Boolean valueIsEmpty = (value == null || value.length() == 0);
@@ -328,7 +330,7 @@ public class SaveSectionFormAction
                     }
                     else if ( type.equals( DataElement.VALUE_TYPE_BOOL ) )
                     {
-                        if ( !valueIsEmpty && !FormUtils.isBoolean( value ) )
+                        if ( !valueIsEmpty && !ValueUtils.isBoolean( value ) )
                         {
                             correctType = false;
                             typeViolations.put( key, "\"" + value + "\"" + " " + i18n.getString( "is_invalid_boolean" ) );
@@ -336,7 +338,7 @@ public class SaveSectionFormAction
                     }
                     else if ( type.equals( DataElement.VALUE_TYPE_DATE ) )
                     {
-                        if ( !FormUtils.isDate( value ) )
+                        if ( !ValueUtils.isDate( value ) )
                         {
                             correctType = false;
                             typeViolations.put( key, "\"" + value + "\"" + " " + i18n.getString( "is_invalid_date" ) );
@@ -345,7 +347,7 @@ public class SaveSectionFormAction
                     else if ( type.equals( DataElement.VALUE_TYPE_INT )
                         && numberType.equals( DataElement.VALUE_TYPE_NUMBER ) )
                     {
-                        if ( !FormUtils.isNumber( value ) )
+                        if ( !MathUtils.isNumeric( value ) )
                         {
                             correctType = false;
                             typeViolations.put( key, "\"" + value + "\"" + " " + i18n.getString( "is_invalid_number" ) );
@@ -354,7 +356,7 @@ public class SaveSectionFormAction
                     else if ( type.equals( DataElement.VALUE_TYPE_INT )
                         && numberType.equals( DataElement.VALUE_TYPE_INT ) )
                     {
-                        if ( !FormUtils.isInteger( value ) )
+                        if ( !MathUtils.isInteger( value ) )
                         {
                             correctType = false;
                             typeViolations.put( key, "\"" + value + "\"" + " " + i18n.getString( "is_invalid_integer" ) );
@@ -363,7 +365,7 @@ public class SaveSectionFormAction
                     else if ( type.equals( DataElement.VALUE_TYPE_INT )
                         && numberType.equals( DataElement.VALUE_TYPE_POSITIVE_INT ) )
                     {
-                        if ( !FormUtils.isPositiveInteger( value ) )
+                        if ( !MathUtils.isPositiveInteger( value ) )
                         {
                             correctType = false;
                             typeViolations.put( key, "\"" + value + "\"" + " " + i18n.getString( "is_invalid_positive_integer" ) );
@@ -372,10 +374,19 @@ public class SaveSectionFormAction
                     else if ( type.equals( DataElement.VALUE_TYPE_INT )
                         && numberType.equals( DataElement.VALUE_TYPE_NEGATIVE_INT ) )
                     {
-                        if ( !FormUtils.isNegativeInteger( value ) )
+                        if ( !MathUtils.isNegativeInteger( value ) )
                         {
                             correctType = false;
                             typeViolations.put( key, "\"" + value + "\"" + " " + i18n.getString( "is_invalid_negative_integer" ) );
+                        }
+                    }
+                    else if ( type.equals( DataElement.VALUE_TYPE_INT)
+                        && numberType.equals( DataElement.VALUE_TYPE_ZERO_OR_POSITIVE_INT ) )
+                    {
+                        if ( !MathUtils.isZeroOrPositiveInteger( value ) )
+                        {
+                            correctType = false;
+                            typeViolations.put( key, "\"" + value + "\"" + " " + i18n.getString( "is_invalid_zero_or_positive_integer" ) );
                         }
                     }
                 }
@@ -395,8 +406,7 @@ public class SaveSectionFormAction
                     {
                         needsValidation = true;
 
-                        dataValue = new DataValue( dataElement, period, organisationUnit, value, storedBy, new Date(),
-                            null, optionCombo );
+                        dataValue = new DataValue( dataElement, period, organisationUnit, categoryOptionCombo, null, value, storedBy, new Date(), null );
                         dataValueService.addDataValue( dataValue );
                     }
                     else
@@ -464,8 +474,7 @@ public class SaveSectionFormAction
 
         validationViolations = formUtils.getValidationViolations( organisationUnit, dataElements, period );
 
-        if ( needsValidation
-            && (!validationViolations.isEmpty() || !typeViolations.isEmpty()) )
+        if ( needsValidation && (!validationViolations.isEmpty() || !typeViolations.isEmpty()) )
         {
             return ERROR;
         }

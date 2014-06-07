@@ -9,19 +9,19 @@
     <property name="actionAccessResolver" ref="org.hisp.dhis.security.ActionAccessResolver" />
     <property name="moduleComparator" ref="org.hisp.dhis.webportal.module.ConfigurableModuleComparator" />
     <property name="defaultActionName" value="index" />
-    <property name="maintenanceModuleIdentifier" value="maintenance" />
   </bean>
 
   <bean id="org.hisp.dhis.webportal.module.ConfigurableModuleComparator"
     class="org.hisp.dhis.webportal.module.ConfigurableModuleComparator">
     <property name="order">
       <list>
+        <value>dhis-web-maintenance-appmanager</value>
         <value>dhis-web-maintenance-dataadmin</value>
         <value>dhis-web-maintenance-datadictionary</value>
         <value>dhis-web-maintenance-dataset</value>
         <value>dhis-web-maintenance-mobile</value>
         <value>dhis-web-maintenance-organisationunit</value>
-        <value>dhis-web-maintenance-patient</value>
+        <value>dhis-web-maintenance-program</value>
         <value>dhis-web-maintenance-settings</value>
         <value>dhis-web-maintenance-user</value>
         <value>dhis-web-appmanager</value>
@@ -74,17 +74,9 @@
 
   <bean id="org.hisp.dhis.webportal.menu.MenuStateManager" class="org.hisp.dhis.webportal.menu.SessionMenuStateManager" />
 
-  <bean id="org.hisp.dhis.webportal.menu.action.SetMenuHiddenAction" class="org.hisp.dhis.webportal.menu.action.SetMenuHiddenAction">
-    <property name="menuStateManager">
-      <ref local="org.hisp.dhis.webportal.menu.MenuStateManager" />
-    </property>
-  </bean>
+  <bean id="org.hisp.dhis.webportal.menu.action.SetMenuStateAction" class="org.hisp.dhis.webportal.menu.action.SetMenuStateAction"/>
 
-  <bean id="org.hisp.dhis.webportal.menu.action.SetMenuVisibleAction" class="org.hisp.dhis.webportal.menu.action.SetMenuVisibleAction">
-    <property name="menuStateManager">
-      <ref local="org.hisp.dhis.webportal.menu.MenuStateManager" />
-    </property>
-  </bean>
+  <bean id="org.hisp.dhis.webportal.menu.action.GetModulesAction" class="org.hisp.dhis.webportal.menu.action.GetModulesAction" />
 
   <bean id="org.hisp.dhis.webportal.interceptor.XWorkPortalMenuInterceptor"
     class="org.hisp.dhis.webportal.interceptor.XWorkPortalMenuInterceptor">
@@ -198,7 +190,6 @@
 
   <bean id="org.hisp.dhis.oust.manager.SelectionTreeManager" class="org.hisp.dhis.oust.manager.DefaultSelectionTreeManager">
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
   </bean>
 
   <bean id="org.hisp.dhis.oust.action.ExpandSubtreeAction" class="org.hisp.dhis.oust.action.ExpandSubtreeAction"
@@ -279,11 +270,7 @@
 
   <!-- About -->
 
-  <bean id="org.hisp.dhis.about.action.AboutAction" class="org.hisp.dhis.about.action.AboutAction" scope="prototype">
-    <property name="locationManager" ref="locationManager" />
-    <property name="databaseInfoProvider" ref="databaseInfoProvider" />
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-  </bean>
+  <bean id="org.hisp.dhis.about.action.AboutAction" class="org.hisp.dhis.about.action.AboutAction" scope="prototype" />
 
   <bean id="org.hisp.dhis.about.action.HelpAction" class="org.hisp.dhis.about.action.HelpAction" scope="prototype">
     <property name="localeManager" ref="org.hisp.dhis.i18n.locale.LocaleManager" />
@@ -306,9 +293,6 @@
 
   <!-- Common actions -->
 
-  <bean id="org.hisp.dhis.commons.action.GetNotificationsAction" class="org.hisp.dhis.commons.action.GetNotificationsAction"
-    scope="prototype" />
-
   <bean id="org.hisp.dhis.commons.action.GetUserAction" class="org.hisp.dhis.commons.action.GetUserAction" scope="prototype">
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
   </bean>
@@ -316,11 +300,11 @@
   <bean id="org.hisp.dhis.commons.action.GetUserRolesAction" class="org.hisp.dhis.commons.action.GetUserRolesAction"
     scope="prototype">
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
   </bean>
 
   <bean id="org.hisp.dhis.commons.action.GetUsersAction" class="org.hisp.dhis.commons.action.GetUsersAction" scope="prototype">
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
+    <property name="systemSettingManager" ref="org.hisp.dhis.setting.SystemSettingManager" />
   </bean>
 
   <bean id="org.hisp.dhis.commons.action.GetUserGroupsAction" class="org.hisp.dhis.commons.action.GetUserGroupsAction"
@@ -412,7 +396,6 @@
     <property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
     <property name="periodService" ref="org.hisp.dhis.period.PeriodService" />
     <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-    <property name="userService" ref="org.hisp.dhis.user.UserService" />
   </bean>
 
   <bean id="org.hisp.dhis.commons.action.GetExpressionTextAction" class="org.hisp.dhis.commons.action.GetExpressionTextAction"
@@ -567,6 +550,9 @@
 
   <!-- User Account -->
 
+  <bean id="org.hisp.dhis.useraccount.action.ExpiredAccountAction" class="org.hisp.dhis.useraccount.action.ExpiredAccountAction"
+    scope="prototype" />
+
   <bean id="org.hisp.dhis.useraccount.action.GetCurrentUserAction" class="org.hisp.dhis.useraccount.action.GetCurrentUserAction"
     scope="prototype">
     <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
@@ -588,6 +574,9 @@
   <bean id="org.hisp.dhis.useraccount.action.IsRestoreTokenValidAction" class="org.hisp.dhis.useraccount.action.IsRestoreTokenValidAction"
     scope="prototype" />
 
+  <bean id="org.hisp.dhis.useraccount.action.IsInviteTokenValidAction" class="org.hisp.dhis.useraccount.action.IsInviteTokenValidAction"
+    scope="prototype" />
+
   <bean id="org.hisp.dhis.useraccount.action.IsAccountRecoveryAllowedAction"
     class="org.hisp.dhis.useraccount.action.IsAccountRecoveryAllowedAction"
     scope="prototype" />
@@ -597,7 +586,6 @@
   <bean id="org.hisp.dhis.settings.user.action.GetGeneralSettingsAction"
     class="org.hisp.dhis.settings.user.action.GetGeneralSettingsAction"
     scope="prototype">
-    <property name="resourceBundleManager" ref="org.hisp.dhis.i18n.resourcebundle.ResourceBundleManager" />
     <property name="i18nService" ref="org.hisp.dhis.i18n.I18nService" />
     <property name="localeManager" ref="org.hisp.dhis.i18n.locale.LocaleManager" />
     <property name="userSettingService" ref="org.hisp.dhis.user.UserSettingService" />
@@ -612,6 +600,8 @@
     <property name="styleManager" ref="org.hisp.dhis.setting.StyleManager" />
   </bean>
 
+  <!-- Others -->
+
   <bean id="org.hisp.dhis.commons.action.GetPingAction" class="org.hisp.dhis.commons.action.GetPingAction">
     <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
   </bean>
@@ -619,5 +609,7 @@
   <bean id="org.hisp.dhis.commons.action.GetAttributesAction" class="org.hisp.dhis.commons.action.GetAttributesAction">
     <property name="attributeService" ref="org.hisp.dhis.attribute.AttributeService" />
   </bean>
+
+  <bean id="org.hisp.dhis.appcache.AppCacheAction" class="org.hisp.dhis.appcache.AppCacheAction" />
 
 </beans>

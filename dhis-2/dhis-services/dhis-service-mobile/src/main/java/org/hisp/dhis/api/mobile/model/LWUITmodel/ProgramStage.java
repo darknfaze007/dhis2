@@ -1,17 +1,20 @@
+package org.hisp.dhis.api.mobile.model.LWUITmodel;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,7 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.api.mobile.model.LWUITmodel;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -42,11 +44,17 @@ public class ProgramStage
 {
     private String clientVersion;
 
+    private String reportDate;
+
+    private String reportDateDescription;
+
     private boolean isRepeatable;
 
     private boolean isCompleted;
 
     private boolean isSingleEvent;
+    
+    private Integer standardInterval; 
 
     private List<Section> sections;
 
@@ -112,25 +120,62 @@ public class ProgramStage
         this.isSingleEvent = isSingleEvent;
     }
 
+    public String getReportDate()
+    {
+        return reportDate;
+    }
+
+    public void setReportDate( String reportDate )
+    {
+        this.reportDate = reportDate;
+    }
+
+    public String getReportDateDescription()
+    {
+        return reportDateDescription;
+    }
+
+    public void setReportDateDescription( String reportDateDescription )
+    {
+        this.reportDateDescription = reportDateDescription;
+    }
+
+    public Integer getStandardInterval()
+    {
+        return standardInterval;
+    }
+
+    public void setStandardInterval( Integer standardInterval )
+    {
+        this.standardInterval = standardInterval;
+    }
+
     @Override
     public void serialize( DataOutputStream dout )
         throws IOException
     {
         super.serialize( dout );
-        dout.writeBoolean( this.isRepeatable() );
-        dout.writeBoolean( this.isCompleted() );
-        dout.writeBoolean( this.isSingleEvent );
-
-        dout.writeInt( this.dataElements.size() );
-        for ( int i = 0; i < this.dataElements.size(); i++ )
+        if ( reportDate == null )
         {
-            this.dataElements.get( i ).serialize( dout );
+            reportDate = "";
+        }
+        dout.writeUTF( reportDate );
+        dout.writeUTF( reportDateDescription );
+        dout.writeBoolean( isRepeatable );
+        dout.writeInt( standardInterval );
+        dout.writeBoolean( isCompleted() );
+        dout.writeBoolean( isSingleEvent );
+
+        dout.writeInt( dataElements.size() );
+        for ( int i = 0; i < dataElements.size(); i++ )
+        {
+            dataElements.get( i ).serialize( dout );
         }
 
-        dout.writeInt( this.sections.size() );
-        for ( int i = 0; i < this.sections.size(); i++ )
+        dout.writeInt( sections.size() );
+        for ( int i = 0; i < sections.size(); i++ )
         {
-            this.sections.get( i ).serialize( dout );
+            sections.get( i ).serialize( dout );
         }
     }
 
@@ -139,9 +184,12 @@ public class ProgramStage
         throws IOException
     {
         super.deSerialize( dint );
-        this.setRepeatable( dint.readBoolean() );
-        this.setCompleted( dint.readBoolean() );
-        this.setSingleEvent( dint.readBoolean() );
+        setReportDate( dint.readUTF() );
+        setReportDateDescription( dint.readUTF() );
+        setRepeatable( dint.readBoolean() );
+        setStandardInterval( dint.readInt() );
+        setCompleted( dint.readBoolean() );
+        setSingleEvent( dint.readBoolean() );
         int dataElementSize = dint.readInt();
         if ( dataElementSize > 0 )
         {
@@ -149,7 +197,7 @@ public class ProgramStage
             {
                 ProgramStageDataElement de = new ProgramStageDataElement();
                 de.deSerialize( dint );
-                this.dataElements.add( de );
+                dataElements.add( de );
             }
         }
         else
@@ -164,7 +212,7 @@ public class ProgramStage
                 sections = new ArrayList<Section>();
                 Section se = new Section();
                 se.deSerialize( dint );
-                this.sections.add( se );
+                sections.add( se );
             }
         }
         else

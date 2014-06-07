@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -39,21 +40,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hisp.dhis.DhisConvenienceTest;
 import org.hisp.dhis.common.BaseDimensionalObject;
 import org.hisp.dhis.common.DimensionType;
+import org.hisp.dhis.common.DimensionalObject;
+import org.hisp.dhis.common.DimensionalObjectUtils;
 import org.hisp.dhis.common.NameableObject;
 import org.hisp.dhis.period.Period;
+import org.hisp.dhis.system.util.ListUtils;
 import org.junit.Test;
 
 /**
  * @author Lars Helge Overland
  */
 public class DataQueryParamsTest
+    extends DhisConvenienceTest
 {
     @Test
     public void testGetDimensionFromParam()
     {
-        assertEquals( DATAELEMENT_DIM_ID, DataQueryParams.getDimensionFromParam( "de:D348asd782j;kj78HnH6hgT;9ds9dS98s2" ) );
+        assertEquals( DATAELEMENT_DIM_ID, DimensionalObjectUtils.getDimensionFromParam( "de:D348asd782j;kj78HnH6hgT;9ds9dS98s2" ) );
     }
     
     @Test
@@ -61,25 +67,17 @@ public class DataQueryParamsTest
     {
         List<String> expected = new ArrayList<String>( Arrays.asList( "D348asd782j", "kj78HnH6hgT", "9ds9dS98s2" ) );
         
-        assertEquals( expected, DataQueryParams.getDimensionItemsFromParam( "de:D348asd782j;kj78HnH6hgT;9ds9dS98s2" ) );        
+        assertEquals( expected, DimensionalObjectUtils.getDimensionItemsFromParam( "de:D348asd782j;kj78HnH6hgT;9ds9dS98s2" ) );        
     }
     
     @Test
     public void testGetLevelFromLevelParam()
     {
-        assertEquals( 4, DataQueryParams.getLevelFromLevelParam( "LEVEL-4-dFsdfejdf2" ) );
-        assertEquals( 0, DataQueryParams.getLevelFromLevelParam( "LEVEL" ) );
-        assertEquals( 0, DataQueryParams.getLevelFromLevelParam( "LEVEL-gFd" ) );        
+        assertEquals( 4, DimensionalObjectUtils.getLevelFromLevelParam( "LEVEL-4-dFsdfejdf2" ) );
+        assertEquals( 0, DimensionalObjectUtils.getLevelFromLevelParam( "LEVEL" ) );
+        assertEquals( 0, DimensionalObjectUtils.getLevelFromLevelParam( "LEVEL-gFd" ) );        
     }
-    
-    @Test
-    public void testGetBoundaryFromLevelParam()
-    {
-        assertEquals( "dFsdfejdf2", DataQueryParams.getBoundaryFromLevelParam( "LEVEL-4-dFsdfejdf2" ) );
-        assertEquals( null, DataQueryParams.getBoundaryFromLevelParam( "LEVEL-4-" ) );
-        assertEquals( null, DataQueryParams.getBoundaryFromLevelParam( "LEVEL-4" ) );
-    }
-    
+        
     @Test
     public void testGetMeasureCriteriaFromParam()
     {
@@ -111,5 +109,26 @@ public class DataQueryParamsTest
         params.getDimensions().add( new BaseDimensionalObject( PERIOD_DIM_ID, DimensionType.PERIOD, periods ) );
         
         assertTrue( params.hasPeriods() );
+    }
+
+    @Test
+    public void testPruneToDimensionType()
+    {
+        DataQueryParams params = new DataQueryParams();
+        params.getDimensions().add( new BaseDimensionalObject( DimensionalObject.INDICATOR_DIM_ID, DimensionType.INDICATOR, null, null, 
+            ListUtils.getList( createIndicator( 'A', null ), createIndicator( 'B', null ) ) ) );
+        params.getDimensions().add( new BaseDimensionalObject( DimensionalObject.ORGUNIT_DIM_ID, DimensionType.ORGANISATIONUNIT, null, null,
+            ListUtils.getList( createOrganisationUnit( 'A' ), createOrganisationUnit( 'B' ) ) ) );
+        params.getFilters().add( new BaseDimensionalObject( DimensionalObject.PERIOD_DIM_ID, DimensionType.PERIOD, null, null,
+            ListUtils.getList( createPeriod( "201201" ), createPeriod( "201202" ) ) ) );
+
+        assertEquals( 2, params.getDimensions().size() );
+        assertEquals( 1, params.getFilters().size() );
+        
+        params.pruneToDimensionType( DimensionType.ORGANISATIONUNIT );
+        
+        assertEquals( 1, params.getDimensions().size() );
+        assertEquals( DimensionType.ORGANISATIONUNIT, params.getDimensions().get( 0 ).getDimensionType() );
+        assertEquals( 0, params.getFilters().size() );
     }
 }

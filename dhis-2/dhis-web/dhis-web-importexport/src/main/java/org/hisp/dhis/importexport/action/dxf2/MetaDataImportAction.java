@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.action.dxf2;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,22 +28,34 @@ package org.hisp.dhis.importexport.action.dxf2;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.opensymphony.xwork2.Action;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.hisp.dhis.dataelement.CategoryOptionGroup;
+import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataelement.DataElementCategoryOption;
+import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dxf2.metadata.ImportOptions;
 import org.hisp.dhis.dxf2.metadata.ImportService;
 import org.hisp.dhis.importexport.ImportStrategy;
+import org.hisp.dhis.importexport.action.util.ImportMetaDataCsvTask;
 import org.hisp.dhis.importexport.action.util.ImportMetaDataTask;
+import org.hisp.dhis.option.OptionSet;
+import org.hisp.dhis.organisationunit.OrganisationUnit;
+import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.scheduling.TaskCategory;
 import org.hisp.dhis.scheduling.TaskId;
 import org.hisp.dhis.system.notification.Notifier;
 import org.hisp.dhis.system.scheduling.Scheduler;
 import org.hisp.dhis.system.util.StreamUtils;
 import org.hisp.dhis.user.CurrentUserService;
+import org.hisp.dhis.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import com.opensymphony.xwork2.Action;
 
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
@@ -50,6 +63,16 @@ import java.io.InputStream;
 public class MetaDataImportAction
     implements Action
 {
+    private static final Map<String, Class<?>> KEY_CLASS_MAP = new HashMap<String, Class<?>>() {{
+       put( "dataelement", DataElement.class );
+       put( "dataelementgroup", DataElementGroup.class);
+       put( "categoryoption", DataElementCategoryOption.class );
+       put( "categoryoptiongroup", CategoryOptionGroup.class );
+       put( "organisationunit", OrganisationUnit.class );
+       put( "organisationunitgroup", OrganisationUnitGroup.class );
+       put( "optionset", OptionSet.class );
+    }};
+    
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
@@ -91,6 +114,25 @@ public class MetaDataImportAction
         this.strategy = ImportStrategy.valueOf( strategy );
     }
 
+    private String importFormat;
+
+    public String getImportFormat()
+    {
+        return importFormat;
+    }
+
+    public void setImportFormat( String importFormat )
+    {
+        this.importFormat = importFormat;
+    }
+    
+    private String classKey;
+
+    public void setClassKey( String classKey )
+    {
+        this.classKey = classKey;
+    }
+
     // -------------------------------------------------------------------------
     // Action Implementation
     // -------------------------------------------------------------------------
@@ -100,7 +142,9 @@ public class MetaDataImportAction
     {
         strategy = strategy != null ? strategy : ImportStrategy.NEW_AND_UPDATES;
 
-        TaskId taskId = new TaskId( TaskCategory.METADATA_IMPORT, currentUserService.getCurrentUser() );
+        User user = currentUserService.getCurrentUser();
+        
+        TaskId taskId = new TaskId( TaskCategory.METADATA_IMPORT, user );
 
         notifier.clear( taskId );
 
@@ -111,8 +155,17 @@ public class MetaDataImportAction
         importOptions.setStrategy( strategy.toString() );
         importOptions.setDryRun( dryRun );
 
-        scheduler.executeTask( new ImportMetaDataTask( currentUserService.getCurrentUser().getUid(), importService, importOptions, in, taskId ) );
-
+        String userId = user != null ? user.getUid() : null;
+        
+        if ( "csv".equals( importFormat ) && classKey != null && KEY_CLASS_MAP.get( classKey ) != null )
+        {
+            scheduler.executeTask( new ImportMetaDataCsvTask( userId, importService, importOptions, in, taskId, KEY_CLASS_MAP.get( classKey ) ) );
+        }
+        else
+        {
+            scheduler.executeTask( new ImportMetaDataTask( userId, importService, importOptions, in, taskId ) );
+        }
+        
         return SUCCESS;
     }
 }

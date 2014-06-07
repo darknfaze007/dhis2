@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.caseentry;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,21 +28,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.caseentry;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hisp.dhis.caseentry.state.SelectedStateManager;
-import org.hisp.dhis.patient.Patient;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramInstanceService;
 import org.hisp.dhis.program.ProgramService;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
 
 import com.opensymphony.xwork2.Action;
 
@@ -52,6 +53,13 @@ public class LoadProgramStageInstancesAction
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
+
+    private TrackedEntityInstanceService entityInstanceService;
+
+    public void setEntityInstanceService( TrackedEntityInstanceService entityInstanceService )
+    {
+        this.entityInstanceService = entityInstanceService;
+    }
 
     private ProgramService programService;
 
@@ -74,20 +82,20 @@ public class LoadProgramStageInstancesAction
         this.programStageInstanceService = programStageInstanceService;
     }
 
-    private SelectedStateManager selectedStateManager;
-
-    public void setSelectedStateManager( SelectedStateManager selectedStateManager )
-    {
-        this.selectedStateManager = selectedStateManager;
-    }
-
     // -------------------------------------------------------------------------
     // Input && Output
     // -------------------------------------------------------------------------
 
-    private Integer programId;
+    private String entityInstanceId;
 
-    public void setProgramId( Integer programId )
+    public void setEntityInstanceId( String entityInstanceId )
+    {
+        this.entityInstanceId = entityInstanceId;
+    }
+
+    private String programId;
+
+    public void setProgramId( String programId )
     {
         this.programId = programId;
     }
@@ -98,9 +106,9 @@ public class LoadProgramStageInstancesAction
     {
         return statusMap;
     }
-    
+
     private ProgramInstance programInstance;
-    
+
     public ProgramInstance getProgramInstance()
     {
         return programInstance;
@@ -119,7 +127,7 @@ public class LoadProgramStageInstancesAction
     {
         return program;
     }
-    
+
     // -------------------------------------------------------------------------
     // Implementation Action
     // -------------------------------------------------------------------------
@@ -127,23 +135,20 @@ public class LoadProgramStageInstancesAction
     public String execute()
         throws Exception
     {
-        selectedStateManager.clearSelectedProgramInstance();
-        selectedStateManager.clearSelectedProgramStageInstance();
-
-        Patient patient = selectedStateManager.getSelectedPatient();
+        TrackedEntityInstance entityInstance = entityInstanceService.getTrackedEntityInstance( entityInstanceId );
 
         program = programService.getProgram( programId );
 
         List<ProgramInstance> programInstances = new ArrayList<ProgramInstance>();
 
-        if ( program.getType() == Program.MULTIPLE_EVENTS_WITH_REGISTRATION)
+        if ( program.getType() == Program.MULTIPLE_EVENTS_WITH_REGISTRATION )
         {
-            programInstances = new ArrayList<ProgramInstance>( programInstanceService.getProgramInstances( patient,
+            programInstances = new ArrayList<ProgramInstance>( programInstanceService.getProgramInstances( entityInstance,
                 program, ProgramInstance.STATUS_ACTIVE ) );
         }
         else if ( program.getType() == Program.SINGLE_EVENT_WITH_REGISTRATION )
         {
-            programInstances = new ArrayList<ProgramInstance>( programInstanceService.getProgramInstances( patient,
+            programInstances = new ArrayList<ProgramInstance>( programInstanceService.getProgramInstances( entityInstance,
                 program ) );
         }
         else
@@ -155,17 +160,16 @@ public class LoadProgramStageInstancesAction
         {
             programInstance = programInstances.iterator().next();
 
-            selectedStateManager.setSelectedProgramInstance( programInstance );
-
             if ( programInstance.getProgramStageInstances() != null )
             {
                 if ( program.isRegistration() )
                 {
-                    statusMap = programStageInstanceService.statusProgramStageInstances( programInstance.getProgramStageInstances() );
+                    statusMap = programStageInstanceService.statusProgramStageInstances( programInstance
+                        .getProgramStageInstances() );
                 }
             }
         }
-        
+
         return SUCCESS;
     }
 }

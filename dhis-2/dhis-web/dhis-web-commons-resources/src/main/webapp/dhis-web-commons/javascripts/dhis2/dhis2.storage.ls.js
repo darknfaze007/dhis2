@@ -130,7 +130,7 @@ dhis2.util.namespace( 'dhis2.storage' );
                 var self = this;
 
                 if ( typeof object === 'undefined' || typeof object[self.keyPath] === 'undefined' ) {
-                    throw new Error( 'Invalid object' );
+                    throw new Error( dhis2.storage.INVALID_OBJECT );
                 }
 
                 object = JSON.parse( JSON.stringify( object ) );
@@ -177,7 +177,7 @@ dhis2.util.namespace( 'dhis2.storage' );
                 var self = this;
 
                 if ( typeof key === 'undefined' ) {
-                    throw new Error( 'Invalid key: ', key );
+                    throw new Error( dhis2.storage.INVALID_KEY, key );
                 }
 
                 var deferred = $.Deferred();
@@ -199,8 +199,9 @@ dhis2.util.namespace( 'dhis2.storage' );
                 var deferred = $.Deferred();
                 var idx = this.indexer[store].all();
                 var objects = [];
+                var filtered = typeof predicate === 'function';
 
-                if ( typeof predicate !== 'undefined' ) {
+                if ( filtered ) {
                     // just log and continue
                     console.log( 'predicate filtering is currently not supported in dom storage getAll, returning all' );
                 }
@@ -234,12 +235,12 @@ dhis2.util.namespace( 'dhis2.storage' );
             },
             enumerable: true
         },
-        'delete': {
+        'remove': {
             value: function ( store, key ) {
                 var self = this;
 
                 if ( typeof key === 'undefined' ) {
-                    throw new Error( 'Invalid key: ', key );
+                    throw new Error( dhis2.storage.INVALID_KEY, key );
                 }
 
                 var deferred = $.Deferred();
@@ -253,14 +254,14 @@ dhis2.util.namespace( 'dhis2.storage' );
             },
             enumerable: true
         },
-        'clear': {
+        'removeAll': {
             value: function ( store ) {
                 var self = this;
                 var deferred = $.Deferred();
 
                 this.getKeys( store ).done( function ( keys ) {
                     $.each( keys, function ( idx, item ) {
-                        self.delete( store, item );
+                        self.remove( store, item );
                     } );
 
                     deferred.resolveWith( self );
@@ -275,7 +276,7 @@ dhis2.util.namespace( 'dhis2.storage' );
                 var self = this;
 
                 if ( typeof key === 'undefined' ) {
-                    throw new Error( 'Invalid key: ', key );
+                    throw new Error( dhis2.storage.INVALID_KEY, key );
                 }
 
                 key = this.name + '.' + store + '.' + key;
@@ -314,7 +315,7 @@ dhis2.util.namespace( 'dhis2.storage' );
                 var deferred = $.Deferred();
 
                 $.each( self.objectStoreNames, function ( idx, item ) {
-                    self.clear( item );
+                    self.removeAll( item );
                     self.indexer[item].destroy();
                 } );
 

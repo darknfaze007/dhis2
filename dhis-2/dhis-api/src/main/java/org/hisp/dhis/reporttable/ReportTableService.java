@@ -1,19 +1,20 @@
 package org.hisp.dhis.reporttable;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,7 +29,11 @@ package org.hisp.dhis.reporttable;
  */
 
 import org.hisp.dhis.common.Grid;
+import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.i18n.I18nFormat;
+import org.hisp.dhis.indicator.Indicator;
+import org.hisp.dhis.organisationunit.OrganisationUnit;
 
 import java.util.Collection;
 import java.util.Date;
@@ -101,10 +106,18 @@ public interface ReportTableService
     /**
      * Retrieves ReportTables with the given identifiers.
      *
-     * @param reportTables the identfiers of the ReportTables to retrieve.
+     * @param reportTables the identifiers of the ReportTables to retrieve.
      * @return a Collection of ReportTables.
      */
     Collection<ReportTable> getReportTables( Collection<Integer> reportTables );
+    
+    /**
+     * Retrieves ReportTables with the given uids.
+     * 
+     * @param uids the list of uids.
+     * @return a list of ReportTables.
+     */
+    List<ReportTable> getReportTablesByUid( List<String> uids );
 
     /**
      * Retrieves the ReportTable with the given name.
@@ -135,4 +148,12 @@ public interface ReportTableService
     int getReportTableCount();
 
     int getReportTableCountByName( String name );
+    
+    int countDataSetReportTables( DataSet dataSet );
+    
+    int countIndicatorReportTables( Indicator indicator );
+    
+    int countDataElementReportTables( DataElement dataElement );
+    
+    int countOrganisationUnitReportTables( OrganisationUnit organisationUnit );
 }

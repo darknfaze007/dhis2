@@ -1,17 +1,20 @@
+package org.hisp.dhis.light.dataentry.action;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,8 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-package org.hisp.dhis.light.dataentry.action;
 
 import com.opensymphony.xwork2.Action;
 import org.apache.commons.lang.Validate;
@@ -123,16 +124,16 @@ public class GetDataSetOverviewAction
         return organisationUnit;
     }
 
-    private String periodId;
+    private String isoPeriod;
 
-    public void setPeriodId( String periodId )
+    public String getIsoPeriod()
     {
-        this.periodId = periodId;
+        return isoPeriod;
     }
 
-    public String getPeriodId()
+    public void setIsoPeriod( String isoPeriod )
     {
-        return periodId;
+        this.isoPeriod = isoPeriod;
     }
 
     private Period period;
@@ -214,12 +215,12 @@ public class GetDataSetOverviewAction
     public String execute()
     {
         Validate.notNull( organisationUnitId );
-        Validate.notNull( periodId );
+        Validate.notNull( isoPeriod );
         Validate.notNull( dataSetId );
-
+        
         organisationUnit = organisationUnitService.getOrganisationUnit( organisationUnitId );
 
-        period = periodService.getPeriodByExternalId( periodId );
+        period = periodService.getPeriod ( isoPeriod );
 
         period.setName( format.formatPeriod( period ) );
 

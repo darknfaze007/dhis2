@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.service;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -51,7 +52,6 @@ import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataelement.DataElementGroupSet;
 import org.hisp.dhis.dataelement.DataElementService;
-import org.hisp.dhis.dataset.CompleteDataSetRegistration;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.datavalue.DataValue;
@@ -70,7 +70,6 @@ import org.hisp.dhis.importexport.ImportStrategy;
 import org.hisp.dhis.importexport.ImportType;
 import org.hisp.dhis.importexport.Importer;
 import org.hisp.dhis.importexport.importer.ChartImporter;
-import org.hisp.dhis.importexport.importer.CompleteDataSetRegistrationImporter;
 import org.hisp.dhis.importexport.importer.ConstantImporter;
 import org.hisp.dhis.importexport.importer.DataDictionaryImporter;
 import org.hisp.dhis.importexport.importer.DataElementCategoryComboImporter;
@@ -103,7 +102,6 @@ import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.indicator.IndicatorType;
 import org.hisp.dhis.jdbc.batchhandler.CategoryCategoryOptionAssociationBatchHandler;
 import org.hisp.dhis.jdbc.batchhandler.CategoryComboCategoryAssociationBatchHandler;
-import org.hisp.dhis.jdbc.batchhandler.CompleteDataSetRegistrationBatchHandler;
 import org.hisp.dhis.jdbc.batchhandler.ConstantBatchHandler;
 import org.hisp.dhis.jdbc.batchhandler.DataDictionaryBatchHandler;
 import org.hisp.dhis.jdbc.batchhandler.DataDictionaryDataElementBatchHandler;
@@ -1007,38 +1005,6 @@ public class DefaultImportObjectManager
     }
 
     @Transactional
-    public void importCompleteDataSetRegistrations()
-    {
-        BatchHandler<CompleteDataSetRegistration> batchHandler = batchHandlerFactory.createBatchHandler(
-            CompleteDataSetRegistrationBatchHandler.class ).init();
-
-        Collection<ImportObject> importObjects = importObjectStore.getImportObjects( CompleteDataSetRegistration.class );
-
-        Map<Object, Integer> dataSetMapping = objectMappingGenerator.getDataSetMapping( false );
-        Map<Object, Integer> periodMapping = objectMappingGenerator.getPeriodMapping( false );
-        Map<Object, Integer> sourceMapping = objectMappingGenerator.getOrganisationUnitMapping( false );
-
-        Importer<CompleteDataSetRegistration> importer = new CompleteDataSetRegistrationImporter( batchHandler, params );
-
-        for ( ImportObject importObject : importObjects )
-        {
-            CompleteDataSetRegistration registration = (CompleteDataSetRegistration) importObject.getObject();
-
-            registration.getDataSet().setId( dataSetMapping.get( registration.getDataSet().getId() ) );
-            registration.getPeriod().setId( periodMapping.get( registration.getPeriod().getId() ) );
-            registration.getSource().setId( sourceMapping.get( registration.getSource().getId() ) );
-
-            importer.importObject( registration, params );
-        }
-
-        batchHandler.flush();
-
-        importObjectStore.deleteImportObjects( CompleteDataSetRegistration.class );
-
-        log.info( "Imported CompleteDataSetRegistrations" );
-    }
-
-    @Transactional
     public void importDataValues()
     {
         Integer importedObjects = 0;
@@ -1066,13 +1032,13 @@ public class DefaultImportObjectManager
                 if  ( dataElementMapping.containsKey( value.getDataElement().getId() )
                         && periodMapping.containsKey( value.getPeriod().getId())
                         && sourceMapping.containsKey( value.getSource().getId())
-                        && categoryOptionComboMapping.containsKey(value.getOptionCombo().getId()))
+                        && categoryOptionComboMapping.containsKey(value.getCategoryOptionCombo().getId()))
                 {
 
                     value.getDataElement().setId( dataElementMapping.get( value.getDataElement().getId() ) );
                     value.getPeriod().setId( periodMapping.get( value.getPeriod().getId() ) );
                     value.getSource().setId( sourceMapping.get( value.getSource().getId() ) );
-                    value.getOptionCombo().setId( categoryOptionComboMapping.get( value.getOptionCombo().getId() ) );
+                    value.getCategoryOptionCombo().setId( categoryOptionComboMapping.get( value.getCategoryOptionCombo().getId() ) );
                     importer.importObject( value, params );
                     importedObjects++;
                 }

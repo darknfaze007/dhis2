@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.dhis14.xml.exporter;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,46 +28,81 @@ package org.hisp.dhis.importexport.dhis14.xml.exporter;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.amplecode.quick.StatementManager;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import org.amplecode.staxwax.factory.XMLFactory;
 import org.amplecode.staxwax.writer.XMLWriter;
 import org.hibernate.SessionFactory;
-import org.hisp.dhis.aggregation.AggregatedDataValueService;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.datavalue.DataValueService;
 import org.hisp.dhis.importexport.ExportParams;
 import org.hisp.dhis.importexport.ExportPipeThread;
 import org.hisp.dhis.importexport.ExportService;
-import org.hisp.dhis.importexport.dhis14.xml.converter.*;
-import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.*;
+import org.hisp.dhis.importexport.dhis14.xml.converter.DataElementConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.DataElementGroupMemberConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.DataElementIndicatorGroupConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.DataTypeConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.DataValueConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.DataValueDailyConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.IndicatorGroupMemberConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.OrganisationUnitConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.OrganisationUnitGroupConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.OrganisationUnitGroupMemberConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.OrganisationUnitHierarchyConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.OrganisationUnitStructureConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.PeriodConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.PeriodTypeConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.UserConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.UserRoleConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.DataElementGroupMemberXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.DataElementIndicatorGroupXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.DataElementXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.DataRootXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.DataTypeXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.IndicatorGroupMemberXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.OrganisationUnitGroupMemberXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.OrganisationUnitGroupXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.OrganisationUnitHierarchyXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.OrganisationUnitStructureXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.OrganisationUnitXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.PeriodTypeXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.PeriodXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.UserRoleXSDConverter;
+import org.hisp.dhis.importexport.dhis14.xml.converter.xsd.UserXSDConverter;
 import org.hisp.dhis.indicator.IndicatorService;
+import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.PeriodService;
 
-import java.io.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-
 /**
  * @author Lars Helge Overland
- * @version $Id: DefaultDhis14XMLExportService.java 5793 2008-10-02 14:14:00Z larshelg $
+ * @version $Id: DefaultDhis14XMLExportService.java 5793 2008-10-02 14:14:00Z
+ *          larshelg $
  */
 public class DefaultDhis14XMLExportService
     implements ExportService
 {
     private static final String ENCODING = "ISO-8859-1";
+
     private static final String ZIP_ENTRY_NAME = "Export.xml";
+
     private static final String ROOT_NAME = "root";
-    private static final String[] ROOT_PROPERTIES = { "xmlns:xsd", "http://www.w3.org/2001/XMLSchema", 
-                                  "xmlns:od", "urn:schemas-microsoft-com:officedata" };
+
+    private static final String[] ROOT_PROPERTIES = { "xmlns:xsd", "http://www.w3.org/2001/XMLSchema", "xmlns:od",
+        "urn:schemas-microsoft-com:officedata" };
 
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
 
     private SessionFactory sessionFactory;
-    
+
     public void setSessionFactory( SessionFactory sessionFactory )
     {
         this.sessionFactory = sessionFactory;
@@ -85,7 +121,7 @@ public class DefaultDhis14XMLExportService
     {
         this.indicatorService = indicatorService;
     }
-    
+
     private PeriodService periodService;
 
     public void setPeriodService( PeriodService periodService )
@@ -106,7 +142,14 @@ public class DefaultDhis14XMLExportService
     {
         this.organisationUnitService = organisationUnitService;
     }
-    
+
+    private OrganisationUnitGroupService organisationUnitGroupService;
+
+    public void setOrganisationUnitGroupService( OrganisationUnitGroupService organisationUnitGroupService )
+    {
+        this.organisationUnitGroupService = organisationUnitGroupService;
+    }
+
     // -------------------------------------------------------------------------
     // ExportService implementation
     // -------------------------------------------------------------------------
@@ -116,26 +159,27 @@ public class DefaultDhis14XMLExportService
         try
         {
             // -------------------------------------------------------------------------
-            // Pipes are input/output pairs. Data written on the output stream shows 
-            // up on the input stream at the other end of the pipe. 
+            // Pipes are input/output pairs. Data written on the output stream
+            // shows
+            // up on the input stream at the other end of the pipe.
             // -------------------------------------------------------------------------
-            
+
             PipedOutputStream out = new PipedOutputStream();
-            
+
             PipedInputStream in = new PipedInputStream( out );
 
             ZipOutputStream zipOut = new ZipOutputStream( out );
-            
+
             zipOut.putNextEntry( new ZipEntry( ZIP_ENTRY_NAME ) );
 
             XMLWriter writer = XMLFactory.getXMLWriter( zipOut );
 
             // -------------------------------------------------------------------------
-            // Writes to one end of the pipe 
+            // Writes to one end of the pipe
             // -------------------------------------------------------------------------
 
             ExportPipeThread thread = new Dhis14ExportPipeThread( sessionFactory );
-            
+
             thread.setZipOutputStream( zipOut );
             thread.setParams( params );
             thread.setWriter( writer );
@@ -143,40 +187,78 @@ public class DefaultDhis14XMLExportService
             thread.setRootName( ROOT_NAME );
             thread.setRootProperties( ROOT_PROPERTIES );
 
-            thread.registerXSDConverter( new DataRootXSDConverter() );
-            thread.registerXSDConverter( new DataElementXSDConverter() );
-            thread.registerXSDConverter( new PeriodTypeXSDConverter() );
-            thread.registerXSDConverter(new OrganisationUnitXSDConverter() );
-            thread.registerXSDConverter( new OrganisationUnitHierarchyXSDConverter() );
-            thread.registerXSDConverter( new IndicatorTypeXSDConverter() );
-            thread.registerXSDConverter( new IndicatorXSDConverter() );
-            thread.registerXSDConverter( new DataTypeXSDConverter() );
-            thread.registerXSDConverter( new UserXSDConverter() );
-            thread.registerXSDConverter( new UserRoleXSDConverter() );
-            
-            thread.registerXMLConverter( new DataElementConverter( dataElementService ) );
-            thread.registerXMLConverter( new PeriodTypeConverter() );
-            thread.registerXMLConverter( new PeriodTypeConverter() );
-            thread.registerXMLConverter( new OrganisationUnitConverter( organisationUnitService ) );
-            //thread.registerXMLConverter( new OrganisationUnitGroupConverter( organisationUnitGroupService ) );
-            //thread.registerXMLConverter( new OrganisationUnitGroupMemberConverter( organisationUnitGroupService, organisationUnitService ) );
-            thread.registerXMLConverter( new OrganisationUnitHierarchyConverter(  organisationUnitService ) );
-            thread.registerXMLConverter( new IndicatorTypeConverter( indicatorService ) );
-            thread.registerXMLConverter( new IndicatorConverter( indicatorService ) );            
-            thread.registerXMLConverter( new DataTypeConverter() );
-            thread.registerXMLConverter( new UserConverter() );
-            thread.registerXMLConverter( new UserRoleConverter() );
-            
-            thread.registerCSVConverter( new DataValueConverter( periodService, dataValueService, dataElementService ) );
-            
+            if ( params.isMetaData() )
+            {
+
+                // =============XSD================
+
+                thread.registerXSDConverter( new DataRootXSDConverter() );
+                thread.registerXSDConverter( new DataElementXSDConverter() );
+                thread.registerXSDConverter( new DataElementGroupMemberXSDConverter() );
+                thread.registerXSDConverter( new DataElementIndicatorGroupXSDConverter() );
+                thread.registerXSDConverter( new OrganisationUnitXSDConverter() );
+                thread.registerXSDConverter( new OrganisationUnitGroupXSDConverter() );
+                thread.registerXSDConverter( new OrganisationUnitGroupMemberXSDConverter() );
+                thread.registerXSDConverter( new OrganisationUnitHierarchyXSDConverter() );
+                thread.registerXSDConverter( new OrganisationUnitStructureXSDConverter() );
+                thread.registerXSDConverter( new DataTypeXSDConverter() );
+                thread.registerXSDConverter( new IndicatorGroupMemberXSDConverter() );
+                thread.registerXSDConverter( new UserXSDConverter() );
+                thread.registerXSDConverter( new UserRoleXSDConverter() );
+                thread.registerXSDConverter( new PeriodXSDConverter() );
+                thread.registerXSDConverter( new PeriodTypeXSDConverter() );
+
+                // ==========XML=========
+
+                thread.registerXMLConverter( new DataElementConverter( dataElementService ) );
+                thread.registerXMLConverter( new DataElementGroupMemberConverter( dataElementService ) );
+                thread.registerXMLConverter( new DataElementIndicatorGroupConverter( dataElementService,
+                    indicatorService ) );
+                thread.registerXMLConverter( new OrganisationUnitConverter( organisationUnitService ) );
+                thread.registerXMLConverter( new OrganisationUnitGroupConverter( organisationUnitGroupService ) );
+                thread.registerXMLConverter( new OrganisationUnitGroupMemberConverter( organisationUnitGroupService,
+                    organisationUnitService ) );
+                thread.registerXMLConverter( new OrganisationUnitHierarchyConverter( organisationUnitService ) );
+                thread.registerXMLConverter( new OrganisationUnitStructureConverter() );
+                thread.registerXMLConverter( new DataTypeConverter() );
+                thread.registerXMLConverter( new IndicatorGroupMemberConverter( indicatorService ) );
+                thread.registerXMLConverter( new UserConverter() );
+                thread.registerXMLConverter( new UserRoleConverter() );
+                thread.registerXMLConverter( new PeriodConverter( periodService ) );
+                thread.registerXMLConverter( new PeriodTypeConverter() );
+
+            }
+            else
+            {
+
+                if ( params.isDataValue() && !params.isDataValueDaily() )
+                {
+                    thread.registerCSVConverter( new DataValueConverter( periodService, dataValueService,
+                        dataElementService ) );
+                }
+                else if ( !params.isDataValue() && params.isDataValueDaily() )
+                {
+                    thread.registerCSVConverter( new DataValueDailyConverter( periodService, dataValueService,
+                        dataElementService ) );
+                }
+                else
+                {
+                    thread.registerCSVConverter( new DataValueConverter( periodService, dataValueService,
+                        dataElementService ) );
+                    thread.registerCSVConverter( new DataValueDailyConverter( periodService, dataValueService,
+                        dataElementService ) );
+                }
+
+            }
+
             thread.start();
 
             // -------------------------------------------------------------------------
-            // Reads at the other end of the pipe 
+            // Reads at the other end of the pipe
             // -------------------------------------------------------------------------
-            
+
             InputStream bis = new BufferedInputStream( in );
-            
+
             return bis;
         }
         catch ( IOException ex )
@@ -185,4 +267,3 @@ public class DefaultDhis14XMLExportService
         }
     }
 }
-

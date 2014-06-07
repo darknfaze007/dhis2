@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport;
 
 /*
- * Copyright (c) 2004-2005, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the <ORGANIZATION> nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -59,7 +60,6 @@ import org.hisp.dhis.system.util.StreamUtils;
 public class DefaultImportService
     implements ImportService
 {
-
     private final Log log = LogFactory.getLog( DefaultImportService.class );
 
     static public final String DXF1URI = "http://dhis2.org/schema/dxf/1.0";
@@ -123,7 +123,7 @@ public class DefaultImportService
                 log.info( "Saved zipstream to file: " + tempZipFile.getAbsolutePath() );
 
                 zipFile = new ZipFile( tempZipFile );
-
+                
                 xmlDataStream = new BufferedInputStream( ZipAnalyzer.getTransformableStream( zipFile ) );
 
             }
@@ -179,8 +179,7 @@ public class DefaultImportService
                 dxfInStream = 
                     new BufferedInputStream(new FileInputStream( transformOutput ));
                 rootNameSpace = preConverter.getDocumentRoot( dxfInStream ).getNamespaceURI();
-                dxfReader = XMLFactory.getXMLReader( dxfInStream );
-                
+                dxfReader = XMLFactory.getXMLReader( dxfInStream );                
             }
 
             log.debug( "Sending DXFv1 to converter" );

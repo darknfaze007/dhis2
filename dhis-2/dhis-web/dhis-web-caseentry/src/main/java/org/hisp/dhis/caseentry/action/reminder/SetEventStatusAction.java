@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.reminder;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,8 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.reminder;
-
+import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
 
@@ -49,6 +51,13 @@ public class SetEventStatusAction
     public void setProgramStageInstanceService( ProgramStageInstanceService programStageInstanceService )
     {
         this.programStageInstanceService = programStageInstanceService;
+    }
+
+    private I18nFormat format;
+
+    public void setFormat( I18nFormat format )
+    {
+        this.format = format;
     }
 
     // -------------------------------------------------------------------------
@@ -83,31 +92,31 @@ public class SetEventStatusAction
         switch ( status.intValue() )
         {
         case ProgramStageInstance.COMPLETED_STATUS:
-            programStageInstance.setCompleted( true );
-            programStageInstance.setStatus( null );
+            programStageInstanceService.completeProgramStageInstance( programStageInstance, format );
             break;
         case ProgramStageInstance.VISITED_STATUS:
             programStageInstance.setCompleted( false );
-            programStageInstance.setStatus( null );
+            programStageInstance.setStatus( ProgramStageInstance.ACTIVE_STATUS );
+            programStageInstanceService.updateProgramStageInstance( programStageInstance );
             break;
         case ProgramStageInstance.LATE_VISIT_STATUS:
             programStageInstance.setCompleted( false );
-            programStageInstance.setStatus( null );
+            programStageInstance.setStatus(  ProgramStageInstance.ACTIVE_STATUS );
+            programStageInstanceService.updateProgramStageInstance( programStageInstance );
             break;
         case ProgramStageInstance.FUTURE_VISIT_STATUS:
             programStageInstance.setCompleted( false );
-            programStageInstance.setStatus( null );
+            programStageInstance.setStatus(  ProgramStageInstance.ACTIVE_STATUS );
+            programStageInstanceService.updateProgramStageInstance( programStageInstance );
             break;
         case ProgramStageInstance.SKIPPED_STATUS:
             programStageInstance.setStatus( status );
+            programStageInstanceService.updateProgramStageInstance( programStageInstance );
             break;
         default:
             break;
         }
 
-        programStageInstanceService.updateProgramStageInstance( programStageInstance );
-
         return SUCCESS;
     }
-
 }

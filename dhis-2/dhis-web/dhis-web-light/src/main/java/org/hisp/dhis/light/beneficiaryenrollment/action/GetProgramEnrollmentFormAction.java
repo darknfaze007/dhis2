@@ -1,17 +1,20 @@
+package org.hisp.dhis.light.beneficiaryenrollment.action;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,18 +28,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.light.beneficiaryenrollment.action;
-
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientAttribute;
-import org.hisp.dhis.patient.PatientIdentifierType;
-import org.hisp.dhis.patient.PatientService;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
 
 import com.opensymphony.xwork2.Action;
 
@@ -47,9 +47,9 @@ public class GetProgramEnrollmentFormAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private PatientService patientService;
+    private TrackedEntityInstanceService patientService;
 
-    public void setPatientService( PatientService patientService )
+    public void setPatientService( TrackedEntityInstanceService patientService )
     {
         this.patientService = patientService;
     }
@@ -89,14 +89,14 @@ public class GetProgramEnrollmentFormAction
         this.patientId = patientId;
     }
 
-    private Patient patient;
+    private TrackedEntityInstance patient;
 
-    public Patient getPatient()
+    public TrackedEntityInstance getPatient()
     {
         return patient;
     }
 
-    public void setPatient( Patient patient )
+    public void setPatient( TrackedEntityInstance patient )
     {
         this.patient = patient;
     }
@@ -125,26 +125,14 @@ public class GetProgramEnrollmentFormAction
         this.now = now;
     }
 
-    private Collection<PatientIdentifierType> patientIdentifierTypes;
+    private Collection<TrackedEntityAttribute> patientAttributes;
 
-    public Collection<PatientIdentifierType> getPatientIdentifierTypes()
-    {
-        return patientIdentifierTypes;
-    }
-
-    public void setPatientIdentifierTypes( Collection<PatientIdentifierType> patientIdentifierTypes )
-    {
-        this.patientIdentifierTypes = patientIdentifierTypes;
-    }
-
-    private Collection<PatientAttribute> patientAttributes;
-
-    public Collection<PatientAttribute> getPatientAttributes()
+    public Collection<TrackedEntityAttribute> getPatientAttributes()
     {
         return patientAttributes;
     }
 
-    public void setPatientAttributes( Collection<PatientAttribute> patientAttributes )
+    public void setPatientAttributes( Collection<TrackedEntityAttribute> patientAttributes )
     {
         this.patientAttributes = patientAttributes;
     }
@@ -155,7 +143,7 @@ public class GetProgramEnrollmentFormAction
     public String execute()
         throws Exception
     {
-        patient = patientService.getPatient( patientId );
+        patient = patientService.getTrackedEntityInstance( patientId );
         program = programService.getProgram( programId );
 
         if ( this.program.isSingleEvent() )
@@ -163,8 +151,7 @@ public class GetProgramEnrollmentFormAction
             return REDIRECT;
         }
 
-        patientAttributes = program.getPatientAttributes();
-        patientIdentifierTypes = program.getPatientIdentifierTypes();
+        patientAttributes = program.getTrackedEntityAttributes();
         now = new SimpleDateFormat( "yyyy-MM-dd" ).format( new Date() );
 
         return SUCCESS;

@@ -1,17 +1,20 @@
+package org.hisp.dhis.light.namebaseddataentry.action;
+
 /*
-  * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,13 +27,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.light.namebaseddataentry.action;
+
+
+import java.util.List;
+import java.util.Set;
+
+import org.hisp.dhis.common.Grid;
+import org.hisp.dhis.common.OrganisationUnitSelectionMode;
+import org.hisp.dhis.common.QueryItem;
+import org.hisp.dhis.common.QueryOperator;
+import org.hisp.dhis.organisationunit.OrganisationUnitService;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceQueryParams;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
+import org.hisp.dhis.trackedentityattributevalue.TrackedEntityAttributeValue;
 
 import com.opensymphony.xwork2.Action;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientService;
-
-import java.util.Collection;
 
 public class FindBeneficiarytAction
     implements Action
@@ -41,32 +53,53 @@ public class FindBeneficiarytAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private PatientService patientService;
+    private TrackedEntityInstanceService patientService;
 
-    public PatientService getPatientService()
-    {
-        return patientService;
-    }
-
-    public void setPatientService( PatientService patientService )
+    public void setPatientService( TrackedEntityInstanceService patientService )
     {
         this.patientService = patientService;
+    }
+
+    private OrganisationUnitService organisationUnitService;
+
+    public void setOrganisationUnitService( OrganisationUnitService organisationUnitService )
+    {
+        this.organisationUnitService = organisationUnitService;
+    }
+
+    private TrackedEntityAttributeService trackedEntityAttributeService;
+
+    public void setTrackedEntityAttributeService( TrackedEntityAttributeService trackedEntityAttributeService )
+    {
+        this.trackedEntityAttributeService = trackedEntityAttributeService;
     }
 
     // -------------------------------------------------------------------------
     // Input & Output
     // -------------------------------------------------------------------------
 
-    private Collection<Patient> patients;
+    private List<List<Object>> trackedEntityList;
 
-    public Collection<Patient> getPatients()
+    public List<List<Object>> getTrackedEntityList()
     {
-        return patients;
+        return trackedEntityList;
     }
 
-    public void setPatients( Collection<Patient> patients )
+    public void setTrackedEntityList( List<List<Object>> trackedEntityList )
     {
-        this.patients = patients;
+        this.trackedEntityList = trackedEntityList;
+    }
+
+    private Set<TrackedEntityAttributeValue> patientAttributes;
+
+    public Set<TrackedEntityAttributeValue> getPatientAttributes()
+    {
+        return patientAttributes;
+    }
+
+    public void setPatientAttributes( Set<TrackedEntityAttributeValue> patientAttributes )
+    {
+        this.patientAttributes = patientAttributes;
     }
 
     private String keyword;
@@ -93,16 +126,28 @@ public class FindBeneficiarytAction
         this.organisationUnitId = organisationUnitId;
     }
 
-    private Integer patientId;
+    private Integer patientAttributeId;
 
-    public Integer getPatientId()
+    public Integer getPatientAttributeId()
     {
-        return patientId;
+        return patientAttributeId;
     }
 
-    public void setPatientId( Integer patientId )
+    public void setPatientAttributeId( Integer patientAttributeId )
     {
-        this.patientId = patientId;
+        this.patientAttributeId = patientAttributeId;
+    }
+
+    private String patientUID;
+
+    public String getPatientUID()
+    {
+        return patientUID;
+    }
+
+    public void setPatientUID( String patientUID )
+    {
+        this.patientUID = patientUID;
     }
 
     // Use in search related patient
@@ -135,23 +180,31 @@ public class FindBeneficiarytAction
     public String execute()
         throws Exception
     {
-        if ( keyword != null )
-        {
-            int index = keyword.indexOf( ' ' );
+        TrackedEntityInstanceQueryParams param = new TrackedEntityInstanceQueryParams();
+        QueryItem queryItem = new QueryItem(
+            trackedEntityAttributeService.getTrackedEntityAttribute( patientAttributeId ), QueryOperator.EQ, keyword,
+            false );
 
-            if ( index != -1 && index == keyword.lastIndexOf( ' ' ) )
-            {
-                String[] keys = keyword.split( " " );
-                keyword = keys[0] + "  " + keys[1];
-            }
+        if ( organisationUnitId == null || organisationUnitId == 0 )
+        {
+            param.setOrganisationUnitMode( OrganisationUnitSelectionMode.ALL );
+        }
+        else
+        {
+            param.addOrganisationUnit( organisationUnitService.getOrganisationUnit( organisationUnitId ) );
         }
 
-        patients = patientService.getPatientsForMobile( keyword, organisationUnitId );
+        param.addAttribute( queryItem );
 
-        if ( patients.size() == 1 )
+        Grid trackedEntityGrid = patientService.getTrackedEntityInstances( param );
+        trackedEntityList = trackedEntityGrid.getRows();
+
+
+        if ( trackedEntityList.size() == 1 )
         {
-            Patient patient = patients.iterator().next();
-            patientId = patient.getId();
+            List<Object> firstRow = trackedEntityList.iterator().next();
+            patientUID = firstRow.get( 0 ).toString();
+
             return REDIRECT;
         }
         return SUCCESS;

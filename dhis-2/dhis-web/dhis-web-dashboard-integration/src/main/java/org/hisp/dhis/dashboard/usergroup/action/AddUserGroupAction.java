@@ -1,19 +1,20 @@
 package org.hisp.dhis.dashboard.usergroup.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -30,6 +31,9 @@ package org.hisp.dhis.dashboard.usergroup.action;
 import java.util.List;
 
 import org.hisp.dhis.attribute.AttributeService;
+import org.hisp.dhis.hibernate.exception.CreateAccessDeniedException;
+import org.hisp.dhis.security.SecurityService;
+import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.system.util.AttributeUtils;
 import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserGroup;
@@ -37,6 +41,8 @@ import org.hisp.dhis.user.UserGroupService;
 import org.hisp.dhis.user.UserService;
 
 import com.opensymphony.xwork2.Action;
+
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_ONLY_MANAGE_WITHIN_USER_GROUPS;
 
 public class AddUserGroupAction
     implements Action
@@ -64,6 +70,20 @@ public class AddUserGroupAction
     public void setAttributeService( AttributeService attributeService )
     {
         this.attributeService = attributeService;
+    }
+
+    private SystemSettingManager systemSettingManager;
+
+    public void setSystemSettingManager( SystemSettingManager systemSettingManager )
+    {
+        this.systemSettingManager = systemSettingManager;
+    }
+
+    private SecurityService securityService;
+
+    public void setSecurityService( SecurityService securityService )
+    {
+        this.securityService = securityService;
     }
 
     // -------------------------------------------------------------------------
@@ -98,12 +118,19 @@ public class AddUserGroupAction
     public String execute()
         throws Exception
     {
+        boolean writeGroupRequired = (Boolean) systemSettingManager.getSystemSetting( KEY_ONLY_MANAGE_WITHIN_USER_GROUPS, false );
+
         UserGroup userGroup = new UserGroup( name );
         
         for ( Integer groupMember : groupMembersList )
         {
             User user = userService.getUser( groupMember );
             userGroup.addUser( user );
+
+            if ( writeGroupRequired && !userGroup.getMembers().contains( user) && !userService.canUpdate( user.getUserCredentials() ) )
+            {
+                throw new CreateAccessDeniedException( "- You don't have permission to add all selected users to this group." );
+            }
         }
 
         if ( jsonAttributeValues != null )

@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.caseentry;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,15 +28,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.caseentry;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.hisp.dhis.caseentry.state.SelectedStateManager;
 import org.hisp.dhis.program.ProgramStageInstance;
+import org.hisp.dhis.program.ProgramStageInstanceService;
 import org.hisp.dhis.program.ProgramValidation;
 import org.hisp.dhis.program.ProgramValidationResult;
 import org.hisp.dhis.program.ProgramValidationService;
@@ -51,13 +53,26 @@ public class ValidateProgramInstanceAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private SelectedStateManager selectedStateManager;
+    private ProgramStageInstanceService programStageInstanceService;
+
+
+    public void setProgramStageInstanceService( ProgramStageInstanceService programStageInstanceService )
+    {
+        this.programStageInstanceService = programStageInstanceService;
+    }
 
     private ProgramValidationService programValidationService;
 
+    public void setProgramValidationService( ProgramValidationService programValidationService )
+    {
+        this.programValidationService = programValidationService;
+    }
+
     // -------------------------------------------------------------------------
-    // Output
+    // Input && Output
     // -------------------------------------------------------------------------
+
+    private Integer programStageInstanceId;
 
     private Collection<ProgramValidationResult> programValidationResults;
 
@@ -69,14 +84,14 @@ public class ValidateProgramInstanceAction
     // Getters && Setters
     // -------------------------------------------------------------------------
 
-    public void setSelectedStateManager( SelectedStateManager selectedStateManager )
-    {
-        this.selectedStateManager = selectedStateManager;
-    }
-
     public Map<Integer, String> getLeftsideFormulaMap()
     {
         return leftsideFormulaMap;
+    }
+
+    public void setProgramStageInstanceId( Integer programStageInstanceId )
+    {
+        this.programStageInstanceId = programStageInstanceId;
     }
 
     public Map<Integer, String> getRightsideFormulaMap()
@@ -89,11 +104,6 @@ public class ValidateProgramInstanceAction
         return programValidationResults;
     }
 
-    public void setProgramValidationService( ProgramValidationService programValidationService )
-    {
-        this.programValidationService = programValidationService;
-    }
-
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
@@ -104,13 +114,13 @@ public class ValidateProgramInstanceAction
     {
         programValidationResults = new ArrayList<ProgramValidationResult>();
 
-        ProgramStageInstance programStageInstance = selectedStateManager.getSelectedProgramStageInstance();
+        ProgramStageInstance programStageInstance = programStageInstanceService.getProgramStageInstance( programStageInstanceId );
 
-        Collection<ProgramValidation> validation = programValidationService.getProgramValidation( programStageInstance
-            .getProgramStage() );
+        List<ProgramValidation> validation = new ArrayList<ProgramValidation>(
+            programValidationService.getProgramValidation( programStageInstance.getProgramStage() ) );
+
         programValidationResults = programValidationService.validate( validation, programStageInstance );
 
         return SUCCESS;
     }
-
 }

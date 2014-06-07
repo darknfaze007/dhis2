@@ -2,7 +2,6 @@
 	jQuery(document).ready( function() {
 		validation( "sendSMSForm", function( form ) { sendSMSMessage( form ); } );
 		selectionTreeSelection.setListenerFunction( selectedOrganisationUnitSendSMS );
-		
 		var target = '${sendTo}';
 		jQuery( "#sendTarget > option" ).each( function( i, item )
 		{
@@ -44,10 +43,7 @@
 						<option value="phone">$i18n.getString( "raw_phone_number" )</option>
 						<option value="userGroup">$i18n.getString( "user_group" )</option>
 						<option value="user">$i18n.getString( "assigned_user_number" )</option>
-						<option value="unit">$i18n.getString( "stakeholder_contact_person" )</option>
-						#if( $auth.hasAccess( "dhis-web-sms", "showBeneficiarySMSForm" ) ) 
-						<option value="patient" selected="true">$i18n.getString( "patients_registered" )</option>
-						#end
+						<option value="unit">$i18n.getString( "org_unit_phone_number" )</option>
 					</select>
 				</td>
 			</tr>
@@ -73,7 +69,7 @@
 			</tr>
 			
 			<tr><th colspan="2">$i18n.getString( "message" ) ($i18n.getString( "do_not_send_patient_confidential_messages_using_sms" ))</th></tr>
-			<tr><td colspan="2"><textarea id="smsMessage" name="smsMessage" rows="5" style="width:544px;" class="{validate:{required:true}}"></textarea></td></tr>
+			<tr><td colspan="2"><textarea id="text" name="text" rows="5" style="width:544px;" class="{validate:{required:true}}"></textarea></td></tr>
 			<tr>
 				<td><input type="submit" class='large-button' name="send" value="$i18n.getString( 'send' )"/>				
 			</tr>

@@ -1,19 +1,20 @@
 package org.hisp.dhis.setting;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,29 +35,25 @@ import static org.junit.Assert.assertNull;
 import java.util.Collection;
 
 import org.hisp.dhis.DhisSpringTest;
-import org.hisp.dhis.common.GenericIdentifiableObjectStore;
-import org.hisp.dhis.setting.SystemSetting;
 import org.junit.Test;
 
 /**
  * @author Stian Strandli
- * @version $Id: SystemSettingStoreTest.java 4866 2008-04-11 10:40:35Z larshelg $
  */
 public class SystemSettingStoreTest
     extends DhisSpringTest
 {
-    private GenericIdentifiableObjectStore<SystemSetting> systemSettingStore;
+    private SystemSettingStore systemSettingStore;
 
     private SystemSetting settingA;
     private SystemSetting settingB;
     private SystemSetting settingC;
 
     @Override
-    @SuppressWarnings( "unchecked" )
     public void setUpTest()
         throws Exception
     {
-        systemSettingStore = (GenericIdentifiableObjectStore<SystemSetting>) getBean( "org.hisp.dhis.setting.SystemSettingStore" );
+        systemSettingStore = (SystemSettingStore) getBean( "org.hisp.dhis.setting.SystemSettingStore" );
 
         settingA = new SystemSetting();
         settingA.setName( "Setting1" );
@@ -74,30 +71,30 @@ public class SystemSettingStoreTest
     @Test
     public void testAddSystemSetting()
     {
-        systemSettingStore.save( settingA );
+        int idA = systemSettingStore.save( settingA );
         systemSettingStore.save( settingB );
         systemSettingStore.save( settingC );
 
-        SystemSetting s = systemSettingStore.getByName( settingA.getName() );
-        assertNotNull( s );
-        assertEquals( "Setting1", s.getName() );
-        assertEquals( "Value1", s.getValue() );
+        settingA = systemSettingStore.get( idA );
+        assertNotNull( settingA );
+        assertEquals( "Setting1", settingA.getName() );
+        assertEquals( "Value1", settingA.getValue() );
 
         settingA.setValue( new String( "Value1.1" ) );
-        systemSettingStore.save( settingA );
+        systemSettingStore.update( settingA );
 
-        s = systemSettingStore.getByName( settingA.getName() );
-        assertNotNull( s );
-        assertEquals( "Setting1", s.getName() );
-        assertEquals( "Value1.1", s.getValue() );        
+        settingA = systemSettingStore.get( idA );
+        assertNotNull( settingA );
+        assertEquals( "Setting1", settingA.getName() );
+        assertEquals( "Value1.1", settingA.getValue() );        
     }
 
     @Test
     public void testUpdateSystemSetting()
     {
-        systemSettingStore.save( settingA );
+        int id = systemSettingStore.save( settingA );
         
-        settingA = systemSettingStore.getByName( "Setting1" );
+        settingA = systemSettingStore.get( id );
         
         assertEquals( "Value1", settingA.getValue() );
         
@@ -105,7 +102,7 @@ public class SystemSettingStoreTest
         
         systemSettingStore.update( settingA );
 
-        settingA = systemSettingStore.getByName( "Setting1" );
+        settingA = systemSettingStore.get( id );
         
         assertEquals( "Value2", settingA.getValue() );
     }
@@ -113,14 +110,14 @@ public class SystemSettingStoreTest
     @Test
     public void testDeleteSystemSetting()
     {
-        systemSettingStore.save( settingA );
-        systemSettingStore.save( settingB );
+        int idA = systemSettingStore.save( settingA );
+        int idB = systemSettingStore.save( settingB );
         systemSettingStore.save( settingC );
 
-        systemSettingStore.delete( systemSettingStore.getByName( settingA.getName() ) );
+        systemSettingStore.delete( settingA );
 
-        assertNull( systemSettingStore.getByName( settingA.getName() ) );
-        assertEquals( 2, systemSettingStore.getAll().size() );
+        assertNull( systemSettingStore.get( idA ) );
+        assertNotNull( systemSettingStore.get( idB ) );
     }
 
     @Test

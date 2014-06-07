@@ -1,19 +1,20 @@
 package org.hisp.dhis.security.listener;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -32,6 +33,7 @@ import org.hisp.dhis.useraudit.UserAuditService;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
+import org.springframework.security.authentication.event.AuthenticationFailureCredentialsExpiredEvent;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
@@ -48,12 +50,12 @@ public class AuthenticationListener
     // -------------------------------------------------------------------------
 
     private UserAuditService userAuditService;
-    
+
     public void setUserAuditService( UserAuditService userAuditService )
     {
         this.userAuditService = userAuditService;
     }
-    
+
     private UserService userService;
 
     public void setUserService( UserService userService )
@@ -68,27 +70,35 @@ public class AuthenticationListener
     public void onApplicationEvent( ApplicationEvent applicationEvent )
     {
         Assert.notNull( applicationEvent );
-        
+
         if ( applicationEvent instanceof AuthenticationSuccessEvent )
         {
             AuthenticationSuccessEvent event = (AuthenticationSuccessEvent) applicationEvent;
-            
+
             String username = ((UserDetails) event.getAuthentication().getPrincipal()).getUsername();
 
             WebAuthenticationDetails details = (WebAuthenticationDetails) event.getAuthentication().getDetails();
-            
+
             String ip = details != null ? details.getRemoteAddress() : "";
-            
+
             userAuditService.registerLoginSuccess( username, ip );
-            
+
             userService.setLastLogin( username );
+        }
+        else if ( applicationEvent instanceof AuthenticationFailureCredentialsExpiredEvent )
+        {
+            AuthenticationFailureCredentialsExpiredEvent event = (AuthenticationFailureCredentialsExpiredEvent) applicationEvent;
+
+            WebAuthenticationDetails details = (WebAuthenticationDetails) event.getAuthentication().getDetails();
+
+            userAuditService.registerLoginExpired( (String) event.getAuthentication().getPrincipal(), details.getRemoteAddress() );
         }
         else if ( applicationEvent instanceof AbstractAuthenticationFailureEvent )
         {
             AbstractAuthenticationFailureEvent event = (AbstractAuthenticationFailureEvent) applicationEvent;
 
             WebAuthenticationDetails details = (WebAuthenticationDetails) event.getAuthentication().getDetails();
-            
+
             userAuditService.registerLoginFailure( (String) event.getAuthentication().getPrincipal(), details.getRemoteAddress() );
         }
     }

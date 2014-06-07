@@ -1,19 +1,20 @@
 package org.hisp.dhis.period;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,10 +30,8 @@ package org.hisp.dhis.period;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Calendar;
 import java.util.List;
 
-import org.hisp.dhis.period.Cal;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -82,7 +81,7 @@ public class SixMonthlyPeriodTypeTest
     @Test
     public void testGetNextPeriod()
     {
-        testCal.set( 2009, Calendar.AUGUST, 15 );
+        testCal.set( 2009, 8, 15 );
 
         Period period = periodType.createPeriod( testCal.time() );
         
@@ -90,6 +89,18 @@ public class SixMonthlyPeriodTypeTest
 
         startCal.set( 2010, 1, 1 );
         endCal.set( 2010, 6, 30 );
+
+        assertEquals( startCal.time(), period.getStartDate() );
+        assertEquals( endCal.time(), period.getEndDate() );
+
+        testCal.set( 2009, 4, 15 );
+
+        period = periodType.createPeriod( testCal.time() );
+
+        period = periodType.getNextPeriod( period );
+
+        startCal.set( 2009, 7, 1 );
+        endCal.set( 2009, 12, 31 );
 
         assertEquals( startCal.time(), period.getStartDate() );
         assertEquals( endCal.time(), period.getEndDate() );
@@ -109,6 +120,18 @@ public class SixMonthlyPeriodTypeTest
 
         assertEquals( startCal.time(), period.getStartDate() );
         assertEquals( endCal.time(), period.getEndDate() );
+
+        testCal.set( 2009, 4, 15 );
+
+        period = periodType.createPeriod( testCal.time() );
+
+        period = periodType.getPreviousPeriod( period );
+
+        startCal.set( 2008, 7, 1 );
+        endCal.set( 2008, 12, 31 );
+
+        assertEquals( startCal.time(), period.getStartDate() );
+        assertEquals( endCal.time(), period.getEndDate() );
     }
     
     @Test
@@ -121,15 +144,31 @@ public class SixMonthlyPeriodTypeTest
         assertEquals( 2, periods.size() );
         assertEquals( periodType.createPeriod( new Cal( 2009, 1, 1 ).time() ), periods.get( 0 ) );
         assertEquals( periodType.createPeriod( new Cal( 2009, 7, 1 ).time() ), periods.get( 1 ) );
+
+        testCal.set( 2009, 4, 15 );
+
+        periods = periodType.generatePeriods( testCal.time() );
+
+        assertEquals( 2, periods.size() );
+        assertEquals( periodType.createPeriod( new Cal( 2009, 1, 1 ).time() ), periods.get( 0 ) );
+        assertEquals( periodType.createPeriod( new Cal( 2009, 7, 1 ).time() ), periods.get( 1 ) );
     }
 
     @Test
     public void testGenerateRollingPeriods()
     {
-        testCal.set( 2009, 4, 15 );
+        testCal.set( 2009, 8, 15 );
         
         List<Period> periods = periodType.generateRollingPeriods( testCal.time() );
         
+        assertEquals( 2, periods.size() );
+        assertEquals( periodType.createPeriod( new Cal( 2009, 1, 1 ).time() ), periods.get( 0 ) );
+        assertEquals( periodType.createPeriod( new Cal( 2009, 7, 1 ).time() ), periods.get( 1 ) );
+
+        testCal.set( 2009, 4, 15 );
+
+        periods = periodType.generateRollingPeriods( testCal.time() );
+
         assertEquals( 2, periods.size() );
         assertEquals( periodType.createPeriod( new Cal( 2008, 7, 1 ).time() ), periods.get( 0 ) );
         assertEquals( periodType.createPeriod( new Cal( 2009, 1, 1 ).time() ), periods.get( 1 ) );

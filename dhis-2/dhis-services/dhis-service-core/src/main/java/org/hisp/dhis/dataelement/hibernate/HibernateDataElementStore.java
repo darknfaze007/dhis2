@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement.hibernate;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,6 +28,8 @@ package org.hisp.dhis.dataelement.hibernate;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.hisp.dhis.system.util.ConversionUtils.getIdentifiers;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -37,7 +40,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
-import org.hibernate.Session;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.hisp.dhis.common.ListMap;
 import org.hisp.dhis.common.hibernate.HibernateIdentifiableObjectStore;
@@ -45,7 +48,6 @@ import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementStore;
 import org.hisp.dhis.dataset.DataSet;
-import org.hisp.dhis.system.util.ConversionUtils;
 import org.hisp.dhis.system.util.TextUtils;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -58,135 +60,111 @@ public class HibernateDataElementStore
     implements DataElementStore
 {
     private static final Log log = LogFactory.getLog( HibernateDataElementStore.class );
-    
+
     // -------------------------------------------------------------------------
     // DataElement
     // -------------------------------------------------------------------------
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> searchDataElementsByName( String key )
     {
-        Session session = sessionFactory.getCurrentSession();
-
-        Criteria criteria = session.createCriteria( DataElement.class );
-        criteria.add( Restrictions.ilike( "name", "%" + key + "%" ) );
-
-        return criteria.list();
+        return getCriteria( Restrictions.ilike( "name", "%" + key + "%" ) ).list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getAggregateableDataElements()
     {
-        Session session = sessionFactory.getCurrentSession();
-
         Set<String> types = new HashSet<String>();
 
         types.add( DataElement.VALUE_TYPE_INT );
         types.add( DataElement.VALUE_TYPE_BOOL );
-
-        Criteria criteria = session.createCriteria( DataElement.class );
-
-        criteria.add( Restrictions.in( "type", types ) );
-
-        return criteria.list();
+        
+        return getCriteria( Restrictions.in( "type", types ) ).list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getAllActiveDataElements()
     {
-        Session session = sessionFactory.getCurrentSession();
-
-        Criteria criteria = session.createCriteria( DataElement.class );
-        criteria.add( Restrictions.eq( "active", true ) );
-
-        return criteria.list();
+        return getCriteria( Restrictions.eq( "active", true ) ).list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getDataElementsByAggregationOperator( String aggregationOperator )
     {
-        Session session = sessionFactory.getCurrentSession();
-
-        Criteria criteria = session.createCriteria( DataElement.class );
-        criteria.add( Restrictions.eq( "aggregationOperator", aggregationOperator ) );
-
-        return criteria.list();
+        return getCriteria( Restrictions.eq( "aggregationOperator", aggregationOperator ) ).list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getDataElementsByType( String type )
     {
-        Session session = sessionFactory.getCurrentSession();
-
-        Criteria criteria = session.createCriteria( DataElement.class );
-        criteria.add( Restrictions.eq( "type", type ) );
-
-        return criteria.list();
+        return getCriteria( Restrictions.eq( "type", type ) ).list();
     }
 
     @SuppressWarnings( "unchecked" )
     public Collection<DataElement> getDataElementsByDomainType( String domainType )
     {
-        Session session = sessionFactory.getCurrentSession();
+        return getCriteria( Restrictions.eq( "domainType", domainType ) ).list();
+    }
 
-        Criteria criteria = session.createCriteria( DataElement.class );
+    @SuppressWarnings("unchecked")
+    public Collection<DataElement> getDataElementsByDomainType( String domainType, int first, int max )
+    {
+        Criteria criteria = getCriteria();
         criteria.add( Restrictions.eq( "domainType", domainType ) );
 
+        criteria.setFirstResult( first );
+        criteria.setMaxResults( max );
+        criteria.addOrder( Order.asc( "name" ) );
+
         return criteria.list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getDataElementByCategoryCombo( DataElementCategoryCombo categoryCombo )
     {
-        Session session = sessionFactory.getCurrentSession();
-
-        Criteria criteria = session.createCriteria( DataElement.class );
-        criteria.add( Restrictions.eq( "categoryCombo", categoryCombo ) );
-
-        return criteria.list();
+        return getCriteria( Restrictions.eq( "categoryCombo", categoryCombo ) ).list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getDataElementsWithGroupSets()
     {
         String hql = "from DataElement d where d.groupSets.size > 0";
 
-        return getQuery( hql ).setCacheable( true ).list();
+        return getQuery( hql ).list();
     }
 
     public void setZeroIsSignificantForDataElements( Collection<Integer> dataElementIds )
     {
-        Session session = sessionFactory.getCurrentSession();
+        String hql = "update DataElement set zeroIsSignificant = false";
 
-        String sql = "update DataElement set zeroIsSignificant = false";
-
-        Query query = session.createQuery( sql );
+        Query query = getQuery( hql );
 
         query.executeUpdate();
+        
+        //TODO improve
 
         if ( !dataElementIds.isEmpty() )
         {
-            sql = "update DataElement set zeroIsSignificant=true where id in (:dataElementIds)";
+            hql = "update DataElement set zeroIsSignificant=true where id in (:dataElementIds)";
 
-            query = session.createQuery( sql );
+            query = getQuery( hql );
             query.setParameterList( "dataElementIds", dataElementIds );
 
             query.executeUpdate();
         }
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getDataElementsByZeroIsSignificant( boolean zeroIsSignificant )
     {
         Criteria criteria = getCriteria();
         criteria.add( Restrictions.eq( "zeroIsSignificant", zeroIsSignificant ) );
         criteria.add( Restrictions.eq( "type", DataElement.VALUE_TYPE_INT ) );
-        criteria.setCacheable( true );
 
         return criteria.list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getDataElementsWithoutGroups()
     {
         String hql = "from DataElement d where d.groups.size = 0";
@@ -194,7 +172,7 @@ public class HibernateDataElementStore
         return getQuery( hql ).setCacheable( true ).list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getDataElementsWithoutDataSets()
     {
         String hql = "from DataElement d where d.dataSets.size = 0 and d.domainType =:domainType";
@@ -202,7 +180,7 @@ public class HibernateDataElementStore
         return getQuery( hql ).setParameter( "domainType", "aggregate" ).setCacheable( true ).list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getDataElementsWithDataSets()
     {
         String hql = "from DataElement d where d.dataSets.size > 0";
@@ -210,16 +188,15 @@ public class HibernateDataElementStore
         return getQuery( hql ).setCacheable( true ).list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getDataElementsByDataSets( Collection<DataSet> dataSets )
     {
         String hql = "select distinct de from DataElement de join de.dataSets ds where ds.id in (:ids)";
 
-        return sessionFactory.getCurrentSession().createQuery( hql )
-            .setParameterList( "ids", ConversionUtils.getIdentifiers( DataSet.class, dataSets ) ).list();
+        return getQuery( hql ).setParameterList( "ids", getIdentifiers( DataSet.class, dataSets ) ).list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> getDataElementsByAggregationLevel( int aggregationLevel )
     {
         String hql = "from DataElement de join de.aggregationLevels al where al = :aggregationLevel";
@@ -229,10 +206,10 @@ public class HibernateDataElementStore
 
     public ListMap<String, String> getDataElementCategoryOptionComboMap( Set<String> dataElementUids )
     {
-        final String sql = 
+        final String sql =
             "select dataelementuid, categoryoptioncombouid " +
-            "from _dataelementcategoryoptioncombo " +
-            "where dataelementuid in (" + TextUtils.getQuotedCommaDelimitedString( dataElementUids ) + ")";
+                "from _dataelementcategoryoptioncombo " +
+                "where dataelementuid in (" + TextUtils.getQuotedCommaDelimitedString( dataElementUids ) + ")";
 
         final ListMap<String, String> map = new ListMap<String, String>();
 
@@ -246,7 +223,7 @@ public class HibernateDataElementStore
                 {
                     String de = rs.getString( 1 );
                     String coc = rs.getString( 2 );
-    
+
                     map.putValue( de, coc );
                 }
             } );
@@ -260,7 +237,7 @@ public class HibernateDataElementStore
         return map;
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<DataElement> get( DataSet dataSet, String key, Integer max )
     {
         String hql = "select dataElement from DataSet dataSet inner join dataSet.dataElements as dataElement where dataSet.id = :dataSetId ";
@@ -272,11 +249,18 @@ public class HibernateDataElementStore
 
         Query query = getQuery( hql );
         query.setInteger( "dataSetId", dataSet.getId() );
+        
         if ( max != null )
         {
             query.setMaxResults( max );
         }
-        
+
         return query.list();
+    }
+
+    @Override
+    public int getCountByDomainType( String domainType )
+    {
+        return getCriteria( Restrictions.eq( "domainType", domainType ) ).list().size(); // TODO improve
     }
 }

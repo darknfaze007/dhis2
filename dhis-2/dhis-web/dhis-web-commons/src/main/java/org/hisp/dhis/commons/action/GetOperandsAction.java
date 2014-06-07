@@ -1,19 +1,20 @@
 package org.hisp.dhis.commons.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -40,6 +41,7 @@ import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.paging.ActionPagingSupport;
 import org.hisp.dhis.system.filter.AggregatableDataElementFilter;
+import org.hisp.dhis.system.filter.DataElementPeriodTypeAllowAverageFilter;
 import org.hisp.dhis.system.filter.DataElementPeriodTypeFilter;
 import org.hisp.dhis.system.util.Filter;
 import org.hisp.dhis.system.util.FilterUtils;
@@ -127,13 +129,20 @@ public class GetOperandsAction
         this.periodType = periodType;
     }
 
-    private boolean includeTotals = false;
+    private boolean periodTypeAllowAverage;
+    
+    public void setPeriodTypeAllowAverage( boolean periodTypeAllowAverage )
+    {
+        this.periodTypeAllowAverage = periodTypeAllowAverage;
+    }
+
+    private boolean includeTotals;
 
     public void setIncludeTotals( boolean includeTotals )
     {
         this.includeTotals = includeTotals;
     }
-
+    
     // -------------------------------------------------------------------------
     // Output
     // -------------------------------------------------------------------------
@@ -179,9 +188,13 @@ public class GetOperandsAction
             FilterUtils.filter( dataElements, AGGREGATABLE_FILTER );
         }
 
-        if ( periodType != null )
+        if ( periodType != null && !periodTypeAllowAverage )
         {
             FilterUtils.filter( dataElements, new DataElementPeriodTypeFilter( periodType ) );
+        }
+        else if ( periodType != null && periodTypeAllowAverage )
+        {
+            FilterUtils.filter( dataElements, new DataElementPeriodTypeAllowAverageFilter( periodType ) );
         }
 
         Collections.sort( dataElements, IdentifiableObjectNameComparator.INSTANCE );
@@ -198,4 +211,5 @@ public class GetOperandsAction
 
         return SUCCESS;
     }
+    
 }

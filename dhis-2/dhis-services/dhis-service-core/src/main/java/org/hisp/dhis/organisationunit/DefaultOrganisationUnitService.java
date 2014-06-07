@@ -1,19 +1,20 @@
 package org.hisp.dhis.organisationunit;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,8 +28,26 @@ package org.hisp.dhis.organisationunit;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import static org.hisp.dhis.i18n.I18nUtils.i18n;
+import com.google.common.collect.Maps;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.hisp.dhis.common.IdentifiableObjectUtils;
+import org.hisp.dhis.dataset.DataSet;
+import org.hisp.dhis.hierarchy.HierarchyViolationException;
+import org.hisp.dhis.i18n.I18nService;
+import org.hisp.dhis.organisationunit.comparator.OrganisationUnitLevelComparator;
+import org.hisp.dhis.system.filter.OrganisationUnitPolygonCoveringCoordinateFilter;
+import org.hisp.dhis.system.util.ConversionUtils;
+import org.hisp.dhis.system.util.Filter;
+import org.hisp.dhis.system.util.FilterUtils;
+import org.hisp.dhis.system.util.GeoUtils;
+import org.hisp.dhis.system.util.ValidationUtils;
+import org.hisp.dhis.user.CurrentUserService;
+import org.hisp.dhis.user.User;
+import org.hisp.dhis.version.VersionService;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,18 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.hisp.dhis.dataset.DataSet;
-import org.hisp.dhis.hierarchy.HierarchyViolationException;
-import org.hisp.dhis.i18n.I18nService;
-import org.hisp.dhis.organisationunit.comparator.OrganisationUnitLevelComparator;
-import org.hisp.dhis.system.util.ConversionUtils;
-import org.hisp.dhis.system.util.Filter;
-import org.hisp.dhis.system.util.FilterUtils;
-import org.hisp.dhis.user.CurrentUserService;
-import org.hisp.dhis.user.User;
-import org.hisp.dhis.version.VersionService;
-import org.springframework.transaction.annotation.Transactional;
+import static org.hisp.dhis.i18n.I18nUtils.i18n;
 
 /**
  * @author Torgeir Lorange Ostby
@@ -116,16 +124,17 @@ public class DefaultOrganisationUnitService
 
             currentUserService.getCurrentUser().getOrganisationUnits().add( organisationUnit );
         }
-
-        versionService.updateVersion( VersionService.ORGANISATIONUNIT_VERSION );
-
+        
         return id;
     }
 
     public void updateOrganisationUnit( OrganisationUnit organisationUnit )
     {
-        organisationUnitStore.update( organisationUnit );
-
+        organisationUnitStore.update( organisationUnit );        
+    }
+    
+    public void updateOrganisationUnitVersion()
+    {
         versionService.updateVersion( VersionService.ORGANISATIONUNIT_VERSION );
     }
 
@@ -154,8 +163,6 @@ public class DefaultOrganisationUnitService
         }
 
         organisationUnitStore.delete( organisationUnit );
-
-        versionService.updateVersion( VersionService.ORGANISATIONUNIT_VERSION );
     }
 
     public OrganisationUnit getOrganisationUnit( int id )
@@ -252,11 +259,6 @@ public class DefaultOrganisationUnitService
         return getOrganisationUnit( id ).getOrganisationUnitLevel();
     }
 
-    public int getLevelOfOrganisationUnit( String uid )
-    {
-        return getOrganisationUnit( uid ).getOrganisationUnitLevel();
-    }
-
     public Collection<OrganisationUnit> getLeafOrganisationUnits( int id )
     {
         Collection<OrganisationUnit> units = getOrganisationUnitWithChildren( id );
@@ -270,11 +272,42 @@ public class DefaultOrganisationUnitService
         } );
     }
 
+    public Collection<OrganisationUnit> getOrganisationUnits( Collection<OrganisationUnitGroup> groups, Collection<OrganisationUnit> parents )
+    {
+        Set<OrganisationUnit> members = new HashSet<OrganisationUnit>();
+
+        for ( OrganisationUnitGroup group : groups )
+        {
+            members.addAll( group.getMembers() );
+        }
+
+        if ( parents != null && !parents.isEmpty() )
+        {
+            Collection<OrganisationUnit> children = getOrganisationUnitsWithChildren( IdentifiableObjectUtils.getUids( parents ) );
+
+            members.retainAll( children );
+        }
+
+        return members;
+    }
+
+    public Collection<OrganisationUnit> getOrganisationUnitsWithChildren( Collection<String> parentUids )
+    {
+        Set<OrganisationUnit> units = new HashSet<OrganisationUnit>();
+
+        for ( String uid : parentUids )
+        {
+            units.addAll( getOrganisationUnitsWithChildren( uid ) );
+        }
+
+        return units;
+    }
+
     public Collection<OrganisationUnit> getOrganisationUnitsWithChildren( String uid )
     {
         return getOrganisationUnitWithChildren( getOrganisationUnit( uid ).getId() );
     }
-    
+
     public Collection<OrganisationUnit> getOrganisationUnitWithChildren( int id )
     {
         OrganisationUnit organisationUnit = getOrganisationUnit( id );
@@ -286,10 +319,9 @@ public class DefaultOrganisationUnitService
 
         List<OrganisationUnit> result = new ArrayList<OrganisationUnit>();
 
-        int rootLevel = 1;
+        int rootLevel = organisationUnit.getOrganisationUnitLevel();
 
         organisationUnit.setLevel( rootLevel );
-
         result.add( organisationUnit );
 
         addOrganisationUnitChildren( organisationUnit, result, rootLevel );
@@ -313,13 +345,10 @@ public class DefaultOrganisationUnitService
         for ( OrganisationUnit child : childList )
         {
             child.setLevel( level );
-
             result.add( child );
 
             addOrganisationUnitChildren( child, result, level );
         }
-
-        level--;
     }
 
     public List<OrganisationUnit> getOrganisationUnitBranch( int id )
@@ -351,69 +380,70 @@ public class DefaultOrganisationUnitService
 
     public Collection<OrganisationUnit> getOrganisationUnitsAtLevel( int level )
     {
-        if ( level < 1 )
-        {
-            throw new IllegalArgumentException( "Level must be greater than zero" );
-        }
+        Collection<OrganisationUnit> roots = getRootOrganisationUnits();
 
         if ( level == 1 )
         {
-            return getRootOrganisationUnits();
+            return roots;
         }
 
-        Set<OrganisationUnit> result = new HashSet<OrganisationUnit>();
-
-        for ( OrganisationUnit root : organisationUnitStore.getRootOrganisationUnits() )
-        {
-            addOrganisationUnitChildrenAtLevel( root, 2, level, result );
-        }
-
-        return result;
+        return getOrganisationUnitsAtLevel( level, roots );
     }
 
     public Collection<OrganisationUnit> getOrganisationUnitsAtLevel( int level, OrganisationUnit parent )
     {
-        if ( level < 1 )
-        {
-            throw new IllegalArgumentException( "Level must be greater than zero" );
-        }
+        Set<OrganisationUnit> parents = new HashSet<OrganisationUnit>();
+        parents.add( parent );
 
-        int parentLevel = parent.getOrganisationUnitLevel();
-
-        if ( level < parentLevel )
-        {
-            throw new IllegalArgumentException(
-                "Level must be greater than or equal to level of parent OrganisationUnit" );
-        }
-
-        Set<OrganisationUnit> result = new HashSet<OrganisationUnit>();
-
-        if ( level == parentLevel )
-        {
-            result.add( parent );
-        }
-        else
-        {
-            addOrganisationUnitChildrenAtLevel( parent, parentLevel + 1, level, result );
-        }
-
-        for ( OrganisationUnit unit : result )
-        {
-            unit.setLevel( level );
-        }
-        
-        return result;
+        return getOrganisationUnitsAtLevel( level, parent != null ? parents : null );
     }
 
     public Collection<OrganisationUnit> getOrganisationUnitsAtLevel( int level, Collection<OrganisationUnit> parents )
     {
-        Set<OrganisationUnit> result = new HashSet<OrganisationUnit>();
-        
-        for ( OrganisationUnit parent : parents )
+        Set<Integer> levels = new HashSet<Integer>();
+        levels.add( level );
+
+        return getOrganisationUnitsAtLevels( levels, parents );
+    }
+
+    public Collection<OrganisationUnit> getOrganisationUnitsAtLevels( Collection<Integer> levels, Collection<OrganisationUnit> parents )
+    {
+        if ( parents == null || parents.isEmpty() )
         {
-            result.addAll( getOrganisationUnitsAtLevel( level, parent ) );
+            parents = new HashSet<OrganisationUnit>( getRootOrganisationUnits() );
         }
-        
+
+        Set<OrganisationUnit> result = new HashSet<OrganisationUnit>();
+
+        for ( Integer level : levels )
+        {
+            if ( level < 1 )
+            {
+                throw new IllegalArgumentException( "Level must be greater than zero" );
+            }
+
+            for ( OrganisationUnit parent : parents )
+            {
+                int parentLevel = parent.getOrganisationUnitLevel();
+
+                if ( level < parentLevel )
+                {
+                    throw new IllegalArgumentException(
+                        "Level must be greater than or equal to level of parent organisation unit" );
+                }
+
+                if ( level == parentLevel )
+                {
+                    parent.setLevel( level );
+                    result.add( parent );
+                }
+                else
+                {
+                    addOrganisationUnitChildrenAtLevel( parent, parentLevel + 1, level, result );
+                }
+            }
+        }
+
         return result;
     }
 
@@ -427,7 +457,11 @@ public class DefaultOrganisationUnitService
     {
         if ( currentLevel == targetLevel )
         {
-            result.addAll( parent.getChildren() );
+            for ( OrganisationUnit child : parent.getChildren() )
+            {
+                child.setLevel( currentLevel );
+                result.add( child );
+            }
         }
         else
         {
@@ -516,14 +550,28 @@ public class DefaultOrganisationUnitService
 
     public OrganisationUnitDataSetAssociationSet getOrganisationUnitDataSetAssociationSet()
     {
-        Map<Integer, Set<Integer>> associationSet = organisationUnitStore.getOrganisationUnitDataSetAssocationMap();
+        Map<String, Set<String>> associationSet = Maps.newHashMap( organisationUnitStore.getOrganisationUnitDataSetAssocationMap() );
+        Map<String, Set<String>> groupAssociationSet = organisationUnitStore.getOrganisationUnitGroupDataSetAssocationMap();
+
+        // merge maps
+        for ( String key : groupAssociationSet.keySet() )
+        {
+            if ( associationSet.containsKey( key ) )
+            {
+                associationSet.get( key ).addAll( groupAssociationSet.get( key ) );
+            }
+            else
+            {
+                associationSet.put( key, groupAssociationSet.get( key ) );
+            }
+        }
 
         filterUserDataSets( associationSet );
         filterChildOrganisationUnits( associationSet );
 
         OrganisationUnitDataSetAssociationSet set = new OrganisationUnitDataSetAssociationSet();
 
-        for ( Map.Entry<Integer, Set<Integer>> entry : associationSet.entrySet() )
+        for ( Map.Entry<String, Set<String>> entry : associationSet.entrySet() )
         {
             int index = set.getDataSetAssociationSets().indexOf( entry.getValue() );
 
@@ -540,34 +588,34 @@ public class DefaultOrganisationUnitService
         return set;
     }
 
-    private void filterUserDataSets( Map<Integer, Set<Integer>> associationMap )
+    private void filterUserDataSets( Map<String, Set<String>> associationMap )
     {
         User currentUser = currentUserService.getCurrentUser();
 
         if ( currentUser != null && !currentUser.getUserCredentials().isSuper() )
         {
-            Collection<Integer> userDataSets = ConversionUtils.getIdentifiers( DataSet.class, currentUser
-                .getUserCredentials().getAllDataSets() );
+            Collection<String> userDataSets = ConversionUtils.getUids( DataSet.class, currentUser.getUserCredentials().getAllDataSets() );
 
-            for ( Set<Integer> dataSets : associationMap.values() )
+            for ( Set<String> dataSets : associationMap.values() )
             {
                 dataSets.retainAll( userDataSets );
             }
         }
     }
 
-    private void filterChildOrganisationUnits( Map<Integer, Set<Integer>> associatonMap )
+    private void filterChildOrganisationUnits( Map<String, Set<String>> associationMap )
     {
         User currentUser = currentUserService.getCurrentUser();
 
         if ( currentUser != null )
         {
-            Collection<Integer> parentIds = ConversionUtils.getIdentifiers( OrganisationUnit.class,
+            Collection<String> parentIds = ConversionUtils.getUids( OrganisationUnit.class,
                 currentUser.getOrganisationUnits() );
 
-            Collection<Integer> children = getOrganisationUnitHierarchy().getChildren( parentIds );
+            Collection<OrganisationUnit> organisationUnitsWithChildren = getOrganisationUnitsWithChildren( parentIds );
+            Collection<String> children = ConversionUtils.getUids( OrganisationUnit.class, organisationUnitsWithChildren );
 
-            associatonMap.keySet().retainAll( children );
+            associationMap.keySet().retainAll( children );
         }
     }
 
@@ -611,6 +659,36 @@ public class DefaultOrganisationUnitService
         Date lastUpdated, int first, int max )
     {
         return organisationUnitStore.getBetweenByStatusLastUpdated( status, lastUpdated, first, max );
+    }
+
+    @Override
+    public boolean isInUserHierarchy( OrganisationUnit organisationUnit )
+    {
+        User user = currentUserService.getCurrentUser();
+        
+        if ( user == null )
+        {
+            return false;
+        }
+        
+        Set<OrganisationUnit> userRootUnits = user.getOrganisationUnits();
+        
+        if ( userRootUnits == null )
+        {
+            return false;
+        }
+        
+        while ( organisationUnit != null )
+        {
+            if ( userRootUnits.contains( organisationUnit ) )
+            {
+                return true;
+            }
+            
+            organisationUnit = organisationUnit.getParent();
+        }
+        
+        return false;
     }
 
     // -------------------------------------------------------------------------
@@ -764,6 +842,111 @@ public class DefaultOrganisationUnitService
         return organisationUnitLevelStore.getMaxLevels();
     }
 
+    /**
+     * Get all the Organisation Units within the distance of a coordinate.
+     */
+    public Collection<OrganisationUnit> getOrganisationUnitWithinDistance( double longitude, double latitude,
+        double distance )
+    {
+        Collection<OrganisationUnit> objects = organisationUnitStore.getWithinCoordinateArea( GeoUtils.getBoxShape(
+            longitude, latitude, distance ) );
+
+        // Go through the list and remove the ones located outside radius
+        
+        if ( objects != null && objects.size() > 0 )
+        {
+            Iterator<OrganisationUnit> iter = objects.iterator();
+
+            Point2D centerPoint = new Point2D.Double( longitude, latitude );
+
+            while ( iter.hasNext() )
+            {
+                OrganisationUnit orgunit = iter.next();
+
+                double distancebetween = GeoUtils.getDistanceBetweenTwoPoints( centerPoint,
+                    ValidationUtils.getCoordinatePoint2D( orgunit.getCoordinates() ) );
+
+                if ( distancebetween > distance )
+                {
+                    iter.remove();
+                }
+            }
+        }
+
+        return objects;
+    }
+
+    /**
+     * Get lowest level/target level Organisation Units that includes the coordinates.
+     */
+    public Collection<OrganisationUnit> getOrganisationUnitByCoordinate( double longitude, double latitude,
+        String topOrgUnitUid, Integer targetLevel )
+    {
+        Collection<OrganisationUnit> orgUnits = new ArrayList<OrganisationUnit>();
+
+        if ( GeoUtils.checkGeoJsonPointValid( longitude, latitude ) )
+        {
+            OrganisationUnit topOrgUnit = null;
+
+            if ( topOrgUnitUid != null && !topOrgUnitUid.isEmpty() )
+            {
+                topOrgUnit = getOrganisationUnit( topOrgUnitUid );
+            }
+            else
+            {
+                // Get top search point through top level org unit which contains coordinate
+                
+                Collection<OrganisationUnit> orgUnitsTopLevel = getTopLevelOrgUnitWithPoint( longitude, latitude, 1,
+                    getNumberOfOrganisationalLevels() - 1 );
+
+                if ( orgUnitsTopLevel.size() == 1 )
+                {
+                    topOrgUnit = orgUnitsTopLevel.iterator().next();
+                }
+            }
+
+            // Search children org units to get the lowest level org unit that contains coordinate
+            
+            if ( topOrgUnit != null )
+            {
+                Collection<OrganisationUnit> orgUnitChildren = new ArrayList<OrganisationUnit>();
+
+                if ( targetLevel != null )
+                {
+                    orgUnitChildren = getOrganisationUnitsAtLevel( targetLevel, topOrgUnit );
+                }
+                else
+                {
+                    orgUnitChildren = getOrganisationUnitWithChildren( topOrgUnit.getId() );
+                }
+
+                FilterUtils.filter( orgUnitChildren, new OrganisationUnitPolygonCoveringCoordinateFilter( longitude, latitude ) );
+                
+                // Get org units with lowest level
+                
+                int bottomLevel = topOrgUnit.getLevel();
+
+                for ( OrganisationUnit ou : orgUnitChildren )
+                {
+                    if ( ou.getLevel() > bottomLevel )
+                    {
+                        bottomLevel = ou.getLevel();
+                    }
+                }
+
+                for ( OrganisationUnit ou : orgUnitChildren )
+                {
+                    if ( ou.getLevel() == bottomLevel )
+                    {
+                        orgUnits.add( ou );
+                    }
+                }
+            }
+        }
+
+        return orgUnits;
+    }
+
     // -------------------------------------------------------------------------
     // Version
     // -------------------------------------------------------------------------
@@ -772,5 +955,29 @@ public class DefaultOrganisationUnitService
     public void updateVersion()
     {
         versionService.updateVersion( VersionService.ORGANISATIONUNIT_VERSION );
+    }
+
+    // -------------------------------------------------------------------------
+    // Supportive methods
+    // -------------------------------------------------------------------------
+
+    /**
+     * Searches organisation units until finding one with polygon containing point.
+     */
+    private List<OrganisationUnit> getTopLevelOrgUnitWithPoint( double longitude, double latitude, 
+        int searchLevel, int stopLevel )
+    {
+        for ( int i = searchLevel; i <= stopLevel; i++ )
+        {
+            List<OrganisationUnit> unitsAtLevel = new ArrayList<OrganisationUnit>( getOrganisationUnitsAtLevel( i ) );
+            FilterUtils.filter( unitsAtLevel, new OrganisationUnitPolygonCoveringCoordinateFilter( longitude, latitude ) );
+            
+            if ( unitsAtLevel.size() > 0 )
+            {
+                return unitsAtLevel;
+            }
+        }
+
+        return new ArrayList<OrganisationUnit>();
     }
 }

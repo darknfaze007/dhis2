@@ -1,19 +1,20 @@
 package org.hisp.dhis.datavalue;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -54,25 +55,15 @@ public class DataValue
     public static final String TRUE = "true";
     public static final String FALSE = "false";
 
-    /**
-     * Part of the DataValue's composite ID
-     */
     private DataElement dataElement;
 
-    /**
-     * Part of the DataValue's composite ID
-     */
     private Period period;
 
-    /**
-     * Part of the DataValue's composite ID
-     */
     private OrganisationUnit source;
 
-    /**
-     * Part of the DataValue's composite ID
-     */
-    private DataElementCategoryOptionCombo optionCombo;
+    private DataElementCategoryOptionCombo categoryOptionCombo;
+
+    private DataElementCategoryOptionCombo attributeOptionCombo;
 
     private String value;
 
@@ -92,61 +83,45 @@ public class DataValue
     {
     }
 
-    public DataValue( DataElement dataElement, Period period, OrganisationUnit source )
+    /**
+     * @param dataElement the data element.
+     * @param period the period.
+     * @param source the organisation unit.
+     * @param categoryOptionCombo the category option combo.
+     */
+    public DataValue( DataElement dataElement, Period period, OrganisationUnit source, 
+        DataElementCategoryOptionCombo categoryOptionCombo, DataElementCategoryOptionCombo attributeOptionCombo )
     {
         this.dataElement = dataElement;
         this.period = period;
         this.source = source;
+        this.categoryOptionCombo = categoryOptionCombo;
+        this.attributeOptionCombo = attributeOptionCombo;
     }
 
-    public DataValue( DataElement dataElement, Period period, OrganisationUnit source, DataElementCategoryOptionCombo optionCombo )
+    /**
+     * @param dataElement the data element.
+     * @param period the period.
+     * @param source the organisation unit.
+     * @param categoryOptionCombo the category option combo.
+     * @param attributeOptionCombo the attribute option combo.
+     * @param value the value.
+     * @param storedBy the user that stored this data value.
+     * @param timestamp the time of creation of this data value.
+     * @param comment the comment.
+     */
+    public DataValue( DataElement dataElement, Period period, OrganisationUnit source, DataElementCategoryOptionCombo categoryOptionCombo, 
+        DataElementCategoryOptionCombo attributeOptionCombo, String value, String storedBy, Date timestamp, String comment )
     {
         this.dataElement = dataElement;
         this.period = period;
         this.source = source;
-        this.optionCombo = optionCombo;
-    }
-
-    public DataValue( DataElement dataElement, Period period, OrganisationUnit source, String value )
-    {
-        this.dataElement = dataElement;
-        this.period = period;
-        this.source = source;
-        this.value = value;
-    }
-
-    public DataValue( DataElement dataElement, Period period, OrganisationUnit source, String value, DataElementCategoryOptionCombo optionCombo )
-    {
-        this.dataElement = dataElement;
-        this.period = period;
-        this.source = source;
-        this.value = value;
-        this.optionCombo = optionCombo;
-    }
-
-    public DataValue( DataElement dataElement, Period period, OrganisationUnit source, String value, String storedBy,
-                      Date timestamp, String comment )
-    {
-        this.dataElement = dataElement;
-        this.period = period;
-        this.source = source;
+        this.categoryOptionCombo = categoryOptionCombo;
+        this.attributeOptionCombo = attributeOptionCombo;
         this.value = value;
         this.storedBy = storedBy;
         this.timestamp = timestamp;
         this.comment = comment;
-    }
-
-    public DataValue( DataElement dataElement, Period period, OrganisationUnit source, String value, String storedBy,
-                      Date timestamp, String comment, DataElementCategoryOptionCombo optionCombo )
-    {
-        this.dataElement = dataElement;
-        this.period = period;
-        this.source = source;
-        this.value = value;
-        this.storedBy = storedBy;
-        this.timestamp = timestamp;
-        this.comment = comment;
-        this.optionCombo = optionCombo;
     }
 
     // -------------------------------------------------------------------------
@@ -167,6 +142,14 @@ public class DataValue
     // Logic
     // -------------------------------------------------------------------------
 
+    /**
+     * Alias for getCategoryOptionCombo(). TODO remove.
+     */
+    public DataElementCategoryOptionCombo getOptionCombo()
+    {
+        return getCategoryOptionCombo();
+    }
+    
     public boolean isZero()
     {
         return dataElement != null && dataElement.getType().equals( DataElement.VALUE_TYPE_INT )
@@ -183,6 +166,23 @@ public class DataValue
         return followup != null && followup;
     }
 
+    public boolean hasComment()
+    {
+        return comment != null && !comment.isEmpty();
+    }
+    
+    public void toggleFollowUp()
+    {
+        if ( this.followup == null )
+        {
+            this.followup = true;
+        }
+        else
+        {
+            this.followup = !this.followup;
+        }
+    }
+    
     // -------------------------------------------------------------------------
     // hashCode and equals
     // -------------------------------------------------------------------------
@@ -207,7 +207,7 @@ public class DataValue
 
         final DataValue other = (DataValue) o;
 
-        return dataElement.equals( other.getDataElement() ) && optionCombo.equals( other.getOptionCombo() )
+        return dataElement.equals( other.getDataElement() ) && categoryOptionCombo.equals( other.getCategoryOptionCombo() )
             && period.equals( other.getPeriod() ) && source.equals( other.getSource() );
     }
 
@@ -217,7 +217,7 @@ public class DataValue
         final int prime = 31;
         int result = 1;
 
-        result = result * prime + optionCombo.hashCode();
+        result = result * prime + categoryOptionCombo.hashCode();
         result = result * prime + period.hashCode();
         result = result * prime + dataElement.hashCode();
         result = result * prime + source.hashCode();
@@ -259,19 +259,29 @@ public class DataValue
         this.source = source;
     }
 
-    public DataElementCategoryOptionCombo getOptionCombo()
+    public DataElementCategoryOptionCombo getCategoryOptionCombo()
     {
-        return optionCombo;
+        return categoryOptionCombo;
     }
 
-    public void setOptionCombo( DataElementCategoryOptionCombo optionCombo )
+    public void setCategoryOptionCombo( DataElementCategoryOptionCombo categoryOptionCombo )
     {
-        this.optionCombo = optionCombo;
+        this.categoryOptionCombo = categoryOptionCombo;
     }
 
     public String getValue()
     {
         return value;
+    }
+
+    public DataElementCategoryOptionCombo getAttributeOptionCombo()
+    {
+        return attributeOptionCombo;
+    }
+
+    public void setAttributeOptionCombo( DataElementCategoryOptionCombo attributeOptionCombo )
+    {
+        this.attributeOptionCombo = attributeOptionCombo;
     }
 
     public void setValue( String value )

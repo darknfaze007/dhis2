@@ -1,19 +1,20 @@
 package org.hisp.dhis.commons.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,11 +28,8 @@ package org.hisp.dhis.commons.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.struts2.ServletActionContext;
+import org.hisp.dhis.common.IdentifiableObjectUtils;
 import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
@@ -46,7 +44,10 @@ import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.system.filter.AggregatableDataElementFilter;
 import org.hisp.dhis.system.util.FilterUtils;
 import org.hisp.dhis.util.ContextUtils;
-import org.hisp.dhis.common.IdentifiableObjectUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Lars Helge Overland
@@ -194,19 +195,32 @@ public class GetDataElementsAction
         }
         else if ( domain != null )
         {
-            dataElements = new ArrayList<DataElement>(
-                dataElementService.getDataElementsByDomainType( DataElement.DOMAIN_TYPE_PATIENT ) );
+            if ( domain.equals( DataElement.DOMAIN_TYPE_AGGREGATE ) )
+            {
+                dataElements = new ArrayList<DataElement>(
+                    dataElementService.getDataElementsByDomainType( DataElement.DOMAIN_TYPE_AGGREGATE ) );
+            }
+            else
+            {
+                dataElements = new ArrayList<DataElement>(
+                    dataElementService.getDataElementsByDomainType( DataElement.DOMAIN_TYPE_PATIENT ) );
+            }
         }
         else
         {
             dataElements = new ArrayList<DataElement>( dataElementService.getAllDataElements() );
-            
+
             ContextUtils.clearIfNotModified( ServletActionContext.getRequest(), ServletActionContext.getResponse(), dataElements );
         }
 
         if ( key != null )
         {
             dataElements = IdentifiableObjectUtils.filterNameByKey( dataElements, key, true );
+        }
+
+        if ( dataElements == null )
+        {
+            dataElements = new ArrayList<DataElement>();
         }
 
         Collections.sort( dataElements, IdentifiableObjectNameComparator.INSTANCE );

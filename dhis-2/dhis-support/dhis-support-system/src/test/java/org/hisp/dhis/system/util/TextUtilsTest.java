@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.util;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,6 +32,9 @@ import static org.junit.Assert.assertEquals;
 import static org.hisp.dhis.system.util.TextUtils.subString;
 import static org.hisp.dhis.system.util.TextUtils.trimEnd;
 import static org.hisp.dhis.system.util.TextUtils.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.junit.Test;
 
@@ -74,5 +78,42 @@ public class TextUtilsTest
     public void testTrim()
     {
         assertEquals( "abcdefgh", trimEnd( "abcdefghijkl", 4 ) );
+    }
+    
+    @Test
+    public void testGetTokens()
+    {
+        assertEquals( new ArrayList<String>( Arrays.asList( "John", "Doe", "Main", "Road", "25" ) ), TextUtils.getTokens( "John Doe Main Road 25" ) );
+        assertEquals( new ArrayList<String>( Arrays.asList( "Ted,Johnson", "Upper-Road", "45" ) ), TextUtils.getTokens( "Ted,Johnson Upper-Road 45" ) );        
+    }
+
+    @Test
+    public void testRemoveLastOr()
+    {
+        assertEquals( null, TextUtils.removeLastOr( null ) );
+        assertEquals( "", TextUtils.removeLastOr( "" ) );
+        assertEquals( "or name='tom' or name='john' ", TextUtils.removeLastOr( "or name='tom' or name='john' or" ) );
+        assertEquals( "or name='tom' or name='john' ", TextUtils.removeLastOr( "or name='tom' or name='john' or " ) );
+        assertEquals( "or name='tom' or name='john' ", TextUtils.removeLastOr( "or name='tom' or name='john' or  " ) );
+    }
+    
+    @Test
+    public void testRemoveLastAnd()
+    {
+        assertEquals( null, TextUtils.removeLastAnd( null ) );
+        assertEquals( "", TextUtils.removeLastAnd( "" ) );
+        assertEquals( "and name='tom' and name='john' ", TextUtils.removeLastAnd( "and name='tom' and name='john' and" ) );
+        assertEquals( "and name='tom' and name='john' ", TextUtils.removeLastAnd( "and name='tom' and name='john' and " ) );
+        assertEquals( "and name='tom' and name='john' ", TextUtils.removeLastAnd( "and name='tom' and name='john' and  " ) );
+    }
+    
+    @Test
+    public void testRemoveLastComma()
+    {
+        assertEquals( null, TextUtils.removeLastComma( null ) );
+        assertEquals( "", TextUtils.removeLastComma( "" ) );
+        assertEquals( "tom,john", TextUtils.removeLastComma( "tom,john," ) );
+        assertEquals( "tom, john", TextUtils.removeLastComma( "tom, john, " ) );
+        assertEquals( "tom, john", TextUtils.removeLastComma( "tom, john,  " ) );
     }
 }

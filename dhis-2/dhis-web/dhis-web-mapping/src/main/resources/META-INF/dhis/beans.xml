@@ -13,40 +13,16 @@
     <bean id="org.hisp.dhis.mapping.action.InitializeAction"
         class="org.hisp.dhis.mapping.action.InitializeAction"
         scope="prototype">
-		<property name="mappingService" ref="org.hisp.dhis.mapping.MappingService" />
         <property name="configurationService" ref="org.hisp.dhis.configuration.ConfigurationService" />
-        <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     </bean>
 
-    <!-- Dashboard -->
-    
-    <bean id="org.hisp.dhis.mapping.action.AddMapViewToDashboardAction"
-        class="org.hisp.dhis.mapping.action.AddMapViewToDashboardAction"
-        scope="prototype"/>
-
 	<!-- OrganisationUnit -->
-
-	<bean id="org.hisp.dhis.mapping.action.GetOrganisationUnitChildrenAction"
-		class="org.hisp.dhis.mapping.action.GetOrganisationUnitChildrenAction"
-		scope="prototype">
-		<property name="organisationUnitService"
-			ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
-	</bean>
 			
 	<bean id="org.hisp.dhis.mapping.action.UpdateOrganisationUnitCoordinatesAction"
         class="org.hisp.dhis.mapping.action.UpdateOrganisationUnitCoordinatesAction"
         scope="prototype">
         <property name="organisationUnitService"
             ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
-    </bean>
-			
-	<bean id="org.hisp.dhis.mapping.action.GetOrganisationUnitInfoFacilityAction"
-        class="org.hisp.dhis.mapping.action.GetOrganisationUnitInfoFacilityAction"
-        scope="prototype">
-        <property name="organisationUnitService"
-            ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
-        <property name="organisationUnitGroupService"
-            ref="org.hisp.dhis.organisationunit.OrganisationUnitGroupService" />
     </bean>
 			
 	<bean id="org.hisp.dhis.mapping.action.GetOrganisationUnitGroupsByGroupSetAction"
@@ -69,11 +45,6 @@
 
     <!-- Period -->
 
-	<bean id="org.hisp.dhis.mapping.action.GetAllPeriodTypesAction"
-		class="org.hisp.dhis.mapping.action.GetAllPeriodTypesAction" scope="prototype">
-		<property name="periodStore" ref="org.hisp.dhis.period.PeriodStore" />
-	</bean>
-
 	<bean id="org.hisp.dhis.mapping.action.GetPeriodsByPeriodTypeAction"
 		class="org.hisp.dhis.mapping.action.GetPeriodsByPeriodTypeAction"
 		scope="prototype">
@@ -85,15 +56,15 @@
     <bean id="org.hisp.dhis.mapping.action.GetGeoJsonAction"
         class="org.hisp.dhis.mapping.action.GetGeoJsonAction"
         scope="prototype">
-        <property name="organisationUnitService"
-            ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
+        <property name="analyticsService"
+            ref="org.hisp.dhis.analytics.AnalyticsService" />
     </bean>
 
     <bean id="org.hisp.dhis.mapping.action.GetGeoJsonFacilitiesAction"
         class="org.hisp.dhis.mapping.action.GetGeoJsonFacilitiesAction"
         scope="prototype">
-        <property name="organisationUnitService"
-            ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
+        <property name="analyticsService"
+            ref="org.hisp.dhis.analytics.AnalyticsService" />
         <property name="organisationUnitGroupService"
             ref="org.hisp.dhis.organisationunit.OrganisationUnitGroupService" />
     </bean>

@@ -1,17 +1,20 @@
+"use strict";
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2013, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,43 +28,38 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-dhis2.util.namespace( 'dhis2.trigger.funcs' );
+
+dhis2.util.namespace('dhis2.trigger.funcs');
 
 /**
  * Binds a function to be invoked for a given key. Any number of functions can
  * be set for a key. A function should return true or false.
  */
-dhis2.trigger.bind = function( key, func )
-{
-	var funcs = dhis2.trigger.funcs[key] || [];
-	funcs.push( func );	
-	dhis2.trigger.funcs[key] = funcs;
-}
+dhis2.trigger.bind = function( key, func ) {
+  var funcs = dhis2.trigger.funcs[key] || [];
+  funcs.push(func);
+  dhis2.trigger.funcs[key] = funcs;
+};
 
 /**
  * Invokes functions bound to the given key. A function can short-circuit the
  * invocations by returning false.
  */
-dhis2.trigger.invoke = function( key, args )
-{
-	var funcs = dhis2.trigger.funcs[key];
-	var result = true;
-	
-	if ( funcs !== undefined )
-	{
-		$.each( funcs, function( index, func )
-		{
-			if ( $.isFunction( func ) )
-			{
-				result = func( args );
-				
-				if ( result === false )
-				{
-					return false; // Break loop
-				}
-			}
-		} );
-	}
-	
-	return result;
-}
+dhis2.trigger.invoke = function( key, args ) {
+  var funcs = dhis2.trigger.funcs[key];
+  var result = true;
+
+  if( funcs !== undefined ) {
+    $.each(funcs, function( index, func ) {
+      if( $.isFunction(func) ) {
+        result = func(args);
+
+        if( result === false ) {
+          return false; // Break loop
+        }
+      }
+    });
+  }
+
+  return result;
+};

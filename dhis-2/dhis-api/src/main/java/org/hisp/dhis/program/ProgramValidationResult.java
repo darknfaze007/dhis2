@@ -1,17 +1,20 @@
+package org.hisp.dhis.program;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,13 +28,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.program;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import org.hisp.dhis.common.BaseIdentifiableObject;
+import org.hisp.dhis.common.DxfNamespaces;
+import org.hisp.dhis.common.view.DetailedView;
+import org.hisp.dhis.common.view.ExportView;
 
 /**
  * @author Chau Thu Tran
- * 
- * @version ProgramValidationResult.java 10:33:59 AM Nov 6, 2012 $
  */
+@JacksonXmlRootElement( localName = "programValidationResult", namespace = DxfNamespaces.DXF_2_0 )
 public class ProgramValidationResult
 {
     private ProgramStageInstance programStageInstance;
@@ -75,29 +85,49 @@ public class ProgramValidationResult
     }
 
     @Override
-    public boolean equals( Object obj )
+    public boolean equals( Object object )
     {
-        if ( this == obj )
+        if ( this == object )
+        {
             return true;
-        if ( obj == null )
+        }
+
+        if ( object == null )
+        {
             return false;
-        if ( getClass() != obj.getClass() )
+        }
+
+        if ( getClass() != object.getClass() )
+        {
             return false;
-        ProgramValidationResult other = (ProgramValidationResult) obj;
+        }
+
+        final ProgramValidationResult other = (ProgramValidationResult) object;
+
         if ( programStageInstance == null )
         {
             if ( other.programStageInstance != null )
+            {
                 return false;
+            }
         }
         else if ( !programStageInstance.equals( other.programStageInstance ) )
+        {
             return false;
+        }
+
         if ( programValidation == null )
         {
             if ( other.programValidation != null )
+            {
                 return false;
+            }
         }
         else if ( !programValidation.equals( other.programValidation ) )
+        {
             return false;
+        }
+
         return true;
     }
 
@@ -105,6 +135,10 @@ public class ProgramValidationResult
     // Setters && Getters
     // -------------------------------------------------------------------------
 
+    @JsonProperty
+    @JsonSerialize( as = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public ProgramStageInstance getProgramStageInstance()
     {
         return programStageInstance;
@@ -115,6 +149,10 @@ public class ProgramValidationResult
         this.programStageInstance = programStageInstance;
     }
 
+    @JsonProperty
+    @JsonSerialize( as = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public ProgramValidation getProgramValidation()
     {
         return programValidation;
@@ -125,6 +163,9 @@ public class ProgramValidationResult
         this.programValidation = programValidation;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getLeftsideValue()
     {
         return leftsideValue;
@@ -135,6 +176,9 @@ public class ProgramValidationResult
         this.leftsideValue = leftsideValue;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getRightsideValue()
     {
         return rightsideValue;
@@ -144,5 +188,4 @@ public class ProgramValidationResult
     {
         this.rightsideValue = rightsideValue;
     }
-
 }

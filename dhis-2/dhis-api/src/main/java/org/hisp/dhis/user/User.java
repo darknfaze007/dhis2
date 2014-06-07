@@ -1,19 +1,20 @@
 package org.hisp.dhis.user;
 
 /*
- * Copyright (c) 2004-2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,9 +28,10 @@ package org.hisp.dhis.user;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -101,17 +103,28 @@ public class User
     private Set<UserGroup> groups = new HashSet<UserGroup>();
 
     /**
-     * All OrgUnits where the user could belong <p/> TODO This should have been
-     * put in UserCredentials
+     * Organisation units for data input and data capture / write operations.
+     * TODO move to UserCredentials.
      */
     @Scanned
     private Set<OrganisationUnit> organisationUnits = new HashSet<OrganisationUnit>();
+    
+    /**
+     * Organisation units for data output and data analysis / read operations.
+     */
+    @Scanned
+    private Set<OrganisationUnit> dataViewOrganisationUnits = new HashSet<OrganisationUnit>();
 
     /**
      * Set of the dynamic attributes values that belong to this User.
      */
     private Set<AttributeValue> attributeValues = new HashSet<AttributeValue>();
 
+    /**
+     * Ordered favorite apps.
+     */
+    private List<String> apps = new ArrayList<String>();
+    
     // -------------------------------------------------------------------------
     // Logic
     // -------------------------------------------------------------------------
@@ -143,7 +156,7 @@ public class User
             addOrganisationUnit( unit );
         }
     }
-
+            
     /**
      * Returns the concatenated first name and surname.
      */
@@ -177,8 +190,6 @@ public class User
      * Null is returned if the user has no organisation units. Which
      * organisation unit to return is undefined if the user has multiple
      * organisation units.
-     *
-     * @return an organisation unit associated with the user.
      */
     public OrganisationUnit getOrganisationUnit()
     {
@@ -189,7 +200,33 @@ public class User
     {
         return !CollectionUtils.isEmpty( organisationUnits );
     }
+    
+    public boolean hasDataViewOrganisationUnit()
+    {
+        return !CollectionUtils.isEmpty( dataViewOrganisationUnits );
+    }
 
+    public OrganisationUnit getDataViewOrganisationUnit()
+    {
+        return CollectionUtils.isEmpty( dataViewOrganisationUnits ) ? null : dataViewOrganisationUnits.iterator().next();
+    }
+    
+    public boolean hasDataViewOrganisationUnitWithFallback()
+    {
+        return hasDataViewOrganisationUnit() || hasOrganisationUnit();
+    }
+    
+    /**
+     * Returns the first of the data view organisation units associated with the
+     * user. If none, returns the first of the data capture organisation units.
+     * If none, return nulls.
+     */
+    public OrganisationUnit getDataViewOrganisationUnitWithFallback()
+    {
+        OrganisationUnit dataViewOrgUnit = getDataViewOrganisationUnit();
+        return dataViewOrgUnit != null ? dataViewOrgUnit : getOrganisationUnit();
+    }
+    
     public String getOrganisationUnitsName()
     {
         return IdentifiableObjectUtils.join( organisationUnits );
@@ -199,20 +236,21 @@ public class User
     {
         return userCredentials != null ? userCredentials.getUsername() : null;
     }
-
-    public void removeAllOrganisationUnits()
+    
+    public boolean isSuper()
     {
-        organisationUnits.clear();
-    }
-
-    public void removeAllAttributeValues()
-    {
-        attributeValues.clear();
+        return userCredentials != null && userCredentials.isSuper();
     }
 
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
+
+    @Override
+    public boolean haveUniqueNames()
+    {
+        return false;
+    }
 
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
@@ -383,6 +421,9 @@ public class User
         this.languages = languages;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Date getLastCheckedInterpretations()
     {
         return lastCheckedInterpretations;
@@ -406,6 +447,11 @@ public class User
         this.userCredentials = userCredentials;
     }
 
+    @JsonProperty
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class } )
+    @JacksonXmlElementWrapper( localName = "userGroups", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "userGroup", namespace = DxfNamespaces.DXF_2_0 )
     public Set<UserGroup> getGroups()
     {
         return groups;
@@ -421,7 +467,7 @@ public class User
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlElementWrapper( localName = "organisationUnits", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "organisationUnit", namespace = DxfNamespaces.DXF_2_0 )
-    public Collection<OrganisationUnit> getOrganisationUnits()
+    public Set<OrganisationUnit> getOrganisationUnits()
     {
         return organisationUnits;
     }
@@ -431,10 +477,25 @@ public class User
         this.organisationUnits = organisationUnits;
     }
 
-    @JsonProperty( value = "attributes" )
+    @JsonProperty
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "attributes", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "attribute", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlElementWrapper( localName = "dataViewOrganisationUnits", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "dataViewOrganisationUnit", namespace = DxfNamespaces.DXF_2_0 )
+    public Set<OrganisationUnit> getDataViewOrganisationUnits()
+    {
+        return dataViewOrganisationUnits;
+    }
+
+    public void setDataViewOrganisationUnits( Set<OrganisationUnit> dataViewOrganisationUnits )
+    {
+        this.dataViewOrganisationUnits = dataViewOrganisationUnits;
+    }
+
+    @JsonProperty( value = "attributeValues" )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "attributeValues", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( localName = "attributeValue", namespace = DxfNamespaces.DXF_2_0)
     public Set<AttributeValue> getAttributeValues()
     {
         return attributeValues;
@@ -443,6 +504,16 @@ public class User
     public void setAttributeValues( Set<AttributeValue> attributeValues )
     {
         this.attributeValues = attributeValues;
+    }
+
+    public List<String> getApps()
+    {
+        return apps;
+    }
+
+    public void setApps( List<String> apps )
+    {
+        this.apps = apps;
     }
 
     @Override
@@ -460,11 +531,38 @@ public class User
             phoneNumber = user.getPhoneNumber() == null ? phoneNumber : user.getPhoneNumber();
             userCredentials = user.getUserCredentials() == null ? userCredentials : user.getUserCredentials();
 
-            removeAllAttributeValues();
+            attributeValues.clear();
             attributeValues.addAll( user.getAttributeValues() );
 
-            removeAllOrganisationUnits();
+            organisationUnits.clear();
             organisationUnits.addAll( user.getOrganisationUnits() );
         }
+    }
+
+    @Override
+    public String toString()
+    {
+        return "User{" +
+            "surname='" + surname + '\'' +
+            ", firstName='" + firstName + '\'' +
+            ", email='" + email + '\'' +
+            ", phoneNumber='" + phoneNumber + '\'' +
+            ", jobTitle='" + jobTitle + '\'' +
+            ", introduction='" + introduction + '\'' +
+            ", gender='" + gender + '\'' +
+            ", birthday=" + birthday +
+            ", nationality='" + nationality + '\'' +
+            ", employer='" + employer + '\'' +
+            ", education='" + education + '\'' +
+            ", interests='" + interests + '\'' +
+            ", languages='" + languages + '\'' +
+            ", lastCheckedInterpretations=" + lastCheckedInterpretations +
+            ", userCredentials=" + userCredentials +
+            ", groups=" + groups +
+            ", organisationUnits=" + organisationUnits +
+            ", dataViewOrganisationUnits=" + dataViewOrganisationUnits +
+            ", attributeValues=" + attributeValues +
+            ", apps=" + apps +
+            '}';
     }
 }

@@ -1,19 +1,20 @@
 package org.hisp.dhis.organisationunit;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,20 +28,20 @@ package org.hisp.dhis.organisationunit;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import static org.hisp.dhis.i18n.I18nUtils.getCountByName;
-import static org.hisp.dhis.i18n.I18nUtils.getObjectsBetween;
-import static org.hisp.dhis.i18n.I18nUtils.getObjectsBetweenByName;
-import static org.hisp.dhis.i18n.I18nUtils.i18n;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.hisp.dhis.common.GenericIdentifiableObjectStore;
 import org.hisp.dhis.i18n.I18nService;
 import org.hisp.dhis.system.util.Filter;
 import org.hisp.dhis.system.util.FilterUtils;
+import org.hisp.dhis.user.CurrentUserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.hisp.dhis.i18n.I18nUtils.*;
 
 /**
  * @author Torgeir Lorange Ostby
@@ -62,10 +63,9 @@ public class DefaultOrganisationUnitGroupService
         this.organisationUnitGroupStore = organisationUnitGroupStore;
     }
 
-    private GenericIdentifiableObjectStore<OrganisationUnitGroupSet> organisationUnitGroupSetStore;
+    private OrganisationUnitGroupSetStore organisationUnitGroupSetStore;
 
-    public void setOrganisationUnitGroupSetStore(
-        GenericIdentifiableObjectStore<OrganisationUnitGroupSet> organisationUnitGroupSetStore )
+    public void setOrganisationUnitGroupSetStore( OrganisationUnitGroupSetStore organisationUnitGroupSetStore )
     {
         this.organisationUnitGroupSetStore = organisationUnitGroupSetStore;
     }
@@ -75,6 +75,22 @@ public class DefaultOrganisationUnitGroupService
     public void setI18nService( I18nService service )
     {
         i18nService = service;
+    }
+
+    private CurrentUserService currentUserService;
+
+    @Autowired
+    public void setCurrentUserService( CurrentUserService currentUserService )
+    {
+        this.currentUserService = currentUserService;
+    }
+
+    private OrganisationUnitService organisationUnitService;
+
+    @Autowired
+    public void setOrganisationUnitService( OrganisationUnitService organisationUnitService )
+    {
+        this.organisationUnitService = organisationUnitService;
     }
 
     // -------------------------------------------------------------------------
@@ -248,6 +264,12 @@ public class DefaultOrganisationUnitGroupService
         return i18n( i18nService, organisationUnitGroupSetStore.getAll() );
     }
 
+    @Override
+    public Collection<OrganisationUnitGroupSet> getDataDimensionOrganisationUnitGroupSets()
+    {
+        return i18n( i18nService, organisationUnitGroupSetStore.getByDataDimension( true ) );
+    }
+
     public Collection<OrganisationUnitGroupSet> getCompulsoryOrganisationUnitGroupSets()
     {
         Collection<OrganisationUnitGroupSet> groupSets = new ArrayList<OrganisationUnitGroupSet>();
@@ -322,5 +344,25 @@ public class DefaultOrganisationUnitGroupService
         int max )
     {
         return getObjectsBetweenByName( i18nService, organisationUnitGroupSetStore, name, first, max );
+    }
+
+    @Override
+    public void mergeWithCurrentUserOrganisationUnits( OrganisationUnitGroup organisationUnitGroup, Collection<OrganisationUnit> mergeOrganisationUnits )
+    {
+        Set<OrganisationUnit> organisationUnits = new HashSet<OrganisationUnit>( organisationUnitGroup.getMembers() );
+
+        Set<OrganisationUnit> userOrganisationUnits = new HashSet<OrganisationUnit>();
+
+        for ( OrganisationUnit organisationUnit : currentUserService.getCurrentUser().getOrganisationUnits() )
+        {
+            userOrganisationUnits.addAll( organisationUnitService.getOrganisationUnitsWithChildren( organisationUnit.getUid() ) );
+        }
+
+        organisationUnits.removeAll( userOrganisationUnits );
+        organisationUnits.addAll( mergeOrganisationUnits );
+
+        organisationUnitGroup.updateOrganisationUnits( organisationUnits );
+
+        updateOrganisationUnitGroup( organisationUnitGroup );
     }
 }

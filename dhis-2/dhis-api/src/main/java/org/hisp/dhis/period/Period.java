@@ -1,19 +1,20 @@
 package org.hisp.dhis.period;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,12 +28,9 @@ package org.hisp.dhis.period;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.hisp.dhis.common.BaseNameableObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.Weighted;
@@ -41,9 +39,12 @@ import org.hisp.dhis.common.adapter.JacksonPeriodTypeSerializer;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
 /**
  * @author Kristian Nordal
@@ -59,8 +60,6 @@ public class Period
     private static final long serialVersionUID = -4445992494203466044L;
 
     public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
-
-    private static final String SEPARATOR = "_";
 
     /**
      * Required.
@@ -99,16 +98,6 @@ public class Period
         this.periodType = periodType;
         this.startDate = startDate;
         this.endDate = endDate;
-    }
-
-    @Deprecated
-    public Period( String externalId )
-    {
-        final String[] id = externalId.split( SEPARATOR );
-
-        this.periodType = PeriodType.getPeriodTypeByName( id[0] );
-        this.startDate = getMediumDate( id[1] );
-        this.endDate = getMediumDate( id[2] );
     }
 
     // -------------------------------------------------------------------------
@@ -166,17 +155,6 @@ public class Period
     }
 
     /**
-     * Generates an String which uniquely identifies this Period based on its
-     * core properties.
-     *
-     * @return an identifier String.
-     */
-    public String getExternalId()
-    {
-        return periodType.getName() + SEPARATOR + getMediumDateString( startDate ) + SEPARATOR + getMediumDateString( endDate );
-    }
-
-    /**
      * Returns the frequency order of the period type of the period.
      *
      * @return the frequency order.
@@ -201,6 +179,16 @@ public class Period
     {
         return getMediumDateString( startDate );
     }
+    
+    /**
+     * Returns end date formatted as string.
+     *
+     * @return end date formatted as string.
+     */
+    public String getEndDateString()
+    {
+        return getMediumDateString( endDate );
+    }
 
     /**
      * Formats a Date to the format YYYY-MM-DD.
@@ -215,28 +203,6 @@ public class Period
         format.applyPattern( DEFAULT_DATE_FORMAT );
 
         return date != null ? format.format( date ) : null;
-    }
-
-    /**
-     * Parses a date from a String on the format YYYY-MM-DD.
-     *
-     * @param dateString the String to parse.
-     * @return a Date based on the given String.
-     */
-    private Date getMediumDate( String dateString )
-    {
-        try
-        {
-            final SimpleDateFormat format = new SimpleDateFormat();
-
-            format.applyPattern( DEFAULT_DATE_FORMAT );
-
-            return dateString != null ? format.parse( dateString ) : null;
-        } 
-        catch ( ParseException ex )
-        {
-            throw new RuntimeException( "Failed to parse medium date", ex );
-        }
     }
 
     /**
@@ -299,7 +265,7 @@ public class Period
     @Override
     public String toString()
     {
-        return "[" + (periodType == null ? "" : periodType.getName() + ": ") + startDate + " - " + endDate + "] " + name;
+        return "[" + (periodType == null ? "" : periodType.getName() + ": ") + startDate + " - " + endDate + "]";
     }
 
     // -------------------------------------------------------------------------

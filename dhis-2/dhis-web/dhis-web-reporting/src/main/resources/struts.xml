@@ -13,7 +13,7 @@
       <param name="page">/dhis-web-reporting/index.vm</param>
       <param name="menu">/dhis-web-reporting/menu.vm</param>
     </action>
-
+    
     <!-- Document -->
 
     <action name="saveDocument" class="org.hisp.dhis.reporting.document.action.SaveDocumentAction">
@@ -159,6 +159,7 @@
       <param name="page">/dhis-web-reporting/viewDataCompletenessForm.vm</param>
       <param name="menu">/dhis-web-reporting/menu.vm</param>
       <param name="javascripts">../dhis-web-commons/oust/oust.js,javascript/dataCompleteness.js</param>
+      <param name="stylesheets">style/dhis-web-reporting.css</param>
     </action>
 
     <action name="getDataCompleteness" class="org.hisp.dhis.reporting.completeness.action.GetDataCompletenessAction">
@@ -180,11 +181,26 @@
     </action>
 
     <action name="generateDataSetReport" class="org.hisp.dhis.reporting.dataset.action.GenerateDataSetReportAction">
-      <result name="default" type="velocity">/dhis-web-reporting/renderDefaultDataSetReportForm.vm</result>
+      <result name="default" type="velocity">/dhis-web-reporting/renderSectionDataSetReportForm.vm</result>
       <result name="section" type="velocity">/dhis-web-reporting/renderSectionDataSetReportForm.vm</result>
       <result name="custom" type="velocity">/dhis-web-reporting/renderCustomDataSetReportForm.vm</result>
       <result name="xls" type="gridXlsResult" />
       <result name="pdf" type="gridPdfResult" />
+    </action>
+    
+    <!-- Data Approval -->
+
+    <action name="showDataApprovalForm" class="org.hisp.dhis.reporting.dataapproval.action.GetDataApprovalOptionsAction">
+      <result name="success" type="velocity">/main.vm</result>
+      <param name="page">/dhis-web-reporting/dataApprovalForm.vm</param>
+      <param name="menu">/dhis-web-reporting/menu.vm</param>
+      <param name="javascripts">../dhis-web-commons/ouwt/ouwt.js,javascript/dataSetReport.js,javascript/dataApproval.js</param>
+      <param name="stylesheets">style/dhis-web-reporting.css</param>
+    </action>
+    
+    <action name="getCategoryOptionGroups" class="org.hisp.dhis.reporting.dataapproval.action.GetCategoryOptionGroupsAction">    
+      <result name="success" type="velocity-json">/dhis-web-commons/ajax/jsonCategoryOptionGroups.vm</result>
+      <param name="onExceptionReturn">plainTextError</param>
     </action>
 
     <!-- Organisation Unit Distribution -->
@@ -202,6 +218,7 @@
       <param name="page">/dhis-web-reporting/viewOrgUnitDistribution.vm</param>
       <param name="menu">/dhis-web-reporting/menu.vm</param>
       <param name="javascripts">../dhis-web-commons/oust/oust.js,javascript/orgUnitDistribution.js</param>
+      <param name="stylesheets">style/dhis-web-reporting.css</param>
     </action>
 
     <action name="getOrgUnitDistributionChart" class="org.hisp.dhis.reporting.orgunitdistribution.action.GetOrgUnitDistributionChartAction">

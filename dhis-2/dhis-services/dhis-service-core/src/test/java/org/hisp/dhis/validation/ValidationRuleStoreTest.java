@@ -1,19 +1,20 @@
 package org.hisp.dhis.validation;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,20 +28,19 @@ package org.hisp.dhis.validation;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.hisp.dhis.expression.Operator.equal_to;
+import static org.hisp.dhis.expression.Operator.greater_than;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.hisp.dhis.expression.Operator.equal_to;
-import static org.hisp.dhis.expression.Operator.greater_than;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hisp.dhis.DhisTest;
+import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementService;
@@ -51,11 +51,9 @@ import org.junit.Test;
 
 /**
  * @author Lars Helge Overland
- * @version $Id: ValidationRuleStoreTest.java 3679 2007-10-22 18:25:18Z larshelg
- *          $
  */
 public class ValidationRuleStoreTest
-    extends DhisTest
+    extends DhisSpringTest
 {
     private ValidationRuleStore validationRuleStore;
 
@@ -112,9 +110,7 @@ public class ValidationRuleStoreTest
         dataElements.add( dataElementC );
         dataElements.add( dataElementD );
 
-        DataElementCategoryCombo categoryCombo = categoryService
-            .getDataElementCategoryComboByName( DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
-        DataElementCategoryOptionCombo categoryOptionCombo = categoryCombo.getOptionCombos().iterator().next();
+        DataElementCategoryOptionCombo categoryOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
 
         optionCombos = new HashSet<DataElementCategoryOptionCombo>();
         optionCombos.add( categoryOptionCombo );
@@ -126,12 +122,6 @@ public class ValidationRuleStoreTest
         expressionService.addExpression( expressionA );
 
         periodType = PeriodType.getAvailablePeriodTypes().iterator().next();
-    }
-
-    @Override
-    public boolean emptyDatabaseAfterTest()
-    {
-        return true;
     }
 
     // -------------------------------------------------------------------------
@@ -241,59 +231,6 @@ public class ValidationRuleStoreTest
 
         assertEquals( rule.getId(), id );
         assertEquals( rule.getName(), "ValidationRuleA" );
-    }
-
-    @Test
-    public void testGetValidationRulesByDataElements()
-    {
-        Set<DataElement> dataElementsA = new HashSet<DataElement>();
-        dataElementsA.add( dataElementA );
-        dataElementsA.add( dataElementB );
-
-        Set<DataElement> dataElementsB = new HashSet<DataElement>();
-        dataElementsB.add( dataElementC );
-        dataElementsB.add( dataElementD );
-
-        Set<DataElement> dataElementsC = new HashSet<DataElement>();
-
-        Set<DataElement> dataElementsD = new HashSet<DataElement>();
-        dataElementsD.addAll( dataElementsA );
-        dataElementsD.addAll( dataElementsB );
-
-        Expression expression1 = new Expression( "Expression1", "Expression1", dataElementsA, optionCombos );
-        Expression expression2 = new Expression( "Expression2", "Expression2", dataElementsB, optionCombos );
-        Expression expression3 = new Expression( "Expression3", "Expression3", dataElementsC, optionCombos );
-
-        expressionService.addExpression( expression1 );
-        expressionService.addExpression( expression2 );
-        expressionService.addExpression( expression3 );
-
-        ValidationRule ruleA = createValidationRule( 'A', equal_to, expression1, expression3, periodType );
-        ValidationRule ruleB = createValidationRule( 'B', equal_to, expression2, expression3, periodType );
-        ValidationRule ruleC = createValidationRule( 'C', equal_to, expression3, expression3, periodType );
-
-        validationRuleStore.save( ruleA );
-        validationRuleStore.save( ruleB );
-        validationRuleStore.save( ruleC );
-        
-        Collection<ValidationRule> rules = validationRuleStore.getValidationRulesByDataElements( dataElementsA );
-
-        assertNotNull( rules );
-        assertEquals( 1, rules.size() );
-        assertTrue( rules.contains( ruleA ) );
-
-        rules = validationRuleStore.getValidationRulesByDataElements( dataElementsB );
-
-        assertNotNull( rules );
-        assertEquals( 1, rules.size() );
-        assertTrue( rules.contains( ruleB ) );
-
-        rules = validationRuleStore.getValidationRulesByDataElements( dataElementsD );
-
-        assertNotNull( rules );
-        assertEquals( 2, rules.size() );
-        assertTrue( rules.contains( ruleA ) );
-        assertTrue( rules.contains( ruleB ) );
     }
 
     @Test

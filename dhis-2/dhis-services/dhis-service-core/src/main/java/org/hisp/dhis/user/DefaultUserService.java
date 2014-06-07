@@ -1,19 +1,20 @@
 package org.hisp.dhis.user;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,21 +28,34 @@ package org.hisp.dhis.user;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_CAN_GRANT_OWN_USER_AUTHORITY_GROUPS;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_ONLY_MANAGE_WITHIN_USER_GROUPS;
+
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.common.AuditLogUtil;
-import org.hisp.dhis.common.GenericIdentifiableObjectStore;
+import org.hisp.dhis.dataelement.CategoryOptionGroup;
+import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
+import org.hisp.dhis.dataelement.DataElementCategory;
+import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.period.PeriodType;
-import org.hisp.dhis.system.filter.UserCredentialsCanUpdateFilter;
+import org.hisp.dhis.security.SecurityService;
+import org.hisp.dhis.setting.SystemSettingManager;
+import org.hisp.dhis.system.filter.UserAuthorityGroupCanIssueFilter;
+import org.hisp.dhis.system.util.DateUtils;
 import org.hisp.dhis.system.util.Filter;
 import org.hisp.dhis.system.util.FilterUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,15 +81,15 @@ public class DefaultUserService
     }
 
     private UserCredentialsStore userCredentialsStore;
-    
+
     public void setUserCredentialsStore( UserCredentialsStore userCredentialsStore )
     {
         this.userCredentialsStore = userCredentialsStore;
     }
 
-    private GenericIdentifiableObjectStore<UserAuthorityGroup> userAuthorityGroupStore;
-    
-    public void setUserAuthorityGroupStore( GenericIdentifiableObjectStore<UserAuthorityGroup> userAuthorityGroupStore )
+    private UserAuthorityGroupStore userAuthorityGroupStore;
+
+    public void setUserAuthorityGroupStore( UserAuthorityGroupStore userAuthorityGroupStore )
     {
         this.userAuthorityGroupStore = userAuthorityGroupStore;
     }
@@ -85,6 +99,20 @@ public class DefaultUserService
     public void setCurrentUserService( CurrentUserService currentUserService )
     {
         this.currentUserService = currentUserService;
+    }
+
+    private SecurityService securityService;
+
+    public void setSecurityService( SecurityService securityService )
+    {
+        this.securityService = securityService;
+    }
+
+    private SystemSettingManager systemSettingManager;
+
+    public void setSystemSettingManager( SystemSettingManager systemSettingManager )
+    {
+        this.systemSettingManager = systemSettingManager;
     }
 
     // -------------------------------------------------------------------------
@@ -115,7 +143,7 @@ public class DefaultUserService
         {
             return false; // Cannot be last if not super user
         }
-        
+
         Collection<UserCredentials> users = userCredentialsStore.getAllUserCredentials();
 
         for ( UserCredentials user : users )
@@ -176,6 +204,8 @@ public class DefaultUserService
     {
         AuditLogUtil.infoWrapper( log, currentUserService.getCurrentUsername(), user, AuditLogUtil.ACTION_DELETE );
 
+        userCredentialsStore.deleteUserCredentials( user.getUserCredentials() );
+
         userStore.delete( user );
     }
 
@@ -185,13 +215,13 @@ public class DefaultUserService
     }
 
     @Override
-    public Collection<User> getAllUsersBetween( int first, int max )
+    public List<User> getAllUsersBetween( int first, int max )
     {
         return userStore.getAllOrderedName( first, max );
     }
-    
+
     @Override
-    public Collection<User> getAllUsersBetweenByName( String name, int first, int max )
+    public List<User> getAllUsersBetweenByName( String name, int first, int max )
     {
         return userStore.getAllLikeNameOrderedName( name, first, max );
     }
@@ -212,20 +242,9 @@ public class DefaultUserService
         return userStore.getByUid( uid );
     }
 
-    public Collection<UserCredentials> getUsers( final Collection<Integer> identifiers, User user )
+    public List<User> getUsersByUid( List<String> uids )
     {
-        Collection<UserCredentials> userCredentials = getAllUserCredentials();
-
-        FilterUtils.filter( userCredentials, new UserCredentialsCanUpdateFilter( user ) );
-
-        return identifiers == null ? userCredentials : FilterUtils.filter( userCredentials,
-            new Filter<UserCredentials>()
-            {
-                public boolean retain( UserCredentials object )
-                {
-                    return identifiers.contains( object.getId() );
-                }
-            } );
+        return userStore.getByUid( uids );
     }
 
     public Collection<UserCredentials> getUsersByOrganisationUnitBetween( OrganisationUnit unit, int first, int max )
@@ -253,7 +272,7 @@ public class DefaultUserService
     {
         return userStore.getUsersByPhoneNumber( phoneNumber );
     }
-    
+
     public Collection<User> getUsersByName( String name )
     {
         return userStore.getUsersByName( name );
@@ -272,6 +291,85 @@ public class DefaultUserService
     public int getUsersWithoutOrganisationUnitCountByName( String userName )
     {
         return userCredentialsStore.getUsersWithoutOrganisationUnitCountByName( userName );
+    }
+
+    public User searchForUser( String query )
+    {
+        User user = userStore.getByUid( query );
+
+        if ( user == null )
+        {
+            UserCredentials credentials = userCredentialsStore.getUserCredentialsByUsername( query );
+            user = credentials != null ? credentials.getUser() : null;
+        }
+
+        return user;
+    }
+
+    public List<User> queryForUsers( String query )
+    {
+        List<User> users = new ArrayList<User>();
+
+        User uidUser = userStore.getByUid( query );
+
+        if ( uidUser != null )
+        {
+            users.add( uidUser );
+        }
+
+        users.addAll( userStore.getAllLikeNameOrderedName( query, 0, 1000 ) ); //TODO
+
+        return users;
+    }
+
+    public Set<CategoryOptionGroup> getCogDimensionConstraints( UserCredentials userCredentials )
+    {
+        Set<CategoryOptionGroup> groups = null;
+
+        Set<CategoryOptionGroupSet> cogsConstraints = userCredentials.getCogsDimensionConstraints();
+
+        if ( cogsConstraints != null && !cogsConstraints.isEmpty() )
+        {
+            groups = new HashSet<CategoryOptionGroup>();
+
+            for ( CategoryOptionGroupSet set : cogsConstraints )
+            {
+                for ( CategoryOptionGroup g : set.getMembers() )
+                {
+                    if ( securityService.canRead( g ) )
+                    {
+                        groups.add( g );
+                    }
+                }
+            }
+        }
+
+        return groups;
+    }
+
+    public Set<DataElementCategoryOption> getCoDimensionConstraints( UserCredentials userCredentials )
+    {
+        Set<DataElementCategoryOption> options = null;
+
+        Set<DataElementCategory> catConstraints = userCredentials.getCatDimensionConstraints();
+
+        if ( catConstraints != null && !catConstraints.isEmpty() )
+        {
+            options = new HashSet<DataElementCategoryOption>();
+
+            for ( DataElementCategory cat : catConstraints )
+            {
+                for ( DataElementCategoryOption o : cat.getCategoryOptions() )
+                {
+                    if ( securityService.canRead( o ) )
+                    {
+                        options.add( o );
+                    }
+                }
+            }
+        }
+
+        return options;
     }
 
     // -------------------------------------------------------------------------
@@ -350,6 +448,15 @@ public class DefaultUserService
         }
     }
 
+    public void canIssueFilter( Collection<UserAuthorityGroup> userRoles )
+    {
+        User user = currentUserService.getCurrentUser();
+
+        boolean canGrantOwnUserAuthorityGroups = (Boolean) systemSettingManager.getSystemSetting( KEY_CAN_GRANT_OWN_USER_AUTHORITY_GROUPS, false );
+
+        FilterUtils.filter( userRoles, new UserAuthorityGroupCanIssueFilter( user, canGrantOwnUserAuthorityGroups ) );
+    }
+
     // -------------------------------------------------------------------------
     // UserCredentials
     // -------------------------------------------------------------------------
@@ -362,11 +469,6 @@ public class DefaultUserService
     public void updateUserCredentials( UserCredentials userCredentials )
     {
         userCredentialsStore.updateUserCredentials( userCredentials );
-    }
-
-    public void deleteUserCredentials( UserCredentials userCredentials )
-    {
-        userCredentialsStore.deleteUserCredentials( userCredentials );
     }
 
     public Collection<UserCredentials> getAllUserCredentials()
@@ -382,6 +484,11 @@ public class DefaultUserService
     public UserCredentials getUserCredentialsByUsername( String username )
     {
         return userCredentialsStore.getUserCredentialsByUsername( username );
+    }
+
+    public UserCredentials getUserCredentialsByOpenID( String openId )
+    {
+        return userCredentialsStore.getUserCredentialsByOpenID( openId );
     }
 
     public Collection<UserCredentials> getUsersBetween( int first, int max )
@@ -414,9 +521,14 @@ public class DefaultUserService
         return userCredentialsStore.getUsersWithoutOrganisationUnitBetweenByName( username, first, max );
     }
 
-    public Collection<UserCredentials> searchUsersByName( String username )
+    public Collection<UserCredentials> searchUsersByName( String name )
     {
-        return userCredentialsStore.searchUsersByName( username );
+        return userCredentialsStore.searchUsersByName( name );
+    }
+
+    public Collection<UserCredentials> searchUsersByName( String name, int first, int max )
+    {
+        return userCredentialsStore.searchUsersByName( name, first, max );
     }
 
     public void setLastLogin( String username )
@@ -435,7 +547,7 @@ public class DefaultUserService
     {
         return userCredentialsStore.getSelfRegisteredUserCredentialsCount();
     }
-    
+
     public Collection<UserCredentials> getInactiveUsers( int months )
     {
         Calendar cal = PeriodType.createCalendarInstance();
@@ -468,6 +580,42 @@ public class DefaultUserService
         return userCredentialsStore.getActiveUsersCount( cal.getTime() );
     }
 
+    public int getActiveUsersCount( Date since )
+    {
+        return userCredentialsStore.getActiveUsersCount( since );
+    }
+
+    public void canUpdateUsersFilter( Collection<User> users )
+    {
+        FilterUtils.filter( users,
+            new Filter<User>()
+            {
+                public boolean retain( User object )
+                {
+                    return canUpdate( object.getUserCredentials() );
+                }
+            }
+        );
+    }
+
+    public void canUpdateFilter( Collection<UserCredentials> userCredentials )
+    {
+        FilterUtils.filter( userCredentials,
+            new Filter<UserCredentials>()
+            {
+                public boolean retain( UserCredentials object )
+                {
+                    return canUpdate( object );
+                }
+            }
+        );
+    }
+
+    public boolean canUpdate( UserCredentials userCredentials )
+    {
+        return hasAuthorityToUpdateUser( userCredentials ) && hasGroupsToUpdateUser( userCredentials );
+    }
+
     // -------------------------------------------------------------------------
     // UserSettings
     // -------------------------------------------------------------------------
@@ -475,6 +623,21 @@ public class DefaultUserService
     public void addUserSetting( UserSetting userSetting )
     {
         userCredentialsStore.addUserSetting( userSetting );
+    }
+
+    public void addOrUpdateUserSetting( UserSetting userSetting )
+    {
+        UserSetting setting = getUserSetting( userSetting.getUser(), userSetting.getName() );
+
+        if ( setting != null )
+        {
+            setting.mergeWith( userSetting );
+            updateUserSetting( setting );
+        }
+        else
+        {
+            addUserSetting( userSetting );
+        }
     }
 
     public void updateUserSetting( UserSetting userSetting )
@@ -492,9 +655,21 @@ public class DefaultUserService
         return userCredentialsStore.getAllUserSettings( user );
     }
 
+    public Collection<UserSetting> getUserSettings( String name )
+    {
+        return userCredentialsStore.getUserSettings( name );
+    }
+
     public UserSetting getUserSetting( User user, String name )
     {
         return userCredentialsStore.getUserSetting( user, name );
+    }
+
+    public Serializable getUserSettingValue( User user, String name, Serializable defaultValue )
+    {
+        UserSetting setting = getUserSetting( user, name );
+
+        return setting != null && setting.getValue() != null ? setting.getValue() : defaultValue;
     }
 
     public Map<User, Serializable> getUserSettings( String name, Serializable defaultValue )
@@ -513,15 +688,90 @@ public class DefaultUserService
     {
         return userStore.getUsersByOrganisationUnits( units );
     }
-    
+
     public void removeUserSettings( User user )
     {
         userStore.removeUserSettings( user );
     }
-    
+
     public Collection<String> getUsernames( String query, Integer max )
     {
         return userCredentialsStore.getUsernames( query, max );
     }
-    
+
+    @Override
+    public int countDataSetUserAuthorityGroups( DataSet dataSet )
+    {
+        return userAuthorityGroupStore.countDataSetUserAuthorityGroups( dataSet );
+    }
+
+    @Override
+    public boolean credentialsNonExpired( UserCredentials credentials )
+    {
+        int credentialsExpires = systemSettingManager.credentialsExpires();
+
+        if ( credentialsExpires == 0 )
+        {
+            return true;
+        }
+
+        int months = DateUtils.monthsBetween( credentials.getPasswordLastUpdated(), new Date() );
+
+        return months < credentialsExpires;
+    }
+
+    // -------------------------------------------------------------------------
+    // Supportive methods
+    // -------------------------------------------------------------------------
+
+    /**
+     * Determines if the current user has all the authorities required to
+     * update a user.
+     *
+     * @param userCredentials The user to be updated.
+     * @return true if current user has authorities, else false.
+     */
+    private boolean hasAuthorityToUpdateUser( UserCredentials userCredentials )
+    {
+        UserCredentials currentUserCredentials = currentUserService.getCurrentUser().getUserCredentials();
+
+        boolean canGrantOwnUserAuthorityGroups = (Boolean) systemSettingManager.getSystemSetting( KEY_CAN_GRANT_OWN_USER_AUTHORITY_GROUPS, false );
+
+        return currentUserCredentials != null && userCredentials != null
+                && currentUserCredentials.canIssueAll( userCredentials.getUserAuthorityGroups(), canGrantOwnUserAuthorityGroups );
+    }
+
+    /**
+     * Determines if the current user read/write access to at least one group
+     * to which the user belongs, if this is a requirement on this system
+     * for updating a user.
+     *
+     * @param userCredentials The user to be updated.
+     * @return true if current user has read/write access to a group to which
+     * the user belongs, or if this requirement is not applicable, else false.
+     */
+    private boolean hasGroupsToUpdateUser( UserCredentials userCredentials )
+    {
+        UserCredentials currentUserCredentials = currentUserService.getCurrentUser().getUserCredentials();
+
+        boolean onlyManageWithinUserGroups = (Boolean) systemSettingManager.getSystemSetting( KEY_ONLY_MANAGE_WITHIN_USER_GROUPS, false );
+
+        if ( onlyManageWithinUserGroups && !currentUserCredentials.getAllAuthorities().contains( UserAuthorityGroup.AUTHORITY_ALL ) )
+        {
+            if ( userCredentials.getUser().getGroups() != null )
+            {
+                for ( UserGroup group : userCredentials.getUser().getGroups() )
+                {
+                    if ( securityService.canWrite( group ) )
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        return true;
+    }
 }

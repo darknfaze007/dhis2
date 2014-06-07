@@ -1,19 +1,20 @@
 package org.hisp.dhis.user.hibernate;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,15 +28,11 @@ package org.hisp.dhis.user.hibernate;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Disjunction;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
@@ -45,6 +42,11 @@ import org.hisp.dhis.user.UserCredentials;
 import org.hisp.dhis.user.UserCredentialsStore;
 import org.hisp.dhis.user.UserService;
 import org.hisp.dhis.user.UserSetting;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Lars Helge Overland
@@ -87,11 +89,24 @@ public class HibernateUserCredentialsStore
     {
         Session session = sessionFactory.getCurrentSession();
 
+        User persistedUser = userService.getUser( userCredentials.getUser().getUid() );
+
+        if ( persistedUser != null && persistedUser.getUserCredentials() != null
+            && !persistedUser.getUserCredentials().getPassword().equals( userCredentials.getPassword() ) )
+        {
+            userCredentials.setPasswordLastUpdated( new Date() );
+        }
+
         session.update( userCredentials );
     }
 
     public UserCredentials getUserCredentials( User user )
     {
+        if ( user == null )
+        {
+            return null;
+        }
+
         Session session = sessionFactory.getCurrentSession();
 
         return (UserCredentials) session.get( UserCredentials.class, user.getId() );
@@ -109,7 +124,20 @@ public class HibernateUserCredentialsStore
         return (UserCredentials) query.uniqueResult();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @Override
+    public UserCredentials getUserCredentialsByOpenID( String openId )
+    {
+        Session session = sessionFactory.getCurrentSession();
+
+        Query query = session.createQuery( "from UserCredentials uc where uc.openId = :openId" );
+
+        query.setString( "openId", openId );
+        query.setCacheable( true );
+
+        return (UserCredentials) query.uniqueResult();
+    }
+
+    @SuppressWarnings("unchecked")
     public Collection<UserCredentials> getAllUserCredentials()
     {
         Session session = sessionFactory.getCurrentSession();
@@ -141,9 +169,37 @@ public class HibernateUserCredentialsStore
         Session session = sessionFactory.getCurrentSession();
 
         Criteria criteria = session.createCriteria( UserCredentials.class );
+        criteria.createAlias( "user", "user" );
 
-        criteria.add( Restrictions.ilike( "username", "%" + key + "%" ) );
+        Disjunction disjunction = Restrictions.disjunction();
+        disjunction.add( Restrictions.ilike( "user.surname", "%" + key + "%" ) );
+        disjunction.add( Restrictions.ilike( "user.firstName", "%" + key + "%" ) );
+        disjunction.add( Restrictions.ilike( "username", "%" + key + "%" ) );
+
+        criteria.add( disjunction );
         criteria.addOrder( Order.asc( "username" ) );
+
+        return criteria.list();
+    }
+
+    @SuppressWarnings("unchecked")
+    public Collection<UserCredentials> searchUsersByName( String key, int first, int max )
+    {
+        Session session = sessionFactory.getCurrentSession();
+
+        Criteria criteria = session.createCriteria( UserCredentials.class );
+        criteria.createAlias( "user", "user" );
+
+        Disjunction disjunction = Restrictions.disjunction();
+        disjunction.add( Restrictions.ilike( "user.surname", "%" + key + "%" ) );
+        disjunction.add( Restrictions.ilike( "user.firstName", "%" + key + "%" ) );
+        disjunction.add( Restrictions.ilike( "username", "%" + key + "%" ) );
+
+        criteria.add( disjunction );
+        criteria.addOrder( Order.asc( "username" ) );
+
+        criteria.setFirstResult( first );
+        criteria.setMaxResults( max );
 
         return criteria.list();
     }
@@ -163,7 +219,7 @@ public class HibernateUserCredentialsStore
         return rs != null ? rs.intValue() : 0;
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<UserCredentials> getUsersBetween( int first, int max )
     {
         Session session = sessionFactory.getCurrentSession();
@@ -172,7 +228,7 @@ public class HibernateUserCredentialsStore
             .setMaxResults( max ).list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<UserCredentials> getUsersBetweenByName( String name, int first, int max )
     {
         Session session = sessionFactory.getCurrentSession();
@@ -229,7 +285,7 @@ public class HibernateUserCredentialsStore
         return findByName( toUserCredentials( userService.getUsersWithoutOrganisationUnit() ), name ).size();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<UserCredentials> getSelfRegisteredUserCredentials( int first, int max )
     {
         Criteria criteria = sessionFactory.getCurrentSession().createCriteria( UserCredentials.class );
@@ -252,7 +308,7 @@ public class HibernateUserCredentialsStore
         return rs != null ? rs.intValue() : 0;
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<UserCredentials> getInactiveUsers( Date date )
     {
         Criteria criteria = sessionFactory.getCurrentSession().createCriteria( UserCredentials.class );
@@ -261,7 +317,7 @@ public class HibernateUserCredentialsStore
         return criteria.list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<UserCredentials> getInactiveUsers( Date date, int first, int max )
     {
         Criteria criteria = sessionFactory.getCurrentSession().createCriteria( UserCredentials.class );
@@ -325,7 +381,7 @@ public class HibernateUserCredentialsStore
         return (UserSetting) query.uniqueResult();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<UserSetting> getAllUserSettings( User user )
     {
         Session session = sessionFactory.getCurrentSession();
@@ -335,7 +391,7 @@ public class HibernateUserCredentialsStore
         return query.list();
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<UserSetting> getUserSettings( String name )
     {
         Session session = sessionFactory.getCurrentSession();
@@ -352,7 +408,7 @@ public class HibernateUserCredentialsStore
         session.delete( userSetting );
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public Collection<String> getUsernames( String key, Integer max )
     {
         Session session = sessionFactory.getCurrentSession();
@@ -365,7 +421,7 @@ public class HibernateUserCredentialsStore
         }
 
         Query query = session.createQuery( hql );
-        
+
         if ( max != null )
         {
             query.setMaxResults( max );

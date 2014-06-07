@@ -1,17 +1,20 @@
+package org.hisp.dhis.program;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,7 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.program;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -41,7 +43,6 @@ import java.io.Serializable;
 
 /**
  * @author Viet Nguyen
- * @version $Id$
  */
 @JacksonXmlRootElement( localName = "programStageDataElement", namespace = DxfNamespaces.DXF_2_0 )
 public class ProgramStageDataElement
@@ -62,19 +63,19 @@ public class ProgramStageDataElement
      */
     private DataElement dataElement;
 
-    /*
+    /**
      * True if this dataElement is mandatory in the dataEntryForm for this
      * programStage
      */
     private boolean compulsory = false;
 
-    private Boolean allowProvidedElsewhere;
+    private Boolean allowProvidedElsewhere = false;
 
     private Integer sortOrder;
 
-    private Boolean displayInReports;
+    private Boolean displayInReports = false;
 
-    private Boolean allowDateInFuture;
+    private Boolean allowDateInFuture = false;
 
     // -------------------------------------------------------------------------
     // Constructors
@@ -100,10 +101,6 @@ public class ProgramStageDataElement
     {
     }
 
-    @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JsonSerialize( as = BaseIdentifiableObject.class )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public ProgramStage getProgramStage()
     {
         return programStage;
@@ -115,8 +112,8 @@ public class ProgramStageDataElement
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
     @JsonSerialize( as = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public DataElement getDataElement()
     {
@@ -177,6 +174,9 @@ public class ProgramStageDataElement
         this.displayInReports = displayInReports;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Boolean getAllowDateInFuture()
     {
         return allowDateInFuture;
@@ -192,29 +192,38 @@ public class ProgramStageDataElement
     // -------------------------------------------------------------------------
 
     @Override
-    public int hashCode()
+    public boolean equals( Object o )
     {
-        return programStage.hashCode() + dataElement.hashCode();
+        if ( this == o ) return true;
+        if ( o == null || getClass() != o.getClass() ) return false;
+
+        ProgramStageDataElement that = (ProgramStageDataElement) o;
+
+        if ( dataElement != null ? !dataElement.equals( that.dataElement ) : that.dataElement != null ) return false;
+        if ( programStage != null ? !programStage.equals( that.programStage ) : that.programStage != null ) return false;
+
+        return true;
     }
 
     @Override
-    public boolean equals( Object object )
+    public int hashCode()
     {
-
-        if ( object == null )
-        {
-            return false;
-        }
-
-        if ( getClass() != object.getClass() )
-        {
-            return false;
-        }
-
-        final ProgramStageDataElement other = (ProgramStageDataElement) object;
-
-        return dataElement.getId() == other.getDataElement().getId()
-            && programStage.getId() == other.getProgramStage().getId();
+        int result = programStage != null ? programStage.hashCode() : 0;
+        result = 31 * result + (dataElement != null ? dataElement.hashCode() : 0);
+        return result;
     }
 
+    @Override
+    public String toString()
+    {
+        return "ProgramStageDataElement{" +
+            "programStage=" + programStage +
+            ", dataElement=" + dataElement +
+            ", compulsory=" + compulsory +
+            ", allowProvidedElsewhere=" + allowProvidedElsewhere +
+            ", sortOrder=" + sortOrder +
+            ", displayInReports=" + displayInReports +
+            ", allowDateInFuture=" + allowDateInFuture +
+            '}';
+    }
 }

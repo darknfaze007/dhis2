@@ -1,19 +1,18 @@
 <script>
 	jQuery(document).ready(function() {
-		validation2( 'emailSettingForm', function( form ) {
+		jQuery("input[type=button]").click(function() {
 			jQuery.postUTF8( 'setSystemEmailSettings.action', {
 				smtpHostName: getFieldValue( 'smtpHostName' ),
 				smtpPort: getFieldValue( 'smtpPort' ),
 				smtpUsername: getFieldValue( 'smtpUsername' ),
 				smtpPassword: getFieldValue( 'smtpPassword' ),
-				smtpTls: getFieldValue( 'smtpTls' )
+				smtpTls: $( '#smtpTls' ).is( ':checked' ),
+				emailSender: getFieldValue( 'emailSender' )
 			}, function( json ) {
 				if ( json.response == "success" ) {
 					setHeaderDelayMessage( json.message );
 				}
 			});
-		}, {
-			"rules" : getValidationRules( "emailSettings" )
 		});
 		
 		jQuery( '#smtpHostName' ).blur();
@@ -26,7 +25,7 @@
 
 <div class="settingLabel">$i18n.getString( "host_name" ) <span class="tipText">(e.g. smtp.gmail.com, localhost)</span></div>
 
-<div class="setting"><input type="text" id="smtpHostName" name="smtpHostName" value="$!smtpHostName"/></div>
+<div class="setting"><input type="text" id="smtpHostName" name="smtpHostName" value="$!smtpHostName"></div>
 
 <div class="settingLabel">$i18n.getString( "port" )</div>
 
@@ -40,17 +39,21 @@
 
 <div class="settingLabel">$i18n.getString( "username" )</div>
 
-<div class="setting"><input type="text" id="smtpUsername" name="smtpUsername" value="$!smtpUsername" autocomplete="off"/></div>
+<div class="setting"><input type="text" id="smtpUsername" name="smtpUsername" value="$!smtpUsername" autocomplete="off"></div>
 
 <div class="settingLabel">$i18n.getString( "password" )</div>
 
-<div class="setting"><input type="password" id="smtpPassword" name="smtpPassword" value="$!smtpPassword" autocomplete="off"/></div>
+<div class="setting"><input type="password" id="smtpPassword" name="smtpPassword" value="$!smtpPassword" autocomplete="off"></div>
 
 <div class="setting">
 	<input type="checkbox" id="smtpTls" name="smtpTls" value="true"#if( $smtpTls ) checked="checked"#end>
 	<label for="smtpTls">$i18n.getString( "tls" )</label>
 </div>
 
-<div class="setting"><input type="submit" value="$i18n.getString( 'save' )" style="width:10em"/></div>
+<div class="settingLabel">$i18n.getString( "email_sender" )</div>
+
+<div class="setting"><input type="text" id="emailSender" name="emailSender" value="$!emailSender" autocomplete="off" placeholder="noreply&#64;dhis2.org"></div>
+
+<div class="setting"><input type="button" value="$i18n.getString( 'save' )" style="width:10em"></div>
 
 </form>

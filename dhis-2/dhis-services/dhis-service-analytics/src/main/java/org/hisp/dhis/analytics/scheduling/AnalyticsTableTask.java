@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics.scheduling;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,12 +28,13 @@ package org.hisp.dhis.analytics.scheduling;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.hisp.dhis.system.notification.NotificationLevel.ERROR;
 import static org.hisp.dhis.system.notification.NotificationLevel.INFO;
 
 import javax.annotation.Resource;
 
 import org.hisp.dhis.analytics.AnalyticsTableService;
-import org.hisp.dhis.resourcetable.ResourceTableService;
+import org.hisp.dhis.message.MessageService;
 import org.hisp.dhis.scheduling.TaskId;
 import org.hisp.dhis.system.notification.Notifier;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,17 +54,44 @@ public class AnalyticsTableTask
     @Resource(name="org.hisp.dhis.analytics.CompletenessTargetTableService")
     private AnalyticsTableService completenessTargetTableService;
     
-    @Autowired
-    private ResourceTableService resourceTableService;
+    @Resource(name="org.hisp.dhis.analytics.OrgUnitTargetTableService")
+    private AnalyticsTableService orgUnitTargetTableService;
+    
+    @Resource(name="org.hisp.dhis.analytics.EventAnalyticsTableService")
+    private AnalyticsTableService eventAnalyticsTableService;
     
     @Autowired
     private Notifier notifier;
+    
+    @Autowired
+    private MessageService messageService;
 
-    private boolean last3Years;
+    private Integer lastYears;
 
-    public void setLast3Years( boolean last3Years )
+    public void setLastYears( Integer lastYears )
     {
-        this.last3Years = last3Years;
+        this.lastYears = lastYears;
+    }
+    
+    private boolean skipResourceTables = false;
+
+    public void setSkipResourceTables( boolean skipResourceTables )
+    {
+        this.skipResourceTables = skipResourceTables;
+    }
+    
+    private boolean skipAggregate = false;
+    
+    public void setSkipAggregate( boolean skipAggregate )
+    {
+        this.skipAggregate = skipAggregate;
+    }
+
+    private boolean skipEvents = false;
+
+    public void setSkipEvents( boolean skipEvents )
+    {
+        this.skipEvents = skipEvents;
     }
 
     private TaskId taskId;
@@ -79,22 +108,46 @@ public class AnalyticsTableTask
     @Override
     public void run()
     {
-        notifier.clear( taskId ).notify( taskId, "Updating resource tables" );
-        
-        resourceTableService.generateAll();
+        notifier.clear( taskId ).notify( taskId, "Analytics table update process started" );
 
-        notifier.notify( taskId, "Updating analytics tables" );
-        
-        analyticsTableService.update( last3Years, taskId );
-        
-        notifier.notify( taskId, "Updating completeness tables" );
-        
-        completenessTableService.update( last3Years, taskId );
+        try
+        {
+            if ( !skipResourceTables )
+            {
+                notifier.notify( taskId, "Updating resource tables" );
+                analyticsTableService.generateResourceTables();    
+            }
+            
+            if ( !skipAggregate )
+            {
+                notifier.notify( taskId, "Updating analytics tables" );
+                analyticsTableService.update( lastYears, taskId );
 
-        notifier.notify( taskId, "Updating compeleteness target table" );
-        
-        completenessTargetTableService.update( last3Years, taskId );
-        
-        notifier.notify( taskId, INFO, "Analytics tables updated", true );
+                notifier.notify( taskId, "Updating completeness table" );
+                completenessTableService.update( lastYears, taskId );    
+
+                notifier.notify( taskId, "Updating completeness target table" );
+                completenessTargetTableService.update( lastYears, taskId );      
+
+                notifier.notify( taskId, "Updating organisation unit target table" );                
+                orgUnitTargetTableService.update( lastYears, taskId );        
+            }
+            
+            if ( !skipEvents )
+            {
+                notifier.notify( taskId, "Updating event analytics table" );  
+                eventAnalyticsTableService.update( lastYears, taskId );
+            }
+            
+            notifier.notify( taskId, INFO, "Analytics tables updated", true );
+        }
+        catch ( RuntimeException ex )
+        {
+            notifier.notify( taskId, ERROR, "Process failed: " + ex.getMessage(), true );
+            
+            messageService.sendFeedback( "Analytics table process failed", "Analytics table process failed, please check the logs.", null );
+            
+            throw ex;
+        }
     }
 }

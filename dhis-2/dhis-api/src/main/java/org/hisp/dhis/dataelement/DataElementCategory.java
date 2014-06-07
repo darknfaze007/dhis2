@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,9 +28,12 @@ package org.hisp.dhis.dataelement;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.hisp.dhis.common.BaseDimensionalObject;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
@@ -39,15 +43,9 @@ import org.hisp.dhis.common.annotation.Scanned;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.DimensionalView;
 import org.hisp.dhis.common.view.ExportView;
-import org.hisp.dhis.concept.Concept;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A Category is a dimension of a data element. DataElements can have sets of
@@ -57,7 +55,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
  *
  * @author Abyot Asalefew
  */
-@JacksonXmlRootElement( localName = "category", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement(localName = "category", namespace = DxfNamespaces.DXF_2_0)
 public class DataElementCategory
     extends BaseDimensionalObject
 {
@@ -68,36 +66,31 @@ public class DataElementCategory
 
     public static final String DEFAULT_NAME = "default";
 
-    private Concept concept;
+    private String dataDimensionType;
 
     @Scanned
     private List<DataElementCategoryOption> categoryOptions = new ArrayList<DataElementCategoryOption>();
 
     private boolean dataDimension;
-    
+
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
 
     public DataElementCategory()
     {
+        setAutoFields();
     }
 
     public DataElementCategory( String name )
     {
+        this();
         this.name = name;
     }
 
     public DataElementCategory( String name, List<DataElementCategoryOption> categoryOptions )
     {
-        this.name = name;
-        this.categoryOptions = categoryOptions;
-    }
-
-    public DataElementCategory( String name, Concept concept, List<DataElementCategoryOption> categoryOptions )
-    {
-        this.name = name;
-        this.concept = concept;
+        this( name );
         this.categoryOptions = categoryOptions;
     }
 
@@ -140,58 +133,24 @@ public class DataElementCategory
         return null;
     }
 
+    public boolean isDefault()
+    {
+        return DEFAULT_NAME.equals( name );
+    }
+
     // -------------------------------------------------------------------------
     // Dimensional object
     // -------------------------------------------------------------------------
 
     @Override
     @JsonProperty
-    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( { DetailedView.class, DimensionalView.class } )
-    @JacksonXmlElementWrapper( localName = "items", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "item", namespace = DxfNamespaces.DXF_2_0 )
+    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
+    @JsonView({ DetailedView.class, DimensionalView.class })
+    @JacksonXmlElementWrapper(localName = "items", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty(localName = "item", namespace = DxfNamespaces.DXF_2_0)
     public List<NameableObject> getItems()
     {
         return new ArrayList<NameableObject>( categoryOptions );
-    }
-    
-    // -------------------------------------------------------------------------
-    // hashCode, equals and toString
-    // -------------------------------------------------------------------------
-
-    @Override
-    public int hashCode()
-    {
-        return name.hashCode();
-    }
-
-    @Override
-    public boolean equals( Object object )
-    {
-        if ( this == object )
-        {
-            return true;
-        }
-
-        if ( object == null )
-        {
-            return false;
-        }
-
-        if ( !(object instanceof DataElementCategory) )
-        {
-            return false;
-        }
-
-        final DataElementCategory other = (DataElementCategory) object;
-
-        return name.equals( other.getName() );
-    }
-
-    @Override
-    public String toString()
-    {
-        return "[" + name + "]";
     }
 
     // ------------------------------------------------------------------------
@@ -208,26 +167,37 @@ public class DataElementCategory
     // Getters and setters
     // ------------------------------------------------------------------------
 
-    @JsonProperty
-    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
-    @JsonInclude( JsonInclude.Include.NON_NULL )
-    public Concept getConcept()
+    @Override
+    public String getShortName()
     {
-        return concept;
-    }
-
-    public void setConcept( Concept concept )
-    {
-        this.concept = concept;
+        if ( getName().length() <= 50 )
+        {
+            return getName();
+        }
+        else
+        {
+            return getName().substring( 0, 49 );
+        }
     }
 
     @JsonProperty
-    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlElementWrapper( localName = "categoryOptions", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "categoryOption", namespace = DxfNamespaces.DXF_2_0 )
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    public String getDataDimensionType()
+    {
+        return dataDimensionType;
+    }
+
+    public void setDataDimensionType( String dataDimensionType )
+    {
+        this.dataDimensionType = dataDimensionType;
+    }
+
+    @JsonProperty
+    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlElementWrapper(localName = "categoryOptions", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty(localName = "categoryOption", namespace = DxfNamespaces.DXF_2_0)
     public List<DataElementCategoryOption> getCategoryOptions()
     {
         return categoryOptions;
@@ -239,8 +209,8 @@ public class DataElementCategory
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
     public boolean isDataDimension()
     {
         return dataDimension;
@@ -250,7 +220,7 @@ public class DataElementCategory
     {
         this.dataDimension = dataDimension;
     }
-    
+
     @Override
     public void mergeWith( IdentifiableObject other )
     {
@@ -259,8 +229,6 @@ public class DataElementCategory
         if ( other.getClass().isInstance( this ) )
         {
             DataElementCategory dataElementCategory = (DataElementCategory) other;
-
-            concept = dataElementCategory.getConcept() == null ? concept : dataElementCategory.getConcept();
 
             removeAllCategoryOptions();
 

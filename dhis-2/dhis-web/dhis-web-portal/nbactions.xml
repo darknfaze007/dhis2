@@ -3,7 +3,6 @@
         <action>
             <actionName>CUSTOM-JettyRunWar</actionName>
             <displayName>JettyRunWar</displayName>
-            <recursive>false</recursive>
             <goals>
                 <goal>jetty:run-war</goal>
             </goals>

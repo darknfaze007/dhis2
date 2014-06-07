@@ -1,19 +1,20 @@
 package org.hisp.dhis.message.hibernate;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -68,12 +69,12 @@ public class HibernateMessageConversationStore
     {
         SqlHelper sh = new SqlHelper();
 
-        String sql = "select mc.messageconversationid, mc.uid, mc.subject, mc.lastmessage, ui.surname, ui.firstname, um.isread, um.isfollowup, ("
-            + "select count(messageconversationid) from messageconversation_messages mcm where mcm.messageconversationid=mc.messageconversationid) as messagecount "
-            + "from messageconversation mc "
-            + "left join messageconversation_usermessages mu on mc.messageconversationid=mu.messageconversationid "
-            + "left join usermessage um on mu.usermessageid=um.usermessageid "
-            + "left join userinfo ui on mc.lastsenderid=ui.userinfoid ";
+        String sql = "select mc.messageconversationid, mc.uid, mc.subject, mc.lastmessage, ui.surname, ui.firstname, um.isread, um.isfollowup, (" +
+            "select count(messageconversationid) from messageconversation_messages mcm where mcm.messageconversationid=mc.messageconversationid) as messagecount " +
+            "from messageconversation mc " +
+            "inner join messageconversation_usermessages mu on mc.messageconversationid=mu.messageconversationid " +
+            "inner join usermessage um on mu.usermessageid=um.usermessageid " +
+            "left join userinfo ui on mc.lastsenderid=ui.userinfoid ";
 
         if ( user != null )
         {
@@ -147,12 +148,11 @@ public class HibernateMessageConversationStore
         {
             return -1;
         }
-        
+            
         String hql = "select count(*) from MessageConversation m join m.userMessages u where u.user = :user and u.read = false";
 
         Query query = getQuery( hql );
         query.setEntity( "user", user );
-        query.setCacheable( true );
 
         return (Long) query.uniqueResult();
     }

@@ -9,10 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts2.ServletActionContext;
-import org.hisp.dhis.coldchain.inventory.EquipmentDataValue;
-import org.hisp.dhis.coldchain.inventory.EquipmentDataValueService;
-import org.hisp.dhis.coldchain.inventory.EquipmentInstance;
-import org.hisp.dhis.coldchain.inventory.EquipmentInstanceService;
+import org.hisp.dhis.coldchain.equipment.EquipmentDataValue;
+import org.hisp.dhis.coldchain.equipment.EquipmentDataValueService;
+import org.hisp.dhis.coldchain.equipment.Equipment;
+import org.hisp.dhis.coldchain.equipment.EquipmentService;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
@@ -32,11 +32,11 @@ public class SaveEquipmentDataValueAction implements Action
     // Dependencies
     // -------------------------------------------------------------------------
     
-    private EquipmentInstanceService equipmentInstanceService;
+    private EquipmentService equipmentService;
     
-    public void setEquipmentInstanceService( EquipmentInstanceService equipmentInstanceService )
+    public void setEquipmentService( EquipmentService equipmentService )
     {
-        this.equipmentInstanceService = equipmentInstanceService;
+        this.equipmentService = equipmentService;
     }
     
     private DataSetService dataSetService;
@@ -72,11 +72,11 @@ public class SaveEquipmentDataValueAction implements Action
         this.selectedDataSetId = selectedDataSetId;
     }
     
-    private int equipmentInstanceId;
+    private int equipmentId;
     
-    public void setEquipmentInstanceId( int equipmentInstanceId )
+    public void setEquipmentId( int equipmentId )
     {
-        this.equipmentInstanceId = equipmentInstanceId;
+        this.equipmentId = equipmentId;
     }
     
     private String selectedPeriodId;
@@ -105,24 +105,25 @@ public class SaveEquipmentDataValueAction implements Action
 
     public String execute()
     {
-        Period period = PeriodType.createPeriodExternalId( selectedPeriodId );
+        //Period period = PeriodType.createPeriodExternalId( selectedPeriodId );
+        Period period = PeriodType.getPeriodFromIsoString( selectedPeriodId );
         
         if ( period == null )
         {
             return logError( "Illegal period identifier: " + selectedPeriodId );
         }
         
-        EquipmentInstance equipmentInstance = equipmentInstanceService.getEquipmentInstance( equipmentInstanceId );
-        OrganisationUnit organisationUnit = equipmentInstance.getOrganisationUnit();
+        Equipment equipment = equipmentService.getEquipment( equipmentId );
+        OrganisationUnit organisationUnit = equipment.getOrganisationUnit();
         
         DataSet dataSet = dataSetService.getDataSet( selectedDataSetId );
         
-       
+       /*
         if ( dataSetService.isLocked( dataSet, period, organisationUnit, null ) )
         {
             return logError( "Entry locked for combination: " + dataSet + ", " + period + ", " + organisationUnit, 2 );
         }
-
+*/
         
         
         List<DataElement> dataElements = new ArrayList<DataElement>( dataSet.getDataElements() );
@@ -148,7 +149,7 @@ public class SaveEquipmentDataValueAction implements Action
         {
             for ( DataElement dataElement : dataElements )
             {
-                EquipmentDataValue equipmentDataValue = equipmentDataValueService.getEquipmentDataValue( equipmentInstance, period, dataElement );
+                EquipmentDataValue equipmentDataValue = equipmentDataValueService.getEquipmentDataValue( equipment, period, dataElement );
                 
                 String value = request.getParameter( PREFIX_DATAELEMENT + dataElement.getId() );
                 
@@ -162,23 +163,27 @@ public class SaveEquipmentDataValueAction implements Action
                     value = value.trim();
                 }
                 
-                if ( equipmentDataValue == null && value != null )
+                if ( equipmentDataValue == null )
                 {
-                    equipmentDataValue = new EquipmentDataValue();
-                    
-                    equipmentDataValue.setValue( value );
-                    equipmentDataValue.setDataElement( dataElement );
-                    equipmentDataValue.setEquipmentInstance( equipmentInstance );
-                    equipmentDataValue.setPeriod( period );
-                    equipmentDataValue.setStoredBy( storedBy );
-                    equipmentDataValue.setTimestamp( timestamp );
-                    equipmentDataValueService.addEquipmentDataValue( equipmentDataValue );
-                }                
+                    if ( value != null )
+                    {
+                        equipmentDataValue = new EquipmentDataValue();
+                        
+                        equipmentDataValue.setValue( value );
+                        equipmentDataValue.setDataElement( dataElement );
+                        equipmentDataValue.setEquipment( equipment );
+                        equipmentDataValue.setPeriod( period );
+                        equipmentDataValue.setStoredBy( storedBy );
+                        equipmentDataValue.setTimestamp( timestamp );
+                        equipmentDataValueService.addEquipmentDataValue( equipmentDataValue );
+                    }
+                }     
                 else
                 {
+                    //System.out.println( " dataElement :" + dataElement + "-- value : " + value );
                     equipmentDataValue.setDataElement( dataElement );
                     equipmentDataValue.setValue( value );
-                    equipmentDataValue.setEquipmentInstance( equipmentInstance );
+                    equipmentDataValue.setEquipment( equipment );
                     equipmentDataValue.setPeriod( period );
                     equipmentDataValue.setStoredBy( storedBy );
                     equipmentDataValue.setTimestamp( timestamp );

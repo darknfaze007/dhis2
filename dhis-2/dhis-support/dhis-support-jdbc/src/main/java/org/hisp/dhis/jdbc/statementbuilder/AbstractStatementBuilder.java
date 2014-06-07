@@ -1,19 +1,20 @@
 package org.hisp.dhis.jdbc.statementbuilder;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -41,13 +42,36 @@ public abstract class AbstractStatementBuilder
     @Override
     public String encode( String value )
     {
+        return encode( value, true );
+    }
+    
+    @Override
+    public String encode( String value, boolean quote )
+    {
         if ( value != null )
         {
             value = value.endsWith( "\\" ) ? value.substring( 0, value.length() - 1 ) : value;
             value = value.replaceAll( QUOTE, QUOTE + QUOTE );
         }
         
-        return QUOTE + value + QUOTE;
+        return quote ? ( QUOTE + value + QUOTE ) : value;
+    }
+    
+    public String columnQuote( String column )
+    {
+        return column != null ? ( getColumnQuote() + column + getColumnQuote() ) : null;
+    }
+
+    @Override
+    public String limitRecord( int offset, int limit )
+    {
+        return " LIMIT " + limit + " OFFSET " + offset;
+    }
+
+    @Override
+    public String getAutoIncrementValue()
+    {
+        return "null";
     }
 
     @Override
@@ -154,5 +178,38 @@ public abstract class AbstractStatementBuilder
             "registrationsOnTime INTEGER, " +
             "value " + getDoubleColumnType() + ", " +
             "valueOnTime " + getDoubleColumnType() + " );";
+    }
+
+    @Override
+    public String getNumberOfColumnsInPrimaryKey( String table )
+    {
+        return
+            "select count(cu.column_name) from information_schema.key_column_usage cu " +
+            "inner join information_schema.table_constraints tc  " +
+            "on cu.constraint_catalog=tc.constraint_catalog " +
+                "and cu.constraint_schema=tc.constraint_schema " +
+                "and cu.constraint_name=tc.constraint_name " +
+                "and cu.table_schema=tc.table_schema " +
+                "and cu.table_name=tc.table_name " +
+            "where tc.constraint_type='PRIMARY KEY' " +
+            "and cu.table_name='" + table + "';";
+    }
+
+    @Override
+    public String getDropPrimaryKey( String table )
+    {
+        return "alter table " + table + " drop primary key;";
+    }
+
+    @Override
+    public String getAddPrimaryKeyToExistingTable( String table, String column )
+    {
+        return "alter table " + table + " add column " + column + " integer auto_increment primary key not null;";
+    }
+    
+    @Override
+    public String getDropNotNullConstraint( String table, String column, String type )
+    {
+        return "alter table " + table + " modify column " + column + " " + type + " null;";
     }
 }

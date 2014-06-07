@@ -51,7 +51,6 @@
     </set>
 	
 	<set name="organisationUnitGroups" table="orgunitgroupdatasets" inverse="true">
-	  <cache usage="read-write" />
 	  <key column="datasetid" />
 	  <many-to-many class="org.hisp.dhis.organisationunit.OrganisationUnitGroup" column="orgunitgroupid"/>
 	</set>
@@ -61,6 +60,10 @@
       <key column="datasetid" />
       <one-to-many class="org.hisp.dhis.dataset.Section" />
     </set>
+
+    <many-to-one name="categoryCombo" class="org.hisp.dhis.dataelement.DataElementCategoryCombo"
+      column="categorycomboid"
+      foreign-key="fk_dataset_categorycomboid" />
 
     <property name="sortOrder" />
 
@@ -73,23 +76,31 @@
 
     <property name="expiryDays" />
 
+    <property name="timelyDays" />
+
     <property name="skipAggregation" />
 
     <many-to-one name="notificationRecipients" class="org.hisp.dhis.user.UserGroup"
       foreign-key="fk_dataset_notificationrecipients" />
 
-    <property name="notifyCompletingUser" />
+      <property name="notifyCompletingUser" />
 
-    <!-- Form properties -->
+      <property name="approveData" />
+
+      <!-- Form properties -->
 
     <property name="allowFuturePeriods" />
 
     <property name="fieldCombinationRequired" />
 
     <property name="validCompleteOnly" />
+    
+    <property name="noValueRequiresComment" />
 
     <property name="skipOffline" />
 
+    <property name="dataElementDecoration" />
+    
     <property name="renderAsTabs" />
 
     <property name="renderHorizontally" />
@@ -103,6 +114,17 @@
       <cache usage="read-write" />
       <key column="datasetid" />
       <many-to-many class="org.hisp.dhis.user.UserGroupAccess" column="usergroupaccessid" unique="true" />
+    </set>
+
+    <many-to-one name="legendSet" class="org.hisp.dhis.mapping.MapLegendSet" column="legendsetid"
+      foreign-key="fk_indicator_legendset" />
+
+    <!-- Dynamic attribute values -->
+
+    <set name="attributeValues" table="datasetattributevalues">
+      <cache usage="read-write" />
+      <key column="datasetid" />
+      <many-to-many class="org.hisp.dhis.attribute.AttributeValue" column="attributevalueid" unique="true" />
     </set>
 
   </class>

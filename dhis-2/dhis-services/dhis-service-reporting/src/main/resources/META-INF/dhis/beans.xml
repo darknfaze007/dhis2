@@ -6,7 +6,7 @@
 
   <!-- ReportTable -->
 
-  <bean id="org.hisp.dhis.reporttable.ReportTableStore" class="org.hisp.dhis.common.hibernate.HibernateIdentifiableObjectStore">
+  <bean id="org.hisp.dhis.reporttable.ReportTableStore" class="org.hisp.dhis.common.hibernate.HibernateAnalyticalObjectStore">
     <property name="clazz" value="org.hisp.dhis.reporttable.ReportTable" />
     <property name="sessionFactory" ref="sessionFactory" />
     <property name="cacheable" value="true" />
@@ -39,7 +39,7 @@
 
   <!-- Chart -->
 
-  <bean id="org.hisp.dhis.chart.ChartStore" class="org.hisp.dhis.chart.hibernate.HibernateChartStore">
+  <bean id="org.hisp.dhis.chart.ChartStore" class="org.hisp.dhis.common.hibernate.HibernateAnalyticalObjectStore">
     <property name="clazz" value="org.hisp.dhis.chart.Chart" />
     <property name="sessionFactory" ref="sessionFactory" />
     <property name="cacheable" value="true" />
@@ -52,7 +52,7 @@
     <property name="minMaxDataElementService" ref="org.hisp.dhis.minmax.MinMaxDataElementService" />
     <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
-	<property name="analyticsService" ref="org.hisp.dhis.analytics.AnalyticsService" />
+    <property name="analyticsService" ref="org.hisp.dhis.analytics.AnalyticsService" />
   </bean>
 
   <!-- Document -->
@@ -78,25 +78,24 @@
     </property>
   </bean>
 
-  <bean id="org.hisp.dhis.completeness.DataSetCompletenessEngine" class="org.hisp.dhis.completeness.engine.DefaultDataSetCompletenessEngine">
-	<property name="completenessService" ref="registrationDataCompletenessService"/>
+  <bean id="org.hisp.dhis.completeness.DataSetCompletenessEngine"
+    class="org.hisp.dhis.completeness.engine.DefaultDataSetCompletenessEngine">
+    <property name="completenessService" ref="registrationDataCompletenessService" />
     <property name="completenessStore" ref="org.hisp.dhis.completeness.DataSetCompletenessStore" />
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="periodService" ref="org.hisp.dhis.period.PeriodService" />
     <property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
-    <property name="systemSettingManager" ref="org.hisp.dhis.setting.SystemSettingManager" />
-	<property name="notifier" ref="notifier" />
+    <property name="notifier" ref="notifier" />
   </bean>
 
   <bean id="compulsoryDataCompletenessService" class="org.hisp.dhis.completeness.impl.CompulsoryDataSetCompletenessService">
     <property name="batchHandlerFactory" ref="batchHandlerFactory" />
-	<property name="aggregationCache" ref="org.hisp.dhis.datamart.aggregation.cache.AggregationCache" />
+    <property name="aggregationCache" ref="org.hisp.dhis.datamart.aggregation.cache.AggregationCache" />
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="organisationUnitGroupService" ref="org.hisp.dhis.organisationunit.OrganisationUnitGroupService" />
     <property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
     <property name="periodService" ref="org.hisp.dhis.period.PeriodService" />
     <property name="completenessStore" ref="org.hisp.dhis.completeness.DataSetCompletenessStore" />
-    <property name="systemSettingManager" ref="org.hisp.dhis.setting.SystemSettingManager" />
   </bean>
 
   <bean id="registrationDataCompletenessService" class="org.hisp.dhis.completeness.impl.RegistrationDataSetCompletenessService"
@@ -105,127 +104,69 @@
 
   <bean id="org.hisp.dhis.completeness.DataSetCompletenessStore" class="org.hisp.dhis.completeness.jdbc.JDBCDataSetCompletenessStore">
     <property name="statementManager" ref="statementManager" />
-	<property name="statementBuilder" ref="statementBuilder" />
+    <property name="statementBuilder" ref="statementBuilder" />
   </bean>
 
   <!-- DataSetReport -->
 
   <bean id="org.hisp.dhis.datasetreport.DataSetReportService" class="org.hisp.dhis.datasetreport.impl.DefaultDataSetReportService">
     <property name="dataValueService" ref="org.hisp.dhis.datavalue.DataValueService" />
-	<property name="dataSetReportStore" ref="org.hisp.dhis.datasetreport.AnalyticsDataSetReportStore" />
-  </bean>
-  
-  <bean id="org.hisp.dhis.datasetreport.DataSetReportStore" class="org.hisp.dhis.datasetreport.jdbc.JdbcDataSetReportStore">
-	<property name="jdbcTemplate" ref="jdbcTemplate" />
+    <property name="dataSetReportStore" ref="org.hisp.dhis.datasetreport.DataSetReportStore" />
   </bean>
 
-  <bean id="org.hisp.dhis.datasetreport.AnalyticsDataSetReportStore" class="org.hisp.dhis.datasetreport.jdbc.AnalyticsDataSetReportStore">
+  <bean id="org.hisp.dhis.datasetreport.DataSetReportStore" class="org.hisp.dhis.datasetreport.jdbc.AnalyticsDataSetReportStore">
     <property name="analyticsService" ref="org.hisp.dhis.analytics.AnalyticsService" />
   </bean>
-  
+
   <!-- Dashboard -->
 
-  <bean id="org.hisp.dhis.dashboard.DashboardContentStore" class="org.hisp.dhis.dashboard.hibernate.HibernateDashboardContentStore">
-    <property name="clazz" value="org.hisp.dhis.dashboard.DashboardContent" />
+  <bean id="org.hisp.dhis.dashboard.DashboardStore" class="org.hisp.dhis.common.hibernate.HibernateIdentifiableObjectStore">
+    <property name="clazz" value="org.hisp.dhis.dashboard.Dashboard" />
     <property name="sessionFactory" ref="sessionFactory" />
-	<property name="jdbcTemplate" ref="jdbcTemplate" />
     <property name="cacheable" value="true" />
   </bean>
 
   <bean id="org.hisp.dhis.dashboard.DashboardService" class="org.hisp.dhis.dashboard.impl.DefaultDashboardService">
-    <property name="dashboardContentStore" ref="org.hisp.dhis.dashboard.DashboardContentStore" />
-    <property name="userService" ref="org.hisp.dhis.user.UserService" />
-    <property name="chartService" ref="org.hisp.dhis.chart.ChartService" />
-    <property name="mappingService" ref="org.hisp.dhis.mapping.MappingService" />
-    <property name="reportService" ref="org.hisp.dhis.report.ReportService" />
-    <property name="reportTableService" ref="org.hisp.dhis.reporttable.ReportTableService" />
-    <property name="documentService" ref="org.hisp.dhis.document.DocumentService" />
+    <property name="dashboardStore" ref="org.hisp.dhis.dashboard.DashboardStore" />
   </bean>
 
-  <!-- Dashboard Content providers -->
-
-  <bean id="reportContentProvider" class="org.hisp.dhis.dashboard.provider.ReportContentProvider">
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-    <property name="dashboardService" ref="org.hisp.dhis.dashboard.DashboardService" />
-    <property name="key" value="reports" />
+  <bean id="org.hisp.dhis.dashboard.impl.DashboardItemDeletionHandler" class="org.hisp.dhis.dashboard.DashboardItemDeletionHandler">
   </bean>
 
-  <bean id="documentContentProvider" class="org.hisp.dhis.dashboard.provider.DocumentContentProvider">
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-    <property name="dashboardService" ref="org.hisp.dhis.dashboard.DashboardService" />
-    <property name="key" value="documents" />
-  </bean>
-
-  <bean id="reportTableContentProvider" class="org.hisp.dhis.dashboard.provider.ReportTableContentProvider">
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-    <property name="dashboardService" ref="org.hisp.dhis.dashboard.DashboardService" />
-    <property name="key" value="reportTables" />
-  </bean>
-
-  <bean id="mapViewContentProvider" class="org.hisp.dhis.dashboard.provider.MapViewContentProvider">
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-    <property name="dashboardService" ref="org.hisp.dhis.dashboard.DashboardService" />
-    <property name="key" value="maps" />
-  </bean>
-
-  <bean id="rssHealthContentProvider" class="org.hisp.dhis.dashboard.provider.RssContentProvider">
-    <property name="url" value="http://news.yahoo.com/rss/health" />
-    <property name="key" value="healthItems" />
-  </bean>
-
-  <bean id="rssDiseasesContentProvider" class="org.hisp.dhis.dashboard.provider.RssContentProvider">
-    <property name="url" value="http://news.yahoo.com/rss/diseases-conditions" />
-    <property name="key" value="diseasesItems" />
-  </bean>
-
-  <!-- Dashboard Manager -->
-
-  <bean id="org.hisp.dhis.dashboard.DashboardManager" class="org.hisp.dhis.dashboard.manager.DefaultDashboardManager">
-    <property name="userSettingService" ref="org.hisp.dhis.user.UserSettingService" />
-    <property name="contentProviders">
-      <map>
-        <entry key="report">
-          <ref local="reportContentProvider" />
-        </entry>
-        <entry key="document">
-          <ref local="documentContentProvider" />
-        </entry>
-        <entry key="report_table">
-          <ref local="reportTableContentProvider" />
-        </entry>
-        <entry key="map_view">
-          <ref local="mapViewContentProvider" />
-        </entry>
-        <entry key="rss_health">
-          <ref local="rssHealthContentProvider" />
-        </entry>
-        <entry key="rss_diseases">
-          <ref local="rssDiseasesContentProvider" />
-        </entry>
-      </map>
-    </property>
+  <bean id="org.hisp.dhis.dashboard.DashboardItemStore" class="org.hisp.dhis.dashboard.hibernate.HibernateDashboardItemStore">
+    <property name="clazz" value="org.hisp.dhis.dashboard.DashboardItem" />
+    <property name="sessionFactory" ref="sessionFactory" />
+    <property name="cacheable" value="true" />
   </bean>
 
   <!-- Organisation Unit Distribution -->
 
-  <bean id="org.hisp.dhis.orgunitdistribution.OrgUnitDistributionService" class="org.hisp.dhis.orgunitdistribution.impl.DefaultOrgUnitDistributionService">
+  <bean id="org.hisp.dhis.orgunitdistribution.OrgUnitDistributionService"
+    class="org.hisp.dhis.orgunitdistribution.impl.DefaultOrgUnitDistributionService">
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="chartService" ref="org.hisp.dhis.chart.ChartService" />
   </bean>
-  
+
   <!-- Interpretation -->
-  
+
   <bean id="org.hisp.dhis.interpretation.InterpretationService" class="org.hisp.dhis.interpretation.impl.DefaultInterpretationService">
-	<property name="interpretationStore" ref="org.hisp.dhis.interpretation.InterpretationStore" />
-	<property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-	<property name="userService" ref="org.hisp.dhis.user.UserService" />
-	<property name="periodService" ref="org.hisp.dhis.period.PeriodService" />
+    <property name="interpretationStore" ref="org.hisp.dhis.interpretation.InterpretationStore" />
+    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
+    <property name="userService" ref="org.hisp.dhis.user.UserService" />
+    <property name="periodService" ref="org.hisp.dhis.period.PeriodService" />
   </bean>
 
   <bean id="org.hisp.dhis.interpretation.InterpretationStore" class="org.hisp.dhis.interpretation.hibernate.HibernateInterpretationStore">
-	<property name="clazz" value="org.hisp.dhis.interpretation.Interpretation" />
+    <property name="clazz" value="org.hisp.dhis.interpretation.Interpretation" />
     <property name="sessionFactory" ref="sessionFactory" />
-    <property name="cacheable" value="true" />
+  </bean>
+
+  <!-- Data element history -->
+
+  <bean id="org.hisp.dhis.dataelementhistory.HistoryRetriever" class="org.hisp.dhis.dataelementhistory.DefaultHistoryRetriever">
+    <property name="minMaxDataElementService" ref="org.hisp.dhis.minmax.MinMaxDataElementService" />
+    <property name="dataValueService" ref="org.hisp.dhis.datavalue.DataValueService" />
+    <property name="periodService" ref="org.hisp.dhis.period.PeriodService" />
   </bean>
 
   <!-- Scheduling -->
@@ -238,10 +179,11 @@
       <map>
         <entry key="resourceTableTask" value-ref="resourceTableTask" />
         <entry key="dataMartLast12MonthsTask" value-ref="dataMartLast12MonthsTask" />
-		<entry key="dataMartLast6MonthsTask" value-ref="dataMartLast6MonthsTask" />
-		<entry key="dataMartFrom6To12MonthsTask" value-ref="dataMartFrom6To12MonthsTask" />
-		<entry key="analyticsAllTask" value-ref="analyticsAllTask" />
-		<entry key="analyticsLast3YearsTask" value-ref="analyticsLast3YearsTask" />
+        <entry key="dataMartLast6MonthsTask" value-ref="dataMartLast6MonthsTask" />
+        <entry key="dataMartFrom6To12MonthsTask" value-ref="dataMartFrom6To12MonthsTask" />
+        <entry key="analyticsAllTask" value-ref="analyticsAllTask" />
+        <entry key="analyticsLast3YearsTask" value-ref="analyticsLast3YearsTask" />
+        <entry key="monitoringLastDayTask" value-ref="monitoringLastDayTask" />
       </map>
     </property>
   </bean>
@@ -249,18 +191,54 @@
   <!-- Scheduled tasks -->
 
   <bean id="dataMartLast12MonthsTask" class="org.hisp.dhis.scheduling.DataMartTask">
-    <property name="last6Months" value="true"/>
-    <property name="last6To12Months" value="true"/>
+    <property name="last6Months" value="true" />
+    <property name="last6To12Months" value="true" />
+  </bean>
+
+  <bean id="dataMartLast6MonthsTask" class="org.hisp.dhis.scheduling.DataMartTask">
+    <property name="last6Months" value="true" />
+  </bean>
+
+  <bean id="dataMartFrom6To12MonthsTask" class="org.hisp.dhis.scheduling.DataMartTask">
+    <property name="last6To12Months" value="true" />
+  </bean>
+
+  <bean id="org.hisp.dhis.common.ReportingIdentityPopulator" class="org.hisp.dhis.common.IdentityPopulator">
+    <property name="name" value="ReportingIdentityPopulator" />
+    <property name="runlevel" value="3" />
+    <property name="skipInTests" value="true" />
+    <property name="tables">
+      <list>
+        <value>reporttable</value>
+        <value>chart</value>
+        <value>map</value>
+        <value>mapview</value>
+        <value>maplegend</value>
+        <value>maplegendset</value>
+        <value>report</value>
+        <value>messageconversation</value>
+        <value>message</value>
+        <value>document</value>
+        <value>dashboard</value>
+        <value>dashboarditem</value>
+        <value>interpretation</value>
+        <value>interpretationcomment</value>
+      </list>
+    </property>
   </bean>
     
-  <bean id="dataMartLast6MonthsTask" class="org.hisp.dhis.scheduling.DataMartTask">
-    <property name="last6Months" value="true"/>
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="org.hisp.dhis.system.startup.StartupRoutineExecutor" />
+    <property name="targetMethod" value="addStartupRoutines" />
+    <property name="arguments">
+      <list>
+        <list>
+          <ref local="org.hisp.dhis.common.ReportingIdentityPopulator" />
+        </list>
+      </list>
+    </property>
   </bean>
   
-  <bean id="dataMartFrom6To12MonthsTask" class="org.hisp.dhis.scheduling.DataMartTask">
-    <property name="last6To12Months" value="true"/>
-  </bean>      
-      
   <!-- DeletionHandler -->
 
   <bean id="org.hisp.dhis.report.ReportDeletionHandler" class="org.hisp.dhis.report.ReportDeletionHandler">
@@ -275,9 +253,8 @@
     <property name="chartService" ref="org.hisp.dhis.chart.ChartService" />
   </bean>
 
-  <bean id="org.hisp.dhis.dashboard.DashboardContentDeletionHandler" class="org.hisp.dhis.dashboard.DashboardContentDeletionHandler">
-    <property name="dashboardService" ref="org.hisp.dhis.dashboard.DashboardService" />
-  </bean>
+  <bean id="org.hisp.dhis.interpretation.InterpretationDeletionHandler"
+    class="org.hisp.dhis.interpretation.InterpretationDeletionHandler" />
 
   <!-- DeletionManager -->
 
@@ -290,7 +267,8 @@
           <ref local="org.hisp.dhis.report.ReportDeletionHandler" />
           <ref local="org.hisp.dhis.reporttable.ReportTableDeletionHandler" />
           <ref local="org.hisp.dhis.chart.ChartDeletionHandler" />
-          <ref local="org.hisp.dhis.dashboard.DashboardContentDeletionHandler" />
+          <ref local="org.hisp.dhis.interpretation.InterpretationDeletionHandler" />
+          <ref local="org.hisp.dhis.dashboard.impl.DashboardItemDeletionHandler" />
         </list>
       </list>
     </property>

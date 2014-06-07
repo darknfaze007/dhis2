@@ -1,19 +1,20 @@
 package org.hisp.dhis.mobile.service;
 
 /*
- * Copyright (c) 2010, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,10 +28,12 @@ package org.hisp.dhis.mobile.service;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Vector;
 
 import org.hisp.dhis.period.DailyPeriodType;
 import org.hisp.dhis.period.MonthlyPeriodType;
@@ -160,4 +163,127 @@ public class PeriodUtil
             + periodName );
     }
 
+    public static String dateToString( Date date )
+    {
+        DateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd" );
+        return dateFormat.format( date );
+    }
+
+    public static Date stringToDate( String dateString )
+    {
+        SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd" );
+        Date date = null;
+        try
+        {
+            date = dateFormat.parse( dateString );
+        }
+        catch ( Exception e )
+        {
+            return null;
+        }
+
+        return date;
+    }
+
+    public static String convertDateFormat( String standardDate )
+    {
+        try
+        {
+            String[] tokens = standardDate.split( "-" );
+            return tokens[2] + "-" + tokens[1] + "-" + tokens[0];
+        }
+        catch ( Exception e )
+        {
+            return standardDate;
+        }
+    }
+
+    public static Vector<String> generatePeriods( String periodType )
+    {
+        Vector<String> periods = null;
+        if ( periodType.equals( "Monthly" ) )
+        {
+            periods = PeriodUtil.generateMonthlyPeriods();
+        }
+        else if ( periodType.equals( "Yearly" ) )
+        {
+            periods = PeriodUtil.generateYearlyPeriods();
+        }
+        else if ( periodType.equals( "Quarterly" ) )
+        {
+            periods = PeriodUtil.generateQuaterlyPeriods();
+        }
+        return periods;
+    }
+
+    public static Vector<String> generateMonthlyPeriods()
+    {
+        Vector<String> months = new Vector<String>();
+        Calendar cal = Calendar.getInstance();
+
+        // Display only 12 previous periods including the current one
+        cal.set( Calendar.MONTH, cal.get( Calendar.MONTH ) );
+
+        for ( int i = 0; i < 11; i++ )
+        {
+            if ( cal.get( Calendar.MONTH ) < 0 )
+            {
+                cal.set( Calendar.MONTH, 11 );
+                cal.set( Calendar.YEAR, cal.get( Calendar.YEAR ) - 1 );
+            }
+            months.addElement( cal.get( Calendar.MONTH ) + "-" + cal.get( Calendar.YEAR ) );
+            cal.set( Calendar.MONTH, cal.get( Calendar.MONTH ) - 1 );
+        }
+
+        return months;
+    }
+
+    public static Vector<String> generateYearlyPeriods()
+    {
+        Vector<String> years = new Vector<String>();
+        Calendar cal = Calendar.getInstance();
+
+        // Display only 12 previous periods including the current one
+        cal.set( Calendar.YEAR, cal.get( Calendar.YEAR ) );
+
+        for ( int i = 0; i < 2; i++ )
+        {
+            years.addElement( Integer.toString( cal.get( Calendar.YEAR ) ) );
+            cal.set( Calendar.YEAR, cal.get( Calendar.YEAR ) - 1 );
+        }
+
+        return years;
+    }
+    
+    public static Vector<String> generateQuaterlyPeriods()
+    {
+        Vector<String> quarters = new Vector<String>();
+        Calendar cal = Calendar.getInstance();
+        String[] quatersStr = { "Jan to Mar", "Apr to Jun", "Jul to Sep", "Oct to Dec" };
+
+        if ( cal.get( Calendar.MONTH ) >= 0 && cal.get( Calendar.MONTH ) <= 2 )
+        {
+            quarters.addElement( quatersStr[0] + " " + cal.get( Calendar.YEAR ) );
+        }
+        else if ( cal.get( Calendar.MONTH ) >= 3 && cal.get( Calendar.MONTH ) <= 5 )
+        {
+            quarters.addElement( quatersStr[1] + " " + cal.get( Calendar.YEAR ) );
+            quarters.addElement( quatersStr[0] + " " + cal.get( Calendar.YEAR ) );
+        }
+        else if ( cal.get( Calendar.MONTH ) >= 6 && cal.get( Calendar.MONTH ) <= 8 )
+        {
+            quarters.addElement( quatersStr[2] + " " + cal.get( Calendar.YEAR ) );
+            quarters.addElement( quatersStr[1] + " " + cal.get( Calendar.YEAR ) );
+            quarters.addElement( quatersStr[0] + " " + cal.get( Calendar.YEAR ) );
+        }
+        else if ( cal.get( Calendar.MONTH ) >= 9 && cal.get( Calendar.MONTH ) <= 11 )
+        {
+            quarters.addElement( quatersStr[3] + " " + cal.get( Calendar.YEAR ) );
+            quarters.addElement( quatersStr[2] + " " + cal.get( Calendar.YEAR ) );
+            quarters.addElement( quatersStr[1] + " " + cal.get( Calendar.YEAR ) );
+            quarters.addElement( quatersStr[0] + " " + cal.get( Calendar.YEAR ) );
+        }
+        return quarters;
+    }
+    
 }

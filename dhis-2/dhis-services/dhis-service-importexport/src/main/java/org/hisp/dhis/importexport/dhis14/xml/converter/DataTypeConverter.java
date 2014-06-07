@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.dhis14.xml.converter;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -46,6 +47,7 @@ public class DataTypeConverter
     private static final String FIELD_NAME = "DataTypeName";
     private static final String FIELD_DISPLAY = "DataTypeDisplay";
     private static final String FIELD_ML = "DataType_ML";
+    private static final String FIELD_UID = "UID";
 
     // -------------------------------------------------------------------------
     // Constructor
@@ -74,6 +76,7 @@ public class DataTypeConverter
         writer.writeElement( FIELD_NAME, "Date" );
         writer.writeElement( FIELD_DISPLAY, "Date" );
         writer.writeElement( FIELD_ML, "1175" );
+        writer.writeElement( FIELD_UID, "" );
         
         writer.closeElement();
 
@@ -87,6 +90,7 @@ public class DataTypeConverter
         writer.writeElement( FIELD_NAME, "Memo" );
         writer.writeElement( FIELD_DISPLAY, "Memo" );
         writer.writeElement( FIELD_ML, "4316" );
+        writer.writeElement( FIELD_UID, "" );
         
         writer.closeElement();
 
@@ -100,6 +104,7 @@ public class DataTypeConverter
         writer.writeElement( FIELD_NAME, "Number" );
         writer.writeElement( FIELD_DISPLAY, "Number" );
         writer.writeElement( FIELD_ML, "1174" );
+        writer.writeElement( FIELD_UID, "" );
         
         writer.closeElement();
 
@@ -113,6 +118,7 @@ public class DataTypeConverter
         writer.writeElement( FIELD_NAME, "String" );
         writer.writeElement( FIELD_DISPLAY, "Text" );
         writer.writeElement( FIELD_ML, "1173" );
+        writer.writeElement( FIELD_UID, "" );
         
         writer.closeElement();
 
@@ -126,6 +132,7 @@ public class DataTypeConverter
         writer.writeElement( FIELD_NAME, "YesNo" );
         writer.writeElement( FIELD_DISPLAY, "Yes/No" );
         writer.writeElement( FIELD_ML, "3077" );
+        writer.writeElement( FIELD_UID, "" );
         
         writer.closeElement();
 
@@ -139,6 +146,7 @@ public class DataTypeConverter
         writer.writeElement( FIELD_NAME, "Object" );
         writer.writeElement( FIELD_DISPLAY, "OLE Object" );
         writer.writeElement( FIELD_ML, "4317" );
+        writer.writeElement( FIELD_UID, "" );
         
         writer.closeElement();
     }

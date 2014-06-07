@@ -9,9 +9,12 @@ function getPeriods()
 {
 	$( '#dataEntryFormDiv' ).html( '' );
 	
+	/*
 	$( '#selectedPeriodId' ).removeAttr( 'disabled' );
     $( '#prevButton' ).removeAttr( 'disabled' );
     $( '#nextButton' ).removeAttr( 'disabled' );
+    
+    */
     
     //hideById('dataEntryFormDiv');
     //setInnerHTML('dataEntryFormDiv', '');
@@ -39,7 +42,7 @@ function getPeriods()
     $.getJSON( url, function( json ) {
     	for ( i in json.periods ) {
     		//addOptionToList( list, i, json.periods[i].name );
-    		addOptionToList( list, json.periods[i].externalId, json.periods[i].name );
+    		addOptionToList( list, json.periods[i].isoDate, json.periods[i].name );
     	}
     } );
 	
@@ -87,6 +90,7 @@ function getPeriods()
     }
     */
 }
+
 /*
 function getAvailablePeriodsPre( selectedDataSetId, periodId, periodId, timespan )
 {
@@ -162,12 +166,11 @@ function getAvailablePeriodsTemp( availablePeriodsId, selectedPeriodsId, year )
 			
 			for ( i in json.periods ) {
 	    		//addOptionToList( list, i, json.periods[i].name );
-	    		addOptionToList( selectedList, json.periods[i].externalId, json.periods[i].name );
+	    		addOptionToList( selectedList, json.periods[i].isoDate, json.periods[i].name );
 	    	}
 			
 		} );
 }
-
 
 /*
 function getAvailablePeriods( periodTypeId, availablePeriodsId, selectedPeriodsId, year )
@@ -210,8 +213,8 @@ function loadDataEntryForm()
 	//var periodTypeId = dataSetPeriod[1];
 	
 	var organisationUnitId = $( '#organisationUnitId' ).val();
-	var inventoryTypeId = $( '#inventoryTypeId' ).val();
-	var equipmentInstanceId = $( '#equipmentInstanceId' ).val();
+	var equipmentTypeId = $( '#equipmentTypeId' ).val();
+	var equipmentId = $( '#equipmentId' ).val();
 	
 	var selectedPeriodId = $( '#selectedPeriodId' ).val();
 	
@@ -225,7 +228,7 @@ function loadDataEntryForm()
 	else
 	{
 		//setInnerHTML('dataEntryFormDiv', '');
-		//alert( dataSetId +"---"+ selectedPeriodId +"----"+ equipmentInstanceId );
+		//alert( dataSetId +"---"+ selectedPeriodId +"----"+ equipmentId );
 		
 		//hideById('dataEntryFormDiv');
 	    jQuery('#loaderDiv').show();
@@ -236,7 +239,7 @@ function loadDataEntryForm()
 			{
 				dataSetId:dataSetId,
 				selectedPeriodId:selectedPeriodId,
-				equipmentInstanceId:equipmentInstanceId
+				equipmentId:equipmentId
 			}, function()
 			{
 				showById('dataEntryFormDiv');
@@ -256,3 +259,134 @@ function clearEntryForm()
     //$( '#completenessDiv' ).hide();
     //$( '#infoDiv' ).hide();
 }
+
+
+
+//-----------------------------------------------------------------------------
+//Load Period
+//-----------------------------------------------------------------------------
+
+
+function getFacilityDataSetPeriods()
+{
+	$( '#facilityDataEntryFormDiv' ).html( '' );
+	
+	/*
+	$( '#selectedPeriodId' ).removeAttr( 'disabled' );
+ 	$( '#prevButton' ).removeAttr( 'disabled' );
+ 	$( '#nextButton' ).removeAttr( 'disabled' );
+	 */
+ 
+	var dataSetId = $( '#dataSetId' ).val();
+
+	var url = 'loadPeriods.action?dataSetId=' + dataSetId;
+	
+	var list = document.getElementById( 'selPeriodId' );
+		
+	clearList( list );
+	    
+	//addOptionToList( list, '-1', '[ Select ]' );
+	
+	$.getJSON( url, function( json ) {
+		for ( i in json.periods ) {
+			//addOptionToList( list, i, json.periods[i].name );
+			addOptionToList( list, json.periods[i].isoDate, json.periods[i].name );
+		}
+		loadFacilityDataEntryForm();
+	} );
+	
+	
+}
+
+
+//-----------------------------------------------------------------------------
+//Load pre and Next Period
+//-----------------------------------------------------------------------------
+function getFacilityAvailablePeriodsTemp( availablePeriodsId, selectedPeriodsId, year )
+{	
+	$( '#facilityDataEntryFormDiv' ).html( '' );
+	
+	var dataSetId = $( '#dataSetId' ).val();
+ 
+	var availableList = document.getElementById( availablePeriodsId );
+	var selectedList = document.getElementById( selectedPeriodsId );
+	
+	clearList( selectedList );
+	
+	//addOptionToList( selectedList, '-1', '[ Select ]' );
+	
+	$.getJSON( "getAvailableNextPrePeriods.action", {
+		"dataSetId": dataSetId ,
+		"year": year },
+		function( json ) {
+			
+			for ( i in json.periods ) {
+	    		//addOptionToList( list, i, json.periods[i].name );
+	    		addOptionToList( selectedList, json.periods[i].isoDate, json.periods[i].name );
+	    	}
+			loadFacilityDataEntryForm();
+		} );
+	
+}
+
+
+//-----------------------------------------------------------------------------
+//Load Facility Data Entry Form
+//-----------------------------------------------------------------------------
+
+function loadFacilityDataEntryForm()
+{
+	
+	$( '#facilityDataEntryFormDiv' ).html('');
+	
+	$( '#saveButton' ).removeAttr( 'disabled' );
+	
+	var dataSetId = $( '#dataSetId' ).val();
+	
+	var orgUnitId = $( '#organisationUnitId' ).val();
+	
+	var selPeriodId = $( '#selPeriodId' ).val();
+	
+	//alert( selectedPeriodId );
+	
+	if ( selPeriodId == "-1" )
+	{
+		$( '#facilityDataEntryFormDiv' ).html('');
+		document.getElementById( "saveButton" ).disabled = true;
+		return false;
+	}
+	
+	else
+	{
+		// jQuery('#loaderDiv').show();
+	    
+	    //contentDiv = 'facilityDataEntryFormDiv';
+		
+		jQuery('#facilityDataEntryFormDiv').load('loadFacilityDataEntryForm.action',
+			{
+				orgUnitId:orgUnitId,
+				dataSetId:dataSetId,
+				selectedPeriodId:selPeriodId
+			}, function()
+			{
+				showById('facilityDataEntryFormDiv');
+				//jQuery('#loaderDiv').hide();
+			});
+		//hideLoader();
+	}
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

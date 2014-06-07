@@ -1,19 +1,20 @@
 package org.hisp.dhis.common;
 
 /*
- * Copyright (c) 2004-2005, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the <ORGANIZATION> nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,6 +30,8 @@ package org.hisp.dhis.common;
 
 import java.util.List;
 
+import org.hisp.dhis.user.User;
+
 /**
  * @author Lars Helge Overland
  */
@@ -36,9 +39,15 @@ public interface DimensionService
 {
     DimensionalObject getDimension( String uid );
     
+    List<NameableObject> getCanReadDimensionItems( String uid );
+    
+    <T extends IdentifiableObject> List<T> filterCanRead( User user, List<T> objects );
+    
     DimensionType getDimensionType( String uid );
     
     List<DimensionalObject> getAllDimensions();
+    
+    List<DimensionalObject> getDimensionConstraints();
     
     void mergeAnalyticalObject( BaseAnalyticalObject object );
 }

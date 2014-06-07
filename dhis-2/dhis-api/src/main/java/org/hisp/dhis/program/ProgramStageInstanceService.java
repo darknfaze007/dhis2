@@ -1,17 +1,20 @@
+package org.hisp.dhis.program;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,21 +27,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.program;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patientreport.TabularReportColumn;
-import org.hisp.dhis.period.Period;
-import org.hisp.dhis.sms.outbound.OutboundSms;
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Abyot Asalefew
@@ -48,91 +48,148 @@ public interface ProgramStageInstanceService
 {
     String ID = ProgramStageInstanceService.class.getName();
 
+    /**
+     * Adds an {@link TrackedEntityAttribute}
+     *
+     * @param programStageInstance The to TrackedEntityAttribute add.
+     * @return A generated unique id of the added {@link TrackedEntityAttribute}.
+     */
     int addProgramStageInstance( ProgramStageInstance programStageInstance );
 
+    /**
+     * Deletes a {@link TrackedEntityAttribute}.
+     *
+     * @param programStageInstance the TrackedEntityAttribute to delete.
+     */
     void deleteProgramStageInstance( ProgramStageInstance programStageInstance );
 
+    /**
+     * Updates an {@link TrackedEntityAttribute}.
+     *
+     * @param programStageInstance the TrackedEntityAttribute to update.
+     */
     void updateProgramStageInstance( ProgramStageInstance programStageInstance );
 
+    /**
+     * Returns a {@link TrackedEntityAttribute}.
+     *
+     * @param id the id of the TrackedEntityAttribute to return.
+     * @return the TrackedEntityAttribute with the given id
+     */
     ProgramStageInstance getProgramStageInstance( int id );
 
+    /**
+     * Returns the {@link TrackedEntityAttribute} with the given UID.
+     *
+     * @param uid the UID.
+     * @return the TrackedEntityAttribute with the given UID, or null if no match.
+     */
     ProgramStageInstance getProgramStageInstance( String uid );
 
+    /**
+     * Retrieve an event on a program instance and a program stage. For
+     * repeatable stage, the system returns the last event
+     *
+     * @param programInstance ProgramInstance
+     * @param programStage    ProgramStage
+     * @return ProgramStageInstance
+     */
     ProgramStageInstance getProgramStageInstance( ProgramInstance programInstance, ProgramStage programStage );
 
-    Collection<ProgramStageInstance> getProgramStageInstances( ProgramStage programStage );
+    /**
+     * Retrieve an event list on program instance list with a certain status
+     *
+     * @param programInstances ProgramInstance list
+     * @param completed        Optional flag to only get completed (<code>true</code> )
+     *                         or uncompleted (<code>false</code>) instances.
+     * @return ProgramStageInstance list
+     */
+    Collection<ProgramStageInstance> getProgramStageInstances( Collection<ProgramInstance> programInstances,
+        boolean completed );
 
-    Collection<ProgramStageInstance> getProgramStageInstances( Collection<ProgramInstance> programInstances );
-
-    Collection<ProgramStageInstance> getProgramStageInstances( Date dueDate );
-
-    Collection<ProgramStageInstance> getProgramStageInstances( Date dueDate, Boolean completed );
-
-    Collection<ProgramStageInstance> getProgramStageInstances( Date startDate, Date endDate );
-
-    Collection<ProgramStageInstance> getProgramStageInstances( Date startDate, Date endDate, Boolean completed );
-
-    Collection<ProgramStageInstance> getAllProgramStageInstances();
-
+    /**
+     * Get statuses of events
+     *
+     * @param programStageInstances ProgramStageInstance list
+     * @return Map< ProgramStageInstance ID, status >
+     */
     Map<Integer, Integer> statusProgramStageInstances( Collection<ProgramStageInstance> programStageInstances );
 
     /**
-     * Get all {@link ProgramStageInstance program stage instances} for unit,
-     * optionally filtering by date or completed.
-     * 
-     * @param unit - the unit to get instances for.
-     * @param after - optional date the instance should be on or after.
-     * @param before - optional date the instance should be on or before.
-     * @param completed - optional flag to only get completed (<code>true</code>
-     *        ) or uncompleted (<code>false</code>) instances.
-     * @return
+     * Get all events by TrackedEntityInstance, optionally filtering by completed.
+     *
+     * @param entityInstance TrackedEntityInstance
+     * @param completed      - optional flag to only get completed (
+     *                       <code>true</code> ) or uncompleted (<code>false</code>) instances.
+     * @return ProgramStageInstance list
      */
-    List<ProgramStageInstance> get( OrganisationUnit unit, Date after, Date before, Boolean completed );
+    List<ProgramStageInstance> getProgramStageInstances( TrackedEntityInstance entityInstance, boolean completed );
 
-    List<ProgramStageInstance> getProgramStageInstances( Patient patient, Boolean completed );
-
-    Grid getTabularReport( Boolean anonynousEntryForm, ProgramStage programStage, List<TabularReportColumn> columns,
-        Collection<Integer> organisationUnits, int level, Date startDate, Date endDate, boolean descOrder,
-        Boolean completed, Boolean accessPrivateInfo, Boolean displayOrgunitCode, Integer min, Integer max, I18n i18n );
-
-    int getTabularReportCount( Boolean anonynousEntryForm, ProgramStage programStage,
-        List<TabularReportColumn> columns, Collection<Integer> organisationUnits, int level, Boolean completed,
-        Date startDate, Date endDate );
-
-    List<Grid> getProgramStageInstancesReport( ProgramInstance programInstance, I18nFormat format, I18n i18n );
-
-    void removeEmptyEvents( ProgramStage programStage, OrganisationUnit organisationUnit );
-
-    void updateProgramStageInstances( Collection<Integer> programStageInstances, OutboundSms outboundSms );
-
+    /**
+     * Retrieve scheduled list of entityInstances registered
+     *
+     * @return A SchedulingProgramObject list
+     */
     Collection<SchedulingProgramObject> getSendMesssageEvents();
 
+    /**
+     * Get/export statistical report of a program
+     *
+     * @param program    Program needs to report
+     * @param orgunitIds The ids of orgunits where the events happened
+     * @param startDate  Optional date the instance should be on or after.
+     * @param endDate    Optional date the instance should be on or before.
+     * @param i18n       I18n object
+     * @param format     I18nFormat
+     * @return Program report
+     */
     Grid getStatisticalReport( Program program, Collection<Integer> orgunitIds, Date startDate, Date endDate,
         I18n i18n, I18nFormat format );
 
-    List<ProgramStageInstance> getStatisticalProgramStageDetailsReport( ProgramStage programStage,
-        Collection<Integer> orgunitIds, Date startDate, Date endDate, int status, Integer max, Integer min );
-
-    Grid getAggregateReport( int position, ProgramStage programStage, Collection<Integer> orgunitIds,
-        String facilityLB, Integer deGroupBy, Integer deSum, Map<Integer, Collection<String>> deFilters,
-        List<Period> periods, String aggregateType, Integer limit, Boolean useCompletedEvents, Boolean displayTotals,
-        Boolean useFormNameDataElement, I18nFormat format, I18n i18n );
-
-    // -------------------------------------------------------------------------
-    // Statistical
-    // -------------------------------------------------------------------------
-
-    Collection<ProgramStageInstance> getProgramStageInstances( Program program, Collection<Integer> orgunitIds,
-        Date startDate, Date endDate, Boolean completed );
-
-    int getOverDueEventCount( ProgramStage programStage, Collection<Integer> orgunitIds, Date startDate, Date endDate );
-
-    int averageNumberCompletedProgramInstance( Program program, Collection<Integer> orgunitIds, Date startDate,
-        Date endDate, Integer status );
-
-    Collection<Integer> getOrganisationUnitIds( Date startDate, Date endDate );
-
-    Grid getCompletenessProgramStageInstance( OrganisationUnit orgunit, Program program, String startDate,
+    /**
+     * Get/Export a report about the number of events of a program completed on
+     * a orgunit
+     *
+     * @param orgunits  The ids of orgunits where the events happened
+     * @param program   The program needs for reporting
+     * @param startDate Optional date the instance should be on or after.
+     * @param endDate   Optional date the instance should be on or before.
+     * @return Grid
+     */
+    Grid getCompletenessProgramStageInstance( Collection<Integer> orgunits, Program program, String startDate,
         String endDate, I18n i18n );
 
+    /**
+     * Complete an event. Besides, program template messages will be send if it
+     * was defined to send when to complete this program
+     *
+     * @param programStageInstance ProgramStageInstance
+     * @param format               I18nFormat
+     */
+    void completeProgramStageInstance( ProgramStageInstance programStageInstance, I18nFormat format );
+
+    /**
+     * Set report date and orgunit where an event happened for the event
+     *
+     * @param programStageInstance ProgramStageInstance
+     * @param executionDate        Report date
+     * @param organisationUnit     Orgunit where the event happens
+     */
+    void setExecutionDate( ProgramStageInstance programStageInstance, Date executionDate,
+        OrganisationUnit organisationUnit );
+
+    /**
+     * For the first case of an anonymous program, the program-instance doesn't
+     * exist, So system has to create a program-instance and
+     * program-stage-instance. The similar thing happens for single event with
+     * registration.
+     *
+     * @param entityInstance   TrackedEntityInstance
+     * @param program          Single event without registration
+     * @param executionDate    Report date of the event
+     * @param organisationUnit Orgunit where the event happens
+     * @return ProgramStageInstance ProgramStageInstance object
+     */
+    ProgramStageInstance createProgramStageInstance( TrackedEntityInstance entityInstance, Program program, Date executionDate,
+        OrganisationUnit organisationUnit );
 }

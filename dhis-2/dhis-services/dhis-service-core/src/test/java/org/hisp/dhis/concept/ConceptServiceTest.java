@@ -1,19 +1,20 @@
 package org.hisp.dhis.concept;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,7 +30,6 @@ package org.hisp.dhis.concept;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
@@ -116,24 +116,6 @@ public class ConceptServiceTest
         assertNotNull( conceptService.getConcept( idB ) );
         assertNotNull( conceptService.getConcept( idC ) );
         assertNotNull( conceptService.getConcept( idD ) );
-
-        categoryA.setConcept( conceptA );
-        categoryB.setConcept( conceptB );
-        categoryC.setConcept( conceptC );
-        defaultCategory.setConcept( null );
-
-        categoryService.updateDataElementCategory( categoryA );
-        categoryService.updateDataElementCategory( categoryB );
-        categoryService.updateDataElementCategory( categoryC );
-        categoryService.updateDataElementCategory( defaultCategory );
-
-        conceptService.deleteConcept( defaultConcept );
-
-        assertNotNull( conceptService.getConcept( idA ) );
-        assertNotNull( conceptService.getConcept( idB ) );
-        assertNotNull( conceptService.getConcept( idC ) );
-        assertNull( conceptService.getConcept( idD ) );
-
     }
 
     @Test
@@ -145,12 +127,9 @@ public class ConceptServiceTest
 
         int idA = conceptService.saveConcept( conceptA );
         int idB = conceptService.saveConcept( conceptB );
-        int idC = defaultConcept.getId();
 
         assertEquals( conceptService.getConceptByName( "ConceptA" ).getId(), idA );
         assertEquals( conceptService.getConceptByName( "ConceptB" ).getId(), idB );
-        assertEquals( defaultCategory.getConcept().getId(), idC );
-        assertNull( conceptService.getConceptByName( "ConceptC" ) );
     }
 
     @Test
@@ -192,24 +171,4 @@ public class ConceptServiceTest
         assertEq( 'C', conceptService.getConceptByName( "ConceptC" ) );
         assertEq( 'D', conceptService.getConceptByName( "ConceptD" ) );
     }
-    
-//    @Test
-//    public void testGetByConcept()
-//    {        
-//        Concept aConcept = conceptStore.getByName("ConceptA");
-//        Concept bConcept = conceptStore.getByName("ConceptB");
-//        
-//        categoryOptionA = new DataElementCategoryOption( "CategoryOptionA" );
-//        categoryOptionA.setConcept(aConcept);
-//        categoryOptionB = new DataElementCategoryOption( "CategoryOptionB" );
-//        categoryOptionB.setConcept(aConcept);
-//        categoryOptionC = new DataElementCategoryOption( "CategoryOptionC" );
-//        categoryOptionC.setConcept(bConcept);
-//        
-//        categoryService.addDataElementCategoryOption(categoryOptionA);
-//        
-//        assertEquals(2, categoryOptionStore.getByConcept(aConcept).size());
-//        assertEquals(1, categoryOptionStore.getByConcept(bConcept).size());
-//    }
-
 }

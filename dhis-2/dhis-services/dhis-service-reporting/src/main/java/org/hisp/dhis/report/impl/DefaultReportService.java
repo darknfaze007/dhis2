@@ -1,19 +1,20 @@
 package org.hisp.dhis.report.impl;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,7 +32,9 @@ import static org.hisp.dhis.system.util.ConversionUtils.getIdentifiers;
 import static org.hisp.dhis.system.util.TextUtils.getCommaDelimitedString;
 
 import java.io.OutputStream;
+import java.io.Writer;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -44,8 +47,8 @@ import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
-import net.sf.jasperreports.engine.util.JRProperties;
 
+import org.apache.velocity.VelocityContext;
 import org.hisp.dhis.common.GenericIdentifiableObjectStore;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.common.IdentifiableObjectUtils;
@@ -59,10 +62,13 @@ import org.hisp.dhis.report.Report;
 import org.hisp.dhis.report.ReportService;
 import org.hisp.dhis.reporttable.ReportTable;
 import org.hisp.dhis.reporttable.ReportTableService;
+import org.hisp.dhis.system.util.DateUtils;
+import org.hisp.dhis.system.util.Encoder;
 import org.hisp.dhis.system.util.Filter;
 import org.hisp.dhis.system.util.FilterUtils;
 import org.hisp.dhis.system.util.JRExportUtils;
 import org.hisp.dhis.system.util.StreamUtils;
+import org.hisp.dhis.system.velocity.VelocityManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,6 +82,8 @@ public class DefaultReportService
 {
     public static final String ORGUNIT_LEVEL_COLUMN_PREFIX = "idlevel";
     public static final String ORGUNIT_UID_LEVEL_COLUMN_PREFIX = "uidlevel";
+
+    private static final Encoder ENCODER = new Encoder();
     
     // -------------------------------------------------------------------------
     // Dependencies
@@ -161,9 +169,6 @@ public class DefaultReportService
 
         try
         {
-            JRProperties.setProperty( "net.sf.jasperreports.awt.ignore.missing.font", "true" );
-            JRProperties.setProperty( "net.sf.jasperreports.default.font.name", "DejaVu Sans" );
-
             JasperReport jasperReport = JasperCompileManager.compileReport( StreamUtils.getInputStream( report.getDesignContent() ) );
 
             if ( report.hasReportTable() ) // Use JR data source
@@ -216,6 +221,52 @@ public class DefaultReportService
         }
         
         return print;
+    }
+    
+    public void renderHtmlReport( Writer writer, String uid, Date date, String ou, I18nFormat format )
+    {
+        Report report = getReport( uid );        
+        OrganisationUnit organisationUnit = null;
+        List<OrganisationUnit> organisationUnitHierarchy = new ArrayList<OrganisationUnit>();
+        List<OrganisationUnit> organisationUnitChildren = new ArrayList<OrganisationUnit>();
+        List<Period> periods = new ArrayList<Period>();
+        
+        if ( ou != null )
+        {
+            organisationUnit = organisationUnitService.getOrganisationUnit( ou );
+            
+            if ( organisationUnit != null )
+            {
+                organisationUnitHierarchy.add( organisationUnit );
+                
+                OrganisationUnit parent = organisationUnit;
+                
+                while ( parent.getParent() != null )
+                {
+                    parent = parent.getParent();
+                    organisationUnitHierarchy.add( parent );
+                }
+                
+                organisationUnitChildren.addAll( organisationUnit.getChildren() );
+            }
+        }
+                
+        if ( report != null && report.hasRelativePeriods() )
+        {
+            periods = report.getRelatives().getRelativePeriods( date, format, true );
+        }
+        
+        final VelocityContext context = new VelocityContext();
+        context.put( "report", report );
+        context.put( "organisationUnit", organisationUnit );
+        context.put( "organisationUnitHierarchy", organisationUnitHierarchy );
+        context.put( "organisationUnitChildren", organisationUnitChildren );
+        context.put( "date", DateUtils.getMediumDateString( date ) );
+        context.put( "periods", periods );
+        context.put( "format", format );
+        context.put( "encoder", ENCODER );
+        
+        new VelocityManager().getEngine().getTemplate( "html-report.vm" ).merge( context, writer );
     }
 
     public int saveReport( Report report )
@@ -283,5 +334,10 @@ public class DefaultReportService
                 return identifiers.contains( object.getId() );
             }
         } );
+    }
+    
+    public List<Report> getReportsByUid( List<String> uids )
+    {
+        return reportStore.getByUid( uids );
     }
 }

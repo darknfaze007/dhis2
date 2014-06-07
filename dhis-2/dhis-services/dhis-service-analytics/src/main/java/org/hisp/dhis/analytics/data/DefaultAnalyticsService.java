@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics.data;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -30,13 +31,14 @@ package org.hisp.dhis.analytics.data;
 import static org.hisp.dhis.analytics.AnalyticsTableManager.ANALYTICS_TABLE_NAME;
 import static org.hisp.dhis.analytics.AnalyticsTableManager.COMPLETENESS_TABLE_NAME;
 import static org.hisp.dhis.analytics.AnalyticsTableManager.COMPLETENESS_TARGET_TABLE_NAME;
+import static org.hisp.dhis.analytics.AnalyticsTableManager.ORGUNIT_TARGET_TABLE_NAME;
 import static org.hisp.dhis.analytics.DataQueryParams.DISPLAY_NAME_CATEGORYOPTIONCOMBO;
 import static org.hisp.dhis.analytics.DataQueryParams.DISPLAY_NAME_DATA_X;
 import static org.hisp.dhis.analytics.DataQueryParams.DISPLAY_NAME_ORGUNIT;
 import static org.hisp.dhis.analytics.DataQueryParams.DISPLAY_NAME_PERIOD;
+import static org.hisp.dhis.analytics.DataQueryParams.DISPLAY_NAME_LONGITUDE;
+import static org.hisp.dhis.analytics.DataQueryParams.DISPLAY_NAME_LATITUDE;
 import static org.hisp.dhis.analytics.DataQueryParams.FIXED_DIMS;
-import static org.hisp.dhis.analytics.DataQueryParams.getDimensionFromParam;
-import static org.hisp.dhis.analytics.DataQueryParams.getDimensionItemsFromParam;
 import static org.hisp.dhis.common.DimensionalObject.CATEGORYOPTIONCOMBO_DIM_ID;
 import static org.hisp.dhis.common.DimensionalObject.DATAELEMENT_DIM_ID;
 import static org.hisp.dhis.common.DimensionalObject.DATASET_DIM_ID;
@@ -45,16 +47,23 @@ import static org.hisp.dhis.common.DimensionalObject.DIMENSION_SEP;
 import static org.hisp.dhis.common.DimensionalObject.INDICATOR_DIM_ID;
 import static org.hisp.dhis.common.DimensionalObject.ORGUNIT_DIM_ID;
 import static org.hisp.dhis.common.DimensionalObject.PERIOD_DIM_ID;
+import static org.hisp.dhis.common.DimensionalObject.LONGITUDE_DIM_ID;
+import static org.hisp.dhis.common.DimensionalObject.LATITUDE_DIM_ID;
 import static org.hisp.dhis.common.DimensionalObjectUtils.toDimension;
 import static org.hisp.dhis.common.IdentifiableObjectUtils.getUids;
 import static org.hisp.dhis.common.NameableObjectUtils.asList;
 import static org.hisp.dhis.common.NameableObjectUtils.asTypedList;
 import static org.hisp.dhis.organisationunit.OrganisationUnit.KEY_LEVEL;
+import static org.hisp.dhis.organisationunit.OrganisationUnit.KEY_ORGUNIT_GROUP;
 import static org.hisp.dhis.organisationunit.OrganisationUnit.KEY_USER_ORGUNIT;
 import static org.hisp.dhis.organisationunit.OrganisationUnit.KEY_USER_ORGUNIT_CHILDREN;
+import static org.hisp.dhis.organisationunit.OrganisationUnit.KEY_USER_ORGUNIT_GRANDCHILDREN;
+import static org.hisp.dhis.organisationunit.OrganisationUnit.getParentGraphMap;
+import static org.hisp.dhis.organisationunit.OrganisationUnit.getParentNameGraphMap;
 import static org.hisp.dhis.period.PeriodType.getPeriodTypeFromIsoString;
 import static org.hisp.dhis.reporttable.ReportTable.IRT2D;
 import static org.hisp.dhis.reporttable.ReportTable.addIfEmpty;
+import static org.hisp.dhis.system.util.DateUtils.daysBetween;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,23 +82,28 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.analytics.AggregationType;
 import org.hisp.dhis.analytics.AnalyticsManager;
+import org.hisp.dhis.analytics.AnalyticsSecurityManager;
 import org.hisp.dhis.analytics.AnalyticsService;
 import org.hisp.dhis.analytics.DataQueryGroups;
 import org.hisp.dhis.analytics.DataQueryParams;
 import org.hisp.dhis.analytics.DimensionItem;
-import org.hisp.dhis.analytics.IllegalQueryException;
 import org.hisp.dhis.analytics.QueryPlanner;
 import org.hisp.dhis.common.BaseAnalyticalObject;
 import org.hisp.dhis.common.BaseDimensionalObject;
+import org.hisp.dhis.common.CodeGenerator;
 import org.hisp.dhis.common.CombinationGenerator;
 import org.hisp.dhis.common.DimensionType;
 import org.hisp.dhis.common.DimensionalObject;
+import org.hisp.dhis.common.DimensionalObjectUtils;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.common.GridHeader;
 import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.IdentifiableObjectUtils;
+import org.hisp.dhis.common.IllegalQueryException;
 import org.hisp.dhis.common.NameableObject;
+import org.hisp.dhis.common.NameableObjectUtils;
 import org.hisp.dhis.constant.ConstantService;
+import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
@@ -105,6 +119,7 @@ import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
+import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
@@ -121,6 +136,7 @@ import org.hisp.dhis.system.util.ListUtils;
 import org.hisp.dhis.system.util.MathUtils;
 import org.hisp.dhis.system.util.SystemUtils;
 import org.hisp.dhis.system.util.Timer;
+import org.hisp.dhis.system.util.UniqueArrayList;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,6 +158,9 @@ public class DefaultAnalyticsService
     
     @Autowired
     private AnalyticsManager analyticsManager;
+    
+    @Autowired
+    private AnalyticsSecurityManager securityManager;
     
     @Autowired
     private QueryPlanner queryPlanner;
@@ -182,12 +201,22 @@ public class DefaultAnalyticsService
     }
 
     // -------------------------------------------------------------------------
-    // Implementation
+    // Methods for retrieving aggregated data
     // -------------------------------------------------------------------------
 
     @Override
     public Grid getAggregatedDataValues( DataQueryParams params )
-    {
+    {   
+        // ---------------------------------------------------------------------
+        // Security and validation
+        // ---------------------------------------------------------------------
+
+        securityManager.decideAccess( params );
+        
+        securityManager.applyDataApprovalConstraints( params );
+        
+        securityManager.applyDimensionConstraints( params );
+        
         queryPlanner.validate( params );
         
         params.conform();
@@ -214,9 +243,13 @@ public class DefaultAnalyticsService
             int indicatorIndex = params.getIndicatorDimensionIndex();
             List<Indicator> indicators = asTypedList( params.getIndicators() );
             
-            expressionService.explodeAndSubstituteExpressions( indicators, null );
-            
-            DataQueryParams dataSourceParams = new DataQueryParams( params );
+            expressionService.explodeExpressions( indicators );
+
+            // -----------------------------------------------------------------
+            // Get indicator values
+            // -----------------------------------------------------------------
+
+            DataQueryParams dataSourceParams = params.instance();
             dataSourceParams.removeDimension( DATAELEMENT_DIM_ID );
             dataSourceParams.removeDimension( DATASET_DIM_ID );
             
@@ -231,6 +264,8 @@ public class DefaultAnalyticsService
             Map<String, Double> constantMap = constantService.getConstantMap();
 
             Period filterPeriod = dataSourceParams.getFilterPeriod();
+
+            Map<String, Map<String, Integer>> permutationOrgUnitTargetMap = getOrgUnitTargetMap( dataSourceParams, indicators );
             
             for ( Indicator indicator : indicators )
             {
@@ -240,22 +275,32 @@ public class DefaultAnalyticsService
 
                     Map<DataElementOperand, Double> valueMap = permutationOperandValueMap.get( permKey );
                     
-                    if ( valueMap != null )
+                    if ( valueMap == null )
                     {
-                        Period period = filterPeriod != null ? filterPeriod : (Period) DimensionItem.getPeriodItem( options );
+                        continue;
+                    }
+                    
+                    Period period = filterPeriod != null ? filterPeriod : (Period) DimensionItem.getPeriodItem( options );
+                    
+                    int days = daysBetween( period.getStartDate(), period.getEndDate() );
+                    
+                    OrganisationUnit unit = (OrganisationUnit) DimensionItem.getOrganisationUnitItem( options );
+                    
+                    String ou = unit != null ? unit.getUid() : null;
+                    
+                    Map<String, Integer> orgUnitCountMap = permutationOrgUnitTargetMap != null ? permutationOrgUnitTargetMap.get( ou ) : null;
+                    
+                    Double value = expressionService.getIndicatorValue( indicator, period, valueMap, constantMap, orgUnitCountMap, days );
+
+                    if ( value != null )
+                    {
+                        List<DimensionItem> row = new ArrayList<DimensionItem>( options );
                         
-                        Double value = expressionService.getIndicatorValue( indicator, period, valueMap, constantMap, null );
-                        
-                        if ( value != null )
-                        {
-                            List<DimensionItem> row = new ArrayList<DimensionItem>( options );
-                            
-                            row.add( indicatorIndex, new DimensionItem( INDICATOR_DIM_ID, indicator ) );
-                                                        
-                            grid.addRow();
-                            grid.addValues( DimensionItem.getItemIdentifiers( row ) );
-                            grid.addValue( MathUtils.getRounded( value, 1 ) );
-                        }
+                        row.add( indicatorIndex, new DimensionItem( INDICATOR_DIM_ID, indicator ) );
+                                                    
+                        grid.addRow();
+                        grid.addValues( DimensionItem.getItemIdentifiers( row ) );
+                        grid.addValue( params.isSkipRounding() ? value : MathUtils.getRounded( value ) );
                     }
                 }
             }
@@ -267,7 +312,7 @@ public class DefaultAnalyticsService
 
         if ( params.getDataElements() != null )
         {
-            DataQueryParams dataSourceParams = new DataQueryParams( params );
+            DataQueryParams dataSourceParams = params.instance();
             dataSourceParams.removeDimension( INDICATOR_DIM_ID );
             dataSourceParams.removeDimension( DATASET_DIM_ID );
             
@@ -277,7 +322,7 @@ public class DefaultAnalyticsService
             {
                 grid.addRow();
                 grid.addValues( entry.getKey().split( DIMENSION_SEP ) );
-                grid.addValue( entry.getValue() );
+                grid.addValue( params.isSkipRounding() ? entry.getValue() : MathUtils.getRounded( entry.getValue() ) );
             }
         }
 
@@ -291,7 +336,8 @@ public class DefaultAnalyticsService
             // Get complete data set registrations
             // -----------------------------------------------------------------
 
-            DataQueryParams dataSourceParams = new DataQueryParams( params );
+            DataQueryParams dataSourceParams = params.instance();
+            dataSourceParams.ignoreDataApproval(); // No approval for reporting rates
             dataSourceParams.removeDimension( INDICATOR_DIM_ID );
             dataSourceParams.removeDimension( DATAELEMENT_DIM_ID );
             dataSourceParams.setAggregationType( AggregationType.COUNT );
@@ -305,7 +351,7 @@ public class DefaultAnalyticsService
             List<Integer> completenessDimIndexes = dataSourceParams.getCompletenessDimensionIndexes();
             List<Integer> completenessFilterIndexes = dataSourceParams.getCompletenessFilterIndexes();
             
-            DataQueryParams targetParams = new DataQueryParams( dataSourceParams );
+            DataQueryParams targetParams = dataSourceParams.instance();
 
             targetParams.setDimensions( ListUtils.getAtIndexes( targetParams.getDimensions(), completenessDimIndexes ) );
             targetParams.setFilters( ListUtils.getAtIndexes( targetParams.getFilters(), completenessFilterIndexes ) );
@@ -343,7 +389,7 @@ public class DefaultAnalyticsService
                     
                     grid.addRow();
                     grid.addValues( dataRow.toArray() );
-                    grid.addValue( MathUtils.getRounded( value, 1 ) );
+                    grid.addValue( params.isSkipRounding() ? value : MathUtils.getRounded( value ) );
                 }
             }
         }
@@ -354,13 +400,13 @@ public class DefaultAnalyticsService
 
         if ( params.getIndicators() == null && params.getDataElements() == null && params.getDataSets() == null )
         {
-            Map<String, Double> aggregatedDataMap = getAggregatedDataValueMap( new DataQueryParams( params ) );
+            Map<String, Double> aggregatedDataMap = getAggregatedDataValueMap( params.instance() );
             
             for ( Map.Entry<String, Double> entry : aggregatedDataMap.entrySet() )
             {
                 grid.addRow();
                 grid.addValues( entry.getKey().split( DIMENSION_SEP ) );
-                grid.addValue( entry.getValue() );
+                grid.addValue( params.isSkipRounding() ? entry.getValue() : MathUtils.getRounded( entry.getValue() ) );
             }
         }
 
@@ -375,17 +421,22 @@ public class DefaultAnalyticsService
             Map<Object, Object> metaData = new HashMap<Object, Object>();
             
             Map<String, String> uidNameMap = getUidNameMap( params );
-            Map<String, String> cocNameMap = getCocNameMap( grid, cocIndex );
-            
+            Map<String, String> cocNameMap = getCocNameMap( grid, cocIndex );            
             uidNameMap.putAll( cocNameMap );
             
             metaData.put( NAMES_META_KEY, uidNameMap );
             metaData.put( PERIOD_DIM_ID, getUids( params.getDimensionOrFilter( PERIOD_DIM_ID ) ) );
             metaData.put( ORGUNIT_DIM_ID, getUids( params.getDimensionOrFilter( ORGUNIT_DIM_ID ) ) );
+            metaData.put( CATEGORYOPTIONCOMBO_DIM_ID, cocNameMap.keySet() );
             
-            if ( cocIndex != null )
+            if ( params.isHierarchyMeta() )
             {
-                metaData.put( CATEGORYOPTIONCOMBO_DIM_ID, cocNameMap.keySet() );
+                metaData.put( OU_HIERARCHY_KEY, getParentGraphMap( asTypedList( params.getDimensionOrFilter( ORGUNIT_DIM_ID ), OrganisationUnit.class ) ) );
+            }
+            
+            if ( params.isShowHierarchy() )
+            {
+                metaData.put( OU_NAME_HIERARCHY_KEY, getParentNameGraphMap( asTypedList( params.getDimensionOrFilter( ORGUNIT_DIM_ID ), OrganisationUnit.class ), true ) );
             }
             
             grid.setMetaData( metaData );
@@ -393,7 +444,7 @@ public class DefaultAnalyticsService
         
         return grid;
     }
-
+    
     @Override
     public Grid getAggregatedDataValues( DataQueryParams params, boolean tableLayout, List<String> columns, List<String> rows )
     {
@@ -407,8 +458,6 @@ public class DefaultAnalyticsService
         
         queryPlanner.validateTableLayout( params, columns, rows );
         
-        Map<String, Double> valueMap = getAggregatedDataValueMapping( params );
-
         ReportTable reportTable = new ReportTable();
         
         List<NameableObject[]> tableColumns = new ArrayList<NameableObject[]>();
@@ -441,8 +490,14 @@ public class DefaultAnalyticsService
         addIfEmpty( reportTable.getGridRows() );
         
         reportTable.setTitle( IdentifiableObjectUtils.join( params.getFilterItems() ) );
+        reportTable.setHideEmptyRows( params.isHideEmptyRows() );
+        reportTable.setShowHierarchy( params.isShowHierarchy() );
 
-        return reportTable.getGrid( new ListGrid(), valueMap, false );
+        Grid grid = getAggregatedDataValues( params );
+        
+        Map<String, Double> valueMap = getAggregatedDataValueMapping( grid );
+
+        return reportTable.getGrid( new ListGrid( grid.getMetaData() ), valueMap, false );
     }
     
     @Override
@@ -450,6 +505,58 @@ public class DefaultAnalyticsService
     {
         Grid grid = getAggregatedDataValues( params );
         
+        return getAggregatedDataValueMapping( grid );
+    }
+    
+    @Override
+    public Map<String, Double> getAggregatedDataValueMapping( BaseAnalyticalObject object, I18nFormat format )
+    {
+        DataQueryParams params = getFromAnalyticalObject( object, format );
+        
+        return getAggregatedDataValueMapping( params );
+    }
+
+    // -------------------------------------------------------------------------
+    // Supportive methods
+    // -------------------------------------------------------------------------
+
+    /**
+     * Generates a mapping of permutations keys (org unit id or null) and mappings
+     * of org unit group and counts.
+     * 
+     * @param params the data query params.
+     * @param indicators the indicators for which formulas to scan for org unit 
+     *        groups.
+     * @return a map of maps.
+     */
+    private Map<String, Map<String, Integer>> getOrgUnitTargetMap( DataQueryParams params, Collection<Indicator> indicators )
+    {
+        Set<OrganisationUnitGroup> orgUnitGroups = expressionService.getOrganisationUnitGroupsInIndicators( indicators );
+        
+        if ( orgUnitGroups == null || orgUnitGroups.isEmpty() )
+        {
+            return null;
+        }
+        
+        DataQueryParams orgUnitTargetParams = params.instance().pruneToDimensionType( DimensionType.ORGANISATIONUNIT );
+        orgUnitTargetParams.getDimensions().add( new BaseDimensionalObject( DimensionalObject.ORGUNIT_GROUP_DIM_ID, null, new ArrayList<NameableObject>( orgUnitGroups ) ) );
+        orgUnitTargetParams.setSkipPartitioning( true );
+        
+        Map<String, Double> orgUnitCountMap = getAggregatedOrganisationUnitTargetMap( orgUnitTargetParams );
+        
+        return orgUnitTargetParams.getPermutationOrgUnitGroupCountMap( orgUnitCountMap );
+    }
+    
+    /**
+     * Generates a mapping where the key represents the dimensional item identifiers
+     * concatenated by "-" and the value is the corresponding aggregated data value
+     * based on the given grid.
+     * 
+     * @param grid the grid.
+     * @return a mapping between item identifiers and aggregated values.
+     */
+    private Map<String, Double> getAggregatedDataValueMapping( Grid grid )
+    {
         Map<String, Double> map = new HashMap<String, Double>();
         
         int metaCols = grid.getWidth() - 1;
@@ -474,14 +581,6 @@ public class DefaultAnalyticsService
         return map;
     }
 
-    @Override
-    public Map<String, Double> getAggregatedDataValueMapping( BaseAnalyticalObject object, I18nFormat format )
-    {
-        DataQueryParams params = getFromAnalyticalObject( object, format );
-        
-        return getAggregatedDataValueMapping( params );
-    }
-    
     /**
      * Generates aggregated values for the given query. Creates a mapping between 
      * a dimension key and the aggregated value. The dimension key is a 
@@ -509,13 +608,30 @@ public class DefaultAnalyticsService
     }
 
     /**
+     * Generates a mapping between the the data set dimension key and the count
+     * of expected data sets to report.
      * 
-     * @param params
-     * @return
+     * @param params the data query parameters.
+     * @return a mapping between the the data set dimension key and the count of
+     *         expected data sets to report.
      */
     private Map<String, Double> getAggregatedCompletenessTargetMap( DataQueryParams params )
     {
         return getAggregatedValueMap( params, COMPLETENESS_TARGET_TABLE_NAME );
+    }
+
+    /**
+     * Generates a mapping between the the org unit dimension key and the count
+     * of org units inside the subtree of the given organisation units and
+     * members of the given organisation unit groups.
+     * 
+     * @param params the data query parameters.
+     * @return a mapping between the the data set dimension key and the count of
+     *         expected data sets to report.
+     */
+    private Map<String, Double> getAggregatedOrganisationUnitTargetMap( DataQueryParams params )
+    {
+        return getAggregatedValueMap( params, ORGUNIT_TARGET_TABLE_NAME );
     }
     
     /**
@@ -571,21 +687,26 @@ public class DefaultAnalyticsService
         
         return map;
     }
-    
+
+    // -------------------------------------------------------------------------
+    // Methods for assembling DataQueryParams
+    // -------------------------------------------------------------------------
+
     @Override
-    public DataQueryParams getFromUrl( Set<String> dimensionParams, Set<String> filterParams, 
-        AggregationType aggregationType, String measureCriteria, boolean skipMeta, I18nFormat format )
+    public DataQueryParams getFromUrl( Set<String> dimensionParams, Set<String> filterParams, AggregationType aggregationType, 
+        String measureCriteria, boolean skipMeta, boolean skipRounding, boolean hierarchyMeta, boolean ignoreLimit, boolean hideEmptyRows, boolean showHierarchy, I18nFormat format )
     {
         DataQueryParams params = new DataQueryParams();
 
         params.setAggregationType( aggregationType );
+        params.setIgnoreLimit( ignoreLimit );
         
         if ( dimensionParams != null && !dimensionParams.isEmpty() )
         {
             for ( String param : dimensionParams )
             {
-                String dimension = getDimensionFromParam( param );
-                List<String> options = getDimensionItemsFromParam( param );
+                String dimension = DimensionalObjectUtils.getDimensionFromParam( param );
+                List<String> options = DimensionalObjectUtils.getDimensionItemsFromParam( param );
                 
                 if ( dimension != null && options != null )
                 {
@@ -598,8 +719,8 @@ public class DefaultAnalyticsService
         {
             for ( String param : filterParams )
             {
-                String dimension = DataQueryParams.getDimensionFromParam( param );
-                List<String> options = DataQueryParams.getDimensionItemsFromParam( param );
+                String dimension = DimensionalObjectUtils.getDimensionFromParam( param );
+                List<String> options = DimensionalObjectUtils.getDimensionItemsFromParam( param );
                 
                 if ( dimension != null && options != null )
                 {
@@ -614,6 +735,10 @@ public class DefaultAnalyticsService
         }
         
         params.setSkipMeta( skipMeta );
+        params.setSkipRounding( skipRounding );
+        params.setHierarchyMeta( hierarchyMeta );
+        params.setHideEmptyRows( hideEmptyRows );
+        params.setShowHierarchy( showHierarchy );
 
         return params;
     }
@@ -648,29 +773,9 @@ public class DefaultAnalyticsService
         return params;
     }
     
-    // -------------------------------------------------------------------------
-    // Supportive methods
-    // -------------------------------------------------------------------------
+    // TODO verify that current user can read each dimension and dimension item
     
-    /**
-     * Returns a list of persisted DimensionalObjects generated from the given 
-     * dimension identifier and list of dimension options. The dx dimension
-     * will be exploded into concrete in|de|ds object identifiers and returned
-     * as separate DimensionalObjects. 
-     * 
-     * For the pe dimension items, relative periods represented by enums will be 
-     * replaced by real ISO periods relative to the current date. For the ou 
-     * dimension items, the user  organisation unit enums 
-     * USER_ORG_UNIT|USER_ORG_UNIT_CHILDREN will be replaced by the persisted 
-     * organisation units for the current user.
-     * 
-     * @param dimension the dimension identifier.
-     * @param items the dimension items.
-     * @param relativePeriodDate the date to use for generating relative periods, can be null.
-     * @parma format the I18nFormat, can be null.
-     * @return list of DimensionalObjects.
-     */
-    private List<DimensionalObject> getDimension( String dimension, List<String> items, Date relativePeriodDate, I18nFormat format )
+    public List<DimensionalObject> getDimension( String dimension, List<String> items, Date relativePeriodDate, I18nFormat format )
     {        
         if ( DATA_X_DIM_ID.equals( dimension ) )
         {
@@ -798,48 +903,93 @@ public class DefaultAnalyticsService
         {
             User user = currentUserService.getCurrentUser();
             
-            List<NameableObject> ous = new ArrayList<NameableObject>();
+            List<NameableObject> ous = new UniqueArrayList<NameableObject>();
+            List<Integer> levels = new UniqueArrayList<Integer>();
+            List<OrganisationUnitGroup> groups = new UniqueArrayList<OrganisationUnitGroup>();
             
             for ( String ou : items )
             {
-                if ( KEY_USER_ORGUNIT.equals( ou ) && user != null && user.getOrganisationUnit() != null )
+                if ( KEY_USER_ORGUNIT.equals( ou ) && user != null && user.hasDataViewOrganisationUnitWithFallback() )
                 {
-                    ous.add( user.getOrganisationUnit() );
+                    ous.add( user.getDataViewOrganisationUnitWithFallback() );
                 }
-                else if ( KEY_USER_ORGUNIT_CHILDREN.equals( ou ) && user != null && user.getOrganisationUnit() != null )
+                else if ( KEY_USER_ORGUNIT_CHILDREN.equals( ou ) && user != null && user.hasDataViewOrganisationUnitWithFallback() )
                 {
-                    ous.addAll( user.getOrganisationUnit().getSortedChildren() );
+                    ous.addAll( user.getDataViewOrganisationUnitWithFallback().getSortedChildren() );
+                }
+                else if ( KEY_USER_ORGUNIT_GRANDCHILDREN.equals( ou ) && user != null && user.hasDataViewOrganisationUnitWithFallback() )
+                {
+                    ous.addAll( user.getDataViewOrganisationUnitWithFallback().getSortedGrandChildren() );
                 }
                 else if ( ou != null && ou.startsWith( KEY_LEVEL ) )
                 {
-                    int level = DataQueryParams.getLevelFromLevelParam( ou );
+                    int level = DimensionalObjectUtils.getLevelFromLevelParam( ou );
                     
-                    String boundaryId = DataQueryParams.getBoundaryFromLevelParam( ou );
-                    
-                    OrganisationUnit boundary = null;
-                    
-                    if ( level > 0 && boundaryId != null && ( boundary = organisationUnitService.getOrganisationUnit( boundaryId ) ) != null )
-                    {                        
-                        ous.addAll( organisationUnitService.getOrganisationUnitsAtLevel( level, boundary ) );
+                    if ( level > 0 )
+                    {
+                        levels.add( level );
                     }
                 }
-                else
+                else if ( ou != null && ou.startsWith( KEY_ORGUNIT_GROUP ) )
+                {
+                    String uid = DimensionalObjectUtils.getUidFromOrgUnitGroupParam( ou );
+                    
+                    OrganisationUnitGroup group = organisationUnitGroupService.getOrganisationUnitGroup( uid );
+                    
+                    if ( uid != null )
+                    {
+                        groups.add( group );
+                    }
+                }
+                else if ( CodeGenerator.isValidCode( ou ) )
                 {
                     OrganisationUnit unit = organisationUnitService.getOrganisationUnit( ou );
                     
-                    if ( unit != null && !ous.contains( unit ) )
+                    if ( unit != null )
                     {
                         ous.add( unit );
                     }
                 }
             }
             
-            if ( ous.isEmpty() )
+            List<NameableObject> orgUnits = new UniqueArrayList<NameableObject>();
+            List<OrganisationUnit> ousList = NameableObjectUtils.asTypedList( ous );
+            
+            if ( !levels.isEmpty() )
+            {
+                orgUnits.addAll( organisationUnitService.getOrganisationUnitsAtLevels( levels, ousList ) );
+            }
+            
+            if ( !groups.isEmpty() )
+            {
+                orgUnits.addAll( organisationUnitService.getOrganisationUnits( groups, ousList ) );
+            }
+            
+            if ( levels.isEmpty() && groups.isEmpty() )
+            {
+                orgUnits.addAll( ous );
+            }            
+            
+            if ( orgUnits.isEmpty() )
             {
                 throw new IllegalQueryException( "Dimension ou is present in query without any valid dimension options" );
             }
             
-            DimensionalObject object = new BaseDimensionalObject( dimension, DimensionType.ORGANISATIONUNIT, null, DISPLAY_NAME_ORGUNIT, ous );
+            DimensionalObject object = new BaseDimensionalObject( dimension, DimensionType.ORGANISATIONUNIT, null, DISPLAY_NAME_ORGUNIT, orgUnits );
+            
+            return Arrays.asList( object );
+        }
+        
+        if ( LONGITUDE_DIM_ID.contains( dimension ) )
+        {
+            DimensionalObject object = new BaseDimensionalObject( dimension, DimensionType.STATIC, null, DISPLAY_NAME_LONGITUDE, new ArrayList<NameableObject>() );
+            
+            return Arrays.asList( object );
+        }
+
+        if ( LATITUDE_DIM_ID.contains( dimension ) )
+        {
+            DimensionalObject object = new BaseDimensionalObject( dimension, DimensionType.STATIC, null, DISPLAY_NAME_LATITUDE, new ArrayList<NameableObject>() );
             
             return Arrays.asList( object );
         }
@@ -866,6 +1016,17 @@ public class DefaultAnalyticsService
             return Arrays.asList( object );
         }
         
+        CategoryOptionGroupSet cogs = categoryService.getCategoryOptionGroupSet( dimension );
+        
+        if ( cogs != null )
+        {
+            List<NameableObject> cogz = asList( categoryService.getCategoryOptionGroupsByUid( items ) );
+            
+            DimensionalObject object = new BaseDimensionalObject( dimension, DimensionType.CATEGORYOPTION_GROUPSET, null, cogs.getDisplayName(), cogz );
+            
+            return Arrays.asList( object );
+        }
+        
         DataElementCategory dec = categoryService.getDataElementCategory( dimension );
         
         if ( dec != null && dec.isDataDimension() )
@@ -879,7 +1040,11 @@ public class DefaultAnalyticsService
         
         throw new IllegalQueryException( "Dimension identifier does not reference any dimension: " + dimension );
     }
-        
+
+    // -------------------------------------------------------------------------
+    // Supportive methods
+    // -------------------------------------------------------------------------
+    
     private DataQueryParams replaceIndicatorsWithDataElements( DataQueryParams params, int indicatorIndex )
     {
         List<Indicator> indicators = asTypedList( params.getIndicators() );        
@@ -891,41 +1056,47 @@ public class DefaultAnalyticsService
         return params;
     }
     
+    /**
+     * Returns a mapping between the uid and the name of all dimension and filter
+     * items for the given params.
+     */
     private Map<String, String> getUidNameMap( DataQueryParams params )
     {
         Map<String, String> map = new HashMap<String, String>();
-        map.putAll( getUidNameMap( params.getDimensions() ) );
-        map.putAll( getUidNameMap( params.getFilters() ) );
+        map.putAll( getUidNameMap( params.getDimensions(), params.isHierarchyMeta() ) );
+        map.putAll( getUidNameMap( params.getFilters(), params.isHierarchyMeta() ) );
         map.put( DATA_X_DIM_ID, DISPLAY_NAME_DATA_X );
         
         return map;
     }
-    
-    private Map<String, String> getUidNameMap( List<DimensionalObject> dimensions )
+
+    private Map<String, String> getUidNameMap( List<DimensionalObject> dimensions, boolean hierarchyMeta )
     {
         Map<String, String> map = new HashMap<String, String>();
         
         for ( DimensionalObject dimension : dimensions )
         {
-            List<NameableObject> options = new ArrayList<NameableObject>( dimension.getItems() );
+            List<NameableObject> items = new ArrayList<NameableObject>( dimension.getItems() );
 
+            boolean hierarchy = hierarchyMeta && DimensionType.ORGANISATIONUNIT.equals( dimension.getDimensionType() );
+            
             // -----------------------------------------------------------------
             // If dimension is not fixed and has no options, insert all options
             // -----------------------------------------------------------------
             
-            if ( !FIXED_DIMS.contains( dimension.getDimension() ) && options.isEmpty() )
+            if ( !FIXED_DIMS.contains( dimension.getDimension() ) && items.isEmpty() )
             {
-                if ( DimensionType.ORGANISATIONUNIT_GROUPSET.equals( dimension.getType() ) )
+                if ( DimensionType.ORGANISATIONUNIT_GROUPSET.equals( dimension.getDimensionType() ) )
                 {
-                    options = asList( organisationUnitGroupService.getOrganisationUnitGroupSet( dimension.getDimension() ).getOrganisationUnitGroups() );
+                    items = asList( organisationUnitGroupService.getOrganisationUnitGroupSet( dimension.getDimension() ).getOrganisationUnitGroups() );
                 }
-                else if ( DimensionType.DATAELEMENT_GROUPSET.equals( dimension.getType() ) )
+                else if ( DimensionType.DATAELEMENT_GROUPSET.equals( dimension.getDimensionType() ) )
                 {
-                    options = asList( dataElementService.getDataElementGroupSet( dimension.getDimension() ).getMembers() );
+                    items = asList( dataElementService.getDataElementGroupSet( dimension.getDimension() ).getMembers() );
                 }
-                else if ( DimensionType.CATEGORY.equals( dimension.getType() ) )
+                else if ( DimensionType.CATEGORY.equals( dimension.getDimensionType() ) )
                 {
-                    options = asList( categoryService.getDataElementCategory( dimension.getDimension() ).getCategoryOptions() );
+                    items = asList( categoryService.getDataElementCategory( dimension.getDimension() ).getCategoryOptions() );
                 }
             }
 
@@ -933,9 +1104,16 @@ public class DefaultAnalyticsService
             // Insert UID and name into map
             // -----------------------------------------------------------------
             
-            for ( IdentifiableObject idObject : options )
+            for ( IdentifiableObject idObject : items )
             {
                 map.put( idObject.getUid(), idObject.getDisplayName() );
+                
+                if ( hierarchy )
+                {
+                    OrganisationUnit unit = (OrganisationUnit) idObject;
+                    
+                    map.putAll( IdentifiableObjectUtils.getUidNameMap( unit.getAncestors() ) );
+                }
             }
             
             if ( dimension.getDisplayName() != null )
@@ -947,6 +1125,11 @@ public class DefaultAnalyticsService
         return map;
     }
     
+    /**
+     * Returns a mapping between the category option combo identifiers and names
+     * in the given grid. Returns an empty map if the grid or cocIndex parameters
+     * are null.
+     */
     private Map<String, String> getCocNameMap( Grid grid, Integer cocIndex )
     {
         Map<String, String> metaData = new HashMap<String, String>();

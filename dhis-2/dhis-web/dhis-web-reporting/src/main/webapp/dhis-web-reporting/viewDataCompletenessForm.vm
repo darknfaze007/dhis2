@@ -33,15 +33,15 @@
     
     <!-- PeriodType -->
 
-	<select id="periodTypeId" style="width:174px" onchange="getPeriods( 'periodTypeId', 'periodId', 'periodId', '0' )">
+	<select id="periodTypeId" style="width:174px" onchange="displayPeriods()">
 		<option value="0">[ $i18n.getString( "select_period_type" ) ]</option>
 		#foreach ( $type in $periodTypes )
 			<option value="$type.name">$i18n.getString( $type.name )</option>
 		#end
 	</select>
 
-	<input type="button" style="width:75px" value="$i18n.getString( 'prev_year' )" onclick="getPeriods( 'periodTypeId', 'periodId', 'periodId', '-1' )" />
-	<input type="button" style="width:75px" value="$i18n.getString( 'next_year' )" onclick="getPeriods( 'periodTypeId', 'periodId', 'periodId', '1' )" /><br>
+	<input type="button" style="width:75px" value="$i18n.getString( 'prev_year' )" onclick="displayPreviousPeriods()" />
+	<input type="button" style="width:75px" value="$i18n.getString( 'next_year' )" onclick="displayNextPeriods()" /><br>
 
 	<!-- Period -->
 	
@@ -63,7 +63,7 @@
     <!-- Get report -->
     
     <input id="reportButton" type="button" value="$i18n.getString( 'get_report' )" style="width:135px" onclick="displayCompleteness()"/> &nbsp;
-    <a id="advancedOptionsLink" href="javascript:showAdvancedOptions()">$i18n.getString( "more_options" )</a><br><br>
+    <a id="advancedOptionsLink" href="javascript:showAdvancedOptions()">$i18n.getString( "show_more_options" )</a><br><br>
     
     <!-- Export -->
     
@@ -75,4 +75,4 @@
 
 #parse( "dhis-web-commons/loader/loader.vm" )
 
-<div id="contentDiv"></div>
+<div id="contentDiv" class="resultDiv" style="display:none"></div>

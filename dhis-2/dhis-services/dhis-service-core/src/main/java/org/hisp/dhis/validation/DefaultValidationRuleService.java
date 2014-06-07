@@ -1,19 +1,20 @@
 package org.hisp.dhis.validation;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -32,43 +33,59 @@ import static org.hisp.dhis.i18n.I18nUtils.getObjectsBetween;
 import static org.hisp.dhis.i18n.I18nUtils.getObjectsBetweenByName;
 import static org.hisp.dhis.i18n.I18nUtils.getObjectsByName;
 import static org.hisp.dhis.i18n.I18nUtils.i18n;
-import static org.hisp.dhis.system.util.MathUtils.expressionIsTrue;
-import static org.hisp.dhis.system.util.MathUtils.getRounded;
-import static org.hisp.dhis.system.util.MathUtils.zeroIfNull;
+import static org.hisp.dhis.system.util.TextUtils.LN;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.common.GenericIdentifiableObjectStore;
 import org.hisp.dhis.constant.ConstantService;
 import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
+import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementOperand;
 import org.hisp.dhis.dataentryform.DataEntryFormService;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.datavalue.DataValueService;
 import org.hisp.dhis.expression.ExpressionService;
-import org.hisp.dhis.expression.Operator;
+import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.i18n.I18nService;
+import org.hisp.dhis.message.MessageService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
+import org.hisp.dhis.organisationunit.OrganisationUnitService;
+import org.hisp.dhis.period.CalendarPeriodType;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodService;
+import org.hisp.dhis.period.PeriodType;
+import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.system.util.Filter;
 import org.hisp.dhis.system.util.FilterUtils;
+import org.hisp.dhis.user.CurrentUserService;
+import org.hisp.dhis.user.User;
+import org.hisp.dhis.user.UserGroup;
+import org.hisp.dhis.user.UserService;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Margrethe Store
  * @author Lars Helge Overland
- * @version $Id
+ * @author Jim Grace
  */
 @Transactional
 public class DefaultValidationRuleService
     implements ValidationRuleService
 {
-    private static final int DECIMALS = 1;
+    private static final Log log = LogFactory.getLog( DefaultValidationRuleService.class );
 
     // -------------------------------------------------------------------------
     // Dependencies
@@ -94,7 +111,7 @@ public class DefaultValidationRuleService
     {
         this.expressionService = expressionService;
     }
-    
+
     private DataEntryFormService dataEntryFormService;
 
     public void setDataEntryFormService( DataEntryFormService dataEntryFormService )
@@ -115,7 +132,14 @@ public class DefaultValidationRuleService
     {
         this.dataValueService = dataValueService;
     }
-    
+
+    private DataElementCategoryService dataElementCategoryService;
+
+    public void setDataElementCategoryService( DataElementCategoryService dataElementCategoryService )
+    {
+        this.dataElementCategoryService = dataElementCategoryService;
+    }
+
     private ConstantService constantService;
 
     public void setConstantService( ConstantService constantService )
@@ -129,258 +153,498 @@ public class DefaultValidationRuleService
     {
         i18nService = service;
     }
+    
+    private MessageService messageService;
+
+    public void setMessageService( MessageService messageService )
+    {
+        this.messageService = messageService;
+    }
+    
+    private OrganisationUnitService organisationUnitService;
+
+    public void setOrganisationUnitService( OrganisationUnitService organisationUnitService )
+    {
+        this.organisationUnitService = organisationUnitService;
+    }
+
+    private UserService userService;
+
+    public void setUserService( UserService userService )
+    {
+        this.userService = userService;
+    }
+
+    private CurrentUserService currentUserService;
+
+    public void setCurrentUserService( CurrentUserService currentUserService )
+    {
+        this.currentUserService = currentUserService;
+    }
+
+    private SystemSettingManager systemSettingManager;
+
+    public void setSystemSettingManager( SystemSettingManager systemSettingManager )
+    {
+        this.systemSettingManager = systemSettingManager;
+    }
 
     // -------------------------------------------------------------------------
     // ValidationRule business logic
     // -------------------------------------------------------------------------
 
-    public Collection<ValidationResult> validate( Date startDate, Date endDate, Collection<OrganisationUnit> sources )
-    {
-        Map<String, Double> constantMap = constantService.getConstantMap();
-        
-        Collection<ValidationResult> validationViolations = new HashSet<ValidationResult>();
-
-        Collection<Period> relevantPeriods = periodService.getPeriodsBetweenDates( startDate, endDate );
-
-        for ( OrganisationUnit source : sources )
-        {
-            Collection<ValidationRule> relevantRules = getRelevantValidationRules( source.getDataElementsInDataSets() );
-            
-            Set<DataElement> dataElements = getDataElementsInValidationRules( relevantRules ); //TODO move outside loop?
-            
-            if ( relevantRules != null && relevantRules.size() > 0 )
-            {
-                for ( Period period : relevantPeriods )
-                {
-                    validationViolations.addAll( validateInternal( period, source, relevantRules, dataElements, constantMap, 
-                        validationViolations.size() ) );
-                }
-            }
-        }
-
-        return validationViolations;
-    }
-
+    @Override
     public Collection<ValidationResult> validate( Date startDate, Date endDate, Collection<OrganisationUnit> sources,
-        ValidationRuleGroup group )
+        DataElementCategoryOptionCombo attributeCombo, ValidationRuleGroup group, boolean sendAlerts, I18nFormat format )
     {
-        Map<String, Double> constantMap = constantService.getConstantMap();
+    	log.info( "Validate start:" + startDate + " end: " + endDate + " sources: " + sources.size() + " group: " + group );
+    	
+        Collection<Period> periods = periodService.getPeriodsBetweenDates( startDate, endDate );
+        Collection<ValidationRule> rules = group != null ? group.getMembers() : getAllValidationRules();
         
-        Collection<ValidationResult> validationViolations = new HashSet<ValidationResult>();
+        Collection<ValidationResult> results = Validator.validate( sources, periods, rules, attributeCombo, null,
+            constantService, expressionService, periodService, dataValueService, dataElementCategoryService, userService, currentUserService );
 
-        Collection<Period> relevantPeriods = periodService.getPeriodsBetweenDates( startDate, endDate );
-
-        for ( OrganisationUnit source : sources )
+        formatPeriods( results, format );
+        
+        if ( sendAlerts )
         {
-            Collection<ValidationRule> relevantRules = getRelevantValidationRules( source.getDataElementsInDataSets() );
-            relevantRules.retainAll( group.getMembers() );
-
-            Set<DataElement> dataElements = getDataElementsInValidationRules( relevantRules );
-            
-            if ( !relevantRules.isEmpty() )
-            {
-                for ( Period period : relevantPeriods )
-                {
-                    validationViolations.addAll( validateInternal( period, source, relevantRules, dataElements, constantMap, 
-                        validationViolations.size() ) );
-                }
-            }
+            Set<ValidationResult> resultsToAlert = new HashSet<ValidationResult>( results );
+            FilterUtils.filter( resultsToAlert, new ValidationResultToAlertFilter() );
+            postAlerts( resultsToAlert, new Date() );
         }
-
-        return validationViolations;
+        
+        return results;
     }
 
+    @Override
     public Collection<ValidationResult> validate( Date startDate, Date endDate, OrganisationUnit source )
     {
-        Map<String, Double> constantMap = constantService.getConstantMap();
-        
-        Collection<ValidationResult> validationViolations = new HashSet<ValidationResult>();
+    	log.info( "Validate start: " + startDate + " end: " + endDate + " source: " + source.getName() );
+    	
+        Collection<Period> periods = periodService.getPeriodsBetweenDates( startDate, endDate );
+        Collection<ValidationRule> rules = getAllValidationRules();
+        Collection<OrganisationUnit> sources = new HashSet<OrganisationUnit>();
+        sources.add( source );
 
-        Collection<ValidationRule> relevantRules = getRelevantValidationRules( source.getDataElementsInDataSets() );
-
-        Set<DataElement> dataElements = getDataElementsInValidationRules( relevantRules );
-        
-        Collection<Period> relevantPeriods = periodService.getPeriodsBetweenDates( startDate, endDate );
-
-        for ( Period period : relevantPeriods )
-        {
-            validationViolations.addAll( validateInternal( period, source, relevantRules, dataElements, constantMap, validationViolations
-                .size() ) );
-        }
-
-        return validationViolations;
+        return Validator.validate( sources, periods, rules, null, null,
+                constantService, expressionService, periodService, dataValueService, dataElementCategoryService, userService, currentUserService );
     }
 
-    public Collection<ValidationResult> validate( DataSet dataSet, Period period, OrganisationUnit source )
+    @Override
+    public Collection<ValidationResult> validate( DataSet dataSet, Period period, OrganisationUnit source,
+        DataElementCategoryOptionCombo attributeCombo )
     {
-        Map<String, Double> constantMap = constantService.getConstantMap();
-        
-        Collection<ValidationRule> relevantRules = null;
+    	log.info( "Validate data set: " + dataSet.getName() + " period: " + period.getPeriodType().getName() + " "
+            + period.getStartDate() + " " + period.getEndDate() + " source: " + source.getName()
+            + " attribute combo: " + ( attributeCombo == null ? "(null)" : attributeCombo.getName() ) );
+
+        Collection<Period> periods = new ArrayList<Period>();
+        periods.add( period );
+
+        Collection<ValidationRule> rules = null;
         
         if ( DataSet.TYPE_CUSTOM.equals( dataSet.getDataSetType() ) )
         {
-            relevantRules = getRelevantValidationRules( dataSet );
+            rules = getRulesForDataSet( dataSet );
         }
         else
         {
-            relevantRules = getRelevantValidationRules( dataSet.getDataElements() );
+            rules = getValidationTypeRulesForDataElements( dataSet.getDataElements() );
         }
         
-        Set<DataElement> dataElements = getDataElementsInValidationRules( relevantRules );
+        log.info( "Using validation rules: " + rules.size() );
+
+        Collection<OrganisationUnit> sources = new HashSet<OrganisationUnit>();
+        sources.add( source );
         
-        return validateInternal( period, source, relevantRules, dataElements, constantMap, 0 );
+        return Validator.validate( sources, periods, rules, attributeCombo, null,
+                constantService, expressionService, periodService, dataValueService, dataElementCategoryService, userService, currentUserService );
     }
 
-    public Collection<DataElement> getDataElementsInValidationRules()
+    @Override
+    public void scheduledRun()
     {
-        Set<DataElement> dataElements = new HashSet<DataElement>();
+        log.info( "Starting scheduled monitoring task" );
+        
+        // Find all the rules belonging to groups that will send alerts to user roles.
 
-        for ( ValidationRule rule : getAllValidationRules() )
+        Set<ValidationRule> rules = getAlertRules();
+
+        Collection<OrganisationUnit> sources = organisationUnitService.getAllOrganisationUnits();
+        
+        Set<Period> periods = getAlertPeriodsFromRules( rules );
+        
+        Date lastScheduledRun = (Date) systemSettingManager.getSystemSetting( SystemSettingManager.KEY_LAST_MONITORING_RUN );
+        
+        // Any database changes after this moment will contribute to the next run.
+        
+        Date thisRun = new Date();
+        
+        log.info( "Scheduled monitoring run sources: " + sources.size() + ", periods: " + periods.size() + ", rules:" + rules.size()
+            + ", last run: " + ( lastScheduledRun == null ? "[none]" : lastScheduledRun ) );
+        
+        Collection<ValidationResult> results = Validator.validate( sources, periods, rules, null, lastScheduledRun,
+                constantService, expressionService, periodService, dataValueService, dataElementCategoryService, userService, currentUserService );
+        
+        log.info( "Validation run result count: " + results.size() );
+        
+        if ( !results.isEmpty() )
         {
-            dataElements.addAll( rule.getLeftSide().getDataElementsInExpression() );
-            dataElements.addAll( rule.getRightSide().getDataElementsInExpression() );
+            postAlerts( results, thisRun );
         }
-
-        return dataElements;
+        
+        log.info( "Posted alerts, monitoring task done" );
+        
+        systemSettingManager.saveSystemSetting( SystemSettingManager.KEY_LAST_MONITORING_RUN, thisRun );
     }
 
     // -------------------------------------------------------------------------
-    // Supportive methods
+    // Supportive methods - scheduled run
     // -------------------------------------------------------------------------
 
     /**
-     * Validates a collection of validation rules.
+     * Gets all the validation rules that could generate alerts.
      * 
-     * @param period the period to validate for.
-     * @param source the source to validate for.
-     * @param validationRules the rules to validate.
-     * @param dataElementsInRules the data elements which are part of the rules expressions.
-     * @param constantMap the constants which are part of the rule expressions.
-     * @param currentSize the current number of validation violations.
-     * @returns a collection of rules that did not pass validation.
+     * @return rules that will generate alerts
      */
-    private Collection<ValidationResult> validateInternal( Period period, OrganisationUnit unit,
-        Collection<ValidationRule> validationRules, Set<DataElement> dataElementsInRules, Map<String, Double> constantMap, int currentSize )
+    private Set<ValidationRule> getAlertRules()
     {
-        Map<DataElementOperand, Double> valueMap = dataValueService.getDataValueMap( dataElementsInRules, period, unit );
-
-        final Collection<ValidationResult> validationViolations = new HashSet<ValidationResult>();
-
-        if ( currentSize < MAX_VIOLATIONS )
+        Set<ValidationRule> rules = new HashSet<ValidationRule>();
+        
+        for ( ValidationRuleGroup validationRuleGroup : getAllValidationRuleGroups() )
         {
-            Double leftSide = null;
-            Double rightSide = null;
-
-            boolean violation = false;
-
-            for ( final ValidationRule validationRule : validationRules )
+            if ( validationRuleGroup.hasUserGroupsToAlert() )
             {
-                if ( validationRule.getPeriodType() != null
-                    && validationRule.getPeriodType().equals( period.getPeriodType() ) )
+                rules.addAll( validationRuleGroup.getMembers() );
+            }
+        }
+        
+        return rules;
+    }
+
+    /**
+     * Gets the current and most recent periods to search, based on
+     * the period types from the rules to run.
+     * 
+     * For each period type, return the period containing the current date
+     * (if any), and the most recent previous period. Add whichever of
+     * these periods actually exist in the database.
+     * 
+     * TODO If the last successful daily run was more than one day ago, we might 
+     * add some additional periods of type DailyPeriodType not to miss any
+     * alerts.
+     *
+     * @param rules the ValidationRules to be evaluated on this run
+     * @return periods to search for new alerts
+     */
+    private Set<Period> getAlertPeriodsFromRules( Set<ValidationRule> rules )
+    {
+        Set<Period> periods = new HashSet<Period>();
+
+        Set<PeriodType> rulePeriodTypes = getPeriodTypesFromRules( rules );
+
+        for ( PeriodType periodType : rulePeriodTypes )
+        {
+            CalendarPeriodType calendarPeriodType = ( CalendarPeriodType ) periodType;
+            Period currentPeriod = calendarPeriodType.createPeriod();
+            Period previousPeriod = calendarPeriodType.getPreviousPeriod( currentPeriod );
+            periods.addAll( periodService.getIntersectingPeriodsByPeriodType( periodType,
+                previousPeriod.getStartDate(), currentPeriod.getEndDate() ) );            
+        }
+
+        return periods;
+    }
+
+    /**
+     * At the end of a scheduled monitoring run, post messages to the users who
+     * want to see the results.
+     * 
+     * Create one message for each set of users who receive the same
+     * subset of results. (Not necessarily the same as the set of users who
+     * receive alerts from the same subset of validation rules -- because
+     * some of these rules may return no results.) This saves on message
+     * storage space.
+     * 
+     * The message results are sorted into their natural order.
+     * 
+     * TODO: Internationalize the messages according to the user's
+     * preferred language, and generate a message for each combination of
+     * ( target language, set of results ).
+     * 
+     * @param validationResults the set of validation error results
+     * @param scheduledRunStart the date/time when this scheduled run started
+     */
+    private void postAlerts( Collection<ValidationResult> validationResults, Date scheduledRunStart )
+    {
+        SortedSet<ValidationResult> results = new TreeSet<ValidationResult>( validationResults );
+
+        Map<SortedSet<ValidationResult>, Set<User>> messageMap = getMessageMap( results );
+
+        for ( Map.Entry<SortedSet<ValidationResult>, Set<User>> entry : messageMap.entrySet() )
+        {
+            sendAlertmessage( entry.getKey(), entry.getValue(), scheduledRunStart );
+        }
+    }
+
+    /**
+     * Gets the Set of period types found in a set of rules.
+     * 
+     * Note that that we have to get periodType from periodService,
+     * otherwise the ID will not be present.)
+     * 
+     * @param rules validation rules of interest
+     * @return period types contained in those rules
+     */
+    private Set<PeriodType> getPeriodTypesFromRules ( Collection<ValidationRule> rules )
+    {
+        Set<PeriodType> rulePeriodTypes = new HashSet<PeriodType>();
+        
+        for ( ValidationRule rule : rules )
+        {
+            rulePeriodTypes.add( periodService.getPeriodTypeByName( rule.getPeriodType().getName() ) );
+        }
+        
+        return rulePeriodTypes;
+    }
+
+    /**
+     * Returns a map where the key is a sorted list of validation results
+     * to assemble into a message, and the value is the set of users who
+     * should receive this message.
+     * 
+     * @param results all the validation run results, in a sorted set
+     * @return map of result sets to users
+     */
+    private Map<SortedSet<ValidationResult>, Set<User>> getMessageMap( SortedSet<ValidationResult> results )
+    {
+        Map<User, SortedSet<ValidationResult>> userResults = getUserResults( results );
+
+        Map<SortedSet<ValidationResult>, Set<User>> messageMap = new HashMap<SortedSet<ValidationResult>, Set<User>>();
+
+        for (Map.Entry<User, SortedSet<ValidationResult>> userResultEntry : userResults.entrySet() )
+        {
+            Set<User> users = messageMap.get( userResultEntry.getValue() );
+
+            if ( users == null )
+            {
+                users = new HashSet<User>();
+
+                messageMap.put( userResultEntry.getValue(), users );
+            }
+            users.add( userResultEntry.getKey() );
+        }
+
+        return messageMap;
+    }
+
+    /**
+     * Returns a map where the key is a user and the value is a naturally-sorted
+     * list of results they should receive.
+     *
+     * @param results all the validation run results, in a sorted set
+     * @return map of users to results
+     */
+    private Map<User, SortedSet<ValidationResult>> getUserResults( SortedSet<ValidationResult> results )
+    {
+        Map<User, SortedSet<ValidationResult>> userResults = new HashMap<User, SortedSet<ValidationResult>>();
+
+        for ( ValidationResult result : results )
+        {
+            for ( ValidationRuleGroup ruleGroup : result.getValidationRule().getGroups() )
+            {
+                if ( ruleGroup.hasUserGroupsToAlert() )
                 {
-                    Operator operator = validationRule.getOperator();
-                    
-                    leftSide = expressionService.getExpressionValue( validationRule.getLeftSide(), valueMap, constantMap, null );
-
-                    if ( leftSide != null || Operator.compulsory_pair.equals( operator ) )
+                    for ( UserGroup userGroup : ruleGroup.getUserGroupsToAlert() )
                     {
-                        rightSide = expressionService.getExpressionValue( validationRule.getRightSide(), valueMap, constantMap, null );
-
-                        if ( rightSide != null || Operator.compulsory_pair.equals( operator )  )
+                        for ( User user : userGroup.getMembers() )
                         {
-                            if ( Operator.compulsory_pair.equals( operator ) )
+                            if ( !ruleGroup.isAlertByOrgUnits() || canUserAccessSource( user, result.getSource() ) )
                             {
-                                violation = ( leftSide != null && rightSide == null ) || ( leftSide == null && rightSide != null );
-                            }
-                            else if ( leftSide != null && rightSide != null )
-                            {
-                                violation = !expressionIsTrue( leftSide, operator, rightSide );
-                            }
-                            
-                            if ( violation )
-                            {
-                                validationViolations.add( new ValidationResult( period, unit, validationRule,
-                                    getRounded( zeroIfNull( leftSide ), DECIMALS ), getRounded( zeroIfNull( rightSide ), DECIMALS ) ) );
+                                SortedSet<ValidationResult> resultSet = userResults.get ( user );
+
+                                if ( resultSet == null )
+                                {
+                                    resultSet = new TreeSet<ValidationResult>();
+
+                                    userResults.put( user, resultSet );
+                                }
+                                resultSet.add( result );
                             }
                         }
                     }
                 }
             }
         }
-
-        return validationViolations;
+        return userResults;
     }
 
     /**
-     * Returns all validation rules which have data elements assigned to it
-     * which are members of the given data set.
-     * 
-     * @param dataSet the data set.
-     * @return all validation rules which have data elements assigned to it
-     *         which are members of the given data set.
+     * Determines whether a user can access an organisation unit,
+     * based on the organisation units to which the user has been assigned.
+     *
+     * @param user user to test
+     * @param source organisation unit to which the user may have access
+     * @return whether the user has acceess to the organisation unit
      */
-    private Collection<ValidationRule> getRelevantValidationRules( Set<DataElement> dataElements )
+    private boolean canUserAccessSource( User user, OrganisationUnit source )
     {
-        Set<ValidationRule> relevantValidationRules = new HashSet<ValidationRule>();
-        
-        Set<DataElement> validationRuleElements = new HashSet<DataElement>();
-        
-        for ( ValidationRule validationRule : getAllValidationRules() )
+        for ( OrganisationUnit o : user.getOrganisationUnits() )
         {
-            validationRuleElements.clear();
-            validationRuleElements.addAll( validationRule.getLeftSide().getDataElementsInExpression() );
-            validationRuleElements.addAll( validationRule.getRightSide().getDataElementsInExpression() );
-            
-            if ( dataElements.containsAll( validationRuleElements ) )
+            if ( source == o || source.getAncestors().contains( o ) )
             {
-                relevantValidationRules.add( validationRule );
+                return true;
             }
         }
+        return false;
+    }
 
-        return relevantValidationRules;
+    /**
+     * Generate and send an alert message containing a list of validation
+     * results to a set of users.
+     * 
+     * @param results results to put in this message
+     * @param users users to receive these results
+     * @param scheduledRunStart date/time when the scheduled run started
+     */
+    private void sendAlertmessage( SortedSet<ValidationResult> results, Set<User> users, Date scheduledRunStart )
+    {
+        StringBuilder builder = new StringBuilder();
+
+        SimpleDateFormat dateTimeFormatter = new SimpleDateFormat( "yyyy-MM-dd HH:mm" );
+
+        Map<String, Integer> importanceCountMap = countResultsByImportanceType( results );
+
+        String subject = "Alerts as of " + dateTimeFormatter.format( scheduledRunStart ) + ": High "
+            + ( importanceCountMap.get( "high" ) == null ? 0 : importanceCountMap.get( "high" ) ) + ", Medium "
+            + ( importanceCountMap.get( "medium" ) == null ? 0 : importanceCountMap.get( "medium" ) ) + ", Low "
+            + ( importanceCountMap.get( "low" ) == null ? 0 : importanceCountMap.get( "low" ) );
+
+        //TODO use velocity template for message
+        
+        for ( ValidationResult result : results )
+        {
+            ValidationRule rule = result.getValidationRule();
+            
+            builder.append( result.getSource().getName() ).append( " " ).append( result.getPeriod().getName() ).
+            append( result.getAttributeOptionCombo().isDefault() ? "" : " " + result.getAttributeOptionCombo().getName() ).append( LN ).
+            append( rule.getName() ).append( " (" ).append( rule.getImportance() ).append( ") " ).append( LN ).
+            append( rule.getLeftSide().getDescription() ).append( ": " ).append( result.getLeftsideValue() ).append( LN ).
+            append( rule.getRightSide().getDescription() ).append( ": " ).append( result.getRightsideValue() ).append( LN ).append( LN );
+        }
+        
+        log.info( "Alerting users: " + users.size() + ", subject: " + subject );
+        messageService.sendMessage( subject, builder.toString(), null, users );
+    }
+
+    // -------------------------------------------------------------------------
+    // Supportive methods - monitoring
+    // -------------------------------------------------------------------------
+
+    /**
+     * Counts the results of each importance type, for all the importance
+     * types that are found within the results.
+     * 
+     * @param results results to analyze
+     * @return Mapping between importance type and result counts.
+     */
+    private Map<String, Integer> countResultsByImportanceType ( Set<ValidationResult> results )
+    {
+        Map<String, Integer> importanceCountMap = new HashMap<String, Integer>();
+        
+        for ( ValidationResult result : results )
+        {
+            Integer importanceCount = importanceCountMap.get( result.getValidationRule().getImportance() );
+            
+            importanceCountMap.put( result.getValidationRule().getImportance(), importanceCount == null ? 1
+                : importanceCount + 1 );
+        }
+        
+        return importanceCountMap;
     }
     
-    public Collection<ValidationRule> getRelevantValidationRules( DataSet dataSet )
+    /**
+     * Returns all validation-type rules which have specified data elements
+     * assigned to them.
+     * 
+     * @param dataElements the data elements to look for
+     * @return all validation rules which have the data elements assigned.
+     */
+    private Collection<ValidationRule> getValidationTypeRulesForDataElements( Set<DataElement> dataElements )
     {
-        Set<ValidationRule> relevantValidationRules = new HashSet<ValidationRule>();
-        
-        Set<DataElementOperand> operands = dataEntryFormService.getOperandsInDataEntryForm( dataSet );
-        
-        Set<DataElementOperand> validationRuleOperands = new HashSet<DataElementOperand>();
-        
+        Set<ValidationRule> rulesForDataElements = new HashSet<ValidationRule>();
+
+        Set<DataElement> validationRuleElements = new HashSet<DataElement>();
+
         for ( ValidationRule validationRule : getAllValidationRules() )
         {
-            validationRuleOperands.clear();
-            validationRuleOperands.addAll( expressionService.getOperandsInExpression( validationRule.getLeftSide().getExpression() ) );
-            validationRuleOperands.addAll( expressionService.getOperandsInExpression( validationRule.getRightSide().getExpression() ) );
-            
-            if ( operands.containsAll( validationRuleOperands ) )
+            if ( validationRule.getRuleType().equals( ValidationRule.RULE_TYPE_VALIDATION ) )
             {
-                relevantValidationRules.add( validationRule );
+                validationRuleElements.clear();
+                validationRuleElements.addAll( validationRule.getLeftSide().getDataElementsInExpression() );
+                validationRuleElements.addAll( validationRule.getRightSide().getDataElementsInExpression() );
+
+                if ( dataElements.containsAll( validationRuleElements ) )
+                {
+                    rulesForDataElements.add( validationRule );
+                }
             }
         }
-        
-        return relevantValidationRules;
+
+        return rulesForDataElements;
     }
 
     /**
-     * Returns all validation rules referred to in the left and right side expressions
-     * of the given validation rules.
+     * Returns all validation rules which have data elements assigned to them
+     * which are members of the given data set.
      * 
-     * @param validationRules the validation rules.
-     * @return a collection of data elements.
+     * @param dataSet the data set
+     * @return all validation rules which have data elements assigned to them
+     *         which are members of the given data set
      */
-    private Set<DataElement> getDataElementsInValidationRules( Collection<ValidationRule> validationRules )
+    private Collection<ValidationRule> getRulesForDataSet( DataSet dataSet )
     {
-        Set<DataElement> dataElements = new HashSet<DataElement>();
+        Set<ValidationRule> rulesForDataSet = new HashSet<ValidationRule>();
 
-        for ( ValidationRule rule : validationRules )
+        Set<DataElementOperand> operands = dataEntryFormService.getOperandsInDataEntryForm( dataSet );
+
+        Set<DataElementOperand> validationRuleOperands = new HashSet<DataElementOperand>();
+
+        for ( ValidationRule rule : getAllValidationRules() )
         {
-            dataElements.addAll( rule.getLeftSide().getDataElementsInExpression() );
-            dataElements.addAll( rule.getRightSide().getDataElementsInExpression() );
+            validationRuleOperands.clear();
+            validationRuleOperands.addAll( expressionService.getOperandsInExpression(
+                rule.getLeftSide().getExpression() ) );
+            validationRuleOperands.addAll( expressionService.getOperandsInExpression(
+                rule.getRightSide().getExpression() ) );
+
+            if ( operands.containsAll( validationRuleOperands ) )
+            {
+                rulesForDataSet.add( rule );
+            }
         }
 
-        return dataElements;
+        return rulesForDataSet;
+    }
+    
+    /**
+     * Formats and sets name on the period of each result.
+     * 
+     * @param results the collecion of validation results.
+     * @param format the i18n format.
+     */
+    private void formatPeriods( Collection<ValidationResult> results, I18nFormat format )
+    {
+        if ( format != null )
+        {
+            for ( ValidationResult result : results )
+            {
+                if ( result != null && result.getPeriod() != null )
+                {
+                    result.getPeriod().setName( format.formatPeriod( result.getPeriod() ) );
+                }
+            }
+        }
     }
     
     // -------------------------------------------------------------------------
@@ -436,10 +700,10 @@ public class DefaultValidationRuleService
     }
 
     public Collection<ValidationRule> getValidationRulesByName( String name )
-    {        
+    {
         return getObjectsByName( i18nService, validationRuleStore, name );
     }
-    
+
     public Collection<ValidationRule> getValidationRulesByDataElements( Collection<DataElement> dataElements )
     {
         return i18n( i18nService, validationRuleStore.getValidationRulesByDataElements( dataElements ) );
@@ -492,12 +756,12 @@ public class DefaultValidationRuleService
     public ValidationRuleGroup getValidationRuleGroup( int id, boolean i18nValidationRules )
     {
         ValidationRuleGroup group = getValidationRuleGroup( id );
-        
+
         if ( i18nValidationRules )
         {
             i18n( i18nService, group.getMembers() );
         }
-        
+
         return group;
     }
 
@@ -505,7 +769,7 @@ public class DefaultValidationRuleService
     {
         return i18n( i18nService, validationRuleGroupStore.getByUid( uid ) );
     }
-    
+
     public Collection<ValidationRuleGroup> getAllValidationRuleGroups()
     {
         return i18n( i18nService, validationRuleGroupStore.getAll() );

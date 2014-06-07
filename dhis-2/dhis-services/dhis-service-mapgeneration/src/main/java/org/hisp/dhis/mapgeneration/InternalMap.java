@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapgeneration;
 
 /*
- * Copyright (c) 2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,78 +28,53 @@ package org.hisp.dhis.mapgeneration;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.awt.Color;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
-/**
- * An internal representation of a map.
- * 
- * It encapsulates all the information of a map built by adding layers to it. It
- * may then create an image representing the map by a call to render.
- * 
- * Finally, one should extend this class with an implementation that uses a
- * specific platform, e.g. GeoTools to draw the map.
- * 
- * @author Kjetil Andresen <kjetand@ifi.uio.no>
- * @author Olai Solheim <olais@ifi.uio.no>
- */
 public class InternalMap
 {
-    protected Color backgroundColor = null;
+    private List<InternalMapLayer> layers = new ArrayList<InternalMapLayer>();
 
-    protected boolean isAntiAliasingEnabled = true;
-    
-    private List<InternalMapObject> mapObjects = new ArrayList<InternalMapObject>();
+    // -------------------------------------------------------------------------
+    // Constructors
+    // -------------------------------------------------------------------------
 
     public InternalMap()
     {
     }
-    
-    public Color getBackgroundColor()
-    {
-        return backgroundColor;
-    }
 
-    public void setBackgroundColor( Color backgroundColor )
-    {
-        this.backgroundColor = backgroundColor;
-    }
+    // -------------------------------------------------------------------------
+    // Logic
+    // -------------------------------------------------------------------------
 
-    public boolean isAntiAliasingEnabled()
+    /**
+     * Returns the first data layer of the list of layers for this map. Returns
+     * null of none of the layers are data layers.
+     */
+    public InternalMapLayer getFirstDataLayer()
     {
-        return isAntiAliasingEnabled;
-    }
-
-    public void setAntiAliasingEnabled( boolean isAntiAliasingEnabled )
-    {
-        this.isAntiAliasingEnabled = isAntiAliasingEnabled;
-    }
-
-    public List<InternalMapObject> getMapObjects()
-    {
-        return mapObjects;
-    }
-
-    public void setMapObjects( List<InternalMapObject> mapObjects )
-    {
-        this.mapObjects = mapObjects;
-    }
-    
-    //TODO remove
-
-    public InternalMap( InternalMapLayer layer )
-    {
-        this.mapObjects = new LinkedList<InternalMapObject>();
-        this.addMapLayer( layer );
-    }
-
-    public void addMapLayer( InternalMapLayer layer )
-    {
-        for ( InternalMapObject mapObject : layer.getAllMapObjects() )
+        for ( InternalMapLayer layer : layers )
         {
-            this.mapObjects.add( mapObject );
+            if ( layer != null && layer.isDataLayer() )
+            {
+                return layer;
+            }
         }
+        
+        return null;
+    }
+    
+    // -------------------------------------------------------------------------
+    // Getters and setters
+    // -------------------------------------------------------------------------
+
+    public List<InternalMapLayer> getLayers()
+    {
+        return layers;
+    }
+
+    public void setLayers( List<InternalMapLayer> layers )
+    {
+        this.layers = layers;
     }
 }

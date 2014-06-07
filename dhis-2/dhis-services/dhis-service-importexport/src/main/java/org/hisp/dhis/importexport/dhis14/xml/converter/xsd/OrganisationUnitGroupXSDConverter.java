@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.dhis14.xml.converter.xsd;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,7 +35,8 @@ import org.hisp.dhis.importexport.ImportParams;
 
 /**
  * @author Jason P. Pickering
- * @version $Id: OrganisationUnitXSDConverter.java 6455 2011-02-17 09:04:37Z jasonp $
+ * @version $Id: OrganisationUnitXSDConverter.java 6455 2011-02-17 09:04:37Z
+ *          jasonp $
  */
 public class OrganisationUnitGroupXSDConverter
     extends AbstractXSDConverter
@@ -44,12 +46,35 @@ public class OrganisationUnitGroupXSDConverter
         // Not implemented
     }
 
-        public void write( XMLWriter writer, ExportParams params )
+    public void write( XMLWriter writer, ExportParams params )
     {
-      // Not implemented
-     }
+        writer.openElement( "xsd:element", "name", "OrgUnitGroup" );
 
-            public void read( XMLReader reader, ImportParams params )
+        writeAnnotation( writer );
+
+        writer.openElement( "xsd:complexType" );
+
+        writer.openElement( "xsd:sequence" );
+
+        writeInteger( writer, "OrgUnitGroupID", 1, true );
+
+        writeText( writer, "OrgUnitGroupName", 1, true, 230 );
+
+        writeMemo( writer, "OrgUnitGroupDescription", 0, false, 536870910 );
+
+        writeText( writer, "UID", 1, true, 11 );
+
+        writeInteger( writer, "LastUserID", 1, true );
+        writeDateTime( writer, "LastUpdated", 1, true );
+
+        writer.closeElement();
+
+        writer.closeElement();
+
+        writer.closeElement();
+    }
+
+    public void read( XMLReader reader, ImportParams params )
     {
         // Not implemented
     }

@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataanalysis;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,10 +28,13 @@ package org.hisp.dhis.dataanalysis;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hisp.dhis.DhisTest;
+import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
@@ -45,13 +49,11 @@ import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodService;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 /**
  * @author Lars Helge Overland
  */
 public class DataAnalysisStoreTest
-    extends DhisTest
+    extends DhisSpringTest
 {
     private DataAnalysisStore dataAnalysisStore;
     
@@ -99,15 +101,15 @@ public class DataAnalysisStoreTest
 
         periodService = (PeriodService) getBean( PeriodService.ID );
 
-        categoryCombo = categoryService.getDataElementCategoryComboByName( DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
+        categoryCombo = categoryService.getDefaultDataElementCategoryCombo();
+        
+        categoryOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
 
         dataElementA = createDataElement( 'A', categoryCombo );
         dataElementB = createDataElement( 'B', categoryCombo );
 
         dataElementService.addDataElement( dataElementA );
         dataElementService.addDataElement( dataElementB );
-
-        categoryOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
 
         periodA = createPeriod( new MonthlyPeriodType(), getDate( 2000, 3, 1 ), getDate( 2000, 3, 31 ) );
         periodB = createPeriod( new MonthlyPeriodType(), getDate( 2000, 4, 1 ), getDate( 2000, 4, 30 ) );
@@ -131,12 +133,6 @@ public class DataAnalysisStoreTest
         organisationUnits.add( organisationUnitB.getId() );
     }
 
-    @Override
-    public boolean emptyDatabaseAfterTest()
-    {
-        return true;
-    }
-    
     // ----------------------------------------------------------------------
     // Business logic tests
     // ----------------------------------------------------------------------
@@ -155,7 +151,7 @@ public class DataAnalysisStoreTest
         dataValueService.addDataValue( createDataValue( dataElementA, periodI, organisationUnitA, "3", categoryOptionCombo ) );
         dataValueService.addDataValue( createDataValue( dataElementA, periodJ, organisationUnitA, "15", categoryOptionCombo ) );
         
-        assertEquals( 14.49, dataAnalysisStore.getStandardDeviation( dataElementA, categoryOptionCombo, organisationUnits ).get( organisationUnitA.getId() ), DELTA );
+        assertEquals( 15.26, dataAnalysisStore.getStandardDeviation( dataElementA, categoryOptionCombo, organisationUnits ).get( organisationUnitA.getId() ), DELTA );
         assertNull( dataAnalysisStore.getStandardDeviation( dataElementA, categoryOptionCombo, organisationUnits ).get( organisationUnitB.getId() ) );
     }
 
@@ -173,7 +169,7 @@ public class DataAnalysisStoreTest
         dataValueService.addDataValue( createDataValue( dataElementA, periodI, organisationUnitA, "3", categoryOptionCombo ) );
         dataValueService.addDataValue( createDataValue( dataElementA, periodJ, organisationUnitA, "15", categoryOptionCombo ) );
         
-        assertEquals( 13, dataAnalysisStore.getAverage( dataElementA, categoryOptionCombo, organisationUnits ).get( organisationUnitA.getId() ), DELTA );
+        assertEquals( 12.78, dataAnalysisStore.getAverage( dataElementA, categoryOptionCombo, organisationUnits ).get( organisationUnitA.getId() ), DELTA );
         assertNull( dataAnalysisStore.getAverage( dataElementA, categoryOptionCombo, organisationUnits ).get( organisationUnitB.getId() ) );
     }
 }

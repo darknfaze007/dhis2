@@ -1,17 +1,20 @@
+package org.hisp.dhis.validation;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,18 +28,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.validation;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
-import java.util.Date;
 
 import org.hisp.dhis.DhisSpringTest;
-import org.hisp.dhis.patient.Patient;
 import org.junit.Test;
 
 /**
@@ -52,9 +51,9 @@ public class ValidationCriteriaServiceTest
 
     private String propertyB;
 
-    private Object valueA;
+    private String valueA;
 
-    private Object valueB;
+    private String valueB;
 
     private ValidationCriteria validationCriteriaA;
 
@@ -70,11 +69,11 @@ public class ValidationCriteriaServiceTest
     {
         validationCriteriaService = (ValidationCriteriaService) getBean( ValidationCriteriaService.ID );
 
-        propertyA = Patient.class.getDeclaredField( "birthDate" ).getName();
-        propertyB = Patient.class.getDeclaredField( "dobType" ).getName();
+        propertyA = "name";
+        propertyB = "name";
 
-        valueA = new Date();
-        valueB = (char)'A';
+        valueA = "A";
+        valueB = "B";
 
         validationCriteriaA = createValidationCriteria( 'A', propertyA, ValidationCriteria.OPERATOR_EQUAL_TO, valueA );
         validationCriteriaB = createValidationCriteria( 'B', propertyB, ValidationCriteria.OPERATOR_EQUAL_TO, valueB );

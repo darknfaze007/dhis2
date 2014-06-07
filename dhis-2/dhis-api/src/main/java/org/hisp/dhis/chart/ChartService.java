@@ -1,19 +1,20 @@
 package org.hisp.dhis.chart;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,10 +30,12 @@ package org.hisp.dhis.chart;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
+import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
@@ -101,13 +104,21 @@ public interface ChartService
 
     Collection<Chart> getCharts( final Collection<Integer> identifiers );
 
-    Collection<Chart> getChartsBetween( int first, int max );
+    List<Chart> getChartsBetween( int first, int max );
 
-    Collection<Chart> getChartsBetweenByName( String name, int first, int max );
+    List<Chart> getChartsBetweenByName( String name, int first, int max );
 
     int getChartCount();
 
     int getChartCountByName( String name );
     
     Collection<Chart> getChartsByUser( User user );
+
+    int countDataSetCharts( DataSet dataSet );
+
+    int countIndicatorCharts( Indicator indicator );
+
+    int countDataElementCharts( DataElement dataElement );
+    
+    int countOrganisationUnitCharts( OrganisationUnit organisationUnit );
 }

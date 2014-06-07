@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapping.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -36,13 +37,16 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.struts2.ServletActionContext;
+import org.hisp.dhis.analytics.AggregationType;
+import org.hisp.dhis.analytics.AnalyticsService;
+import org.hisp.dhis.analytics.DataQueryParams;
+import org.hisp.dhis.common.DimensionalObject;
 import org.hisp.dhis.common.IdentifiableObject;
+import org.hisp.dhis.common.NameableObjectUtils;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
-import org.hisp.dhis.organisationunit.OrganisationUnitLevel;
-import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.system.filter.OrganisationUnitWithValidCoordinatesFilter;
 import org.hisp.dhis.system.util.FilterUtils;
 
@@ -59,36 +63,29 @@ public class GetGeoJsonFacilitiesAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private OrganisationUnitService organisationUnitService;
-
-    public void setOrganisationUnitService( OrganisationUnitService organisationUnitService )
-    {
-        this.organisationUnitService = organisationUnitService;
-    }
-
     private OrganisationUnitGroupService organisationUnitGroupService;
 
     public void setOrganisationUnitGroupService( OrganisationUnitGroupService organisationUnitGroupService )
     {
         this.organisationUnitGroupService = organisationUnitGroupService;
     }
+    
+    private AnalyticsService analyticsService;
+
+    public void setAnalyticsService( AnalyticsService analyticsService )
+    {
+        this.analyticsService = analyticsService;
+    }
 
     // -------------------------------------------------------------------------
     // Input
     // -------------------------------------------------------------------------
 
-    private String parentId;
-
-    public void setParentId( String parentId )
+    private Collection<String> ids;
+    
+    public void setIds( Collection<String> ids )
     {
-        this.parentId = parentId;
-    }
-
-    private String level;
-
-    public void setLevel( String level )
-    {
-        this.level = level;
+        this.ids = ids;
     }
     
     private String callback;
@@ -107,7 +104,7 @@ public class GetGeoJsonFacilitiesAction
         return callback;
     }
 
-    private Collection<OrganisationUnit> object;
+    private Collection<OrganisationUnit> object = new ArrayList<OrganisationUnit>();
 
     public Collection<OrganisationUnit> getObject()
     {
@@ -130,10 +127,6 @@ public class GetGeoJsonFacilitiesAction
     {
         groupSets = organisationUnitGroupService.getAllOrganisationUnitGroupSets();
 
-        // ---------------------------------------------------------------------
-        // Check if modified for caching purposes
-        // ---------------------------------------------------------------------
-
         Set<OrganisationUnitGroup> groups = new HashSet<OrganisationUnitGroup>();
         
         for ( OrganisationUnitGroupSet groupSet : groupSets )
@@ -142,30 +135,25 @@ public class GetGeoJsonFacilitiesAction
         }
         
         // ---------------------------------------------------------------------
-        // Retrieve list of organisation units and populate group names
+        // Retrieve list of organisation units with valid coordinates
         // ---------------------------------------------------------------------
 
-        OrganisationUnit parent = organisationUnitService.getOrganisationUnit( parentId );
-
-        if ( parent == null )
+        String paramString = "ou:";
+        
+        for ( String id : ids )
         {
-            parent = organisationUnitService.getOrganisationUnit( Integer.parseInt( parentId ) );
+            paramString += id + ";";
         }
 
-        OrganisationUnitLevel orgUnitLevel = organisationUnitService.getOrganisationUnitLevel( level );
-
-        if ( orgUnitLevel == null )
-        {
-            orgUnitLevel = organisationUnitService.getOrganisationUnitLevel( Integer.parseInt( level ) );
-        }
-
-        if ( orgUnitLevel == null )
-        {
-            orgUnitLevel = organisationUnitService.getOrganisationUnitLevel( parent.getOrganisationUnitLevel() );
-        }
-
-        Collection<OrganisationUnit> organisationUnits = organisationUnitService.getOrganisationUnitsAtLevel(
-            orgUnitLevel.getLevel(), parent );
+        Set<String> ouParams = new HashSet<String>();
+        
+        ouParams.add( paramString.substring( 0, paramString.length() ) );
+        
+        DataQueryParams params = analyticsService.getFromUrl( ouParams, null, AggregationType.SUM, null, false, false, false, false, false, false, null );
+        
+        DimensionalObject dim = params.getDimension( DimensionalObject.ORGUNIT_DIM_ID );
+        
+        List<OrganisationUnit> organisationUnits = NameableObjectUtils.asTypedList( dim.getItems() );
 
         FilterUtils.filter( organisationUnits, new OrganisationUnitWithValidCoordinatesFilter() );
 
@@ -178,7 +166,7 @@ public class GetGeoJsonFacilitiesAction
         cachingCollection.addAll( organisationUnits );
         
         boolean modified = !clearIfNotModified( ServletActionContext.getRequest(), ServletActionContext.getResponse(), cachingCollection );
-        
+
         if ( !modified )
         {
             return SUCCESS;

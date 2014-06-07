@@ -1,19 +1,20 @@
 package org.hisp.dhis.servlet.filter;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -37,6 +38,9 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * @author Torgeir Lorange Ostby
  * @version $Id: HttpRedirectFilter.java 2869 2007-02-20 14:26:09Z andegje $
@@ -46,6 +50,8 @@ public class HttpRedirectFilter
 {
     public static final String REDIRECT_PATH_KEY = "redirectPath";
 
+    private static final Log log = LogFactory.getLog( HttpRedirectFilter.class );
+    
     private String redirectPath;
 
     // -------------------------------------------------------------------------
@@ -61,14 +67,19 @@ public class HttpRedirectFilter
     public void doFilter( ServletRequest request, ServletResponse response, FilterChain chain )
         throws IOException, ServletException
     {
+        log.debug( "Redirecting to: " + redirectPath );
+        
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         if ( redirectPath == null )
         {
+            String msg = "HttpRedirectFilter was not properly initialised. \"" + REDIRECT_PATH_KEY + "\" must be specified.";
+            
             httpResponse.setContentType( "text/plain" );
-            httpResponse.getWriter().print(
-                "HttpRedirectFilter was not properly initialised. \"" + REDIRECT_PATH_KEY + "\" must be specified." );
+            httpResponse.getWriter().print( msg );
 
+            log.warn( msg );
+            
             return;
         }
 

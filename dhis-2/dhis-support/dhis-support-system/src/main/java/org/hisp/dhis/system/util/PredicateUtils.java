@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.util;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -42,19 +43,19 @@ import java.util.Collection;
  */
 public class PredicateUtils
 {
-    public static Predicate<Field> alwaysTrue = new StaticReply( true );
+    public static final Predicate<Field> alwaysTrue = new StaticReply( true );
 
-    public static Predicate<Field> alwaysFalse = new StaticReply( false );
+    public static final Predicate<Field> alwaysFalse = new StaticReply( false );
 
-    public static Predicate<Field> idObjects = new ObjectWithTypePredicate( IdentifiableObject.class );
+    public static final Predicate<Field> idObjects = new ObjectWithTypePredicate( IdentifiableObject.class );
 
-    public static Predicate<Field> collections = new CollectionPredicate();
+    public static final Predicate<Field> collections = new CollectionPredicate();
 
-    public static Predicate<Field> idObjectCollections = new CollectionWithTypePredicate( IdentifiableObject.class );
+    public static final Predicate<Field> idObjectCollections = new CollectionWithTypePredicate( IdentifiableObject.class );
 
-    public static Predicate<Field> objectCollectionsWithScanned = new CollectionWithAnnotationPredicate( Scanned.class );
+    public static final Predicate<Field> objectCollectionsWithScanned = new CollectionWithAnnotationPredicate( Scanned.class );
 
-    public static Predicate<Field> idObjectCollectionsWithScanned = new CollectionWithTypeAndAnnotationPredicate( IdentifiableObject.class, Scanned.class );
+    public static final Predicate<Field> idObjectCollectionsWithScanned = new CollectionWithTypeAndAnnotationPredicate( IdentifiableObject.class, Scanned.class );
 
     public static class StaticReply
         implements Predicate<Field>

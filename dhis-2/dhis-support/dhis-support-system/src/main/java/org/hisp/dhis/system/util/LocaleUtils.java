@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.util;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,42 +28,119 @@ package org.hisp.dhis.system.util;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import org.hisp.dhis.translation.Translation;
+import org.hisp.dhis.translation.comparator.TranslationLocaleSpecificityComparator;
 
 /**
  * @author Oyvind Brucker
  */
 public class LocaleUtils
 {
+    private static final String SEP = "_";
+    
     /**
-     * Creates a Locale object based on the input String
+     * Creates a Locale object based on the input string.
      *
-     * @param localestr String to parse
+     * @param localeStr String to parse
      * @return A locale object or null if not valid
      */
-    public static Locale getLocale( String localestr ) 
+    public static Locale getLocale( String localeStr ) 
     {
-        String[] parts = localestr.split( "_" );
-
-        Locale thisLocale;
-
-        if ( parts.length == 1 )
-        {
-            thisLocale = new Locale( parts[0] );
-        }
-        else if ( parts.length == 2 )
-        {
-            thisLocale = new Locale( parts[0], parts[1] );
-        }
-        else if ( parts.length == 3 )
-        {
-            thisLocale = new Locale( parts[0], parts[1], parts[2] );
-        }
-        else
+        if ( localeStr == null || localeStr.isEmpty() )
         {
             return null;
         }
-
-        return thisLocale;        
+        else
+        {
+            return org.apache.commons.lang.LocaleUtils.toLocale( localeStr );
+        }
+    }
+        
+    /**
+     * Createa a locale string based on the given language, country and variant.
+     * 
+     * @param language the language, cannot be null.
+     * @param country the country, can be null.
+     * @param variant the variant, can be null.
+     * @return a locale string.
+     */
+    public static String getLocaleString( String language, String country, String variant )
+    {
+        if ( language == null )
+        {
+            return null;
+        }
+        
+        String locale = language;
+        
+        if ( country != null )
+        {
+            locale += SEP + country;
+        }
+        
+        if ( variant != null )
+        {
+            locale += SEP + variant;
+        }
+        
+        return locale;
+    }
+    
+    /**
+     * Creates a list of locales of all possible specifities based on the given
+     * Locale. As an example, for the given locale "en_UK", the locales "en" and
+     * "en_UK" are returned.
+     * 
+     * @param locale the Locale.
+     * @return a list of locale strings.
+     */
+    public static List<String> getLocaleFallbacks( Locale locale )
+    {
+        List<String> locales = new ArrayList<String>();
+        
+        locales.add( locale.getLanguage() );
+        
+        if ( !locale.getCountry().isEmpty() )
+        {
+            locales.add( locale.getLanguage() + SEP + locale.getCountry() );
+        }
+        
+        if ( !locale.getVariant().isEmpty() )
+        {
+            locales.add( locale.toString() );
+        }
+        
+        return locales;
+    }
+    
+    /**
+     * Filters the given list of translations in a way where only the most specific
+     * locales are kept for every base locale.
+     * 
+     * @param translations the list of translations.
+     * @return a list of translations.
+     */
+    public static List<Translation> getTranslationsHighestSpecifity( Collection<Translation> translations )
+    {
+        Map<String, Translation> translationMap = new HashMap<String, Translation>();
+        
+        List<Translation> trans = new ArrayList<Translation>( translations );
+        
+        Collections.sort( trans, TranslationLocaleSpecificityComparator.INSTANCE );
+        
+        for ( Translation tr : trans )
+        {
+            translationMap.put( tr.getClassIdPropKey(), tr );
+        }
+        
+        return new ArrayList<Translation>( translationMap.values() );
     }
 }

@@ -8,10 +8,10 @@
 
   <bean id="org.hisp.dhis.user.action.AddUserAction" class="org.hisp.dhis.user.action.AddUserAction" scope="prototype">
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
+    <property name="securityService" ref="org.hisp.dhis.security.SecurityService" />
     <property name="passwordManager" ref="org.hisp.dhis.security.PasswordManager" />
     <property name="selectionTreeManager" ref="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     <property name="selectionManager" ref="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
     <property name="attributeService" ref="org.hisp.dhis.attribute.AttributeService" />
   </bean>
 
@@ -30,12 +30,10 @@
     scope="prototype">
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
     <property name="selectionManager" ref="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
   </bean>
 
   <bean id="org.hisp.dhis.user.action.GetUserListAction" class="org.hisp.dhis.user.action.GetUserListAction" scope="prototype">
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
   </bean>
 
   <bean id="org.hisp.dhis.user.action.RemoveUserAction" class="org.hisp.dhis.user.action.RemoveUserAction" scope="prototype">
@@ -45,6 +43,7 @@
 
   <bean id="org.hisp.dhis.user.action.UpdateUserAction" class="org.hisp.dhis.user.action.UpdateUserAction" scope="prototype">
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
+    <property name="securityService" ref="org.hisp.dhis.security.SecurityService" />
     <property name="passwordManager" ref="org.hisp.dhis.security.PasswordManager" />
     <property name="selectionTreeManager" ref="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     <property name="selectionManager" ref="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
@@ -61,20 +60,12 @@
     <property name="selectionTreeManager" ref="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     <property name="selectionManager" ref="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
     <property name="attributeService" ref="org.hisp.dhis.attribute.AttributeService" />
+    <property name="i18nService" ref="org.hisp.dhis.i18n.I18nService" />
+    <property name="localeManager" ref="org.hisp.dhis.i18n.locale.LocaleManager" />
   </bean>
 
   <bean id="org.hisp.dhis.user.action.DisableUserAction" class="org.hisp.dhis.user.action.DisableUserAction" scope="prototype" />
-
-   <!-- PDF -->
-
-  <bean id="org.hisp.dhis.user.action.pdf.ExportToPdfAction" class="org.hisp.dhis.user.action.pdf.ExportToPdfAction"
-    scope="prototype">
-    <property name="serviceProvider" ref="exportServiceProvider" />
-    <property name="userService" ref="org.hisp.dhis.user.UserService" />
-    <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-  </bean>
   
 	<!-- Role -->
 
@@ -100,11 +91,6 @@
   <bean id="org.hisp.dhis.user.action.UpdateRoleAction" class="org.hisp.dhis.user.action.UpdateRoleAction" scope="prototype">
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
     <property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.user.action.SetupRoleAction" class="org.hisp.dhis.user.action.SetupRoleAction" scope="prototype">
-    <property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
-    <property name="authoritiesProvider" ref="org.hisp.dhis.security.authority.SystemAuthoritiesProvider" />
   </bean>
 
   <bean id="org.hisp.dhis.user.action.ValidateRoleAction" class="org.hisp.dhis.user.action.ValidateRoleAction"

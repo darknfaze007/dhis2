@@ -1,19 +1,20 @@
 package org.hisp.dhis.webportal.module;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -38,7 +39,10 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts2.dispatcher.Dispatcher;
+import org.hisp.dhis.appmanager.App;
+import org.hisp.dhis.appmanager.AppManager;
 import org.hisp.dhis.security.ActionAccessResolver;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.opensymphony.xwork2.config.Configuration;
 import com.opensymphony.xwork2.config.entities.PackageConfig;
@@ -50,7 +54,7 @@ import com.opensymphony.xwork2.config.entities.PackageConfig;
 public class DefaultModuleManager
     implements ModuleManager
 {
-    private static final Log LOG = LogFactory.getLog( DefaultModuleManager.class );
+    private static final Log log = LogFactory.getLog( DefaultModuleManager.class );
 
     private boolean modulesDetected = false;
 
@@ -60,16 +64,15 @@ public class DefaultModuleManager
 
     private List<Module> menuModules = new ArrayList<Module>();
     
-    private List<Module> maintenanceMenuModules = new ArrayList<Module>();
-    
-    private List<Module> serviceMenuModules = new ArrayList<Module>();
-
     private ThreadLocal<Module> currentModule = new ThreadLocal<Module>();
 
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
 
+    @Autowired
+    private AppManager appManager;
+    
     private ActionAccessResolver actionAccessResolver;
 
     public void setActionAccessResolver( ActionAccessResolver actionAccessResolver )
@@ -89,13 +92,6 @@ public class DefaultModuleManager
     public void setDefaultActionName( String defaultActionName )
     {
         this.defaultActionName = defaultActionName;
-    }
-
-    private String maintenanceModuleIdentifier;
-
-    public void setMaintenanceModuleIdentifier( String maintenanceModuleIdentifier )
-    {
-        this.maintenanceModuleIdentifier = maintenanceModuleIdentifier;
     }
     
     // -------------------------------------------------------------------------
@@ -128,41 +124,34 @@ public class DefaultModuleManager
         return menuModules;
     }
 
-    public List<Module> getMaintenanceMenuModules()
+    public List<Module> getAccessibleMenuModules()
     {
         detectModules();
         
-        return maintenanceMenuModules;
-    }
-
-    public List<Module> getAccessibleMaintenanceModules()
-    {
-        detectModules();
-        
-        return getAccessibleModules( maintenanceMenuModules );
+        return getAccessibleModules( menuModules );
     }
     
-    public List<Module> getServiceMenuModules()
+    public List<Module> getAccessibleMenuModulesAndApps()
     {
-        detectModules();
+        List<Module> modules = getAccessibleMenuModules();
         
-        return serviceMenuModules;
+        List<App> apps = appManager.getApps();
+        
+        for ( App app : apps )
+        {   
+            modules.add( Module.getModule( app ) );
+        }
+        
+        return modules;
     }
 
-    public List<Module> getAccessibleServiceModules()
-    {
-        detectModules();
-        
-        return getAccessibleModules( serviceMenuModules );
-    }
-    
     public Collection<Module> getAllModules()
     {
         detectModules();
 
         return modulesByName.values();
     }
-
+    
     public Module getCurrentModule()
     {
         return currentModule.get();
@@ -185,13 +174,15 @@ public class DefaultModuleManager
         }
 
         for ( PackageConfig packageConfig : getPackageConfigs() )
-        {
+        {            
             String name = packageConfig.getName();
             String namespace = packageConfig.getNamespace();
 
+            log.debug( "Package config: " + name + ", " + namespace );
+            
             if ( packageConfig.getAllActionConfigs().size() == 0 )
             {
-                LOG.debug( "Ignoring action package with no actions: " + name );
+                log.warn( "Ignoring action package with no actions: " + name );
 
                 continue;
             }
@@ -210,8 +201,8 @@ public class DefaultModuleManager
             {
                 Module module = modulesByNamespace.get( namespace );
 
-                throw new RuntimeException( "These action packages have the same namespace: " + name + " and "
-                    + module.getName() );
+                throw new RuntimeException( "These action packages have the same namespace: " + 
+                    name + " and " + module.getName() );
             }
 
             Module module = new Module( name, namespace );
@@ -224,27 +215,18 @@ public class DefaultModuleManager
 
                 menuModules.add( module );
 
-                LOG.debug( "Has default action: " + name );
-                
-                if ( name.toLowerCase().contains( maintenanceModuleIdentifier ) )
-                {
-                    maintenanceMenuModules.add( module );
-                }
-                else
-                {
-                    serviceMenuModules.add( module );
-                }
+                log.debug( "Has default action: " + name );
             }
             else
             {
-                LOG.debug( "Doesn't have default action: " + name );
+                log.debug( "Doesn't have default action: " + name );
             }
         }
 
         Collections.sort( menuModules, moduleComparator );
-        Collections.sort( maintenanceMenuModules, moduleComparator );
-        Collections.sort( serviceMenuModules, moduleComparator );
 
+        log.info( "Menu modules detected: " + menuModules );
+        
         modulesDetected = true;
     }
 

@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseaggregation;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,8 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-package org.hisp.dhis.caseaggregation;
 
 import org.hisp.dhis.common.BaseNameableObject;
 import org.hisp.dhis.dataelement.DataElement;
@@ -63,24 +64,24 @@ public class CaseAggregationCondition
 
     public static String OBJECT_PROGRAM_STAGE_DATAELEMENT = "DE";
 
-    public static String OBJECT_PATIENT_ATTRIBUTE = "CA";
-
-    public static String OBJECT_PATIENT_PROPERTY = "CP";
+    public static String OBJECT_TRACKED_ENTITY_ATTRIBUTE = "CA";
 
     public static String OBJECT_PROGRAM_PROPERTY = "PP";
 
     public static String OBJECT_PROGRAM = "PG";
 
-    public static String OBJECT_PATIENT = "PT";
-
     public static String OBJECT_PROGRAM_STAGE = "PS";
 
     public static String OBJECT_PROGRAM_STAGE_PROPERTY = "PSP";
 
-    public static String OBJECT_PATIENT_PROGRAM_STAGE_PROPERTY = "PC";
+    public static String OBJECT_TRACKED_ENTITY_PROGRAM_STAGE_PROPERTY = "PC";
 
     public static String OBJECT_ORGUNIT_COMPLETE_PROGRAM_STAGE = "PSIC";
-
+   
+    public static String FORMULA_AGE = "age";
+    
+    public static String FORMULA_VISIT = "visit";
+    
     public static String OBJECT_PROGRAM_PROPERTY_INCIDENT_DATE = "dateOfIncident";
 
     public static String OBJECT_PROGRAM_PROPERTY_ENROLLEMENT_DATE = "enrollmentDate";
@@ -91,12 +92,11 @@ public class CaseAggregationCondition
 
     public static String MINUS_DATAELEMENT_OPERATOR = "DEDATEDIFF";
 
-    public static String AUTO_STORED_BY = "DHIS-SYSTEM";
+    public static String AUTO_STORED_BY = "aggregated_from_tracker";
 
-    public static final String regExp = "\\[(" + OBJECT_ORGUNIT_COMPLETE_PROGRAM_STAGE + "|" + OBJECT_PATIENT + "|"
-        + OBJECT_PROGRAM + "|" + OBJECT_PROGRAM_STAGE_PROPERTY + "|" + OBJECT_PROGRAM_STAGE + "|"
-        + OBJECT_PATIENT_PROGRAM_STAGE_PROPERTY + "|" + OBJECT_PROGRAM_STAGE_DATAELEMENT + "|"
-        + OBJECT_PATIENT_ATTRIBUTE + "|" + OBJECT_PATIENT_PROPERTY + "|" + OBJECT_PROGRAM_PROPERTY + ")"
+    public static final String regExp = "\\[(" + OBJECT_ORGUNIT_COMPLETE_PROGRAM_STAGE + "|" + OBJECT_PROGRAM + "|"
+        + OBJECT_PROGRAM_STAGE_PROPERTY + "|" + OBJECT_PROGRAM_STAGE + "|" + OBJECT_TRACKED_ENTITY_PROGRAM_STAGE_PROPERTY
+        + "|" + OBJECT_PROGRAM_STAGE_DATAELEMENT + "|" + OBJECT_TRACKED_ENTITY_ATTRIBUTE + "|" + OBJECT_PROGRAM_PROPERTY + ")"
         + SEPARATOR_OBJECT + "([a-zA-Z0-9@#\\- ]+[" + SEPARATOR_ID + "[a-zA-Z0-9]*]*)" + "\\]";
 
     public static final String dataelementRegExp = MINUS_OPERATOR + "{1}\\s*\\(\\s*(\\["
@@ -168,29 +168,49 @@ public class CaseAggregationCondition
     }
 
     @Override
-    public boolean equals( Object obj )
+    public boolean equals( Object object )
     {
-        if ( this == obj )
+        if ( this == object )
+        {
             return true;
-        if ( obj == null )
+        }
+
+        if ( object == null )
+        {
             return false;
-        if ( getClass() != obj.getClass() )
+        }
+
+        if ( !getClass().isAssignableFrom( object.getClass() ) )
+        {
             return false;
-        CaseAggregationCondition other = (CaseAggregationCondition) obj;
+        }
+
+        final CaseAggregationCondition other = (CaseAggregationCondition) object;
+
         if ( aggregationExpression == null )
         {
             if ( other.aggregationExpression != null )
+            {
                 return false;
+            }
         }
         else if ( !aggregationExpression.equals( other.aggregationExpression ) )
+        {
             return false;
+        }
+
         if ( operator == null )
         {
             if ( other.operator != null )
+            {
                 return false;
+            }
         }
         else if ( !operator.equals( other.operator ) )
+        {
             return false;
+        }
+
         return true;
     }
 

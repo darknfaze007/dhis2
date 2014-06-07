@@ -1,19 +1,20 @@
 package org.hisp.dhis.message;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,8 +30,6 @@ package org.hisp.dhis.message;
 
 import static org.hisp.dhis.user.UserSettingService.KEY_MESSAGE_EMAIL_NOTIFICATION;
 
-import java.io.Serializable;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -45,6 +44,8 @@ import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserService;
 import org.springframework.scheduling.annotation.Async;
 
+import static org.apache.commons.lang.StringUtils.defaultIfEmpty;
+
 /**
  * @author Lars Helge Overland
  */
@@ -53,7 +54,7 @@ public class EmailMessageSender
 {
     private static final Log log = LogFactory.getLog( EmailMessageSender.class );
     private static final String FROM_ADDRESS = "noreply@dhis2.org";
-    private static final String FROM_NAME = "DHIS2 Message [No reply]";
+    private static final String FROM_NAME = "DHIS 2 Message [No reply]";
     private static final String SUBJECT_PREFIX = "[DHIS2] ";
     private static final String LB = System.getProperty( "line.separator" );
 
@@ -91,6 +92,7 @@ public class EmailMessageSender
         String username = systemSettingManager.getEmailUsername();
         String password = systemSettingManager.getEmailPassword();
         boolean tls = systemSettingManager.getEmailTls();
+        String from = systemSettingManager.getEmailSender();
 
         if ( hostName == null )
         {
@@ -103,11 +105,9 @@ public class EmailMessageSender
             ( sender.getEmail() != null ? ( sender.getEmail() + LB ) : StringUtils.EMPTY ) +
             ( sender.getPhoneNumber() != null ? ( sender.getPhoneNumber() + LB ) : StringUtils.EMPTY ) );
         
-        Map<User, Serializable> settings = userService.getUserSettings( KEY_MESSAGE_EMAIL_NOTIFICATION, false );
-
         try
         {
-            Email email = getEmail( hostName, port, username, password, tls );
+            Email email = getEmail( hostName, port, username, password, tls, from );
             email.setSubject( SUBJECT_PREFIX + subject );
             email.setMsg( text );
             
@@ -115,7 +115,7 @@ public class EmailMessageSender
             
             for ( User user : users )
             {
-                boolean emailNotification = settings.get( user ) != null && (Boolean) settings.get( user ) == true;
+                boolean emailNotification = (Boolean) userService.getUserSettingValue( user, KEY_MESSAGE_EMAIL_NOTIFICATION, false );
                 
                 boolean doSend = forceSend || emailNotification;
     
@@ -123,7 +123,7 @@ public class EmailMessageSender
                 {
                     email.addBcc( user.getEmail() );
                     
-                    log.info( "Sending email to user: " + user + " with email address: " + user.getEmail() );
+                    log.info( "Sending email to user: " + user.getUsername() + " with email address: " + user.getEmail() );
                     
                     hasRecipients = true;
                 }
@@ -144,12 +144,12 @@ public class EmailMessageSender
         return null;
     }
 
-    private Email getEmail( String hostName, int port, String username, String password, boolean tls )
+    private Email getEmail( String hostName, int port, String username, String password, boolean tls, String sender )
         throws EmailException
     {
         Email email = new SimpleEmail();
         email.setHostName( hostName );
-        email.setFrom( FROM_ADDRESS, FROM_NAME );
+        email.setFrom( defaultIfEmpty( sender, FROM_ADDRESS ), FROM_NAME );
         email.setSmtpPort( port );
         email.setTLS( true );
         

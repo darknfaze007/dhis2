@@ -1,19 +1,20 @@
 package org.hisp.dhis.dd.action.category;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,14 +28,14 @@ package org.hisp.dhis.dd.action.category;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.opensymphony.xwork2.Action;
-import org.hisp.dhis.concept.ConceptService;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.opensymphony.xwork2.Action;
 
 /**
  * @author Selamawit
@@ -52,13 +53,6 @@ public class AddDataElementCategoryAction
     public void setDataElementCategoryService( DataElementCategoryService dataElementCategoryService )
     {
         this.dataElementCategoryService = dataElementCategoryService;
-    }
-
-    private ConceptService conceptService;
-
-    public void setConceptService( ConceptService conceptService )
-    {
-        this.conceptService = conceptService;
     }
 
     // -------------------------------------------------------------------------
@@ -79,11 +73,11 @@ public class AddDataElementCategoryAction
         this.dataDimension = dataDimension;
     }
 
-    private Integer conceptId;
+    private String dimensionType;
 
-    public void setConceptId( Integer conceptId )
+    public void setDimensionType( String dimensionType )
     {
-        this.conceptId = conceptId;
+        this.dimensionType = dimensionType;
     }
 
     private List<String> selectedList = new ArrayList<String>();
@@ -102,7 +96,7 @@ public class AddDataElementCategoryAction
         DataElementCategory dataElementCategory = new DataElementCategory();
         dataElementCategory.setName( name );
         dataElementCategory.setDataDimension( dataDimension );
-        dataElementCategory.setConcept( conceptService.getConcept( conceptId ) );
+        dataElementCategory.setDataDimensionType( dimensionType );
 
         List<DataElementCategoryOption> options = new ArrayList<DataElementCategoryOption>();
 

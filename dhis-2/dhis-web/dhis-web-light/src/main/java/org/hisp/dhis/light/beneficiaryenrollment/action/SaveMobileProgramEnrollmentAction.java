@@ -1,19 +1,20 @@
 package org.hisp.dhis.light.beneficiaryenrollment.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -36,21 +37,9 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang.math.NumberUtils;
 import org.apache.struts2.StrutsStatics;
 import org.hisp.dhis.light.utils.FormUtils;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientAttribute;
-import org.hisp.dhis.patient.PatientAttributeOption;
-import org.hisp.dhis.patient.PatientAttributeOptionService;
-import org.hisp.dhis.patient.PatientAttributeService;
-import org.hisp.dhis.patient.PatientIdentifier;
-import org.hisp.dhis.patient.PatientIdentifierService;
-import org.hisp.dhis.patient.PatientIdentifierType;
-import org.hisp.dhis.patient.PatientIdentifierTypeService;
-import org.hisp.dhis.patient.PatientService;
-import org.hisp.dhis.patientattributevalue.PatientAttributeValue;
-import org.hisp.dhis.patientattributevalue.PatientAttributeValueService;
+import org.hisp.dhis.light.utils.ValueUtils;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramInstanceService;
@@ -59,6 +48,13 @@ import org.hisp.dhis.program.ProgramStage;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
 import org.hisp.dhis.system.util.DateUtils;
+import org.hisp.dhis.system.util.MathUtils;
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
+import org.hisp.dhis.trackedentityattributevalue.TrackedEntityAttributeValue;
+import org.hisp.dhis.trackedentityattributevalue.TrackedEntityAttributeValueService;
 import org.hisp.dhis.util.ContextUtils;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -74,9 +70,9 @@ public class SaveMobileProgramEnrollmentAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private PatientService patientService;
+    private TrackedEntityInstanceService patientService;
 
-    public void setPatientService( PatientService patientService )
+    public void setPatientService( TrackedEntityInstanceService patientService )
     {
         this.patientService = patientService;
     }
@@ -114,62 +110,26 @@ public class SaveMobileProgramEnrollmentAction
         this.formUtils = formUtils;
     }
 
-    private PatientIdentifierTypeService patientIdentifierTypeService;
+    private TrackedEntityAttributeService patientAttributeService;
 
-    public PatientIdentifierTypeService getPatientIdentifierTypeService()
-    {
-        return patientIdentifierTypeService;
-    }
-
-    public void setPatientIdentifierTypeService( PatientIdentifierTypeService patientIdentifierTypeService )
-    {
-        this.patientIdentifierTypeService = patientIdentifierTypeService;
-    }
-
-    private PatientIdentifierService patientIdentifierService;
-
-    public PatientIdentifierService getPatientIdentifierService()
-    {
-        return patientIdentifierService;
-    }
-
-    public void setPatientIdentifierService( PatientIdentifierService patientIdentifierService )
-    {
-        this.patientIdentifierService = patientIdentifierService;
-    }
-
-    private PatientAttributeService patientAttributeService;
-
-    public PatientAttributeService getPatientAttributeService()
+    public TrackedEntityAttributeService getPatientAttributeService()
     {
         return patientAttributeService;
     }
 
-    public void setPatientAttributeService( PatientAttributeService patientAttributeService )
+    public void setPatientAttributeService( TrackedEntityAttributeService patientAttributeService )
     {
         this.patientAttributeService = patientAttributeService;
     }
 
-    private PatientAttributeOptionService patientAttributeOptionService;
+    private TrackedEntityAttributeValueService patientAttributeValueService;
 
-    public PatientAttributeOptionService getPatientAttributeOptionService()
-    {
-        return patientAttributeOptionService;
-    }
-
-    public void setPatientAttributeOptionService( PatientAttributeOptionService patientAttributeOptionService )
-    {
-        this.patientAttributeOptionService = patientAttributeOptionService;
-    }
-
-    private PatientAttributeValueService patientAttributeValueService;
-
-    public PatientAttributeValueService getPatientAttributeValueService()
+    public TrackedEntityAttributeValueService getPatientAttributeValueService()
     {
         return patientAttributeValueService;
     }
 
-    public void setPatientAttributeValueService( PatientAttributeValueService patientAttributeValueService )
+    public void setPatientAttributeValueService( TrackedEntityAttributeValueService patientAttributeValueService )
     {
         this.patientAttributeValueService = patientAttributeValueService;
     }
@@ -202,9 +162,9 @@ public class SaveMobileProgramEnrollmentAction
         return programId;
     }
 
-    private Patient patient;
+    private TrackedEntityInstance patient;
 
-    public Patient getPatient()
+    public TrackedEntityInstance getPatient()
     {
         return patient;
     }
@@ -271,26 +231,14 @@ public class SaveMobileProgramEnrollmentAction
         this.validated = validated;
     }
 
-    private Collection<PatientIdentifierType> patientIdentifierTypes;
+    private Collection<TrackedEntityAttribute> patientAttributes;
 
-    public Collection<PatientIdentifierType> getPatientIdentifierTypes()
-    {
-        return patientIdentifierTypes;
-    }
-
-    public void setPatientIdentifierTypes( Collection<PatientIdentifierType> patientIdentifierTypes )
-    {
-        this.patientIdentifierTypes = patientIdentifierTypes;
-    }
-
-    private Collection<PatientAttribute> patientAttributes;
-
-    public Collection<PatientAttribute> getPatientAttributes()
+    public Collection<TrackedEntityAttribute> getPatientAttributes()
     {
         return patientAttributes;
     }
 
-    public void setPatientAttributes( Collection<PatientAttribute> patientAttributes )
+    public void setPatientAttributes( Collection<TrackedEntityAttribute> patientAttributes )
     {
         this.patientAttributes = patientAttributes;
     }
@@ -298,71 +246,27 @@ public class SaveMobileProgramEnrollmentAction
     public String execute()
         throws Exception
     {
-        patient = patientService.getPatient( patientId );
+        patient = patientService.getTrackedEntityInstance( patientId );
         program = programService.getProgram( programId );
-        patientAttributes = program.getPatientAttributes();
-        patientIdentifierTypes = program.getPatientIdentifierTypes();
+        patientAttributes = program.getTrackedEntityAttributes();
 
-        List<PatientAttributeValue> patientAttributeValues = new ArrayList<PatientAttributeValue>();
+        List<TrackedEntityAttributeValue> patientAttributeValues = new ArrayList<TrackedEntityAttributeValue>();
 
         HttpServletRequest request = (HttpServletRequest) ActionContext.getContext().get( StrutsStatics.HTTP_REQUEST );
         Map<String, String> parameterMap = ContextUtils.getParameterMap( request );
         DateTimeFormatter sdf = ISODateTimeFormat.yearMonthDay();
 
-        if ( !FormUtils.isDate( enrollmentDate ) )
+        if ( !ValueUtils.isDate( enrollmentDate ) )
         {
             validationMap.put( "enrollmentDate", "is_invalid_date" );
         }
 
-        if ( !FormUtils.isDate( incidentDate ) )
+        if ( !ValueUtils.isDate( incidentDate ) )
         {
             validationMap.put( "incidentDate", "is_invalid_date" );
         }
 
-        // Handle Attribute and Identifier
-
-        for ( PatientIdentifierType patientIdentifierType : patientIdentifierTypes )
-        {
-            {
-                String key = "IDT" + patientIdentifierType.getId();
-                String value = parameterMap.get( key );
-
-                PatientIdentifier duplicateId = null;
-
-                if ( value != null && !value.isEmpty() )
-                {
-                    duplicateId = patientIdentifierService.get( patientIdentifierType, value );
-                }
-
-                if ( value != null )
-                {
-                    if ( patientIdentifierType.isMandatory() && value.trim().equals( "" ) )
-                    {
-                        this.validationMap.put( key, "is_mandatory" );
-                    }
-                    else if ( patientIdentifierType.getType().equals( "number" ) && !FormUtils.isNumber( value ) )
-                    {
-                        this.validationMap.put( key, "is_invalid_number" );
-                    }
-                    else if ( duplicateId != null )
-                    {
-                        this.validationMap.put( key, "is_duplicate" );
-                    }
-                    else
-                    {
-                        PatientIdentifier patientIdentifier = new PatientIdentifier();
-                        patientIdentifier.setIdentifierType( patientIdentifierType );
-                        patientIdentifier.setPatient( patient );
-                        patientIdentifier.setIdentifier( value.trim() );
-                        patient.getIdentifiers().add( patientIdentifier );
-                    }
-
-                    this.previousValues.put( key, value );
-                }
-            }
-        }
-
-        for ( PatientAttribute patientAttribute : patientAttributes )
+        for ( TrackedEntityAttribute patientAttribute : patientAttributes )
         {
             {
                 String key = "AT" + patientAttribute.getId();
@@ -370,39 +274,29 @@ public class SaveMobileProgramEnrollmentAction
 
                 if ( value != null )
                 {
-                    if ( patientAttribute.isMandatory() && value.trim().equals( "" ) )
+                  /*  if ( patientAttribute.isMandatory() && value.trim().equals( "" ) )
                     {
                         this.validationMap.put( key, "is_mandatory" );
                     }
-                    else if ( value.trim().length() > 0
-                        && patientAttribute.getValueType().equals( PatientAttribute.TYPE_INT )
-                        && !FormUtils.isInteger( value ) )
+                    else */
+                    if ( value.trim().length() > 0
+                        && patientAttribute.getValueType().equals( TrackedEntityAttribute.TYPE_NUMBER )
+                        && !MathUtils.isInteger( value ) )
                     {
                         this.validationMap.put( key, "is_invalid_number" );
                     }
                     else if ( value.trim().length() > 0
-                        && patientAttribute.getValueType().equals( PatientAttribute.TYPE_DATE )
-                        && !FormUtils.isDate( value ) )
+                        && patientAttribute.getValueType().equals( TrackedEntityAttribute.TYPE_DATE )
+                        && !ValueUtils.isDate( value ) )
                     {
                         this.validationMap.put( key, "is_invalid_date" );
                     }
                     else
                     {
-                        PatientAttributeValue patientAttributeValue = new PatientAttributeValue();
+                        TrackedEntityAttributeValue patientAttributeValue = new TrackedEntityAttributeValue();
 
-                        if ( PatientAttribute.TYPE_COMBO.equalsIgnoreCase( patientAttribute.getValueType() ) )
-                        {
-                            PatientAttributeOption option = patientAttributeOptionService.get( NumberUtils.toInt(
-                                value, 0 ) );
-
-                            if ( option != null )
-                            {
-                                patientAttributeValue.setPatientAttributeOption( option );
-                            }
-                        }
-
-                        patientAttributeValue.setPatient( patient );
-                        patientAttributeValue.setPatientAttribute( patientAttribute );
+                        patientAttributeValue.setEntityInstance( patient );
+                        patientAttributeValue.setAttribute( patientAttribute );
                         patientAttributeValue.setValue( value.trim() );
                         patientAttributeValues.add( patientAttributeValue );
                     }
@@ -421,7 +315,7 @@ public class SaveMobileProgramEnrollmentAction
         }
 
         this.saveAttributeValue( patientAttributeValues );
-        patientService.updatePatient( patient );
+        patientService.updateTrackedEntityInstance( patient );
 
         Collection<ProgramInstance> programInstances = programInstanceService.getProgramInstances( patient, program,
             ProgramInstance.STATUS_ACTIVE );
@@ -439,13 +333,12 @@ public class SaveMobileProgramEnrollmentAction
             programInstance.setEnrollmentDate( sdf.parseDateTime( enrollmentDate ).toDate() );
             programInstance.setDateOfIncident( sdf.parseDateTime( incidentDate ).toDate() );
             programInstance.setProgram( program );
-            programInstance.setPatient( patient );
+            programInstance.setEntityInstance( patient );
             programInstance.setStatus( ProgramInstance.STATUS_ACTIVE );
 
             programInstanceService.addProgramInstance( programInstance );
 
-            patient.getPrograms().add( program );
-            patientService.updatePatient( patient );
+            patientService.updateTrackedEntityInstance( patient );
 
             for ( ProgramStage programStage : program.getProgramStages() )
             {
@@ -456,7 +349,7 @@ public class SaveMobileProgramEnrollmentAction
                     programStageInstance.setProgramStage( programStage );
 
                     Date dateCreatedEvent = sdf.parseDateTime( incidentDate ).toDate();
-                    if ( program.getGeneratedByEnrollmentDate() )
+                    if ( programStage.getGeneratedByEnrollmentDate() )
                     {
                         dateCreatedEvent = sdf.parseDateTime( enrollmentDate ).toDate();
                     }
@@ -501,11 +394,11 @@ public class SaveMobileProgramEnrollmentAction
         return SUCCESS;
     }
 
-    private void saveAttributeValue( List<PatientAttributeValue> patientAttributeValues )
+    private void saveAttributeValue( List<TrackedEntityAttributeValue> patientAttributeValues )
     {
-        for ( PatientAttributeValue patientAttributeValue : patientAttributeValues )
+        for ( TrackedEntityAttributeValue patientAttributeValue : patientAttributeValues )
         {
-            patientAttributeValueService.savePatientAttributeValue( patientAttributeValue );
+            patientAttributeValueService.addTrackedEntityAttributeValue( patientAttributeValue );
         }
 
     }

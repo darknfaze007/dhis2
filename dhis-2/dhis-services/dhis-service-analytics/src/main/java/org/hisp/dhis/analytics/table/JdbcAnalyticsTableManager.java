@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics.table;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -37,15 +38,19 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 
+import org.hisp.dhis.analytics.AnalyticsTable;
 import org.hisp.dhis.analytics.DataQueryParams;
+import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
+import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementGroupSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitLevel;
-import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
+import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.system.util.DateUtils;
 import org.hisp.dhis.system.util.MathUtils;
+import org.hisp.dhis.system.util.TextUtils;
 import org.springframework.scheduling.annotation.Async;
 
 /**
@@ -71,18 +76,27 @@ public class JdbcAnalyticsTableManager
     // Implementation
     // -------------------------------------------------------------------------
     
-    public boolean validState()
+    public String validState()
     {
-        return jdbcTemplate.queryForRowSet( "select dataelementid from datavalue limit 1" ).next();
+        boolean hasData = jdbcTemplate.queryForRowSet( "select dataelementid from datavalue limit 1" ).next();
+        
+        if ( !hasData )
+        {
+            return "No data values exist, not updating aggregate analytics tables";
+        }
+        
+        return null;
     }
     
     public String getTableName()
     {
-        return "analytics";
+        return ANALYTICS_TABLE_NAME;
     }
-        
-    public void createTable( String tableName )
+    
+    public void createTable( AnalyticsTable table )
     {
+        final String tableName = table.getTempTableName();
+        
         final String dbl = statementBuilder.getDoubleColumnType();
         
         final String sqlDrop = "drop table " + tableName;
@@ -91,12 +105,14 @@ public class JdbcAnalyticsTableManager
         
         String sqlCreate = "create table " + tableName + " (";
         
-        for ( String[] col : getDimensionColumns() )
+        for ( String[] col : getDimensionColumns( table ) )
         {
             sqlCreate += col[0] + " " + col[1] + ",";
         }
         
-        sqlCreate += "daysxvalue " + dbl + ", daysno integer not null, value " + dbl + ")";
+        sqlCreate += "daysxvalue " + dbl + ", daysno integer not null, value " + dbl + ") ";
+        
+        sqlCreate += statementBuilder.getTableOptions( false );
         
         log.info( "Create SQL: " + sqlCreate );
         
@@ -104,53 +120,52 @@ public class JdbcAnalyticsTableManager
     }
     
     @Async
-    public Future<?> populateTableAsync( ConcurrentLinkedQueue<String> tables )
+    public Future<?> populateTableAsync( ConcurrentLinkedQueue<AnalyticsTable> tables )
     {
         final String dbl = statementBuilder.getDoubleColumnType();
         
         taskLoop : while ( true )
         {
-            String table = tables.poll();
+            AnalyticsTable table = tables.poll();
                 
             if ( table == null )
             {
                 break taskLoop;
             }
             
-            Period period = PartitionUtils.getPeriod( table );
-            
-            Date startDate = period.getStartDate();
-            Date endDate = period.getEndDate();
-            
             String intClause = 
                 "dv.value " + statementBuilder.getRegexpMatch() + " '" + MathUtils.NUMERIC_LENIENT_REGEXP + "' " +
                 "and ( dv.value != '0' or de.aggregationtype = 'average' or de.zeroissignificant = true ) ";
             
-            populateTable( table, startDate, endDate, "cast(dv.value as " + dbl + ")", "int", intClause );
+            populateTable( table, "cast(dv.value as " + dbl + ")", "int", intClause );
             
-            populateTable( table, startDate, endDate, "1" , "bool", "dv.value = 'true'" );
+            populateTable( table, "1" , DataElement.VALUE_TYPE_BOOL, "dv.value = 'true'" );
     
-            populateTable( table, startDate, endDate, "0" , "bool", "dv.value = 'false'" );
+            populateTable( table, "0" , DataElement.VALUE_TYPE_BOOL, "dv.value = 'false'" );
+            
+            populateTable( table, "1" , DataElement.VALUE_TYPE_TRUE_ONLY, "dv.value = 'true'" );
         }
     
         return null;
     }
     
-    private void populateTable( String tableName, Date startDate, Date endDate, String valueExpression, String valueType, String clause )
+    // TODO join categoryoptiongroupsetstructure on both categoryoptioncomboid and attributeoptioncomboid
+    
+    private void populateTable( AnalyticsTable table, String valueExpression, String valueType, String clause )
     {
-        final String start = DateUtils.getMediumDateString( startDate );
-        final String end = DateUtils.getMediumDateString( endDate );
+        final String start = DateUtils.getMediumDateString( table.getPeriod().getStartDate() );
+        final String end = DateUtils.getMediumDateString( table.getPeriod().getEndDate() );
         
-        String sql = "insert into " + tableName + " (";
+        String sql = "insert into " + table.getTempTableName() + " (";
         
-        for ( String[] col : getDimensionColumns() )
+        for ( String[] col : getDimensionColumns( table ) )
         {
             sql += col[0] + ",";
         }
         
         sql += "daysxvalue, daysno, value) select ";
         
-        for ( String[] col : getDimensionColumns() )
+        for ( String[] col : getDimensionColumns( table ) )
         {
             sql += col[2] + ",";
         }
@@ -162,7 +177,9 @@ public class JdbcAnalyticsTableManager
             "from datavalue dv " +
             "left join _dataelementgroupsetstructure degs on dv.dataelementid=degs.dataelementid " +
             "left join _organisationunitgroupsetstructure ougs on dv.sourceid=ougs.organisationunitid " +
-            "left join _categorystructure cs on dv.categoryoptioncomboid=cs.categoryoptioncomboid " +
+            "left join _categoryoptiongroupsetstructure cogs on dv.attributeoptioncomboid=cogs.categoryoptioncomboid " +
+            "left join _categorystructure dcs on dv.categoryoptioncomboid=dcs.categoryoptioncomboid " +
+            "left join _categorystructure acs on dv.attributeoptioncomboid=acs.categoryoptioncomboid " +
             "left join _orgunitstructure ous on dv.sourceid=ous.organisationunitid " +
             "left join _periodstructure ps on dv.periodid=ps.periodid " +
             "left join dataelement de on dv.dataelementid=de.dataelementid " +
@@ -180,43 +197,78 @@ public class JdbcAnalyticsTableManager
         jdbcTemplate.execute( sql );
     }
 
-    public List<String[]> getDimensionColumns()
+    private String getApprovalSubquery( Collection<OrganisationUnitLevel> levels )
+    {
+        String sql = "(" +
+            "select coalesce(min(dal.level),999) " +
+            "from dataapproval da " +
+            "inner join dataapprovallevel dal on da.dataapprovallevelid = dal.dataapprovallevelid " +
+            "inner join _dataelementstructure des on da.datasetid = des.datasetid and des.dataelementid = dv.dataelementid " +
+            "where da.periodid = dv.periodid and (";
+        
+        for ( OrganisationUnitLevel level : levels )
+        {
+            sql += "ous.idlevel" + level.getLevel() + " = da.organisationunitid or ";
+        }
+        
+        return TextUtils.removeLastOr( sql ) + ") ) as approvallevel";        
+    }
+
+    public List<String[]> getDimensionColumns( AnalyticsTable table )
     {
         List<String[]> columns = new ArrayList<String[]>();
 
         Collection<DataElementGroupSet> dataElementGroupSets =
-            dataElementService.getAllDataElementGroupSets();
+            dataElementService.getDataDimensionDataElementGroupSets();
         
         Collection<OrganisationUnitGroupSet> orgUnitGroupSets = 
-            organisationUnitGroupService.getAllOrganisationUnitGroupSets();
+            organisationUnitGroupService.getDataDimensionOrganisationUnitGroupSets();
 
-        Collection<DataElementCategory> categories =
-            categoryService.getDataDimensionDataElementCategories();
+        Collection<CategoryOptionGroupSet> categoryOptionGroupSets =
+            categoryService.getDataDimensionCategoryOptionGroupSets();
+        
+        Collection<DataElementCategory> disaggregationCategories =
+            categoryService.getDisaggregationDataDimensionCategories();
+        
+        Collection<DataElementCategory> attributeCategories =
+            categoryService.getAttributeDataDimensionCategories();
 
         Collection<OrganisationUnitLevel> levels =
             organisationUnitService.getOrganisationUnitLevels();
         
         for ( DataElementGroupSet groupSet : dataElementGroupSets )
         {
-            String[] col = { groupSet.getUid(), "character(11)", "degs." + groupSet.getUid() };
+            String[] col = { quote( groupSet.getUid() ), "character(11)", "degs." + quote( groupSet.getUid() ) };
             columns.add( col );
         }
         
         for ( OrganisationUnitGroupSet groupSet : orgUnitGroupSets )
         {
-            String[] col = { groupSet.getUid(), "character(11)", "ougs." + groupSet.getUid() };
+            String[] col = { quote( groupSet.getUid() ), "character(11)", "ougs." + quote( groupSet.getUid() ) };
+            columns.add( col );
+        }
+
+        for ( CategoryOptionGroupSet groupSet : categoryOptionGroupSets )
+        {
+            String[] col = { quote( groupSet.getUid() ), "character(11)", "cogs." + quote( groupSet.getUid() ) };
             columns.add( col );
         }
         
-        for ( DataElementCategory category : categories )
+        for ( DataElementCategory category : disaggregationCategories )
         {
-            String[] col = { category.getUid(), "character(11)", "cs." + category.getUid() };
+            String[] col = { quote( category.getUid() ), "character(11)", "dcs." + quote( category.getUid() ) };
+            columns.add( col );
+        }
+        
+        for ( DataElementCategory category : attributeCategories )
+        {
+            String[] col = { quote( category.getUid() ), "character(11)", "acs." + quote( category.getUid() ) };
             columns.add( col );
         }
         
         for ( OrganisationUnitLevel level : levels )
         {
-            String column = PREFIX_ORGUNITLEVEL + level.getLevel();
+            String column = quote( PREFIX_ORGUNITLEVEL + level.getLevel() );
             String[] col = { column, "character(11)", "ous." + column };
             columns.add( col );
         }
@@ -225,16 +277,22 @@ public class JdbcAnalyticsTableManager
         
         for ( PeriodType periodType : periodTypes )
         {
-            String column = periodType.getName().toLowerCase();
-            String[] col = { column, "character varying(10)", "ps." + column };
+            String column = quote( periodType.getName().toLowerCase() );
+            String[] col = { column, "character varying(15)", "ps." + column };
             columns.add( col );
         }
         
-        String[] de = { "de", "character(11) not null", "de.uid" };
-        String[] co = { "co", "character(11) not null", "co.uid" };
-        String[] level = { "level", "integer", "ous.level" };
+        String[] de = { quote( "de" ), "character(11) not null", "de.uid" };
+        String[] co = { quote( "co" ), "character(11) not null", "co.uid" };
+        String[] level = { quote( "level" ), "integer", "ous.level" };
         
         columns.addAll( Arrays.asList( de, co, level ) );
+
+        if ( isApprovalEnabled() )
+        {            
+            String[] al = { quote( "approvallevel" ), "integer", getApprovalSubquery( levels ) };
+            columns.add( al );
+        }
         
         return columns;
     }
@@ -242,7 +300,8 @@ public class JdbcAnalyticsTableManager
     public Date getEarliestData()
     {
         final String sql = "select min(pe.startdate) from datavalue dv " +
-            "join period pe on dv.periodid=pe.periodid";
+            "join period pe on dv.periodid=pe.periodid " +
+            "where pe.startdate is not null";
         
         return jdbcTemplate.queryForObject( sql, Date.class );
     }
@@ -250,30 +309,31 @@ public class JdbcAnalyticsTableManager
     public Date getLatestData()
     {
         final String sql = "select max(pe.enddate) from datavalue dv " +
-            "join period pe on dv.periodid=pe.periodid";
+            "join period pe on dv.periodid=pe.periodid " + 
+            "where pe.enddate is not null ";
         
         return jdbcTemplate.queryForObject( sql, Date.class );
     }
     
     @Async
-    public Future<?> applyAggregationLevels( ConcurrentLinkedQueue<String> tables, Collection<String> dataElements, int aggregationLevel )
+    public Future<?> applyAggregationLevels( ConcurrentLinkedQueue<AnalyticsTable> tables, Collection<String> dataElements, int aggregationLevel )
     {
         taskLoop : while ( true )
         {
-            String table = tables.poll();
+            AnalyticsTable table = tables.poll();
                 
             if ( table == null )
             {
                 break taskLoop;
             }
             
-            StringBuilder sql = new StringBuilder( "update " + table + " set " );
+            StringBuilder sql = new StringBuilder( "update " + table.getTempTableName() + " set " );
             
             for ( int i = 0; i < aggregationLevel; i++ )
             {
                 int level = i + 1;
                 
-                String column = DataQueryParams.LEVEL_PREFIX + level;
+                String column = quote( DataQueryParams.LEVEL_PREFIX + level );
                 
                 sql.append( column + " = null," );
             }
@@ -289,5 +349,14 @@ public class JdbcAnalyticsTableManager
         }
 
         return null;
+    }
+
+    /**
+     * Indicates whether the system should ignore data which has not been approved
+     * in analytics tables.
+     */
+    private boolean isApprovalEnabled()
+    {
+        return (Boolean) systemSettingManager.getSystemSetting( SystemSettingManager.KEY_HIDE_UNAPPROVED_DATA_IN_ANALYTICS, false );
     }
 }

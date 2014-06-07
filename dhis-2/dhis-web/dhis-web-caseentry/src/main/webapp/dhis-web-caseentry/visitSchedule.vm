@@ -1,6 +1,6 @@
 #set($programStageInstances = $programInstance.programStageInstances)
 #set($hasUsers = false)
-#foreach($user in $!programInstance.patient.healthWorker.organisationUnit.users)
+#foreach($user in $!programInstance.entityInstance.associate.organisationUnit.users)
 	#if($!user.phoneNumber!='') 
 		#set($hasUsers = true)
 	#end
@@ -13,7 +13,6 @@
 	   <col style="width: 10%;">
        <col style="width: 10%;">
        <col style="width: 10%;">
-	   <col style="width: 10%;">
        <col style="width: 10%;">
    </colgroup>
    
@@ -23,9 +22,11 @@
             <div class="commentHeader">$encoder.htmlEncode( $i18n.getString( "program_enrollment" ) )</div>
         </td>
 		<!-- Comment -->
-		<td style="height:24px" valign="bottom" colspan='3'>
+		<td style="height:24px" valign="bottom" >
             <div class="commentHeader">$i18n.getString( "comment" )</div>
 		</td>
+		<td colspan='2' style="background-color: #e0e0e0; height:26px;">$i18n.getString( "updated_by" ): $!encoder.htmlEncode( $programInstance.comment.creator )</td>
+		<td colspan='2' style="background-color: #e0e0e0; height:26px;">$i18n.getString( "updated_date" ): $!format.formatDate( $programInstance.comment.createdDate )</td>
     </tr>
    
    <tr>
@@ -41,7 +42,7 @@
 			<a href='javascript:markForFollowup($programInstance.id, true)' #if( $followup == 'true') class='hidden' #end name='imgUnmarkFollowup' title='$i18n.getString("toggle_risk_status")' ><img src='images/unrisk_large.png'></a>			
 		</td>
 		<td rowspan='3' colspan='8'>
-			<textarea id="comment" name='comment' maxlength="360" style="height:100px;width:100%">$!encoder.htmlEncode( $programInstance.patientComment.commentText )</textarea>
+			<textarea id="comment" name='comment' maxlength="360" style="height:100px;width:100%">$!encoder.htmlEncode( $programInstance.comment.commentText )</textarea>
 		</td>
    </tr>
    
@@ -62,7 +63,7 @@
 		<td></td>
 		<td>
 			#if( $auth.hasAccess( "dhis-web-caseentry", "saveProgramEnrollment" ) )
-				<input type="button" style='width:80px' value="$i18n.getString( 'update' )" onclick='updateEnrollment($programInstance.patient.id, $programInstance.program.id, $programInstance.id, "$programInstance.program.displayName")'/>
+				<input type="button" style='width:80px' value="$i18n.getString( 'update' )" onclick='updateEnrollment($programInstance.entityInstance.id, $programInstance.program.id, $programInstance.id, "$programInstance.program.displayName")'/>
 			#end
 			<input type="button" style='width:80px' id='completeProgram' value="$i18n.getString( 'complete' )" onclick='unenrollmentForm($programInstance.id, 1)' />
 			<input type="button" style='width:80px' id='cancelProgram' value="$i18n.getString( 'quit' )" onclick='unenrollmentForm($programInstance.id, 2)' />
@@ -71,12 +72,12 @@
 			#foreach( $programStageInstance in $programStageInstances )
 				#if( $!programStageInstance.executionDate 
 					|| $!programStageInstance.outboundSms.size() > 0 
-					|| $!programStageInstance.patientComments.size() > 0 )
+					|| $!programStageInstance.comment )
 					
 					#set($allowRemove = 'false')
 				#end
-			#end
-	
+			#end 
+			
 		#if($allowRemove == 'true')
 			<input type="button" style='width:80px' id='removeProgram' value="$i18n.getString( 'remove' )" onclick='removeProgramInstance($programInstance.id)' />
 			<script>
@@ -86,13 +87,10 @@
 		#end
 		</td>
 		
-		<td valign="top">
-			<input type="button" value="$i18n.getString( 'save_comment' )" style="width:130px" onclick="saveComment($programInstance.id);">
+		<td valign="top" colspan='4'>
+			<input type="button" id='updateCommentBtn' name='updateCommentBtn' #if($!programStageInstance.comment) value="$i18n.getString( 'update_comment' )" #else value="$i18n.getString( 'save_comment' )" #end style="width:130px" onclick="saveComment($programInstance.id);">
+			<input type="button" id='sendProgramSMSBtn' name='sendProgramSMSBtn' value="$i18n.getString( 'send_message' )" style="width:130px" onclick="setFieldValue('sendFromEvent','false');sendSmsOneTrackedEntityInstanceForm();">
 		</td>
-		<td style="background-color: #e0e0e0; height:26px;">$i18n.getString( "stored_by" ):</td>
-		<td>$!encoder.htmlEncode( $programInstance.patientComment.creator )</td>
-		<td style="background-color: #e0e0e0; height:26px;">$i18n.getString( "stored_date" ):</td>
-		<td>$!format.formatDate( $programInstance.patientComment.createdDate )</td>
 	</tr>
 
 </table>
@@ -131,9 +129,9 @@
 			<th>$i18n.getString( "events" )</th>                   
 			<th>$i18n.getString( "due_date" )</th>       
 			<th>$i18n.getString( "status" )</th>
-			<th colspan='2'>$i18n.getString( "message" )</th>
+			<th colspan='2'>$i18n.getString( "comment" )</th>
 			#if( $auth.hasAccess( "dhis-web-caseentry", "removeCurrentEncounter" ) )
-			<th>$i18n.getString( "remove" )</th>
+			<th>$i18n.getString( "operation" )</th>
 			#end
 		</tr>
 		<tbody>
@@ -178,23 +176,48 @@
 				</script>
 			</td>
 			<td>
-				<input type='text' id='message_$programStageInstance.id' name='message_$programStageInstance.id' class="{validate:{required:true,maxlength:160}}" style="width:100%">
+				<input type='text' value='$!programStageInstance.comment.commentText' id='message_$programStageInstance.id' name='message_$programStageInstance.id' class="{validate:{required:true,maxlength:160}}" style="width:100%" onchange="addComment(byId('message_$programStageInstance.id'),'$programStageInstance.id')" >
 			</td>
 			<td>
-				<img src='images/post_comment.png' class='img-button' title='$i18n.getString("post_comment")' onclick="addComment(byId('message_$programStageInstance.id'),'$programStageInstance.id')">
+				<input type='button' class='normal-button' onclick="addComment(byId('message_$programStageInstance.id'),'$programStageInstance.id')" value="$i18n.getString('save')" >
 			</td>
 			<td>
-				#if(($auth.hasAccess( "dhis-web-caseentry", "sendSMS" ) ) 
-					&& ($!programInstance.patient.phoneNumber 
-					|| $!programInstance.patient.healthWorker.phoneNumber 
-					|| $!programInstance.patient.healthWorker.organisationUnit.phoneNumber 
-					|| $hasUsers ))
-				<img src="images/send_sms.png" class='img-button' title="$i18n.getString( 'send_message' )" onclick="setFieldValue( 'programStageInstanceId',$programStageInstance.id);sendSmsOnePatientForm();"/>
+			#set($hasPhoneNumber=false)
+			#foreach($attrValue in $!programInstance.entityInstance.attributeValues)
+				#if($attrValue.attribute.valueType=='phoneNumber')
+					#set($hasPhoneNumber = true )
 				#end
-				#if( $auth.hasAccess( "dhis-web-caseentry", "removeCurrentEncounter" ) )
-					<a href="javascript:removeEvent($programStageInstance.id, false)" link="javascript:removeEvent($programStageInstance.id, false)" title='$i18n.getString( "remove" )'><img src="../images/delete.png" id='del_$programStageInstance.id' name='del_$programStageInstance.id' alt='$i18n.getString( "remove" )' #if( $status==1 ) class='hidden' #end></a>
+			#end
+
+			#if(!$hasPhoneNumber)
+				#foreach($attrValue in $!programInstance.entityInstance.attributeValues)
+					#if($attrValue.attribute.valueType=='users')
+						#set($hasPhoneNumber = true )
+					#end
 				#end
+			#end
+
+			#if($!programInstance.entityInstance.organisationUnit.phoneNumber)
+				#set($hasPhoneNumber = true )
+			#end
+
+			#if(!$hasPhoneNumber)
+				#foreach($user in $!programInstance.entityInstance.organisationUnit.users)
+					#if($user.phoneNumber)
+						#set($hasPhoneNumber = true )
+					#end
+				#end
+			#end
+
+			#if($hasPhoneNumber)
+			<img src="images/send_sms.png" class='img-button' title="$i18n.getString( 'send_message' )" onclick="setFieldValue('sendFromEvent','true');setFieldValue( 'programStageInstanceId',$programStageInstance.id);sendSmsOneTrackedEntityInstanceForm();"/>
+			#end
+			
+			#if( $auth.hasAccess( "dhis-web-caseentry", "removeCurrentEncounter" ) )
+				<a href="javascript:removeEvent($programStageInstance.id, false)" link="javascript:removeEvent($programStageInstance.id, false)" title='$i18n.getString( "remove" )'><img src="../images/delete.png" id='del_$programStageInstance.id' name='del_$programStageInstance.id' alt='$i18n.getString( "remove" )' #if( $status==1 ) class='hidden' #end></a>
+			#end
 			</td>
+		</tr>
 		</tr>
 		#set( $mark = !$mark  )
 	#end
@@ -202,23 +225,41 @@
 	</table>
 	
 	<div id='smsDiv' name="smsDiv" class='hidden'>
+		<input type='hidden' id='sendFromEvent' name='sendFromEvent' value='true'>
 		<table>
 			<tr>
 				<td>$i18n.getString("send_to")</td>
 				<td>
 					<select id='sendTo' name='sendTo' style='width:260px;'>
-						#if($!programInstance.patient.phoneNumber)
-						<option value='1'>$i18n.getString('patient')</option>
+						#set($valueType='')
+						#foreach($attrValue in $!programInstance.entityInstance.attributeValues)
+							#if($attrValue.attribute.valueType=='phoneNumber')
+								#set($valueType = $attrValue.attribute.valueType )
+							#end
+						#end
+						#if($valueType!='')
+							<option value='1'>$i18n.getString('tracked_entity_instance')</option>
 						#end
 						
-						#if($!programInstance.patient.healthWorker.phoneNumber)
-						<option value='2'>$i18n.getString('health_worker')</option>
+						#foreach($attrValue in $!programInstance.entityInstance.attributeValues)
+							#if($attrValue.attribute.valueType=='users')
+								#set($valueType = $attrValue.attribute.valueType )
+							#end
+						#end
+						#if($valueType!='')
+						<option value='2'>$i18n.getString('health_staff')</option>
 						#end
 						
-						#if($!programInstance.patient.healthWorker.organisationUnit.phoneNumber)
+						#if($!programInstance.entityInstance.organisationUnit.phoneNumber)
 						<option value='3'>$i18n.getString('orgunit_registered')</option>
 						#end
 						
+						#set($hasUsers = false )
+						#foreach($user in $!programInstance.entityInstance.organisationUnit.users)
+							#if($user.phoneNumber)
+								#set($hasUsers = true )
+							#end
+						#end
 						#if($hasUsers)
 						<option value='4'>$i18n.getString('users_in_orgunit_registered')</option>
 						#end
@@ -232,7 +273,7 @@
 			<tr>
 				<td></td>
 				<td>
-					<input type='button' value="$i18n.getString('send')" onclick="sendSmsOnePatient(byId('smsField'),getFieldValue('programStageInstanceId') );">
+					<input type='button' value="$i18n.getString('send')" onclick="var id=getFieldValue('programStageInstanceId');if(getFieldValue('sendFromEvent')=='false'){id=$programInstance.id};sendSmsOneEntityInstance(byId('smsField'),id );">
 					<input type='button' value="$i18n.getString('cancel')" onclick="jQuery('#smsDiv').dialog('close');">
 				</td>
 			</tr>
@@ -242,7 +283,12 @@
 
 <script>
 	#if( $programInstance.status==0)
-		datePickerInRangeValid( 'dateOfIncident' , 'enrollmentDate' );
+		#if($program.attr("selectEnrollmentDatesInFuture")=='true')
+			datePickerInRange( 'dateOfIncident' , 'enrollmentDate', false, true );
+		#else
+			datePickerInRangeValid( 'dateOfIncident' , 'enrollmentDate', false, true );
+		#end
+		
 		jQuery("#incompleteProgram").attr('disabled', true);
 	#else
 		jQuery(":input").attr('disabled', true);

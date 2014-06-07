@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -76,21 +77,11 @@ public class DataElementCategoryOptionComboDeletionHandler
             "select count(*) from datavalue dv " +
             "where dv.categoryoptioncomboid in ( " +
                 "select cc.categoryoptioncomboid from categoryoptioncombos_categoryoptions cc " +
+                "where cc.categoryoptionid = " + categoryOption.getId() + " ) " +
+            "or dv.attributeoptioncomboid in ( " +
+                "select cc.categoryoptioncomboid from categoryoptioncombos_categoryoptions cc " +
                 "where cc.categoryoptionid = " + categoryOption.getId() + " );";
         
-        return jdbcTemplate.queryForObject( sql, Integer.class ) == 0 ? null : ERROR;
-    }
-    
-    @Override
-    public String allowDeleteDataElementCategory( DataElementCategory category )
-    {
-        final String sql =
-            "select count(*) from datavalue dv " +
-            "where dv.categoryoptioncomboid in ( " +
-              "select cc.categoryoptioncomboid from categoryoptioncombos_categoryoptions cc " +
-              "join categories_categoryoptions co on cc.categoryoptionid=co.categoryoptionid " +
-              "where co.categoryid=" + category.getId() + " );";        
-
         return jdbcTemplate.queryForObject( sql, Integer.class ) == 0 ? null : ERROR;
     }
     
@@ -100,8 +91,11 @@ public class DataElementCategoryOptionComboDeletionHandler
         final String sql =
             "select count(*) from datavalue dv " +
             "where dv.categoryoptioncomboid in ( " +
-              "select co.categoryoptioncomboid from categorycombos_optioncombos co " +
-              "where co.categorycomboid=" + categoryCombo.getId() + " );";
+                "select co.categoryoptioncomboid from categorycombos_optioncombos co " +
+                "where co.categorycomboid=" + categoryCombo.getId() + " ) " +
+            "or dv.attributeoptioncomboid in ( " +
+                "select co.categoryoptioncomboid from categorycombos_optioncombos co " +
+                "where co.categorycomboid=" + categoryCombo.getId() + " );";
         
         return jdbcTemplate.queryForObject( sql, Integer.class ) == 0 ? null : ERROR;
     }

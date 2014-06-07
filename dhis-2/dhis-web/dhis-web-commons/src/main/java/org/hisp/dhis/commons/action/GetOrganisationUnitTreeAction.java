@@ -1,19 +1,20 @@
 package org.hisp.dhis.commons.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -109,6 +110,13 @@ public class GetOrganisationUnitTreeAction
         return version;
     }
 
+    private String username;
+
+    public String getUsername()
+    {
+        return username;
+    }
+
     private boolean versionOnly;
 
     public void setVersionOnly( Boolean versionOnly )
@@ -121,9 +129,9 @@ public class GetOrganisationUnitTreeAction
         return versionOnly;
     }
 
-    private Integer parentId;
+    private String parentId;
 
-    public void setParentId( Integer parentId )
+    public void setParentId( String parentId )
     {
         this.parentId = parentId;
     }
@@ -159,12 +167,15 @@ public class GetOrganisationUnitTreeAction
                 organisationUnits.add( child );
                 OrganisationUnit parent = child.getParent();
 
-                do
+                if ( parent != null )
                 {
-                    organisationUnits.add( parent );
-                    organisationUnits.addAll( parent.getChildren() );
+                    do
+                    {
+                        organisationUnits.add( parent );
+                        organisationUnits.addAll( parent.getChildren() );
+                    }
+                    while ( (parent = parent.getParent()) != null );
                 }
-                while ( (parent = parent.getParent()) != null );
 
                 return "partial";
             }
@@ -225,7 +236,13 @@ public class GetOrganisationUnitTreeAction
                 }
 
                 int minLevel = rootOrganisationUnits.get( 0 ).getLevel();
-                int maxLevel = organisationUnitService.getOrganisationUnitLevelByLevel( size ).getLevel();
+                int maxLevel = Integer.MAX_VALUE;
+
+                if ( organisationUnitService.getOrganisationUnitLevelByLevel( size ) != null )
+                {
+                    maxLevel = organisationUnitService.getOrganisationUnitLevelByLevel( size ).getLevel();
+                }
+
                 int total = minLevel + offlineOrganisationUnitLevel.getLevel() - 1;
 
                 if ( total > offlineOrganisationUnitLevel.getLevel() )
@@ -257,6 +274,8 @@ public class GetOrganisationUnitTreeAction
         Collections.sort( rootOrganisationUnits, IdentifiableObjectNameComparator.INSTANCE );
 
         version = getVersionString();
+
+        username = currentUserService.getCurrentUsername();
 
         return SUCCESS;
     }

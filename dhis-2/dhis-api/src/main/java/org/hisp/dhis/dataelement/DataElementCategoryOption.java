@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,6 +28,16 @@ package org.hisp.dhis.dataelement;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.hisp.dhis.common.BaseIdentifiableObject;
+import org.hisp.dhis.common.BaseNameableObject;
+import org.hisp.dhis.common.DxfNamespaces;
+import org.hisp.dhis.common.annotation.Scanned;
+import org.hisp.dhis.common.view.DetailedView;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -34,17 +45,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import org.hisp.dhis.common.BaseIdentifiableObject;
-import org.hisp.dhis.common.BaseNameableObject;
-import org.hisp.dhis.common.DxfNamespaces;
-import org.hisp.dhis.common.IdentifiableObject;
-import org.hisp.dhis.common.annotation.Scanned;
-import org.hisp.dhis.common.view.DetailedView;
-import org.hisp.dhis.common.view.ExportView;
-import org.hisp.dhis.concept.Concept;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Abyot Asalefew
@@ -60,23 +60,29 @@ public class DataElementCategoryOption
 
     public static final String DEFAULT_NAME = "default";
 
-    private Set<DataElementCategory> categories = new HashSet<DataElementCategory>();
+    private Date startDate;
 
-    private Concept concept;
+    private Date endDate;
+
+    private Set<DataElementCategory> categories = new HashSet<DataElementCategory>();
 
     @Scanned
     private Set<DataElementCategoryOptionCombo> categoryOptionCombos = new HashSet<DataElementCategoryOptionCombo>();
 
+    private Set<CategoryOptionGroup> groups = new HashSet<CategoryOptionGroup>();
+    
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
 
     public DataElementCategoryOption()
     {
+        setAutoFields();
     }
 
     public DataElementCategoryOption( String name )
     {
+        this();
         this.name = name;
     }
 
@@ -89,45 +95,28 @@ public class DataElementCategoryOption
         return name.equals( DEFAULT_NAME );
     }
 
-    // -------------------------------------------------------------------------
-    // hashCode, equals and toString
-    // -------------------------------------------------------------------------
-
-    @Override
-    public int hashCode()
+    /**
+     * Returns a set of category option group sets which are associated with the
+     * category option groups of this category option.
+     */
+    public Set<CategoryOptionGroupSet> getGroupSets()
     {
-        return name.hashCode();
-    }
-
-    @Override
-    public boolean equals( Object object )
-    {
-        if ( this == object )
+        Set<CategoryOptionGroupSet> groupSets = new HashSet<CategoryOptionGroupSet>();
+        
+        if ( groups != null )
         {
-            return true;
+            for ( CategoryOptionGroup group : groups )
+            {
+                if ( group.getGroupSet() != null )
+                {
+                    groupSets.add( group.getGroupSet() );
+                }
+            }
         }
-
-        if ( object == null )
-        {
-            return false;
-        }
-
-        if ( !(object instanceof DataElementCategoryOption) )
-        {
-            return false;
-        }
-
-        final DataElementCategoryOption other = (DataElementCategoryOption) object;
-
-        return name.equals( other.getName() );
+        
+        return groupSets;
     }
-
-    @Override
-    public String toString()
-    {
-        return "[" + name + "]";
-    }
-
+    
     // -------------------------------------------------------------------------
     // Logic
     // -------------------------------------------------------------------------
@@ -168,6 +157,30 @@ public class DataElementCategoryOption
     }
 
     @JsonProperty
+    @JsonView( {DetailedView.class } )
+    public Date getStartDate()
+    {
+        return startDate;
+    }
+
+    public void setStartDate( Date startDate )
+    {
+        this.startDate = startDate;
+    }
+
+    @JsonProperty
+    @JsonView( {DetailedView.class } )
+    public Date getEndDate()
+    {
+        return endDate;
+    }
+
+    public void setEndDate( Date endDate )
+    {
+        this.endDate = endDate;
+    }
+
+    @JsonProperty
     @JsonSerialize(contentAs = BaseIdentifiableObject.class)
     @JsonView({ DetailedView.class })
     @JacksonXmlElementWrapper(localName = "categories", namespace = DxfNamespaces.DXF_2_0)
@@ -180,20 +193,6 @@ public class DataElementCategoryOption
     public void setCategories( Set<DataElementCategory> categories )
     {
         this.categories = categories;
-    }
-
-    @JsonProperty
-    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
-    public Concept getConcept()
-    {
-        return concept;
-    }
-
-    public void setConcept( Concept concept )
-    {
-        this.concept = concept;
     }
 
     @JsonProperty
@@ -211,16 +210,13 @@ public class DataElementCategoryOption
         this.categoryOptionCombos = categoryOptionCombos;
     }
 
-    @Override
-    public void mergeWith( IdentifiableObject other )
+    public Set<CategoryOptionGroup> getGroups()
     {
-        super.mergeWith( other );
+        return groups;
+    }
 
-        if ( other.getClass().isInstance( this ) )
-        {
-            DataElementCategoryOption dataElementCategoryOption = (DataElementCategoryOption) other;
-
-            concept = dataElementCategoryOption.getConcept() == null ? concept : dataElementCategoryOption.getConcept();
-        }
+    public void setGroups( Set<CategoryOptionGroup> groups )
+    {
+        this.groups = groups;
     }
 }

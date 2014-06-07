@@ -1,19 +1,20 @@
 package org.hisp.dhis.api.mobile;
 
 /*
- * Copyright (c) 2010, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,6 +35,7 @@ import org.hisp.dhis.api.mobile.model.Contact;
 import org.hisp.dhis.api.mobile.model.DataSet;
 import org.hisp.dhis.api.mobile.model.DataSetList;
 import org.hisp.dhis.api.mobile.model.DataSetValue;
+import org.hisp.dhis.api.mobile.model.DataSetValueList;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 
 /**
@@ -42,26 +44,22 @@ import org.hisp.dhis.organisationunit.OrganisationUnit;
 public interface FacilityReportingService
 {
 
-    public List<DataSet> getMobileDataSetsForUnit( OrganisationUnit unit, String localeString );
+    List<DataSet> getMobileDataSetsForUnit( OrganisationUnit unit, String localeString );
 
-    public DataSet getDataSet( int id );
+    DataSet getDataSet( int id );
 
-    public DataSet getDataSetForLocale( int dataSetId, Locale locale );
+    DataSet getDataSetForLocale( int dataSetId, Locale locale );
 
-    /**
-     * Save {@link DataSetValue} to given {@link OrganisationUnit}
-     * 
-     * @param unit - the Organisation unit to save to
-     * @param dataSetValue - the data set value to save
-     * @throws NotAllowedException if saving is not allowed
-     */
-    public void saveDataSetValues( OrganisationUnit unit, DataSetValue dataSetValue )
+    void saveDataSetValues( OrganisationUnit unit, DataSetValue dataSetValue )
         throws NotAllowedException;
 
-    public DataSetList getUpdatedDataSet( DataSetList dataSetList, OrganisationUnit unit, String locale );
+    DataSetValueList getDataSetValues( OrganisationUnit unit, DataSetList dataSetList )
+        throws NotAllowedException;
 
-    public DataSetList getDataSetsForLocale( OrganisationUnit unit, String locale );
+    DataSetList getUpdatedDataSet( DataSetList dataSetList, OrganisationUnit unit, String locale );
 
-    public Contact updateContactForMobile();
+    DataSetList getDataSetsForLocale( OrganisationUnit unit, String locale );
+
+    Contact updateContactForMobile();
 
 }

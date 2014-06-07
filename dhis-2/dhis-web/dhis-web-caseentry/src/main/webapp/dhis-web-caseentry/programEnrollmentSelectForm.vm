@@ -10,29 +10,30 @@
 		validation( 'programEnrollmentSelectDiv', function(form){
 			validateProgramEnrollment();
 		});
-		datePickerInRangeValid( 'dateOfIncidentField' , 'enrollmentDateField' );
-		setFieldValue("dateOfIncidentField", "");
 		var unSave = false;
 	});	
 </script>
 
-<form id='programEnrollmentSelectDiv' name='programEnrollmentSelectDiv' method='POST' action='saveProgramEnrollment.action'>
-	<input type="hidden" id="patientId" name="patientId" value="$patient.id">
+<form id='programEnrollmentSelectDiv' name='programEnrollmentSelectDiv' method='POST' >
+	<input type="hidden" id="entityInstanceId" name="entityInstanceId" value="$entityInstance.id">
+	<input type="hidden" id="entityInstanceUid" name="entityInstanceUid" value="$entityInstance.uid">
 	<table>
 		<tr>
 			<td class='text-column'><label for="programId">$i18n.getString( "program" )</label></td>
-			<td class='input-column'>
+			<td class='input-column' align='right'>
 				<select id="programId" name="programId" onchange='programOnchange(this.value);'>
 					#if($programs.size()==0)
 					<option value="">[$i18n.getString( "none_program" )]</option>
-					#elseif($programs.size()>1)
+					#else
 					<option value="">[$i18n.getString( "please_select" )]</option>
 					#end
 					#foreach( $program in $programs )
-					<option value="$program.id" programType='$program.type' 
+					<option value="$program.uid" programType='$program.type' 
 						displayIncidentDate='$!program.displayIncidentDate'
 						dateOfEnrollmentDescription='$!program.dateOfEnrollmentDescription'
-						dateOfIncidentDescription='$!program.dateOfIncidentDescription'>$encoder.htmlEncode( $program.displayName )</option>
+						dateOfIncidentDescription='$!program.dateOfIncidentDescription'
+						selectEnrollmentDatesInFuture='$!program.selectEnrollmentDatesInFuture'
+						selectIncidentDatesInFuture='$program.selectIncidentDatesInFuture'>$encoder.htmlEncode( $program.displayName )</option>
 					#end
 				</select>
 			</td>
@@ -42,12 +43,14 @@
 		
 		<tr id='enrollmentDateTR' class='hidden'>
 			<td class='text-column'><label for="enrollmentDate"><span id='enrollmentDateDescription'></span><em title="$i18n.getString( "required" )" class="required"> * </em></label></td>
-			<td colspan='2' class='input-column'><input type="text" id="enrollmentDateField" name="enrollmentDateField" class="{validate:{required:true}}"></td>
+			<td colspan='2' class='input-column'  align='right'>
+				<input type="text" id="enrollmentDateField" name="enrollmentDateField" style='width:265px' class="{validate:{required:true}}" >
+			</td>
 		</tr>
 		
-		<tr id='dateOfIncidentTR' class='hidden'>
+		<tr id='dateOfIncidentTR' class='hidden' align='right'>
 			<td class='text-column'><label for="dateOfIncident"><span id='dateOfIncidentDescription'></span><em title="$i18n.getString( "required" )" class="required"> * </em></label></td>
-			<td colspan='2' class='input-column'><input type="text" id="dateOfIncidentField" name="dateOfIncidentField"  class="{validate:{required:true}}"></td>
+			<td colspan='2' class='input-column'><input type="text" id="dateOfIncidentField" name="dateOfIncidentField" style='width:265px' class="{validate:{required:true}}" ></td>
 		</tr>
 	
 		<tr>
@@ -56,7 +59,7 @@
 			<td></td>                             
 		</tr>
 		
-		<tbody id='identifierAndAttributeDiv' name='identifierAndAttributeDiv'></tbody>
+		<tbody><tr><td id='identifierAndAttributeDiv' name='identifierAndAttributeDiv' colspan='2'></td></tr></tbody>
 		
 		<tr>
 			<td></td>
@@ -69,6 +72,7 @@
 			<td colspan='3'><span id='message'></span></td>
 		</tr>
 	</table>
+	<span id='message'></span>
 </form>
 
 #end

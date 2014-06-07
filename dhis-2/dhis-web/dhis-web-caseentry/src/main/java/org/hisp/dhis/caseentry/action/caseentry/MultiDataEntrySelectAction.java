@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.caseentry;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,17 +28,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.caseentry;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-import org.hisp.dhis.caseentry.state.SelectedStateManager;
+import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.patient.PatientAttribute;
-import org.hisp.dhis.patient.PatientAttributeService;
+import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramService;
+import org.hisp.dhis.trackedentity.TrackedEntity;
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeService;
+import org.hisp.dhis.trackedentity.TrackedEntityService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.opensymphony.xwork2.Action;
 
@@ -46,11 +53,11 @@ public class MultiDataEntrySelectAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private SelectedStateManager selectedStateManager;
+    private OrganisationUnitSelectionManager selectionManager;
 
-    public void setSelectedStateManager( SelectedStateManager selectedStateManager )
+    public void setSelectionManager( OrganisationUnitSelectionManager selectionManager )
     {
-        this.selectedStateManager = selectedStateManager;
+        this.selectionManager = selectionManager;
     }
 
     private ProgramService programService;
@@ -60,12 +67,15 @@ public class MultiDataEntrySelectAction
         this.programService = programService;
     }
 
-    private PatientAttributeService patientAttributeService;
+    private TrackedEntityAttributeService attributeService;
 
-    public void setPatientAttributeService( PatientAttributeService patientAttributeService )
+    public void setAttributeService( TrackedEntityAttributeService attributeService )
     {
-        this.patientAttributeService = patientAttributeService;
+        this.attributeService = attributeService;
     }
+
+    @Autowired
+    private TrackedEntityService trackedEntityService;
 
     // -------------------------------------------------------------------------
     // Input/Output
@@ -78,14 +88,14 @@ public class MultiDataEntrySelectAction
         return organisationUnit;
     }
 
-    private Integer programId;
+    private String programId;
 
-    public void setProgramId( Integer programId )
+    public void setProgramId( String programId )
     {
         this.programId = programId;
     }
 
-    public Integer getProgramId()
+    public String getProgramId()
     {
         return programId;
     }
@@ -97,11 +107,18 @@ public class MultiDataEntrySelectAction
         return programs;
     }
 
-    private Collection<PatientAttribute> patientAttributes = new ArrayList<PatientAttribute>();
+    private List<TrackedEntityAttribute> attributes = new ArrayList<TrackedEntityAttribute>();
 
-    public Collection<PatientAttribute> getPatientAttributes()
+    public List<TrackedEntityAttribute> getAttributes()
     {
-        return patientAttributes;
+        return attributes;
+    }
+
+    private List<TrackedEntity> trackedEntities = new ArrayList<TrackedEntity>();
+
+    public List<TrackedEntity> getTrackedEntities()
+    {
+        return trackedEntities;
     }
 
     // -------------------------------------------------------------------------
@@ -111,17 +128,21 @@ public class MultiDataEntrySelectAction
     public String execute()
         throws Exception
     {
-        patientAttributes = patientAttributeService.getAllPatientAttributes();
+        attributes = new ArrayList<TrackedEntityAttribute>( attributeService.getAllTrackedEntityAttributes() );
+        Collections.sort( attributes, IdentifiableObjectNameComparator.INSTANCE );
+        
+        trackedEntities = new ArrayList<TrackedEntity>( trackedEntityService.getAllTrackedEntity() );
+        Collections.sort( trackedEntities, IdentifiableObjectNameComparator.INSTANCE );
 
-        organisationUnit = selectedStateManager.getSelectedOrganisationUnit();
+        organisationUnit = selectionManager.getSelectedOrganisationUnit();
 
         if ( organisationUnit != null )
         {
-            programs = programService.getPrograms( organisationUnit );
-            programs.retainAll( programService.getProgramsByCurrentUser());
-            programs.removeAll( programService.getPrograms( Program.SINGLE_EVENT_WITHOUT_REGISTRATION, organisationUnit ) );
+            programs = programService.getProgramsByCurrentUser( organisationUnit );
+            programs.removeAll( programService
+                .getPrograms( Program.SINGLE_EVENT_WITHOUT_REGISTRATION, organisationUnit ) );
         }
-        
+
         return SUCCESS;
     }
 }

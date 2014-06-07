@@ -1,19 +1,20 @@
 package org.hisp.dhis.settings.user.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,12 +32,10 @@ import static org.hisp.dhis.user.UserSettingService.KEY_DB_LOCALE;
 import static org.hisp.dhis.user.UserSettingService.KEY_MESSAGE_EMAIL_NOTIFICATION;
 import static org.hisp.dhis.user.UserSettingService.KEY_MESSAGE_SMS_NOTIFICATION;
 
-import java.util.Locale;
-
-import org.apache.commons.lang.StringUtils;
 import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.i18n.locale.LocaleManager;
 import org.hisp.dhis.setting.StyleManager;
+import org.hisp.dhis.system.util.LocaleUtils;
 import org.hisp.dhis.user.UserSettingService;
 
 import com.opensymphony.xwork2.Action;
@@ -133,13 +132,12 @@ public class SetGeneralSettingsAction
     public String execute()
         throws Exception
     {
-        localeManager.setCurrentLocale( getRespectiveLocale( currentLocale ) );
+        localeManager.setCurrentLocale( LocaleUtils.getLocale( currentLocale ) );
 
-        userSettingService.saveUserSetting( KEY_DB_LOCALE, getRespectiveLocale( StringUtils
-            .trimToNull( currentLocaleDb ) ) );
+        userSettingService.saveUserSetting( KEY_DB_LOCALE, LocaleUtils.getLocale( currentLocaleDb ) );
 
         styleManager.setUserStyle( currentStyle );
-        
+
         userSettingService.saveUserSetting( KEY_MESSAGE_EMAIL_NOTIFICATION, messageEmailNotification );
 
         userSettingService.saveUserSetting( KEY_MESSAGE_SMS_NOTIFICATION, messageSmsNotification );
@@ -147,39 +145,5 @@ public class SetGeneralSettingsAction
         message = i18n.getString( "settings_updated" );
 
         return SUCCESS;
-    }
-
-    // -------------------------------------------------------------------------
-    // Supportive methods
-    // -------------------------------------------------------------------------
-
-    private Locale getRespectiveLocale( String locale )
-    {
-        if ( locale == null )
-        {
-            return null;
-        }
-
-        String[] tokens = locale.split( "_" );
-        Locale newLocale = null;
-
-        switch ( tokens.length )
-        {
-        case 1:
-            newLocale = new Locale( tokens[0] );
-            break;
-
-        case 2:
-            newLocale = new Locale( tokens[0], tokens[1] );
-            break;
-
-        case 3:
-            newLocale = new Locale( tokens[0], tokens[1], tokens[2] );
-            break;
-
-        default:
-        }
-
-        return newLocale;
     }
 }

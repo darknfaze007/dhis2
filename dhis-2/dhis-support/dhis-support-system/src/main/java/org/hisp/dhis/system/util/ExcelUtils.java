@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.util;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -64,10 +65,10 @@ public class ExcelUtils
 {
     public static final String EXTENSION_XLS = ".xls";
 
-    public static WritableCellFormat FORMAT_LABEL = new WritableCellFormat( new WritableFont( WritableFont.ARIAL, 13,
+    public static final WritableCellFormat FORMAT_LABEL = new WritableCellFormat( new WritableFont( WritableFont.ARIAL, 13,
         WritableFont.BOLD, false, UnderlineStyle.NO_UNDERLINE, Colour.BLACK ) );
     
-    public static WritableCellFormat FORMAT_TEXT = new WritableCellFormat( new WritableFont( WritableFont.ARIAL, 11,
+    public static final WritableCellFormat FORMAT_TEXT = new WritableCellFormat( new WritableFont( WritableFont.ARIAL, 11,
         WritableFont.NO_BOLD, false ) );
     
     public static void printDataElementHeaders( WritableSheet sheet, I18n i18n, int row,
@@ -224,8 +225,9 @@ public class ExcelUtils
         {
             for ( GridHeader col : grid.getVisibleHeaders() )
             {
-                sheet.addCell( new Label( column++, 3, i18n.getString( DateUtils.convertDate( col.getName() ) ),
-                    cellFormat ) );
+                //TODO use i18nFormat.formatDate for label
+                
+                sheet.addCell( new Label( column++, 3, col.getName(), cellFormat ) );
             }
         }
         catch ( RowsExceededException e )

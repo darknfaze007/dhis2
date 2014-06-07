@@ -1,17 +1,20 @@
+package org.hisp.dhis.light.namebaseddataentry.action;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,8 +28,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.light.namebaseddataentry.action;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,11 +35,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.hisp.dhis.light.utils.NamebasedUtils;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientIdentifier;
-import org.hisp.dhis.patient.PatientIdentifierService;
-import org.hisp.dhis.patient.PatientService;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramInstanceService;
@@ -47,6 +45,10 @@ import org.hisp.dhis.relationship.Relationship;
 import org.hisp.dhis.relationship.RelationshipService;
 import org.hisp.dhis.relationship.RelationshipType;
 import org.hisp.dhis.relationship.RelationshipTypeService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
+import org.hisp.dhis.trackedentityattributevalue.TrackedEntityAttributeValue;
+import org.hisp.dhis.trackedentityattributevalue.TrackedEntityAttributeValueService;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.User;
 
@@ -61,48 +63,28 @@ public class GetPatientProgramListAction
 
     private ProgramInstanceService programInstanceService;
 
-    public ProgramInstanceService getProgramInstanceService()
-    {
-        return programInstanceService;
-    }
-
     public void setProgramInstanceService( ProgramInstanceService programInstanceService )
     {
         this.programInstanceService = programInstanceService;
     }
 
-    private PatientIdentifierService patientIdentifierService;
+    private TrackedEntityAttributeValueService patientAttributeValueService;
 
-    public PatientIdentifierService getPatientIdentifierService()
+    public void setPatientAttributeValueService( TrackedEntityAttributeValueService patientAttributeValueService )
     {
-        return patientIdentifierService;
-    }
-
-    public void setPatientIdentifierService( PatientIdentifierService patientIdentifierService )
-    {
-        this.patientIdentifierService = patientIdentifierService;
+        this.patientAttributeValueService = patientAttributeValueService;
     }
 
     private ProgramService programService;
-
-    public ProgramService getProgramService()
-    {
-        return programService;
-    }
 
     public void setProgramService( ProgramService programService )
     {
         this.programService = programService;
     }
 
-    private PatientService patientService;
+    private TrackedEntityInstanceService patientService;
 
-    public PatientService getPatientService()
-    {
-        return patientService;
-    }
-
-    public void setPatientService( PatientService patientService )
+    public void setPatientService( TrackedEntityInstanceService patientService )
     {
         this.patientService = patientService;
     }
@@ -121,11 +103,6 @@ public class GetPatientProgramListAction
 
     private RelationshipService relationshipService;
 
-    public RelationshipService getRelationshipService()
-    {
-        return relationshipService;
-    }
-
     public void setRelationshipService( RelationshipService relationshipService )
     {
         this.relationshipService = relationshipService;
@@ -133,22 +110,12 @@ public class GetPatientProgramListAction
 
     public RelationshipTypeService relationshipTypeService;
 
-    public RelationshipTypeService getRelationshipTypeService()
-    {
-        return relationshipTypeService;
-    }
-
     public void setRelationshipTypeService( RelationshipTypeService relationshipTypeService )
     {
         this.relationshipTypeService = relationshipTypeService;
     }
 
     private CurrentUserService currentUserService;
-
-    public CurrentUserService getCurrentUserService()
-    {
-        return currentUserService;
-    }
 
     public void setCurrentUserService( CurrentUserService currentUserService )
     {
@@ -159,16 +126,16 @@ public class GetPatientProgramListAction
     // Input & Output
     // -------------------------------------------------------------------------
 
-    private Integer patientId;
+    private String patientUID;
 
-    public Integer getPatientId()
+    public String getPatientUID()
     {
-        return patientId;
+        return patientUID;
     }
 
-    public void setPatientId( Integer patientId )
+    public void setPatientUID( String patientUID )
     {
-        this.patientId = patientId;
+        this.patientUID = patientUID;
     }
 
     private Set<ProgramInstance> programInstances = new HashSet<ProgramInstance>();
@@ -183,14 +150,14 @@ public class GetPatientProgramListAction
         this.programInstances = programInstances;
     }
 
-    private Patient patient;
+    private TrackedEntityInstance patient;
 
-    public Patient getPatient()
+    public TrackedEntityInstance getPatient()
     {
         return patient;
     }
 
-    public void setPatient( Patient patient )
+    public void setPatient( TrackedEntityInstance patient )
     {
         this.patient = patient;
     }
@@ -207,14 +174,14 @@ public class GetPatientProgramListAction
         this.enrollmentProgramList = enrollmentProgramList;
     }
 
-    private Map<Relationship, Patient> relatedPeople;
+    private Map<Relationship, TrackedEntityInstance> relatedPeople;
 
-    public Map<Relationship, Patient> getRelatedPeople()
+    public Map<Relationship, TrackedEntityInstance> getRelatedPeople()
     {
         return relatedPeople;
     }
 
-    public void setRelatedPeople( Map<Relationship, Patient> relatedPeople )
+    public void setRelatedPeople( Map<Relationship, TrackedEntityInstance> relatedPeople )
     {
         this.relatedPeople = relatedPeople;
     }
@@ -243,16 +210,16 @@ public class GetPatientProgramListAction
         this.validated = validated;
     }
 
-    private Collection<PatientIdentifier> patientIdentifiers;
+    private Collection<TrackedEntityAttributeValue> patientAttributeValues;
 
-    public Collection<PatientIdentifier> getPatientIdentifiers()
+    public void setPatientAttributeValues( Collection<TrackedEntityAttributeValue> patientAttributeValues )
     {
-        return patientIdentifiers;
+        this.patientAttributeValues = patientAttributeValues;
     }
 
-    public void setPatientIdentifiers( Collection<PatientIdentifier> patientIdentifiers )
+    public Collection<TrackedEntityAttributeValue> getPatientAttributeValues()
     {
-        this.patientIdentifiers = patientIdentifiers;
+        return patientAttributeValues;
     }
 
     private List<ProgramInstance> listOfCompletedProgram;
@@ -280,39 +247,40 @@ public class GetPatientProgramListAction
     {
         user = currentUserService.getCurrentUser();
         programInstances.clear();
-        relatedPeople = new HashMap<Relationship, Patient>();
+        relatedPeople = new HashMap<Relationship, TrackedEntityInstance>();
 
-        patient = patientService.getPatient( patientId );
+        patient = patientService.getTrackedEntityInstance( patientUID );
         Collection<Program> programByCurrentUser = programService.getProgramsByCurrentUser();
-        for ( ProgramInstance programInstance : programInstanceService.getProgramInstances( patient ) )
+        for ( ProgramInstance programInstance : patient.getProgramInstances() )
         {
-            if ( programInstance.getStatus() == ProgramInstance.STATUS_ACTIVE && programByCurrentUser.contains( programInstance.getProgram() ) )
+            if ( programInstance.getStatus() == ProgramInstance.STATUS_ACTIVE
+                && programByCurrentUser.contains( programInstance.getProgram() ) )
             {
                 programInstances.add( programInstance );
             }
         }
 
         enrollmentProgramList = this.generateEnrollmentProgramList();
-        Collection<Relationship> relationships = relationshipService.getRelationshipsForPatient( patient );
+        Collection<Relationship> relationships = relationshipService.getRelationshipsForTrackedEntityInstance( patient );
 
         for ( Relationship relationship : relationships )
         {
-            if ( relationship.getPatientA().getId() != patient.getId() )
+            if ( relationship.getEntityInstanceA().getId() != patient.getId() )
             {
-                relatedPeople.put( relationship, relationship.getPatientA() );
+                relatedPeople.put( relationship, relationship.getEntityInstanceA() );
             }
 
-            if ( relationship.getPatientB().getId() != patient.getId() )
+            if ( relationship.getEntityInstanceB().getId() != patient.getId() )
             {
-                relatedPeople.put( relationship, relationship.getPatientB() );
+                relatedPeople.put( relationship, relationship.getEntityInstanceB() );
             }
         }
 
         relationshipTypes = relationshipTypeService.getAllRelationshipTypes();
 
-        patientIdentifiers = patientIdentifierService.getPatientIdentifiers( patient );
+        patientAttributeValues = patientAttributeValueService.getTrackedEntityAttributeValues( patient );
 
-        Collection<ProgramInstance> listOfProgramInstance = programInstanceService.getProgramInstances( patient );
+        Collection<ProgramInstance> listOfProgramInstance = patient.getProgramInstances();
 
         this.listOfCompletedProgram = new ArrayList<ProgramInstance>();
 
@@ -342,13 +310,15 @@ public class GetPatientProgramListAction
             }
             else if ( !program.isSingleEvent() )
             {
-                if ( programInstanceService.getProgramInstances( patient, program, ProgramInstance.STATUS_ACTIVE ).size() == 0 )
+                if ( programInstanceService.getProgramInstances( patient, program, ProgramInstance.STATUS_ACTIVE )
+                    .size() == 0 )
                 {
                     programs.add( program );
                 }
                 else if ( programInstanceService.getProgramInstances( patient, program ).size() > 0
                     && !program.getOnlyEnrollOnce()
-                    && programInstanceService.getProgramInstances( patient, program, ProgramInstance.STATUS_ACTIVE ).size() == 0 )
+                    && programInstanceService.getProgramInstances( patient, program, ProgramInstance.STATUS_ACTIVE )
+                        .size() == 0 )
                 {
                     programs.add( program );
                 }

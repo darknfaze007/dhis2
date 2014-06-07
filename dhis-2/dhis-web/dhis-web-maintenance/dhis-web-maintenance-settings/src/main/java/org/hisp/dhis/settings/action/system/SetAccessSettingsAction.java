@@ -1,19 +1,20 @@
 package org.hisp.dhis.settings.action.system;
 
 /*
- * Copyright (c) 2004-2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,6 +28,8 @@ package org.hisp.dhis.settings.action.system;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import com.opensymphony.xwork2.Action;
+import org.apache.commons.lang3.StringUtils;
 import org.hisp.dhis.configuration.Configuration;
 import org.hisp.dhis.configuration.ConfigurationService;
 import org.hisp.dhis.i18n.I18n;
@@ -37,9 +40,7 @@ import org.hisp.dhis.user.UserAuthorityGroup;
 import org.hisp.dhis.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.opensymphony.xwork2.Action;
-
-import static org.hisp.dhis.setting.SystemSettingManager.KEY_ACCOUNT_RECOVERY;
+import static org.hisp.dhis.setting.SystemSettingManager.*;
 
 /**
  * @author Lars Helge Overland
@@ -49,13 +50,13 @@ public class SetAccessSettingsAction
 {
     @Autowired
     private ConfigurationService configurationService;
-    
+
     @Autowired
     private SystemSettingManager systemSettingManager;
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private OrganisationUnitService organisationUnitService;
 
@@ -77,13 +78,62 @@ public class SetAccessSettingsAction
         this.selfRegistrationOrgUnit = selfRegistrationOrgUnit;
     }
 
+    private Boolean selfRegistrationNoRecaptcha;
+
+    public void setSelfRegistrationNoRecaptcha( Boolean selfRegistrationNoRecaptcha )
+    {
+        this.selfRegistrationNoRecaptcha = selfRegistrationNoRecaptcha;
+    }
+
     private Boolean accountRecovery;
 
     public void setAccountRecovery( Boolean accountRecovery )
     {
         this.accountRecovery = accountRecovery;
     }
-    
+
+    private Boolean accountInvite;
+
+    public void setAccountInvite( Boolean accountInvite )
+    {
+        this.accountInvite = accountInvite;
+    }
+
+    private Boolean canGrantOwnUserAuthorityGroups;
+
+    public void setCanGrantOwnUserAuthorityGroups( Boolean canGrantOwnUserAuthorityGroups )
+    {
+        this.canGrantOwnUserAuthorityGroups = canGrantOwnUserAuthorityGroups;
+    }
+
+    private Boolean onlyManageWithinUserGroups;
+
+    public void setOnlyManageWithinUserGroups( Boolean onlyManageWithinUserGroups )
+    {
+        this.onlyManageWithinUserGroups = onlyManageWithinUserGroups;
+    }
+
+    private Integer credentialsExpires;
+
+    public void setCredentialsExpires( Integer credentialsExpires )
+    {
+        this.credentialsExpires = credentialsExpires;
+    }
+
+    private String openIdProvider;
+
+    public void setOpenIdProvider( String openIdProvider )
+    {
+        this.openIdProvider = openIdProvider;
+    }
+
+    private String openIdProviderLabel;
+
+    public void setOpenIdProviderLabel( String openIdProviderLabel )
+    {
+        this.openIdProviderLabel = openIdProviderLabel;
+    }
+
     // -------------------------------------------------------------------------
     // Output
     // -------------------------------------------------------------------------
@@ -110,24 +160,40 @@ public class SetAccessSettingsAction
     {
         UserAuthorityGroup group = null;
         OrganisationUnit unit = null;
-        
+
         if ( selfRegistrationRole != null )
         {
             group = userService.getUserAuthorityGroup( selfRegistrationRole );
         }
-        
+
         if ( selfRegistrationOrgUnit != null )
         {
             unit = organisationUnitService.getOrganisationUnit( selfRegistrationOrgUnit );
         }
-        
+
         Configuration config = configurationService.getConfiguration();
         config.setSelfRegistrationRole( group );
         config.setSelfRegistrationOrgUnit( unit );
         configurationService.setConfiguration( config );
 
         systemSettingManager.saveSystemSetting( KEY_ACCOUNT_RECOVERY, accountRecovery );
-        
+        systemSettingManager.saveSystemSetting( KEY_ACCOUNT_INVITE, accountInvite );
+        systemSettingManager.saveSystemSetting( KEY_CAN_GRANT_OWN_USER_AUTHORITY_GROUPS, canGrantOwnUserAuthorityGroups );
+        systemSettingManager.saveSystemSetting( KEY_ONLY_MANAGE_WITHIN_USER_GROUPS, onlyManageWithinUserGroups );
+        systemSettingManager.saveSystemSetting( KEY_SELF_REGISTRATION_NO_RECAPTCHA, selfRegistrationNoRecaptcha );
+
+        systemSettingManager.saveSystemSetting( KEY_OPENID_PROVIDER, StringUtils.isEmpty( openIdProvider ) ? null : openIdProvider );
+
+        if ( !StringUtils.isEmpty( openIdProviderLabel ) )
+        {
+            systemSettingManager.saveSystemSetting( KEY_OPENID_PROVIDER_LABEL, openIdProviderLabel );
+        }
+
+        if ( credentialsExpires != null )
+        {
+            systemSettingManager.saveSystemSetting( KEY_CREDENTIALS_EXPIRES, credentialsExpires );
+        }
+
         message = i18n.getString( "settings_updated" );
 
         return SUCCESS;

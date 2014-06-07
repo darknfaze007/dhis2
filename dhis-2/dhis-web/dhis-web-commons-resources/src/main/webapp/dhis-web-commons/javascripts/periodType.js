@@ -9,6 +9,7 @@ function PeriodType()
     periodTypes['BiMonthly'] = new BiMonthlyPeriodType( dateFormat );
     periodTypes['Quarterly'] = new QuarterlyPeriodType( dateFormat );
     periodTypes['SixMonthly'] = new SixMonthlyPeriodType( dateFormat );
+    periodTypes['SixMonthlyApril'] = new SixMonthlyAprilPeriodType( dateFormat );
     periodTypes['Yearly'] = new YearlyPeriodType( dateFormat );
     periodTypes['FinancialOct'] = new FinancialOctoberPeriodType( dateFormat );
     periodTypes['FinancialJuly'] = new FinancialJulyPeriodType( dateFormat );
@@ -106,7 +107,7 @@ function WeeklyPeriodType( dateFormat )
         var day = startDate.date().getDay();
         var i = 0;
 
-        if ( day == 0 ) // Sunday, forward to Monday
+        if ( day == 0 ) // Sunday (0), forward to Monday
         {
             startDate.adjust( 'D', +1 );
         }
@@ -122,7 +123,9 @@ function WeeklyPeriodType( dateFormat )
         
         var endDate = startDate.clone().adjust( 'D', +6 );
 
-        while ( startDate.date().getFullYear() <= year )
+        // Include all weeks where Thursday falls in same year
+        
+        while ( startDate.clone().adjust( 'D', 3 ).date().getFullYear() <= year )
         {
             var period = [];
             period['startDate'] = startDate.format( dateFormat );
@@ -253,6 +256,33 @@ function SixMonthlyPeriodType( dateFormat )
         period['name'] = monthNames[6] + ' - ' + monthNames[11] + ' ' + year;
         period['id'] = 'SixMonthly_' + period['startDate'];
         period['iso'] = year + 'S2';
+        periods[1] = period;
+
+        return periods;
+    };
+}
+
+function SixMonthlyAprilPeriodType( dateFormat )
+{
+    this.generatePeriods = function( offset )
+    {
+        var periods = [];
+        var year = new Date().getFullYear() + offset;
+
+        var period = [];
+        period['startDate'] = year + '-04-01';
+        period['endDate'] = year + '-09-30';
+        period['name'] = monthNames[3] + ' - ' + monthNames[8] + ' ' + year;
+        period['id'] = 'SixMonthlyApril_' + period['startDate'];
+        period['iso'] = year + 'AprilS1';
+        periods[0] = period;
+
+        period = [];
+        period['startDate'] = year + '-10-01';
+        period['endDate'] = ( year + 1 ) + '-03-31';
+        period['name'] = monthNames[9] + ' ' + year + ' - ' + monthNames[2] + ' ' + ( year + 1 );
+        period['id'] = 'SixMonthlyApril_' + period['startDate'];
+        period['iso'] = year + 'AprilS2';
         periods[1] = period;
 
         return periods;

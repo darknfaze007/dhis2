@@ -1,17 +1,20 @@
+package org.hisp.dhis.reporting.dataset.action;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,21 +28,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.reporting.dataset.action;
-
 import static org.hisp.dhis.dataset.DataSet.TYPE_CUSTOM;
 import static org.hisp.dhis.dataset.DataSet.TYPE_SECTION;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.struts2.ServletActionContext;
-import org.hisp.dhis.api.utils.ContextUtils;
-import org.hisp.dhis.api.utils.ContextUtils.CacheStrategy;
+import org.hisp.dhis.webapi.utils.ContextUtils;
+import org.hisp.dhis.webapi.utils.ContextUtils.CacheStrategy;
+import org.hisp.dhis.common.DimensionalObjectUtils;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.dataset.CompleteDataSetRegistration;
 import org.hisp.dhis.dataset.CompleteDataSetRegistrationService;
@@ -49,8 +52,6 @@ import org.hisp.dhis.datasetreport.DataSetReportService;
 import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
-import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodService;
@@ -65,9 +66,7 @@ import com.opensymphony.xwork2.Action;
  */
 public class GenerateDataSetReportAction
     implements Action
-{
-    private static final String SEP = ";";
-    
+{    
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
@@ -100,13 +99,6 @@ public class GenerateDataSetReportAction
         this.organisationUnitService = organisationUnitService;
     }
     
-    private OrganisationUnitGroupService organisationUnitGroupService;
-
-    public void setOrganisationUnitGroupService( OrganisationUnitGroupService organisationUnitGroupService )
-    {
-        this.organisationUnitGroupService = organisationUnitGroupService;
-    }
-
     private PeriodService periodService;
     
     public void setPeriodService( PeriodService periodService )
@@ -156,11 +148,11 @@ public class GenerateDataSetReportAction
         this.ou = ou;
     }
     
-    private String groups;    
+    private Set<String> dimension;
 
-    public void setGroups( String groups )
+    public void setDimension( Set<String> dimension )
     {
-        this.groups = groups;
+        this.dimension = dimension;
     }
 
     private boolean selectedUnitOnly;
@@ -228,13 +220,6 @@ public class GenerateDataSetReportAction
         return grids;
     }
 
-    private Grid grid;
-
-    public Grid getGrid()
-    {
-        return grid;
-    }
-
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
@@ -265,19 +250,17 @@ public class GenerateDataSetReportAction
      
         selectedOrgunit = organisationUnitService.getOrganisationUnit( ou );
 
-        Set<OrganisationUnitGroup> ouGroups = new HashSet<OrganisationUnitGroup>();
-            
-        if ( groups != null && groups.split( SEP ).length > 0 )
+        Map<String, String> dimensions = new HashMap<String, String>();
+        
+        if ( dimension != null )
         {
-            String[] groupIds = groups.split( SEP );
-            
-            for ( String groupId : groupIds )
-            {                
-                OrganisationUnitGroup group = organisationUnitGroupService.getOrganisationUnitGroup( groupId );
+            for ( String dim : dimension )
+            {
+                String[] dims = dim.split( DimensionalObjectUtils.DIMENSION_NAME_SEP );
                 
-                if ( group != null )
+                if ( dims.length == 2 && dims[0] != null && dims[1] != null )
                 {
-                    ouGroups.add( group );
+                    dimensions.put( dims[0], dims[1] );
                 }
             }
         }
@@ -290,20 +273,20 @@ public class GenerateDataSetReportAction
         {
             if ( type != null )
             {
-                grids = dataSetReportService.getCustomDataSetReportAsGrid( selectedDataSet, selectedPeriod, selectedOrgunit, ouGroups, selectedUnitOnly, format );
+                grids = dataSetReportService.getCustomDataSetReportAsGrid( selectedDataSet, selectedPeriod, selectedOrgunit, dimensions, selectedUnitOnly, format );
             }
             else
             {
-                customDataEntryFormCode = dataSetReportService.getCustomDataSetReport( selectedDataSet, selectedPeriod, selectedOrgunit, ouGroups, selectedUnitOnly, format );
+                customDataEntryFormCode = dataSetReportService.getCustomDataSetReport( selectedDataSet, selectedPeriod, selectedOrgunit, dimensions, selectedUnitOnly, format );
             }
         }
         else if ( TYPE_SECTION.equals( dataSetType ) )
         {
-            grids = dataSetReportService.getSectionDataSetReport( selectedDataSet, selectedPeriod, selectedOrgunit, ouGroups, selectedUnitOnly, format, i18n );
+            grids = dataSetReportService.getSectionDataSetReport( selectedDataSet, selectedPeriod, selectedOrgunit, dimensions, selectedUnitOnly, format, i18n );
         }
         else
         {
-            grid = dataSetReportService.getDefaultDataSetReport( selectedDataSet, selectedPeriod, selectedOrgunit, ouGroups, selectedUnitOnly, format, i18n );
+            grids = dataSetReportService.getDefaultDataSetReport( selectedDataSet, selectedPeriod, selectedOrgunit, dimensions, selectedUnitOnly, format, i18n );
         }
         
         return type != null ? type : dataSetType;

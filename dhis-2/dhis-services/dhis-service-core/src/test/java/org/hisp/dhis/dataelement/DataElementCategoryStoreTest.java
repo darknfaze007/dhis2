@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -37,7 +38,6 @@ import java.util.Collection;
 import java.util.List;
 
 import org.hisp.dhis.DhisSpringTest;
-import org.hisp.dhis.concept.Concept;
 import org.hisp.dhis.common.GenericIdentifiableObjectStore;
 import org.junit.Test;
 
@@ -50,12 +50,6 @@ public class DataElementCategoryStoreTest
     extends DhisSpringTest
 {
     private GenericIdentifiableObjectStore<DataElementCategory> categoryStore;
-
-    private Concept conceptA;
-
-    private Concept conceptB;
-
-    private Concept conceptC;
 
     private DataElementCategoryOption categoryOptionA;
 
@@ -80,11 +74,7 @@ public class DataElementCategoryStoreTest
     {
         categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
 
-        categoryStore = (GenericIdentifiableObjectStore<DataElementCategory>) getBean( "org.hisp.dhis.dataelement.DataElementCategoryStore" );
-
-        conceptA = new Concept( "ConceptA" );
-        conceptB = new Concept( "ConceptB" );
-        conceptC = new Concept( "ConceptC" );
+        categoryStore = (GenericIdentifiableObjectStore<DataElementCategory>) getBean( "org.hisp.dhis.dataelement.CategoryStore" );
 
         categoryOptionA = new DataElementCategoryOption( "CategoryOptionA" );
         categoryOptionB = new DataElementCategoryOption( "CategoryOptionB" );
@@ -109,9 +99,9 @@ public class DataElementCategoryStoreTest
     @Test
     public void testAddGet()
     {
-        categoryA = new DataElementCategory( "CategoryA", conceptA, categoryOptions );
-        categoryB = new DataElementCategory( "CategoryB", conceptB, categoryOptions );
-        categoryC = new DataElementCategory( "CategoryC", conceptC, categoryOptions );
+        categoryA = new DataElementCategory( "CategoryA", categoryOptions );
+        categoryB = new DataElementCategory( "CategoryB", categoryOptions );
+        categoryC = new DataElementCategory( "CategoryC", categoryOptions );
 
         int idA = categoryStore.save( categoryA );
         int idB = categoryStore.save( categoryB );
@@ -120,10 +110,6 @@ public class DataElementCategoryStoreTest
         assertEquals( categoryA, categoryStore.get( idA ) );
         assertEquals( categoryB, categoryStore.get( idB ) );
         assertEquals( categoryC, categoryStore.get( idC ) );
-
-        assertEquals( "ConceptA", categoryStore.get( idA ).getConcept().getName() );
-        assertEquals( "ConceptB", categoryStore.get( idB ).getConcept().getName() );
-        assertEquals( "ConceptC", categoryStore.get( idC ).getConcept().getName() );
 
         assertEquals( categoryOptions, categoryStore.get( idA ).getCategoryOptions() );
         assertEquals( categoryOptions, categoryStore.get( idB ).getCategoryOptions() );

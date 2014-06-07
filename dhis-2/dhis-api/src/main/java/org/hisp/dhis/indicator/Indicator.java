@@ -1,19 +1,20 @@
 package org.hisp.dhis.indicator;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -92,7 +93,12 @@ public class Indicator
      * The legend set for this indicator.
      */
     private MapLegendSet legendSet;
-    
+
+    public Indicator()
+    {
+        setAutoFields();
+    }
+
     // -------------------------------------------------------------------------
     // Logic
     // -------------------------------------------------------------------------
@@ -136,37 +142,6 @@ public class Indicator
         this.dataSets.remove( dataSet );
         dataSet.getIndicators().remove( this );
     }
-
-    // -------------------------------------------------------------------------
-    // hashCode and equals
-    // -------------------------------------------------------------------------
-
-    @Override
-    public boolean equals( Object o )
-    {
-        if ( this == o )
-        {
-            return true;
-        }
-
-        if ( o == null )
-        {
-            return false;
-        }
-
-        if ( !(o instanceof Indicator) )
-        {
-            return false;
-        }
-
-        final Indicator other = (Indicator) o;
-
-        return name.equals( other.getName() );
-    }
-
-    // -------------------------------------------------------------------------
-    // Logic
-    // -------------------------------------------------------------------------
 
     public void removeAllAttributeValues()
     {
@@ -352,10 +327,10 @@ public class Indicator
         this.dataSets = dataSets;
     }
 
-    @JsonProperty( value = "attributes" )
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlElementWrapper( localName = "attributes", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty( localName = "attribute", namespace = DxfNamespaces.DXF_2_0)
+    @JsonProperty( value = "attributeValues" )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "attributeValues", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( localName = "attributeValue", namespace = DxfNamespaces.DXF_2_0)
     public Set<AttributeValue> getAttributeValues()
     {
         return attributeValues;
@@ -397,6 +372,7 @@ public class Indicator
             explodedNumerator = indicator.getExplodedNumerator() == null ? explodedNumerator : indicator.getExplodedNumerator();
             explodedDenominator = indicator.getExplodedDenominator() == null ? explodedDenominator : indicator.getExplodedDenominator();
             indicatorType = indicator.getIndicatorType() == null ? indicatorType : indicator.getIndicatorType();
+            legendSet = indicator.getLegendSet() == null ? legendSet : indicator.getLegendSet();
 
             dataSets.clear();
             groups.clear();

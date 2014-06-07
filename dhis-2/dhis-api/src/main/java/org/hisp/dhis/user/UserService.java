@@ -1,27 +1,32 @@
 package org.hisp.dhis.user;
 
+import org.hisp.dhis.dataelement.CategoryOptionGroup;
+import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -81,7 +86,7 @@ public interface UserService
     /**
      * Retrieves the User with the given unique identifier.
      *
-     * @param id the identifier of the User to retrieve.
+     * @param uid the identifier of the User to retrieve.
      * @return the User.
      */
     User getUser( String uid );
@@ -93,11 +98,11 @@ public interface UserService
      */
     Collection<User> getAllUsers();
 
-    Collection<User> getAllUsersBetween( int first, int max );
-    
-    Collection<User> getAllUsersBetweenByName( String name, int first, int max );
+    List<User> getAllUsersBetween( int first, int max );
 
-    Collection<User> getUsersByLastUpdated(Date lastUpdated);
+    List<User> getAllUsersBetweenByName( String name, int first, int max );
+
+    Collection<User> getUsersByLastUpdated( Date lastUpdated );
 
     /**
      * Returns a Collection of the Users which are not associated with any
@@ -111,7 +116,6 @@ public interface UserService
      * Returns a Collection of the Users which are associated with OrganisationUnits.
      *
      * @param units a Collection of the organization units.
-     *
      * @return a Collection of Users.
      */
     Collection<User> getUsersByOrganisationUnits( Collection<OrganisationUnit> units );
@@ -142,6 +146,30 @@ public interface UserService
     int getUsersByOrganisationUnitCount( OrganisationUnit orgUnit );
 
     int getUsersByOrganisationUnitCountByName( OrganisationUnit orgUnit, String name );
+
+    List<User> getUsersByUid( List<String> uids );
+
+    User searchForUser( String query );
+
+    List<User> queryForUsers( String query );
+
+    /**
+     * Returns a set of CategoryOptionGroups that may be seen by the current
+     * user, if the current user has any CategoryOptionGroupSet constraint(s).
+     *
+     * @param userCredentials User credentials to check restrictions for.
+     * @return Set of CategoryOptionGroups if constrained, else null.
+     */
+    public Set<CategoryOptionGroup> getCogDimensionConstraints( UserCredentials userCredentials );
+
+    /**
+     * Returns a set of CategoryOptions that may be seen by the current
+     * user, if the current user has any Category constraint(s).
+     *
+     * @param userCredentials User credentials to check restrictions for.
+     * @return Set of CategoryOptions if constrained, else null.
+     */
+    public Set<DataElementCategoryOption> getCoDimensionConstraints( UserCredentials userCredentials );
 
     // -------------------------------------------------------------------------
     // UserCredentials
@@ -180,6 +208,15 @@ public interface UserService
     UserCredentials getUserCredentialsByUsername( String username );
 
     /**
+     * Retrieves the UserCredentials associated with the User with the given
+     * OpenID.
+     *
+     * @param openId the openId of the User.
+     * @return the UserCredentials.
+     */
+    UserCredentials getUserCredentialsByOpenID( String openId );
+
+    /**
      * Retrieves all UserCredentials.
      *
      * @return a Collection of UserCredentials.
@@ -194,22 +231,9 @@ public interface UserService
      */
     void setLastLogin( String username );
 
-    /**
-     * Deletes a UserCredentials.
-     *
-     * @param userCredentials the UserCredentials.
-     */
-    void deleteUserCredentials( UserCredentials userCredentials );
-
-    /**
-     * Get the UserCredentials with the corresponding identifiers.
-     *
-     * @param identifiers the collection of identifiers.
-     * @return a collection of users.
-     */
-    Collection<UserCredentials> getUsers( Collection<Integer> identifiers, User user );
-
     Collection<UserCredentials> searchUsersByName( String key );
+
+    Collection<UserCredentials> searchUsersByName( String name, int first, int max );
 
     Collection<UserCredentials> getUsersBetween( int first, int max );
 
@@ -224,9 +248,9 @@ public interface UserService
     Collection<UserCredentials> getUsersByOrganisationUnitBetweenByName( OrganisationUnit orgUnit, String name, int first, int max );
 
     Collection<UserCredentials> getSelfRegisteredUserCredentials( int first, int max );
-    
+
     int getSelfRegisteredUserCredentialsCount();
-    
+
     Collection<UserCredentials> getInactiveUsers( int months );
 
     Collection<UserCredentials> getInactiveUsers( int months, int first, int max );
@@ -234,6 +258,32 @@ public interface UserService
     int getInactiveUsersCount( int months );
 
     int getActiveUsersCount( int days );
+
+    int getActiveUsersCount( Date since );
+
+    /**
+     * Filters the given list of users based on whether the current
+     * user is allowed to update.
+     *
+     * @param users the list of users.
+     */
+    void canUpdateUsersFilter( Collection<User> users );
+
+    /**
+     * Filters the given list of user credentials based on whether the current
+     * user is allowed to update.
+     *
+     * @param userCredentials the list of user credentials.
+     */
+    void canUpdateFilter( Collection<UserCredentials> userCredentials );
+
+    /**
+     * Is the current user allowed to update this user?
+     *
+     * @param userCredentials credentials to check for allowing update.
+     * @return true if current user can update this user, else false.
+     */
+    boolean canUpdate( UserCredentials userCredentials );
 
     // -------------------------------------------------------------------------
     // UserAuthorityGroup
@@ -255,7 +305,6 @@ public interface UserService
     void updateUserAuthorityGroup( UserAuthorityGroup userAuthorityGroup );
 
     /**
-     * 2
      * Retrieves the UserAuthorityGroup with the given identifier.
      *
      * @param id the identifier of the UserAuthorityGroup to retrieve.
@@ -264,10 +313,9 @@ public interface UserService
     UserAuthorityGroup getUserAuthorityGroup( int id );
 
     /**
-     * 2
      * Retrieves the UserAuthorityGroup with the given identifier.
      *
-     * @param id the identifier of the UserAuthorityGroup to retrieve.
+     * @param uid the identifier of the UserAuthorityGroup to retrieve.
      * @return the UserAuthorityGroup.
      */
     UserAuthorityGroup getUserAuthorityGroup( String uid );
@@ -290,21 +338,21 @@ public interface UserService
     /**
      * Retrieves all UserAuthorityGroups.
      *
-     * @return a Collectio of UserAuthorityGroups.
+     * @return a Collection of UserAuthorityGroups.
      */
     Collection<UserAuthorityGroup> getAllUserAuthorityGroups();
 
     /**
      * Retrieves all UserAuthorityGroups.
      *
-     * @return a Collectio of UserAuthorityGroups.
+     * @return a Collection of UserAuthorityGroups.
      */
     Collection<UserAuthorityGroup> getUserRolesBetween( int first, int max );
 
     /**
      * Retrieves all UserAuthorityGroups.
      *
-     * @return a Collectio of UserAuthorityGroups.
+     * @return a Collection of UserAuthorityGroups.
      */
     Collection<UserAuthorityGroup> getUserRolesBetweenByName( String name, int first, int max );
 
@@ -314,6 +362,14 @@ public interface UserService
 
     int getUserRoleCountByName( String name );
 
+    /**
+     * Filters the given collection of user roles based on whether the current user
+     * is allowed to issue it.
+     * 
+     * @param userRoles the collection of user roles.
+     */
+    void canIssueFilter( Collection<UserAuthorityGroup> userRoles );
+    
     // -------------------------------------------------------------------------
     // UserSettings
     // -------------------------------------------------------------------------
@@ -324,6 +380,14 @@ public interface UserService
      * @param userSetting the UserSetting to add.
      */
     void addUserSetting( UserSetting userSetting );
+
+    /**
+     * If a matching UserSetting exists, based on its user and name, it will be
+     * updated, if not, the given UserSetting will be added.
+     *
+     * @param userSetting the UserSetting.
+     */
+    void addOrUpdateUserSetting( UserSetting userSetting );
 
     /**
      * Updates a UserSetting.
@@ -343,12 +407,26 @@ public interface UserService
     UserSetting getUserSetting( User user, String name );
 
     /**
+     * Retrieves a user setting value for the given user and setting name. Returns
+     * the given default value if the setting does not exist or the setting value
+     * is null.
+     *
+     * @param user         the user.
+     * @param name         the setting name.
+     * @param defaultValue the default value.
+     * @return a setting value.
+     */
+    Serializable getUserSettingValue( User user, String name, Serializable defaultValue );
+
+    /**
      * Retrieves all UserSettings for the given User.
      *
      * @param user the User.
      * @return a Collection of UserSettings.
      */
     Collection<UserSetting> getAllUserSettings( User user );
+
+    Collection<UserSetting> getUserSettings( String name );
 
     /**
      * Deletes a UserSetting.
@@ -369,13 +447,16 @@ public interface UserService
 
     /**
      * Removes all user settings associated with the given user.
-     * 
+     *
      * @param user the user.
      */
     void removeUserSettings( User user );
-    
-    Collection<User> getUsersByName( String name );  
-    
+
+    Collection<User> getUsersByName( String name );
+
     Collection<String> getUsernames( String query, Integer max );
-    
+
+    int countDataSetUserAuthorityGroups( DataSet dataSet );
+
+    boolean credentialsNonExpired( UserCredentials credentials );
 }

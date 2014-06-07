@@ -1,39 +1,64 @@
 <script type="text/javascript">
-	jQuery(function() {
-	    validation2( 'addUserForm', function( form )
-	    {
-	        jQuery( "#selectedList" ).children().attr( "selected", true );
-	        form.submit();
-	    }, {
-	        'beforeValidateHandler' : function()
-	        {
-	            listValidator( 'roleValidator', 'selectedList' );
-	            #tblDynamicAttributesJavascript()
-	        },
-	        'rules' : getValidationRules( "user" )
-	    } );
-	
-	    checkValueIsExist( "username", "validateUser.action" );
-	
-	    jQuery( "#cancel" ).click( function()
-	    {
-	        referrerBack( "alluser.action" );
-	    } );
-	
-		jQuery("#availableList").dhisAjaxSelect({
-			source: "../dhis-web-commons-ajax-json/getUserRoles.action",
-			iterator: 'userRoles',
-			connectedTo: 'selectedList',
-			handler: function(item) {
-				var option = jQuery("<option />");
-				option.text( item.name );
-				option.attr( "value", item.id );
+  jQuery(function() {
+    validation2('addUserForm', function( form ) {
+      jQuery("#urSelected").children().attr("selected", "selected");
+      jQuery("#ugSelected").children().attr("selected", "selected");
+      jQuery("#dcSelected").children().attr("selected", "selected");
 
-				return option;
-			}
-		});
-	});
+      if( $('#orgUnitTree').find('.selected').size() == 0 ) {
+        setHeaderDelayMessage('$encoder.jsEncode( $i18n.getString( "data_capture_organisation_unit_required_for_user" ) )');
+      } else {
+        form.submit();
+      }
+    }, {
+      'beforeValidateHandler': function() {
+        listValidator('urValidator', 'urSelected');
+          #tblDynamicAttributesJavascript()
+      },
+      'rules': getValidationRules("user")
+    });
+
+    checkValueIsExist("username", "validateUser.action");
+    checkValueIsExist("openId", "validateUser.action");
+
+    selection.setMultipleSelectionAllowed( true );
+    selection.setUnselectAllowed( true );
+    selection.setAutoSelectRoot( false );
+
+    jQuery("#cancel").click(function() {
+      dhis2.commons.redirectCurrentPage('alluser.action');
+    });
+
+    $('#urAvailable').selected({
+      url: '../api/userRoles.json?canIssue=true',
+      target: $('#urSelected'),
+      search: $('#urAvailableSearch'),
+      iterator: 'userRoles'
+    });
+
+    $('#ugAvailable').selected({
+      url: '../api/userGroups.json',
+      target: $('#ugSelected'),
+      search: $('#ugAvailableSearch'),
+      iterator: 'userGroups'
+    });
+    
+    $('#dcAvailable').selected({
+      url: '../api/dimensions/constraints.json',
+      target: $('#dcSelected'),
+      search: $('#dcAvailableSearch'),
+      iterator: 'dimensions'
+    });
+  });
 </script>
+
+<style type="text/css">
+div#orgUnitTree
+{
+  width: 495px;
+  border: 1px solid #ccc;
+}
+</style>
 
 <h3>$i18n.getString( "create_new_user" )</h3>
 <form id="addUserForm" action="addUser.action" method="post" class="inputForm">
@@ -41,87 +66,144 @@
 <table>
     <col style="width: 120px"/>
 
+    #if ( $keyAccountInvite )
+    <tr>
+        <td><label>$i18n.getString( "action" )</label></td>
+        <td>
+            <select id="accountAction" name="accountAction" onchange="changeAccountAction()">
+                <option value="create" selected="selected">$i18n.getString( "create_account_with_user_details" )</option>
+                <option value="invite">$i18n.getString( "email_invitation_to_create_account" )</option>
+            </select>
+        </td>
+    </tr>
+    #end
+
 	<tr>
 		<th colspan="4">$i18n.getString( "details" )</th>
 	</tr>
 
-	<tr>
+    <tr class="invite" style="display:none">
+        <td><label for="inviteEmail">$i18n.getString( "email" ) <em title="$i18n.getString( 'required' )" class="required">*</em></label></td>
+        <td colspan="3"><input type="text" id="inviteEmail" name="inviteEmail" value="validEmail@domain.com" autocomplete="off"></td>
+    </tr>
+
+    <tr class="invite" style="display:none">
+        <td><label for="inviteUsername">$i18n.getString( "username" )</label></td>
+        <td colspan="3"><input type="text" id="inviteUsername" name="inviteUsername" autocomplete="off"></td>
+    </tr>
+
+    <tr class="account">
 		<td><label for="username">$i18n.getString( "username" ) <em title="$i18n.getString( 'required' )" class="required">*</em></label></td>
 		<td colspan="3"><input type="text" id="username" name="username" autocomplete="off"></td>
 	</tr>
 
-	<tr>
+    <tr class="account">
 		<td><label for="rawPassword">$i18n.getString( "password" ) <em title="$i18n.getString( 'required' )" class="required">*</em></label></td>
 		<td colspan="3"><input type="password" id="rawPassword" name="rawPassword" autocomplete="off"></td>			
 	</tr>
 
-	<tr>
+    <tr class="account">
 		<td><label for="retypePassword">$i18n.getString( "retype_password" ) <em title="$i18n.getString( 'required' )" class="required">*</em></label></td>
 		<td colspan="3"><input type="password" id="retypePassword" name="retypePassword" autocomplete="off"></td>		
 	</tr>
 
-	<tr>
+    <tr class="account">
 		<td><label for="surname">$i18n.getString( "surname" ) <em title="$i18n.getString( 'required' )" class="required">*</em></label></td>
 		<td colspan="3"><input type="text" id="surname" name="surname"></td>
 	</tr>
 
-	<tr>
+    <tr class="account">
 		<td><label for="firstName">$i18n.getString( "firstName" ) <em title="$i18n.getString( 'required' )" class="required">*</em></label></td>
 		<td colspan="3"><input type="text" id="firstName" name="firstName"></td>		
 	</tr>
 
-	<tr>
+	<tr class="account">
 		<td><label for="email">$i18n.getString( "email" )</label></td>
-		<td colspan="3"><input type="text" id="email" name="email" ></td>			
+		<td colspan="3"><input type="text" id="email" name="email"></td>
 	</tr>
 
-    <tr>
+	<tr class="account">
+		<td><label for="email">$i18n.getString( "openid" )</label></td>
+		<td colspan="3"><input type="text" id="openId" name="openId"></td>
+	</tr>
+
+    <tr class="account">
         <td><label for="phoneNumber">$i18n.getString( "phone_number" )</label></td>
         <td colspan="3"><input type="text" id="phoneNumber" name="phoneNumber"></td>
     </tr>
-</table>
-
-#tblDynamicAttributes( { "attributes": $attributes } )
-
-<table>
-    <colgroup>
-      <col style="width: 500px;"/>
-      <col/>
-      <col style="width: 500px;"/>
-    </colgroup>
-
-	<tr>
-		<th>$i18n.getString( "available_roles" )</th>
-		<th></th>
-		<th>$i18n.getString( "selected_roles" )
-			<select id="roleValidator" style="display:none"/>
-		</th>
-	</tr>
-
-	<tr style="margin-bottom: 15px;">
+    
+    <tr>
+        <td><label>$i18n.getString( "language" )</label></td>
         <td>
-            <select id="availableList" name="availableList" multiple="multiple" style="height: 200px; width: 100%;"></select>
+            <select id="localeUi" name="localeUi">
+            #foreach( $locale in $availableLocales )
+                <option value="$locale.toString()" #if( $locale == $currentLocale )selected="selected"#end>$locale.getDisplayName()</option>
+            #end
+            </select>
         </td>
-
-        <td style="text-align:center">
-        	<input type="button" value="&gt;" title="$i18n.getString( 'move_selected' )" style="width:50px" onclick="dhisAjaxSelect_moveAllSelected( 'availableList' );"/><br/>
-            <input type="button" value="&lt;" title="$i18n.getString( 'remove_selected' )" style="width:50px" onclick="dhisAjaxSelect_moveAllSelected( 'selectedList' );"/><br/>
-			<input type="button" value="&gt;&gt;" title="$i18n.getString('move_all')" style="width:50px" onclick="dhisAjaxSelect_moveAll( 'availableList' );"/><br/>
-			<input type="button" value="&lt;&lt;" title="$i18n.getString('remove_all')" style="width:50px" onclick="dhisAjaxSelect_moveAll( 'selectedList' );"/>
+    </tr>
+    
+    <tr>
+        <td><label>$i18n.getString( "db_language" )</label></td>
+        <td>
+            <select id="localeDb" name="localeDb">
+            <option value="">[$i18n.getString( "use_db_locale_no_translation" )]</option>
+            #foreach( $locale in $availableLocalesDb )
+                <option value="$locale.toString()">$locale.getDisplayName()</option>
+            #end
+            </select>
         </td>
+    </tr>
+    
+</table>
 
-		<td>
-            <select id="selectedList" name="selectedList" multiple="multiple" style="height: 200px; width: 100%; margin-top: 22px;"></select>
-        </td>
-	</tr>
+#tblDynamicAttributes({
+    "attributes": $attributes
+})
 
+#jqSelected({
+    "prefix": "ur",
+    "required": true,
+    "i18n_available": "available_roles",
+    "i18n_selected": "selected_roles"
+})
+
+<table style="margin-bottom: 20px;">
 	<tr>
-		<td colspan="3">
-			#organisationUnitSelectionTree( true, true, true )
+		<th>$i18n.getString( "data_capture_maintenance_org_units" )</th>
+		<th></th>
+		<th>$i18n.getString( "data_output_analysis_org_units" )</th>
+	</tr>
+	<tr>
+		<td>			
+            #parse( "/dhis-web-commons/ouwt/orgunittree.vm" )
 		</td>
-
+		<td style="width: 26px"></td>
+		<td>
+            #parse( "/dhis-web-commons/oust/selectionTree.vm" )
+		</td>
 	</tr>
 </table>
+
+<div id="showMoreOptions" style="margin-bottom: 20px;"><a href="javascript:showUserOptions()">$i18n.getString( "show_more_options" )</a></div>
+
+<div id="moreOptions" style="display:none">
+
+#jqSelected({
+    "prefix": "ug",
+    "i18n_available": "available_user_groups",
+    "i18n_selected": "selected_user_groups"
+})
+
+#jqSelected({
+    "prefix": "dc",
+    "i18n_available": "available_dimension_restrictions_for_data_analytics",
+    "i18n_selected": "selected_dimension_restrictions_for_data_analytics"
+})
+
+<div id="showLessOptions" style="margin-bottom: 20px;"><a href="javascript:showUserOptions()">$i18n.getString( "show_less_options" )</a></div>
+
+</div>
 
 <p>
 	<input type="submit" value="$i18n.getString( 'add' )" style="width:10em" />

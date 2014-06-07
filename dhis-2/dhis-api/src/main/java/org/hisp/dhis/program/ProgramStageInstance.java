@@ -1,17 +1,20 @@
+package org.hisp.dhis.program;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,58 +27,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.program;
 
 import org.hisp.dhis.common.BaseIdentifiableObject;
+import org.hisp.dhis.message.MessageConversation;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.patientcomment.PatientComment;
 import org.hisp.dhis.sms.outbound.OutboundSms;
+import org.hisp.dhis.trackedentitycomment.TrackedEntityComment;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Abyot Asalefew
- * @version $Id$
  */
-public class ProgramStageInstance extends BaseIdentifiableObject
+public class ProgramStageInstance
+    extends BaseIdentifiableObject
 {
+    public static final int ACTIVE_STATUS = 0;
+    private Integer status = ACTIVE_STATUS;
+    public static final int COMPLETED_STATUS = 1;
+    public static final int VISITED_STATUS = 2;
+    public static final int FUTURE_VISIT_STATUS = 3;
+    public static final int LATE_VISIT_STATUS = 4;
+    public static final int SKIPPED_STATUS = 5;
     /**
      * Determines if a de-serialized file is compatible with this class.
      */
     private static final long serialVersionUID = 6239130884678145713L;
-
-    public static final int COMPLETED_STATUS = 1;
-
-    public static final int VISITED_STATUS = 2;
-
-    public static final int FUTURE_VISIT_STATUS = 3;
-
-    public static final int LATE_VISIT_STATUS = 4;
-
-    public static final int SKIPPED_STATUS = 5;
-
     private ProgramInstance programInstance;
-
     private ProgramStage programStage;
-
     private Date dueDate;
-
     private Date executionDate;
-
     private OrganisationUnit organisationUnit;
+    private boolean completed;
+    private List<OutboundSms> outboundSms = new ArrayList<OutboundSms>();
+    private List<MessageConversation> messageConversations = new ArrayList<MessageConversation>();
+    private TrackedEntityComment comment;
+    private Double longitude;
 
-    private boolean completed = false;
-
-    private List<OutboundSms> outboundSms;
-
-    private Set<PatientComment> patientComments;
-
-    private Integer status;
-
-    private String coordinates;
+    private Double latitude;
 
     private String completedUser;
 
@@ -87,6 +79,7 @@ public class ProgramStageInstance extends BaseIdentifiableObject
 
     public ProgramStageInstance()
     {
+        setAutoFields();
     }
 
     public ProgramStageInstance( ProgramInstance programInstance, ProgramStage programStage )
@@ -94,49 +87,7 @@ public class ProgramStageInstance extends BaseIdentifiableObject
         this.programInstance = programInstance;
         this.programStage = programStage;
     }
-
-    // -------------------------------------------------------------------------
-    // hashCode and equals
-    // -------------------------------------------------------------------------
-
-    @Override
-    public boolean equals( Object o )
-    {
-        if ( this == o )
-        {
-            return true;
-        }
-
-        if ( o == null )
-        {
-            return false;
-        }
-
-        if ( !(o instanceof ProgramStageInstance) )
-        {
-            return false;
-        }
-
-        final ProgramStageInstance other = (ProgramStageInstance) o;
-
-        return programInstance.equals( other.getProgramInstance() ) && programStage.equals( other.getProgramStage() );
-
-    }
-
-    @Override
-    public int hashCode()
-    {
-        final int prime = 31;
-        int result = 1;
-
-        result = result * prime + programInstance.hashCode();
-        result = result * prime + programStage.hashCode();
-        result = result * prime + dueDate.hashCode();
-        result = result * prime + ((executionDate == null) ? 0 : executionDate.hashCode());
-
-        return result;
-    }
-
+    
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
@@ -251,16 +202,6 @@ public class ProgramStageInstance extends BaseIdentifiableObject
         this.outboundSms = outboundSms;
     }
 
-    public Set<PatientComment> getPatientComments()
-    {
-        return patientComments;
-    }
-
-    public void setPatientComments( Set<PatientComment> patientComments )
-    {
-        this.patientComments = patientComments;
-    }
-
     public Date getCompletedDate()
     {
         return completedDate;
@@ -281,19 +222,49 @@ public class ProgramStageInstance extends BaseIdentifiableObject
         this.status = status;
     }
 
-    public String getCoordinates()
+    public List<MessageConversation> getMessageConversations()
     {
-        return coordinates;
+        return messageConversations;
     }
 
-    public void setCoordinates( String coordinates )
+    public void setMessageConversations( List<MessageConversation> messageConversations )
     {
-        this.coordinates = coordinates;
+        this.messageConversations = messageConversations;
+    }
+
+    public Double getLongitude()
+    {
+        return longitude;
+    }
+
+    public void setLongitude( Double longitude )
+    {
+        this.longitude = longitude;
+    }
+
+    public Double getLatitude()
+    {
+        return latitude;
+    }
+
+    public void setLatitude( Double latitude )
+    {
+        this.latitude = latitude;
+    }
+
+    public TrackedEntityComment getComment()
+    {
+        return comment;
+    }
+
+    public void setComment( TrackedEntityComment comment )
+    {
+        this.comment = comment;
     }
 
     public Integer getEventStatus()
     {
-        if ( this.status != null )
+        if ( this.status != 0 )
         {
             return status;
         }

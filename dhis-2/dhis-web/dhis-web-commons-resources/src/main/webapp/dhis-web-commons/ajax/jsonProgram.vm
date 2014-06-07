@@ -4,18 +4,16 @@
 	"name": "$!encoder.jsEncode( ${program.name} )",
 	"description": "$!encoder.jsEncode( ${program.description} )",
 	"type": "$!program.type",
-	"displayProvidedOtherFacility": "$!program.displayProvidedOtherFacility",
+	"dataEntryMethod": "$!program.dataEntryMethod",
 	"displayIncidentDate": "$!program.displayIncidentDate",
-	"generatedByEnrollmentDate": "$!program.generatedByEnrollmentDate",
 	"ignoreOverdueEvents": "$!program.ignoreOverdueEvents",
 	"dateOfEnrollmentDescription": "$!encoder.jsEncode( ${program.dateOfEnrollmentDescription} )",
 	"dateOfIncidentDescription": "$!encoder.jsEncode( ${program.dateOfIncidentDescription} )",
 	"programStageCount": "${program.programStages.size()}",
-	"noAttributes": "$!program.patientAttributes.size()",
-	"noIdentifierTypes": "$!program.patientIdentifierTypes.size()",
-	"blockEntryForm": "$!program.blockEntryForm",
+	"noAttributes": "$!program.attributes.size()",
 	"onlyEnrollOnce": "$!program.onlyEnrollOnce",
-	"remindCompleted": "$!program.remindCompleted",
-	"displayOnAllOrgunit": "$!program.displayOnAllOrgunit"
+	"displayOnAllOrgunit": "$!program.displayOnAllOrgunit",
+	"selectEnrollmentDatesInFuture": "$!program.selectEnrollmentDatesInFuture",
+	"selectIncidentDatesInFuture": "$!program.selectIncidentDatesInFuture"
   }
 }

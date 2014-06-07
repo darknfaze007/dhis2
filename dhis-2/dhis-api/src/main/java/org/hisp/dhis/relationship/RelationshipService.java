@@ -1,17 +1,20 @@
+package org.hisp.dhis.relationship;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.relationship;
 
 import java.util.Collection;
 
-import org.hisp.dhis.patient.Patient;
+import org.hisp.dhis.program.Program;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
 
 /**
  * @author Abyot Asalefew
@@ -38,25 +41,69 @@ public interface RelationshipService
 {
     String ID = RelationshipService.class.getName();
 
-    int saveRelationship( Relationship relationship );
+    /**
+     * Adds an {@link Program}
+     * 
+     * @param program The to Program add.
+     * 
+     * @return A generated unique id of the added {@link Program}.
+     */
+    int addRelationship( Relationship relationship );
 
+    /**
+     * Returns a {@link Program}.
+     * 
+     * @param id the id of the Program to return.
+     * 
+     * @return the Program with the given id
+     */
     void deleteRelationship( Relationship relationship );
 
+    /**
+     * Updates an {@link Program}.
+     * 
+     * @param program the Program to update.
+     */
     void updateRelationship( Relationship relationship );
 
+    /**
+     * Returns a {@link Program}.
+     * 
+     * @param id the id of the Program to return.
+     * 
+     * @return the Program with the given id
+     */
     Relationship getRelationship( int id );
+
+    /**
+     * Get the relationship between two entityInstances by retrieving a
+     * {@link RelationshipType}
+     * 
+     * @param entityInstanceA {@link TrackedEntityInstance}
+     * @param entityInstanceB {@link TrackedEntityInstance}
+     * @param relationshipType {@link RelationshipType}
+     * 
+     * @return {@link RelationshipType}
+     */
+    Relationship getRelationship( TrackedEntityInstance entityInstanceA, TrackedEntityInstance entityInstanceB, RelationshipType relationshipType );
     
-    Relationship getRelationship( Patient patientA, Patient patientB, RelationshipType relationshipType );
-    
-    Relationship getRelationship( Patient patientA, Patient patientB );
+    /**
+     * Retrieve relationships of a instance
+     * 
+     * @param instance TrackedEntityInstance
+     * 
+     * @return Relationship list
+     */
+    Collection<Relationship> getRelationshipsForTrackedEntityInstance( TrackedEntityInstance instance );
 
-    Collection<Relationship> getAllRelationships();
-
-    Collection<Relationship> getRelationshipsForPatient( Patient patient );
-
-    // For example a patient might have more than one sibling
-    Collection<Relationship> getRelationships( Patient patientA, RelationshipType relationshipType );
-
-    Collection<Relationship> getRelationshipsByRelationshipType( RelationshipType relationshipType );   
-
+    /**
+     * Retrieve all relationships by relationship type of a person, for example
+     * a instance might have more than one sibling
+     * 
+     * @param entityInstanceA TrackedEntityInstance
+     * @param relationshipType RelationshipType
+     * 
+     * @return Relationship list
+     */
+    Collection<Relationship> getRelationships( TrackedEntityInstance entityInstanceA, RelationshipType relationshipType );
 }

@@ -1,19 +1,20 @@
 package org.hisp.dhis.reporttable;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,17 +29,13 @@ package org.hisp.dhis.reporttable;
  */
 
 import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
-import org.hisp.dhis.period.Period;
 import org.hisp.dhis.system.deletion.DeletionHandler;
 
 /**
  * @author Lars Helge Overland
- * @version $Id$
  */
 public class ReportTableDeletionHandler
     extends DeletionHandler
@@ -63,90 +60,28 @@ public class ReportTableDeletionHandler
     {
         return ReportTable.class.getSimpleName();
     }
-
+    
     @Override
-    public void deleteDataElement( DataElement dataElement )
+    public String allowDeleteDataSet( DataSet dataSet )
     {
-        for ( ReportTable reportTable : reportTableService.getAllReportTables() )
-        {
-            if ( reportTable.getDataElements().remove( dataElement ) )
-            {
-                reportTableService.updateReportTable( reportTable );
-            }
-        }
-    }
-
-    @Override
-    public void deleteIndicator( Indicator indicator )
-    {
-        for ( ReportTable reportTable : reportTableService.getAllReportTables() )
-        {
-            if ( reportTable.getIndicators().remove( indicator ) )
-            {
-                reportTableService.updateReportTable( reportTable );
-            }
-        }
-    }
-
-    @Override
-    public void deleteDataSet( DataSet dataSet )
-    {
-        for ( ReportTable reportTable : reportTableService.getAllReportTables() )
-        {
-            if ( reportTable.getDataSets().remove( dataSet ) )
-            {
-                reportTableService.updateReportTable( reportTable );
-            }
-        }
-    }
-
-    @Override
-    public String allowDeletePeriod( Period period )
-    {
-        for ( ReportTable reportTable : reportTableService.getAllReportTables() )
-        {
-            if ( reportTable.getPeriods().contains( period ) )
-            {
-                return reportTable.getName();
-            }
-        }
-
-        return null;
-    }
-
-    @Override
-    public void deleteOrganisationUnit( OrganisationUnit unit )
-    {
-        for ( ReportTable reportTable : reportTableService.getAllReportTables() )
-        {
-            if ( reportTable.getOrganisationUnits().remove( unit ) )
-            {
-                reportTableService.updateReportTable( reportTable );
-            }
-        }
-    }
-
-    @Override
-    public void deleteDataElementGroup( DataElementGroup group )
-    {
-        for ( ReportTable reportTable : reportTableService.getAllReportTables() )
-        {
-            if ( reportTable.getDataElementGroups().remove( group ) )
-            {
-                reportTableService.updateReportTable( reportTable );
-            }
-        }
+        return reportTableService.countDataSetReportTables( dataSet ) == 0 ? null : ERROR;
     }
     
     @Override
-    public void deleteOrganisationUnitGroup( OrganisationUnitGroup group )
+    public String allowDeleteIndicator( Indicator indicator )
     {
-        for ( ReportTable reportTable : reportTableService.getAllReportTables() )
-        {
-            if ( reportTable.getOrganisationUnitGroups().remove( group ) )
-            {
-                reportTableService.updateReportTable( reportTable );
-            }
-        }
+        return reportTableService.countIndicatorReportTables( indicator ) == 0 ? null : ERROR;
+    }
+    
+    @Override
+    public String allowDeleteDataElement( DataElement dataElement )
+    {
+        return reportTableService.countDataElementReportTables( dataElement ) == 0 ? null : ERROR;
+    }
+    
+    @Override
+    public String allowDeleteOrganisationUnit( OrganisationUnit organisationUnit )
+    {
+        return reportTableService.countOrganisationUnitReportTables( organisationUnit ) == 0 ? null : ERROR;
     }
 }

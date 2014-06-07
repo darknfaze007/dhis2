@@ -1,19 +1,20 @@
 package org.hisp.dhis.common;
 
 /*
- * Copyright (c) 2004-2005, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the <ORGANIZATION> nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -41,11 +42,21 @@ import java.util.Set;
  */
 public interface IdentifiableObjectManager
 {
+    final String ID = IdentifiableObjectManager.class.getName();
+
     void save( IdentifiableObject object );
 
     void update( IdentifiableObject object );
 
+    void update( List<IdentifiableObject> object );
+
+    <T extends IdentifiableObject> T get( String uid );
+
+    <T extends IdentifiableObject> T get( Class<T> clazz, int id );
+
     <T extends IdentifiableObject> T get( Class<T> clazz, String uid );
+
+    <T extends IdentifiableObject> boolean exists( Class<T> clazz, String uid );
 
     <T extends IdentifiableObject> T getByCode( Class<T> clazz, String code );
 
@@ -53,17 +64,21 @@ public interface IdentifiableObjectManager
 
     <T extends IdentifiableObject> T search( Class<T> clazz, String query );
 
+    <T extends IdentifiableObject> Collection<T> filter( Class<T> clazz, String query );
+
     <T extends IdentifiableObject> Collection<T> getAll( Class<T> clazz );
 
     <T extends IdentifiableObject> Collection<T> getAllSorted( Class<T> clazz );
-    
+
     <T extends IdentifiableObject> List<T> getByUid( Class<T> clazz, Collection<String> uids );
 
     <T extends IdentifiableObject> Collection<T> getLikeName( Class<T> clazz, String name );
 
-    <T extends IdentifiableObject> Collection<T> getBetween( Class<T> clazz, int first, int max );
+    <T extends IdentifiableObject> Collection<T> getLikeShortName( Class<T> clazz, String shortName );
 
-    <T extends IdentifiableObject> Collection<T> getBetweenByName( Class<T> clazz, String name, int first, int max );
+    <T extends IdentifiableObject> List<T> getBetween( Class<T> clazz, int first, int max );
+
+    <T extends IdentifiableObject> List<T> getBetweenByName( Class<T> clazz, String name, int first, int max );
 
     <T extends IdentifiableObject> Collection<T> getByLastUpdated( Class<T> clazz, Date lastUpdated );
 

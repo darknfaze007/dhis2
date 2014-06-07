@@ -6,18 +6,41 @@
   xmlns:sec="http://www.springframework.org/schema/security"
   xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
-    http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd
+    http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd">
 
   <sec:global-method-security pre-post-annotations="enabled" />
 
+  <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver" />
+
+  <bean id="org.hisp.dhis.webapi.utils.RootNodeMessageConverter" class="org.hisp.dhis.webapi.utils.RootNodeMessageConverter">
+    <constructor-arg name="supportedMediaTypes">
+      <list>
+        <value>application/json</value>
+        <value>application/xml</value>
+      </list>
+    </constructor-arg>
+  </bean>
+
+  <bean id="org.hisp.dhis.webapi.utils.RenderServiceMessageConverter" class="org.hisp.dhis.webapi.utils.RenderServiceMessageConverter">
+    <constructor-arg name="supportedMediaTypes">
+      <list>
+        <value>application/json</value>
+        <value>application/xml</value>
+      </list>
+    </constructor-arg>
+  </bean>
+
   <mvc:annotation-driven>
-    <mvc:message-converters>
+    <mvc:message-converters register-defaults="true">
+      <ref bean="org.hisp.dhis.webapi.utils.RootNodeMessageConverter" />
+      <ref bean="org.hisp.dhis.webapi.utils.RenderServiceMessageConverter" />
       <bean class="org.hisp.dhis.api.mobile.support.DataStreamSerializableMessageConverter" />
     </mvc:message-converters>
   </mvc:annotation-driven>
 
-  <context:component-scan base-package="org.hisp.dhis.api" />
+  <context:component-scan base-package="org.hisp.dhis.webapi" />
+  <context:annotation-config />
 
   <bean id="fixedContentNegotiationStrategy" class="org.springframework.web.accept.FixedContentNegotiationStrategy">
     <constructor-arg name="defaultContentType" value="application/json" />
@@ -25,14 +48,18 @@
 
   <bean id="headerContentNegotiationStrategy" class="org.springframework.web.accept.HeaderContentNegotiationStrategy" />
 
-  <bean id="pathExtensionContentNegotiationStrategy" class="org.springframework.web.accept.PathExtensionContentNegotiationStrategy">
+  <bean id="pathExtensionContentNegotiationStrategy" class="org.hisp.dhis.webapi.view.CustomPathExtensionContentNegotiationStrategy">
     <constructor-arg name="mediaTypes">
       <map>
-        <entry key="html" value="text/html" />
         <entry key="json" value="application/json" />
+        <entry key="json.gz" value="application/json+gzip" />
         <entry key="jsonp" value="application/javascript" />
         <entry key="xml" value="application/xml" />
+        <entry key="xml.gz" value="application/xml+gzip" />
         <entry key="png" value="image/png" />
+        <entry key="pdf" value="application/pdf" />
+        <entry key="xls" value="application/vnd.ms-excel" />
+        <entry key="csv" value="application/csv" />
       </map>
     </constructor-arg>
   </bean>
@@ -53,25 +80,42 @@
 
     <property name="defaultViews">
       <list>
-        <bean class="org.hisp.dhis.api.view.JacksonXmlView" />
+        <bean class="org.hisp.dhis.webapi.view.JacksonXmlView">
+          <constructor-arg name="withCompression" value="false" />
+        </bean>
 
-        <bean class="org.hisp.dhis.api.view.JacksonJsonView" />
+        <bean class="org.hisp.dhis.webapi.view.JacksonXmlView">
+          <constructor-arg name="withCompression" value="true" />
+        </bean>
 
-        <bean class="org.hisp.dhis.api.view.JacksonJsonView">
+        <bean class="org.hisp.dhis.webapi.view.JacksonJsonView">
+          <constructor-arg name="withPadding" value="false" />
+          <constructor-arg name="withCompression" value="false" />
+        </bean>
+
+        <bean class="org.hisp.dhis.webapi.view.JacksonJsonView">
+          <constructor-arg name="withPadding" value="false" />
+          <constructor-arg name="withCompression" value="true" />
+        </bean>
+
+        <bean class="org.hisp.dhis.webapi.view.JacksonJsonView">
           <constructor-arg name="withPadding" value="true" />
+          <constructor-arg name="withCompression" value="false" />
         </bean>
+
+        <bean class="org.hisp.dhis.webapi.view.JacksonJsonView">
+          <constructor-arg name="withPadding" value="true" />
+          <constructor-arg name="withCompression" value="true" />
+        </bean>
+
+        <bean class="org.hisp.dhis.webapi.view.PdfGridView" />
+
+        <bean class="org.hisp.dhis.webapi.view.ExcelGridView" />
+
+        <bean class="org.hisp.dhis.webapi.view.CsvGridView" />
       </list>
     </property>
 
-    <property name="viewResolvers">
-      <list>
-        <bean name="xsltHtmlViewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver">
-          <property name="prefix" value="/templates/html/" />
-          <property name="suffix" value=".xsl" />
-          <property name="viewClass" value="org.hisp.dhis.api.view.XsltHtmlView" />
-        </bean>
-      </list>
-    </property>
   </bean>
 
 </beans>

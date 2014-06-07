@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics.table;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,9 +35,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 
+import org.hisp.dhis.analytics.AnalyticsTable;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitLevel;
-import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.system.util.DateUtils;
 import org.springframework.scheduling.annotation.Async;
@@ -47,30 +48,41 @@ import org.springframework.scheduling.annotation.Async;
 public class JdbcCompletenessTableManager
     extends AbstractJdbcTableManager
 {
-    public boolean validState()
+    public String validState()
     {
-        return jdbcTemplate.queryForRowSet( "select datasetid from completedatasetregistration limit 1" ).next();
+        boolean hasData = jdbcTemplate.queryForRowSet( "select datasetid from completedatasetregistration limit 1" ).next();
+        
+        if ( !hasData )
+        {
+            return "No complete registrations exist, not updating completeness analytics tables";
+        }
+        
+        return null;
     }
     
     public String getTableName()
     {
-        return "completeness";
+        return COMPLETENESS_TABLE_NAME;
     }
     
-    public void createTable( String tableName )
+    public void createTable( AnalyticsTable table )
     {
+        final String tableName = table.getTempTableName();
+        
         final String sqlDrop = "drop table " + tableName;
         
         executeSilently( sqlDrop );
         
         String sqlCreate = "create table " + tableName + " (";
         
-        for ( String[] col : getDimensionColumns() )
+        for ( String[] col : getDimensionColumns( table ) )
         {
             sqlCreate += col[0] + " " + col[1] + ",";
         }
         
-        sqlCreate += "value date)";
+        sqlCreate += "value date) ";
+        
+        sqlCreate += statementBuilder.getTableOptions( false );
         
         log.info( "Create SQL: " + sqlCreate );
         
@@ -78,25 +90,23 @@ public class JdbcCompletenessTableManager
     }
     
     @Async
-    public Future<?> populateTableAsync( ConcurrentLinkedQueue<String> tables )
+    public Future<?> populateTableAsync( ConcurrentLinkedQueue<AnalyticsTable> tables )
     {
         taskLoop : while ( true )
         {
-            String table = tables.poll();
+            AnalyticsTable table = tables.poll();
                 
             if ( table == null )
             {
                 break taskLoop;
             }
             
-            Period period = PartitionUtils.getPeriod( table );
-            
-            final String start = DateUtils.getMediumDateString( period.getStartDate() );
-            final String end = DateUtils.getMediumDateString( period.getEndDate() );
+            final String start = DateUtils.getMediumDateString( table.getPeriod().getStartDate() );
+            final String end = DateUtils.getMediumDateString( table.getPeriod().getEndDate() );
         
-            String insert = "insert into " + table + " (";
+            String insert = "insert into " + table.getTempTableName() + " (";
             
-            for ( String[] col : getDimensionColumns() )
+            for ( String[] col : getDimensionColumns( table ) )
             {
                 insert += col[0] + ",";
             }
@@ -105,7 +115,7 @@ public class JdbcCompletenessTableManager
             
             String select = "select ";
             
-            for ( String[] col : getDimensionColumns() )
+            for ( String[] col : getDimensionColumns( table ) )
             {
                 select += col[2] + ",";
             }
@@ -134,37 +144,37 @@ public class JdbcCompletenessTableManager
         return null;
     }
     
-    public List<String[]> getDimensionColumns()
+    public List<String[]> getDimensionColumns( AnalyticsTable table )
     {
         List<String[]> columns = new ArrayList<String[]>();
 
         Collection<OrganisationUnitGroupSet> orgUnitGroupSets = 
-            organisationUnitGroupService.getAllOrganisationUnitGroupSets();
+            organisationUnitGroupService.getDataDimensionOrganisationUnitGroupSets();
         
         Collection<OrganisationUnitLevel> levels =
             organisationUnitService.getOrganisationUnitLevels();
         
         for ( OrganisationUnitGroupSet groupSet : orgUnitGroupSets )
         {
-            String[] col = { groupSet.getUid(), "character(11)", "ougs." + groupSet.getUid() };
+            String[] col = { quote( groupSet.getUid() ), "character(11)", "ougs." + quote( groupSet.getUid() ) };
             columns.add( col );
         }
         
         for ( OrganisationUnitLevel level : levels )
         {
-            String column = PREFIX_ORGUNITLEVEL + level.getLevel();
+            String column = quote( PREFIX_ORGUNITLEVEL + level.getLevel() );
             String[] col = { column, "character(11)", "ous." + column };
             columns.add( col );
         }
         
-        for ( PeriodType periodType : PeriodType.getAvailablePeriodTypes().subList( 0, 7 ) )
+        for ( PeriodType periodType : PeriodType.getAvailablePeriodTypes() )
         {
-            String column = periodType.getName().toLowerCase();
-            String[] col = { column, "character varying(10)", "ps." + column };
+            String column = quote( periodType.getName().toLowerCase() );
+            String[] col = { column, "character varying(15)", "ps." + column };
             columns.add( col );
         }
         
-        String[] ds = { "ds", "character(11) not null", "ds.uid" };
+        String[] ds = { quote( "ds" ), "character(11) not null", "ds.uid" };
         
         columns.add( ds );
         
@@ -174,7 +184,8 @@ public class JdbcCompletenessTableManager
     public Date getEarliestData()
     {
         final String sql = "select min(pe.startdate) from completedatasetregistration cdr " +
-            "join period pe on cdr.periodid=pe.periodid";
+            "join period pe on cdr.periodid=pe.periodid " +
+            "where pe.startdate is not null";
         
         return jdbcTemplate.queryForObject( sql, Date.class );
     }
@@ -182,13 +193,14 @@ public class JdbcCompletenessTableManager
     public Date getLatestData()
     {
         final String sql = "select max(pe.enddate) from completedatasetregistration cdr " +
-            "join period pe on cdr.periodid=pe.periodid";
+            "join period pe on cdr.periodid=pe.periodid " +
+            "where pe.enddate is not null";
         
         return jdbcTemplate.queryForObject( sql, Date.class );
     }
 
     @Async
-    public Future<?> applyAggregationLevels( ConcurrentLinkedQueue<String> tables, Collection<String> dataElements, int aggregationLevel )
+    public Future<?> applyAggregationLevels( ConcurrentLinkedQueue<AnalyticsTable> tables, Collection<String> dataElements, int aggregationLevel )
     {
         return null; // Not relevant
     }

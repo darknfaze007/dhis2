@@ -1,19 +1,20 @@
 package org.hisp.dhis.translation;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -46,6 +47,13 @@ public interface TranslationService
     void addTranslation( Translation translation );
 
     /**
+     * Adds a collection of Translation.
+     *
+     * @param translations the collection of translations
+     */
+    void createOrUpdate( Collection<Translation> translations );
+
+    /**
      * Updates a Translation.
      * 
      * @param translation the Translation.
@@ -55,23 +63,52 @@ public interface TranslationService
     /**
      * Retrieves a Translation.
      * 
+     *
+     *
      * @param className the class name.
-     * @param id the id.
      * @param locale the locale.
      * @param property the property.
+     * @param objectUid
      * @return a Translation.
      */
-    Translation getTranslation( String className, int id, Locale locale, String property );
+    Translation getTranslation( String className, Locale locale, String property, String objectUid );
+
+    /**
+     * Retrieves a Translation. Only exact matches on the given
+     * Locale will be returned.
+     * 
+     *
+     *
+     * @param className the class name.
+     * @param locale the locale.
+     * @param property the property.
+     * @param objectUid
+     * @return a Translation.
+     */
+    Translation getTranslationNoFallback( String className, Locale locale, String property, String objectUid );
 
     /**
      * Retrieves a Collection of Translations.
      * 
+     *
      * @param className the class name.
-     * @param id the id.
      * @param locale the locale.
      * @return a Collection of Translations.
      */
-    Collection<Translation> getTranslations( String className, int id, Locale locale );
+    Collection<Translation> getTranslations( String className, Locale locale, String objectUid );
+
+    /**
+     * Retrieves a Collection of Translations. Only exact matches on the given
+     * Locale will be returned.
+     * 
+     *
+     *
+     * @param className the class name.
+     * @param locale the locale.
+     * @param objectUid the id.
+     * @return a Collection of Translations.
+     */
+    Collection<Translation> getTranslationsNoFallback( String className, Locale locale, String objectUid );
 
     /**
      * Retrieves a Collection of Translations.
@@ -81,6 +118,14 @@ public interface TranslationService
      * @return a Collection of Translations.
      */
     Collection<Translation> getTranslations( String className, Locale locale );
+
+    /**
+     * Retrieves a Collection of Translations.
+     * 
+     * @param locale the locale.
+     * @return a Collection of Translations.
+     */
+    Collection<Translation> getTranslations( Locale locale );
 
     /**
      * Retrieves a Collection of all Translations.
@@ -98,9 +143,11 @@ public interface TranslationService
 
     /**
      * Deletes Translations.
-     * 
+     *
      * @param className the class name.
-     * @param id the id.
+     * @param objectUid the id.
      */
-    void deleteTranslations( String className, int id );
+    void deleteTranslations( String className, String objectUid );
+
+    void createOrUpdate( Translation translation );
 }

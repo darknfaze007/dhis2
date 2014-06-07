@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,6 +29,8 @@ package org.hisp.dhis.analytics;
  */
 
 import java.util.List;
+
+import org.hisp.dhis.common.IllegalQueryException;
 
 /**
  * @author Lars Helge Overland
@@ -82,4 +85,30 @@ public interface QueryPlanner
      */
     DataQueryGroups planQuery( DataQueryParams params, int optimalQueries, String tableName )
         throws IllegalQueryException;
+
+    /**
+     * If organisation units appear as dimensions; groups the given query into 
+     * sub queries based on the level of the organisation units. Sets the organisation 
+     * unit level on each query. If organisation units appear as filter; replaces
+     * the organisation unit filter with one filter for each level. Sets the dimension
+     * names and filter names respectively.
+     */
+    List<DataQueryParams> groupByOrgUnitLevel( DataQueryParams params );
+
+    /**
+     * Groups the given query into sub queries based on its periods and which 
+     * partition it should be executed against. Sets the partition table name on
+     * each query. Queries are grouped based on periods if appearing as a 
+     * dimension.
+     */
+    List<DataQueryParams> groupByPartition( DataQueryParams params, String tableName, String tableSuffix );
+    
+    /**
+     * If periods appear as dimensions in the given query; groups the query into 
+     * sub queries based on the period type of the periods. Sets the period type 
+     * name on each query. If periods appear as filters; replaces the period filter
+     * with one filter for each period type. Sets the dimension names and filter
+     * names respectively.
+     */
+    List<DataQueryParams> groupByPeriodType( DataQueryParams params );
 }

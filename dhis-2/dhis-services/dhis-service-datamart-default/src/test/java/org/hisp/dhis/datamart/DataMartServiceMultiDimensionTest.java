@@ -1,19 +1,20 @@
 package org.hisp.dhis.datamart;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -81,6 +82,7 @@ public class DataMartServiceMultiDimensionTest
     
     private DataElementCategoryCombo categoryComboA;
     
+    private DataElementCategoryOptionCombo defaultOptionCombo;
     private DataElementCategoryOptionCombo categoryOptionComboA;
     private DataElementCategoryOptionCombo categoryOptionComboB;  
     
@@ -161,7 +163,7 @@ public class DataMartServiceMultiDimensionTest
 
         Iterator<DataElementCategoryOptionCombo> categoryOptionCombos = categoryService.getAllDataElementCategoryOptionCombos().iterator();
         
-        categoryOptionCombos.next(); // Omit default
+        defaultOptionCombo = categoryOptionCombos.next();
         categoryOptionComboA = categoryOptionCombos.next();
         categoryOptionComboB = categoryOptionCombos.next();     
         
@@ -244,19 +246,19 @@ public class DataMartServiceMultiDimensionTest
         // Setup DataValues
         // ---------------------------------------------------------------------
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, "40", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, "20", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "90", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "10", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "25", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "20", categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, "40", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, "20", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "90", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "10", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "25", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "20", categoryOptionComboB, defaultOptionCombo ) );
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, "40", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, "80", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "70", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "30", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "65", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "40", categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, "40", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, "80", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "70", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "30", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "65", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "40", categoryOptionComboB, defaultOptionCombo ) );
         
         // ---------------------------------------------------------------------
         // Test
@@ -298,19 +300,19 @@ public class DataMartServiceMultiDimensionTest
         // Setup DataValues
         // ---------------------------------------------------------------------
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, "40", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, "20", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "90", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "10", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "25", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "20", categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, "40", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, "20", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "90", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "10", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "25", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "20", categoryOptionComboB, defaultOptionCombo ) );
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, "40", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, "80", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "70", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "30", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "65", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "40", categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, "40", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, "80", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "70", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "30", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "65", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "40", categoryOptionComboB, defaultOptionCombo ) );
         
         // ---------------------------------------------------------------------
         // Test
@@ -352,19 +354,19 @@ public class DataMartServiceMultiDimensionTest
         // Setup DataValues
         // ---------------------------------------------------------------------
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, T, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, F, categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, T, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, F, categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, F, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, T, categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, T, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, F, categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, T, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, F, categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, F, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, T, categoryOptionComboB, defaultOptionCombo ) );
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, T, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, T, categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, F, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, T, categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, F, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, F, categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, T, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, T, categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, F, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, T, categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, F, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, F, categoryOptionComboB, defaultOptionCombo ) );
         
         // ---------------------------------------------------------------------
         // Test
@@ -406,19 +408,19 @@ public class DataMartServiceMultiDimensionTest
         // Setup DataValues
         // ---------------------------------------------------------------------
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, T, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, F, categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, T, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, F, categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, F, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, T, categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, T, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitA, F, categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, T, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, F, categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, F, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, T, categoryOptionComboB, defaultOptionCombo ) );
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, T, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, T, categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, F, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, T, categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, F, categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, F, categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, T, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitA, T, categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, F, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, T, categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, F, categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, F, categoryOptionComboB, defaultOptionCombo ) );
         
         // ---------------------------------------------------------------------
         // Test
@@ -460,15 +462,15 @@ public class DataMartServiceMultiDimensionTest
         // Setup DataValues
         // ---------------------------------------------------------------------
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "9", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "3", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "1", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "5", categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "9", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "3", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "1", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "5", categoryOptionComboB, defaultOptionCombo ) );
         
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "3", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "2", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "7", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "9", categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "3", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "2", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "7", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "9", categoryOptionComboB, defaultOptionCombo ) );
         
         // ---------------------------------------------------------------------
         // Setup Indicators
@@ -520,15 +522,15 @@ public class DataMartServiceMultiDimensionTest
         // Setup DataValues
         // ---------------------------------------------------------------------
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "9", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "3", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "1", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "5", categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "9", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "3", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "1", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "5", categoryOptionComboB, defaultOptionCombo ) );
         
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "3", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "2", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "7", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "9", categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "3", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "2", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "7", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "9", categoryOptionComboB, defaultOptionCombo ) );
         
         // ---------------------------------------------------------------------
         // Setup Indicators
@@ -599,15 +601,15 @@ public class DataMartServiceMultiDimensionTest
         // Setup DataValues
         // ---------------------------------------------------------------------
 
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "9", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "3", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "1", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "5", categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "9", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitB, "3", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "1", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodA, unitC, "5", categoryOptionComboB, defaultOptionCombo ) );
         
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "3", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "2", categoryOptionComboB ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "7", categoryOptionComboA ) );
-        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "9", categoryOptionComboB ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "3", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitB, "2", categoryOptionComboB, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "7", categoryOptionComboA, defaultOptionCombo ) );
+        dataValueService.addDataValue( createDataValue( dataElementA, periodB, unitC, "9", categoryOptionComboB, defaultOptionCombo ) );
         
         // ---------------------------------------------------------------------
         // Setup Indicators

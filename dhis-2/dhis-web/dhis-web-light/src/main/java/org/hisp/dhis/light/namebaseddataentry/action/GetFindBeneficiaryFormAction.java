@@ -1,17 +1,20 @@
+package org.hisp.dhis.light.namebaseddataentry.action;
+
 /*
- * Copyright (c) 2004-2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,132 +28,142 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.light.namebaseddataentry.action;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.hisp.dhis.organisationunit.OrganisationUnit;
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeService;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.User;
 
 import com.opensymphony.xwork2.Action;
 
-public class GetFindBeneficiaryFormAction
-    implements Action
-{
-    // -------------------------------------------------------------------------
-    // Dependencies
-    // -------------------------------------------------------------------------
+public class GetFindBeneficiaryFormAction implements Action {
+	// -------------------------------------------------------------------------
+	// Dependencies
+	// -------------------------------------------------------------------------
 
-    private CurrentUserService currentUserService;
+	private CurrentUserService currentUserService;
 
-    public CurrentUserService getCurrentUserService()
-    {
-        return currentUserService;
-    }
+	public void setCurrentUserService(CurrentUserService currentUserService) {
+		this.currentUserService = currentUserService;
+	}
 
-    public void setCurrentUserService( CurrentUserService currentUserService )
-    {
-        this.currentUserService = currentUserService;
-    }
+	private TrackedEntityAttributeService patientAttributeService;
 
-    // -------------------------------------------------------------------------
-    // Input & Output
-    // -------------------------------------------------------------------------
+	public void setPatientAttributeService(
+			TrackedEntityAttributeService patientAttributeService) {
+		this.patientAttributeService = patientAttributeService;
+	}
 
-    private Integer orgUnitId;
-    
-    public Integer getOrgUnitId()
-    {
-        return orgUnitId;
-    }
+	// -------------------------------------------------------------------------
+	// Input & Output
+	// -------------------------------------------------------------------------
 
-    public void setOrgUnitId( Integer orgUnitId )
-    {
-        this.orgUnitId = orgUnitId;
-    }
+	private Integer patientAttributeId;
 
-    private Set<OrganisationUnit> organisationUnits;
+	public Integer getPatientAttributeId() {
+		return patientAttributeId;
+	}
 
-    public Set<OrganisationUnit> getOrganisationUnits()
-    {
-        return organisationUnits;
-    }
+	public void setPatientAttributeId(Integer patientAttributeId) {
+		this.patientAttributeId = patientAttributeId;
+	}
 
-    public void setOrganisationUnits( Set<OrganisationUnit> organisationUnits )
-    {
-        this.organisationUnits = organisationUnits;
-    }
+	private Integer orgUnitId;
 
-    private User user;
+	public Integer getOrgUnitId() {
+		return orgUnitId;
+	}
 
-    public User getUser()
-    {
-        return user;
-    }
+	public void setOrgUnitId(Integer orgUnitId) {
+		this.orgUnitId = orgUnitId;
+	}
 
-    public void setUser( User user )
-    {
-        this.user = user;
-    }
+	private Collection<TrackedEntityAttribute> patientAttributes;
 
-    // use in find relation person
+	public Collection<TrackedEntityAttribute> getPatientAttributes() {
+		return patientAttributes;
+	}
 
-    private Integer originalPatientId;
+	public void setPatientAttributes(
+			Collection<TrackedEntityAttribute> patientAttributes) {
+		this.patientAttributes = patientAttributes;
+	}
 
-    public Integer getOriginalPatientId()
-    {
-        return originalPatientId;
-    }
+	private Set<OrganisationUnit> organisationUnits;
 
-    public void setOriginalPatientId( Integer originalPatientId )
-    {
-        this.originalPatientId = originalPatientId;
-    }
+	public Set<OrganisationUnit> getOrganisationUnits() {
+		return organisationUnits;
+	}
 
-    private Integer relationshipTypeId;
+	public void setOrganisationUnits(Set<OrganisationUnit> organisationUnits) {
+		this.organisationUnits = organisationUnits;
+	}
 
-    public Integer getRelationshipTypeId()
-    {
-        return relationshipTypeId;
-    }
+	private User user;
 
-    public void setRelationshipTypeId( Integer relationshipTypeId )
-    {
-        this.relationshipTypeId = relationshipTypeId;
-    }
+	public User getUser() {
+		return user;
+	}
 
-    @Override
-    public String execute()
-        throws Exception
-    {
-        user = currentUserService.getCurrentUser();
-        Collection<OrganisationUnit> basicOrganisationUnits = currentUserService.getCurrentUser()
-            .getOrganisationUnits();
-        organisationUnits = new HashSet<OrganisationUnit>();
+	public void setUser(User user) {
+		this.user = user;
+	}
 
-        for ( OrganisationUnit organisationUnit : basicOrganisationUnits )
-        {
-            organisationUnits.addAll( this.getAllParentOrganisationUnits( organisationUnit ) );
-        }
+	// use in find relation person
 
-        return SUCCESS;
-    }
+	private Integer originalPatientId;
 
-    private Collection<? extends OrganisationUnit> getAllParentOrganisationUnits( OrganisationUnit organisationUnit )
-    {
-        List<OrganisationUnit> parents = new ArrayList<OrganisationUnit>();
-        parents.add( organisationUnit );
+	public Integer getOriginalPatientId() {
+		return originalPatientId;
+	}
 
-        while ( organisationUnit.getParent() != null )
-        {
-            parents.add( organisationUnit.getParent() );
-            organisationUnit = organisationUnit.getParent();
-        }
-        return parents;
-    }
+	public void setOriginalPatientId(Integer originalPatientId) {
+		this.originalPatientId = originalPatientId;
+	}
+
+	private Integer relationshipTypeId;
+
+	public Integer getRelationshipTypeId() {
+		return relationshipTypeId;
+	}
+
+	public void setRelationshipTypeId(Integer relationshipTypeId) {
+		this.relationshipTypeId = relationshipTypeId;
+	}
+
+	@Override
+	public String execute() throws Exception {
+		user = currentUserService.getCurrentUser();
+		Collection<OrganisationUnit> basicOrganisationUnits = currentUserService
+				.getCurrentUser().getOrganisationUnits();
+		organisationUnits = new HashSet<OrganisationUnit>();
+
+		for (OrganisationUnit organisationUnit : basicOrganisationUnits) {
+			organisationUnits.addAll(this
+					.getAllParentOrganisationUnits(organisationUnit));
+		}
+
+		patientAttributes = patientAttributeService.getAllTrackedEntityAttributes();
+
+		return SUCCESS;
+	}
+
+	private Collection<? extends OrganisationUnit> getAllParentOrganisationUnits(
+			OrganisationUnit organisationUnit) {
+		List<OrganisationUnit> parents = new ArrayList<OrganisationUnit>();
+		parents.add(organisationUnit);
+
+		while (organisationUnit.getParent() != null) {
+			parents.add(organisationUnit.getParent());
+			organisationUnit = organisationUnit.getParent();
+		}
+		return parents;
+	}
 
 }

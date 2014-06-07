@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.dhis14.xml.converter;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -32,7 +33,6 @@ import org.amplecode.staxwax.writer.XMLWriter;
 import org.hisp.dhis.importexport.ExportParams;
 import org.hisp.dhis.importexport.ImportParams;
 import org.hisp.dhis.importexport.XMLConverter;
-
 /**
  * @author Lars Helge Overland
  * @version $Id: UserConverter.java 6455 2008-11-24 08:59:37Z larshelg $
@@ -43,16 +43,21 @@ public class UserConverter
     public static final String ELEMENT_NAME = "UserName";
     
     private static final String FIELD_ID = "UserID";
+    private static final String FIELD_UID = "UID";
     private static final String FIELD_NAME = "UserName";
     private static final String FIELD_SURNAME = "Surname";
     private static final String FIELD_FIRSTNAME = "Firstname";  
-    private static final String FIELD_INFO_ROLE = "InfoRoleID";  
+    private static final String FIELD_INFO_ROLE = "InfoRoleID"; 
+    private static final String FIELD_USERROLEUSERDEFINED = "UserRoleUserDefined";
     private static final String FIELD_TELEPHONE_NUMBER = "TelephoneNumber";
     private static final String FIELD_FAX_NUMBER = "FaxNumber";
     private static final String FIELD_CELL_NUMBER = "CellNumber";
     private static final String FIELD_EMAIL_ADDRESS = "EmailAddress";
     private static final String FIELD_USER_URL = "UserURL";
+    private static final String FIELD_ACTIVE = "Active";
     private static final String FIELD_SELECTED = "Selected";
+    private static final String FIELD_FIRSTREGISTERED = "FirstRegistered";
+    private static final String FIELD_LASTLOGONDATE = "LastLogOnDate";
     private static final String FIELD_LAST_UPDATED = "LastUpdated";
 
     // -------------------------------------------------------------------------
@@ -75,16 +80,44 @@ public class UserConverter
         writer.openElement( ELEMENT_NAME );
         
         writer.writeElement( FIELD_ID, String.valueOf( 1 ) );
+        writer.writeElement( FIELD_UID, "" );
         writer.writeElement( FIELD_NAME, "NDOH_DD" );
         writer.writeElement( FIELD_SURNAME, "NDOH_DD" );
         writer.writeElement( FIELD_FIRSTNAME, "NDOH_DD" );
         writer.writeElement( FIELD_INFO_ROLE, String.valueOf( 1 ) );
+        writer.writeElement( FIELD_USERROLEUSERDEFINED, "" );
         writer.writeElement( FIELD_TELEPHONE_NUMBER, "" );
         writer.writeElement( FIELD_FAX_NUMBER, "" );
         writer.writeElement( FIELD_CELL_NUMBER, "" );
         writer.writeElement( FIELD_EMAIL_ADDRESS, "" );
         writer.writeElement( FIELD_USER_URL, "#http://www.hisp.org#" );
-        writer.writeElement( FIELD_SELECTED, String.valueOf( 1 ) );        
+        writer.writeElement( FIELD_ACTIVE, String.valueOf( 1 ) );
+        writer.writeElement( FIELD_SELECTED, String.valueOf( 1 ) );
+        writer.writeElement( FIELD_FIRSTREGISTERED, "" );
+        writer.writeElement( FIELD_LASTLOGONDATE, "" );
+        writer.writeElement( FIELD_LAST_UPDATED, "" );
+        
+        writer.closeElement();
+        
+        
+        writer.openElement( ELEMENT_NAME );
+        
+        writer.writeElement( FIELD_ID, String.valueOf( 1594 ) );
+        writer.writeElement( FIELD_UID, "" );
+        writer.writeElement( FIELD_NAME, "Import From DHIS2" );
+        writer.writeElement( FIELD_SURNAME, "From DHIS2" );
+        writer.writeElement( FIELD_FIRSTNAME, "Import" );
+        writer.writeElement( FIELD_INFO_ROLE, String.valueOf( 1 ) );
+        writer.writeElement( FIELD_USERROLEUSERDEFINED, "" );
+        writer.writeElement( FIELD_TELEPHONE_NUMBER, "" );
+        writer.writeElement( FIELD_FAX_NUMBER, "" );
+        writer.writeElement( FIELD_CELL_NUMBER, "" );
+        writer.writeElement( FIELD_EMAIL_ADDRESS, "" );
+        writer.writeElement( FIELD_USER_URL, "#http://www.hisp.org#" );
+        writer.writeElement( FIELD_ACTIVE, String.valueOf( 1 ) );
+        writer.writeElement( FIELD_SELECTED, String.valueOf( 1 ) );
+        writer.writeElement( FIELD_FIRSTREGISTERED, "" );
+        writer.writeElement( FIELD_LASTLOGONDATE, "" );
         writer.writeElement( FIELD_LAST_UPDATED, "" );
         
         writer.closeElement();

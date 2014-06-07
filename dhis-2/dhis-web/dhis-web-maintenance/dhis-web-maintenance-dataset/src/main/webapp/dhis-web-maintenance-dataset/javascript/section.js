@@ -2,9 +2,17 @@
 // Section details form
 // -----------------------------------------------------------------------------
 
-function showSectionDetails( sectionId )
+function editSectionShow( context ) {
+  location.href = 'editSection.action?sectionId=' + context.id;
+}
+
+function greySectionShow( context ) {
+  location.href = 'greySection.action?sectionId=' + context.id;
+}
+
+function showSectionDetails( context )
 {
-	jQuery.get( 'getSection.action', { sectionId: sectionId }, function ( json ) {
+	jQuery.get( 'getSection.action', { sectionId: context.id }, function ( json ) {
 		setInnerHTML( 'nameField', json.section.name );
 		setInnerHTML( 'dataSetField', json.section.dataSet );
 		setInnerHTML( 'categoryComboField', json.section.categoryCombo );
@@ -33,9 +41,9 @@ function getSectionByDataSet( dataSetId )
 	window.location.href = "section.action?dataSetId=" + dataSetId;
 }
 
-function removeSection(sectionId, sectionName) 
+function removeSection( context ) 
 {
-	removeItem( sectionId, sectionName, i18n_confirm_delete, "removeSection.action" );
+	removeItem( context.id, context.name, i18n_confirm_delete, "removeSection.action" );
 }
 
 function addSectionSubmit() 

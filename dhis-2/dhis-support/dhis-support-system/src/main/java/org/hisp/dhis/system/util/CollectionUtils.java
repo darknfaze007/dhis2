@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.util;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,9 +28,12 @@ package org.hisp.dhis.system.util;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.util.AbstractMap;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.hisp.dhis.system.util.functional.Function1;
@@ -81,5 +85,47 @@ public class CollectionUtils
     public static <T> Collection<T> emptyIfNull( Collection<T> collection )
     {
         return collection != null ? collection : new HashSet<T>();
+    }
+    
+    public static <T> Set<T> asSet( T... items )
+    {
+        Set<T> set = new HashSet<T>();
+        
+        for ( T item : items )
+        {
+            set.add( item );
+        }
+        
+        return set;
+    }
+
+    /**
+     * Constructs a Map Entry (key, value). Used to construct a Map with asMap.
+     *
+     * @param key map entry key
+     * @param value map entry value
+     * @return entry with the key and value
+     */
+    public static <K, V> AbstractMap.SimpleEntry<K, V> asEntry( K key, V value )
+    {
+        return new AbstractMap.SimpleEntry<K, V>( key, value );
+    }
+
+    /**
+     * Constructs a Map from Entries, each containing a (key, value) pair.
+     *
+     * @param entries any number of (key, value) pairs
+     * @return Map of the entries
+     */
+    public static <K, V> Map<K, V> asMap( AbstractMap.SimpleEntry<K, V>... entries )
+    {
+        Map<K, V> map = new HashMap<K, V>();
+
+        for ( AbstractMap.SimpleEntry<K, V> entry : entries )
+        {
+            map.put( entry.getKey(), entry.getValue() );
+        }
+
+        return map;
     }
 }

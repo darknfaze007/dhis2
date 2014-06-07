@@ -1,17 +1,20 @@
+package org.hisp.dhis.program;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,14 +28,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.program;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Chau Thu Tran
- *
  * @version ProgramStageSectionService.java 11:12:41 AM Aug 22, 2012 $
  */
 public interface ProgramStageSectionService
@@ -42,21 +40,45 @@ public interface ProgramStageSectionService
     // -------------------------------------------------------------------------
     // ProgramStageSection
     // -------------------------------------------------------------------------
-    
+
+    /**
+     * Adds an {@link ProgramStageSection}
+     *
+     * @param programStageSection The to ProgramStageSection add.
+     * @return A generated unique id of the added {@link ProgramStageSection}.
+     */
     int saveProgramStageSection( ProgramStageSection programStageSection );
-    
+
+    /**
+     * Deletes a {@link ProgramStageSection}.
+     *
+     * @param programStageSection the ProgramStageSection to delete.
+     */
     void deleteProgramStageSection( ProgramStageSection programStageSection );
-    
+
+    /**
+     * Updates an {@link ProgramStageSection}.
+     *
+     * @param programStageSection the ProgramStageSection to update.
+     */
     void updateProgramStageSection( ProgramStageSection programStageSection );
-    
+
+    /**
+     * Returns a {@link ProgramStageSection}.
+     *
+     * @param id the id of the ProgramStageSection to return.
+     * @return the ProgramStageSection with the given id
+     */
     ProgramStageSection getProgramStageSection( int id );
-    
-    List<ProgramStageSection> getProgramStageSectionByName( String name );
-    
+
+    /**
+     * Retrieve a program stage section by name and a program stage
+     *
+     * @param name         Name of program stage
+     * @param programStage Specify a {@link Program} for retrieving a program
+     *                     stage. The system allows the name of program stages are duplicated
+     *                     on different programs
+     * @return ProgramStage
+     */
     ProgramStageSection getProgramStageSectionByName( String name, ProgramStage programStage );
-    
-    Collection<ProgramStageSection> getAllProgramStageSections();
-    
-    Collection<ProgramStageSection> getProgramStages( ProgramStage programStage );
-    
 }

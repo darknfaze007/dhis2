@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.grid;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -57,7 +58,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * @author Lars Helge Overland
- * @version $Id$
  */
 public class ListGrid
     implements Grid
@@ -116,9 +116,19 @@ public class ListGrid
      */
     public ListGrid()
     {
-        headers = new ArrayList<GridHeader>();
-        metaData = new HashMap<Object, Object>();
-        grid = new ArrayList<List<Object>>();
+        this.headers = new ArrayList<GridHeader>();
+        this.metaData = new HashMap<Object, Object>();
+        this.grid = new ArrayList<List<Object>>();
+    }
+    
+    /**
+     * @param metaData meta data.
+     */
+    public ListGrid( Map<Object, Object> metaData )
+    {
+        this.headers = new ArrayList<GridHeader>();
+        this.metaData = metaData;
+        this.grid = new ArrayList<List<Object>>();
     }
 
     // ---------------------------------------------------------------------
@@ -256,6 +266,20 @@ public class ListGrid
 
         currentRowWriteIndex++;
 
+        return this;
+    }
+    
+    public Grid addRows( Grid grid )
+    {
+        List<List<Object>> rows = grid.getRows();
+        
+        for ( List<Object> row : rows )
+        {
+            this.grid.add( row );
+            
+            currentRowWriteIndex++;
+        }
+        
         return this;
     }
 
@@ -401,6 +425,20 @@ public class ListGrid
         return this;
     }
 
+    public Grid removeCurrentWriteRow()
+    {
+        grid.remove( currentRowWriteIndex );
+        
+        currentRowWriteIndex--;
+        
+        return this;
+    }
+    
+    public boolean hasMetaDataKey( String key )
+    {
+        return metaData != null && metaData.containsKey( key );
+    }
+    
     public Grid limitGrid( int limit )
     {
         if ( limit < 0 )
@@ -575,34 +613,46 @@ public class ListGrid
         {
             GridHeader header = headers.get( colIndex );
             
+            // Header
+            
+            Object headerMetaName = metaDataMap.get( header.getName() );
+            
+            if ( headerMetaName != null )
+            {
+                header.setName( String.valueOf( headerMetaName ) );
+            }
+
             if ( header.isMeta() )
             {
-                // Header
-                
-                Object headerMetaName = metaDataMap.get( header.getName() );
-                
-                if ( headerMetaName != null )
-                {
-                    header.setName( String.valueOf( headerMetaName ) );
-                }
-                
                 // Column cells
                 
-                List<Object> col = getColumn( colIndex );
-                
-                for ( int rowIndex = 0; rowIndex < col.size(); rowIndex++ )
-                {
-                    Object object = col.get( rowIndex );
-                    
-                    Object meta = metaDataMap.get( object );
-                    
-                    if ( meta != null )
-                    {
-                        grid.get( rowIndex ).set( colIndex, meta );
-                    }
-                }
+                substituteMetaData( colIndex, metaDataMap );
             }
         }        
+        
+        return this;
+    }
+    
+    public Grid substituteMetaData( int columnIndex, Map<Object, Object> metaDataMap )
+    {
+        if ( metaDataMap == null )
+        {
+            return this;
+        }
+        
+        List<Object> col = getColumn( columnIndex );
+        
+        for ( int rowIndex = 0; rowIndex < col.size(); rowIndex++ )
+        {
+            Object object = col.get( rowIndex );
+            
+            Object meta = metaDataMap.get( object );
+            
+            if ( meta != null )
+            {
+                grid.get( rowIndex ).set( columnIndex, meta );
+            }
+        }
         
         return this;
     }

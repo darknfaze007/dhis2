@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataanalysis;
 
 /*
- * Copyright (c) 2004-${year}, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -49,6 +50,8 @@ import org.hisp.dhis.system.util.ConversionUtils;
 import org.hisp.dhis.system.util.Filter;
 import org.hisp.dhis.system.util.FilterUtils;
 import org.hisp.dhis.system.util.MathUtils;
+
+import static org.hisp.dhis.dataelement.DataElement.*;
 
 /**
  * @author Lars Helge Overland
@@ -123,7 +126,7 @@ public class MinMaxOutlierAnalysisService
         
         for ( DataElement dataElement : dataElements )
         {
-            if ( dataElement.getType().equals( DataElement.VALUE_TYPE_INT ) )
+            if ( VALUE_TYPE_INT.equals( dataElement.getType() ) )
             {
                 Collection<DataElementCategoryOptionCombo> categoryOptionCombos = dataElement.getCategoryCombo().getOptionCombos();
 
@@ -142,6 +145,16 @@ public class MinMaxOutlierAnalysisService
                         {
                             int min = (int) MathUtils.getLowBound( stdDev, stdDevFactor, avg );
                             int max = (int) MathUtils.getHighBound( stdDev, stdDevFactor, avg );
+                            
+                            if ( VALUE_TYPE_POSITIVE_INT.equals( dataElement.getNumberType() ) || VALUE_TYPE_ZERO_OR_POSITIVE_INT.equals( dataElement.getNumberType() ) )
+                            {
+                                min = Math.max( 0, min ); // Cannot be < 0
+                            }
+                            
+                            if ( VALUE_TYPE_NEGATIVE_INT.equals( dataElement.getNumberType() ) )
+                            {
+                                max = Math.min( 0, max ); // Cannot be > 0
+                            }
                             
                             OrganisationUnit source = new OrganisationUnit();
                             source.setId( unit );

@@ -6,6 +6,7 @@
 ::-webkit-scrollbar 
 {
   width: 11px;
+  height: 11px;
 }
 
 ::-webkit-scrollbar-track:horizontal
@@ -90,7 +91,7 @@ div#rightBar
 #detailsArea 
 {
   display: none;
-  border: 1px solid #ececec;
+  border: 1px solid #ddd;
   position: fixed;
   top: 150px;
   width: 233px;
@@ -98,11 +99,12 @@ div#rightBar
   padding: 15px;
   overflow: auto;
   color: #222;
+  box-shadow: #f2f2f2 0 1px 1px 0;
 }
 
 #detailsArea label 
 {
-  font-family: LiberationSansBold, arial;
+  font-weight: bold;
   font-size: 13px;
 }
 
@@ -179,7 +181,7 @@ div.thingy
   position: absolute;
   left: 22px;
   top: 50px;
-  font-family: LiberationSansBold, arial;
+  font-weight: bold;
   font-size: 9pt;
   cursor: pointer;
 }
@@ -188,7 +190,7 @@ div.thingy
 {
   position: absolute;
   right: 2px;
-  font-family: LiberationSansBold, arial;
+  font-weight: bold;
   font-size: 9pt;
   cursor: pointer;
 }
@@ -209,13 +211,13 @@ div#orgUnitTree
   padding-top: 4px;
 }
 
-#leftBarContents div#orgUnitTree 
+div#orgUnitTree 
 {
   font-size: 9pt;
   background-color: white;
   overflow: auto;
   width: 235px;
-  height: 298px;
+  height: 300px;
   border-top: 1px solid #e3e3e3;
   border-bottom: 1px solid #e3e3e3;
 }
@@ -236,7 +238,7 @@ div#orgUnitTree li
   list-style-type: none;
   white-space: nowrap;
   margin-top: 0;
-  padding: 1px 0 1px 15px;
+  padding: 0 0 1px 15px;
   background-color: transparent;
   background-image: url('../../images/treeview-gray-line.gif');
   background-repeat: no-repeat;
@@ -268,9 +270,8 @@ div#orgUnitTree a:hover
 
 div#orgUnitTree a.selected 
 {
-  color: #000000;
-  font-family: LiberationSansBold, arial;
-  font-size: 13px;
+  color: #000;
+  font-weight: bold;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -282,9 +283,10 @@ div#selectionTree
   font-size: 9pt; /* Size to change */
   background-color: white;
   height: 300px;
-  width:595px;  
-  overflow:auto;
-  border:1px solid #cccccc;   
+  width: 493px;  
+  overflow: auto;
+  border: 1px solid #ccc;   
+  padding: 4px 0 0 5px;
 }
 
 div#selectionTree ul 
@@ -340,10 +342,10 @@ span#message
 {
   display: none;
   padding: 1em;
-  margin: 1em;
-  background-color: #f9edbe;
+  margin: 1em 0;
+  background-color: #f8eab0;
   border: 1px solid #dbae56;
-  width: 500px;
+  width: 480px;
   border-radius: 3px;
 }
 
@@ -351,10 +353,10 @@ span#info
 {
   display: block;
   padding: 1em;
-  margin: 1em;
+  margin: 1em 0;
   background-color: #baffbc;
   border: 1px solid #12cd17;
-  width: 500px;
+  width: 480px;
   border-radius: 3px;
 }
 
@@ -364,15 +366,14 @@ div#headerMessage
   left: 155px;
   position: fixed;
   display: none;
-  height: 31px;
+  padding: 10px;
+  padding-bottom: 9px;
   width: 410px;
-  background-color: #f9edbe;
+  background-color: #f8eab0;
   border: 1px solid #dbae56;
   z-index: 21;
   font-size: 9pt;
   text-align: center;
-  vertical-align: center;
-  line-height: 32px;
   border-radius: 3px;
 }
 
@@ -488,7 +489,7 @@ div.inputCriteria
 
 .alt
 {
-  background-color: #e0e0e0;
+  background-color: #e9e9e9;
   padding-right: 50px;
 }
 
@@ -521,7 +522,7 @@ div.inputCriteria
 
 .settingHeader
 {
-  padding: 6px 0;
+  padding: 9px 0 6px 0;
   font-size: 12pt;
   color: #373737;
 }
@@ -539,15 +540,48 @@ div.inputCriteria
   margin-bottom: 15px;
 }
 
-.setting input[type=text],input[type=password],select
+.setting input[type=text], 
+.setting input[type=password], 
+.inputForm input[type=text], 
+.inputForm input[type=password],
+.setting textarea,
+.inputForm textarea
 {
   width: 25em;
+  border: 1px solid #aaa;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  border-radius: 3px;
+  padding: 6px 5px;
+  margin: 2px 0;
+  color: #333;
 }
 
-.setting textarea
+.setting select,
+.inputForm select
 {
-  width: 25em;
+  width: 26em;
+  padding: 6px 1px;
+  margin: 2px 0;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  background-color: #fff;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+}
+
+.setting textarea,
+.inputForm textarea
+{
   height: 8em;
+}
+
+.inputForm label
+{
+  color: #222;
+}
+
+.settingIndent
+{
+  margin-left: 12px;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -570,7 +604,7 @@ div.paging
 
 div.paging span, div.paging a 
 {
-	font-family: LiberationSansBold, arial;
+    font-weight: bold;
 	padding: 0 5px;
 	font-size: 12px;
 }
@@ -661,21 +695,6 @@ ul.pageSizeSelection input
 }
 
 /*----------------------------------------------------------------------------*/
-/* Forms                                                                      */
-/*----------------------------------------------------------------------------*/
-
-.inputForm input[type=text],select
-{
-  width: 25em;
-}
-
-.inputForm textarea
-{
-  width: 25em;
-  height: 8em;
-}
-
-/*----------------------------------------------------------------------------*/
 /* Buttons                                                                    */
 /*----------------------------------------------------------------------------*/
 
@@ -683,10 +702,10 @@ ul.pageSizeSelection input
 {
   padding: 6px 12px;
   height: 25px;
-  border: 1px solid #aaa;
+  border: 1px solid #bbb;
   border-radius: 3px;
   margin-right: 4px;
-  font-family: LiberationSansBold, arial;
+  font-weight: bold;
   font-size: 13px;
   background-color: #f3f3f3;
   color: #606060 !important;
@@ -703,12 +722,12 @@ ul.pageSizeSelection input
 {
   padding: 6px 12px;
   height: 25px;
-  border: 1px solid #3D77B3;
+  border: 1px solid #3281D1;
   border-radius: 3px;
   margin-right: 4px;
-  font-family: LiberationSansBold, arial;
+  font-weight: bold;
   font-size: 13px;
-  background-color: #3685D5;
+  background-color: #3581CE;
   color: #fff !important;
   text-decoration: none !important;
 }
@@ -716,7 +735,7 @@ ul.pageSizeSelection input
 .blueButtonLink:hover
 {
   text-decoration: none;
-  background-color: #2C7CCE;
+  background-color: #3176BD;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -759,35 +778,27 @@ input:-moz-placeholder
 
 .ui-widget, .ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button
 {
-  font-family: LiberationSansRegular, arial, sans-serif !important;
+  font-family: LiberationSans, arial, sans-serif !important;
   font-size: 9pt !important;
 }
 
 .ui-datepicker th 
 {
-  font-family: LiberationSansBold, arial, sans-serif !important;
-  font-weight: normal !important;
+  font-family: LiberationSans, arial, sans-serif !important;
   padding: 0.5em 0 !important;
   font-size: 9pt !important;
 }
 
 .ui-widget-header, .ui-widget-header a
 {
-  font-family: LiberationSansBold, arial, sans-serif !important;
-  font-weight: normal !important;
+  font-family: LiberationSans, arial, sans-serif !important;
   font-size: 10pt !important;
 }
 
 .ui-button-text
 {
-  font-family: LiberationSansBold, arial, sans-serif !important;
-  font-weight: normal !important;
+  font-family: LiberationSans, arial, sans-serif !important;
   font-size: 9pt !important;
-}
-
-.ui-state-default
-{
-  font-weight: normal !important;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -803,10 +814,26 @@ input:-moz-placeholder
     margin-bottom: 8px;
 }
 
-.message-info 
+.message-info
 {
     background-color: #f3f3f3;
 	color: #222;
+}
+
+/*----------------------------------------------------------------------------*/
+/* Filter                                                                     */
+/*----------------------------------------------------------------------------*/
+
+.filterInput
+{
+  max-width: 300px;
+  min-width: 120px;
+  width: 50%;
+}
+
+.filterButton
+{
+  width: 55px;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -816,4 +843,9 @@ input:-moz-placeholder
 .tipText
 {
 	color: #777;
+}
+
+.fa-question-circle
+{
+  color: #276696;
 }

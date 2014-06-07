@@ -1,19 +1,20 @@
 package org.hisp.dhis.validation;
 
 /*
- * Copyright (c) 2004-2005, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the <ORGANIZATION> nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,6 +28,7 @@ package org.hisp.dhis.validation;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.period.Period;
 
@@ -34,10 +36,9 @@ import java.io.Serializable;
 
 /**
  * @author Margrethe Store
- * @version $Id: ValidationResult.java 5277 2008-05-27 15:48:42Z larshelg $
  */
 public class ValidationResult
-    implements Serializable
+    implements Serializable, Comparable<ValidationResult>
 {
     /**
      * Determines if a de-serialized file is compatible with this class.
@@ -47,6 +48,8 @@ public class ValidationResult
     private OrganisationUnit source;
 
     private Period period;
+
+    private DataElementCategoryOptionCombo attributeOptionCombo;
 
     private ValidationRule validationRule;
 
@@ -62,18 +65,20 @@ public class ValidationResult
     {
     }
 
-    public ValidationResult( Period period, OrganisationUnit source, ValidationRule validationRule,
+    public ValidationResult( Period period, OrganisationUnit source,
+        DataElementCategoryOptionCombo attributeOptionCombo, ValidationRule validationRule,
         Double leftsideValue, Double rightsideValue )
     {
         this.source = source;
         this.period = period;
+        this.attributeOptionCombo = attributeOptionCombo;
         this.validationRule = validationRule;
         this.leftsideValue = leftsideValue;
         this.rightsideValue = rightsideValue;
     }
 
     // -------------------------------------------------------------------------
-    // Equals, hashCode and toString
+    // Equals, compareTo, hashCode and toString
     // -------------------------------------------------------------------------     
 
     @Override
@@ -90,6 +95,11 @@ public class ValidationResult
         return result;
     }
 
+    //
+    // Note: this method is called from threads in which it may not be possible
+    // to initialize lazy Hibernate properties. So object properties to compare
+    // must be chosen accordingly.
+    //
     @Override
     public boolean equals( Object object )
     {
@@ -122,6 +132,18 @@ public class ValidationResult
             return false;
         }
 
+        if ( attributeOptionCombo == null )
+        {
+            if ( other.attributeOptionCombo != null )
+            {
+                return false;
+            }
+        }
+        else if ( attributeOptionCombo.getId() != other.attributeOptionCombo.getId() )
+        {
+            return false;
+        }
+
         if ( source == null )
         {
             if ( other.source != null )
@@ -145,14 +167,131 @@ public class ValidationResult
         {
             return false;
         }
+        
+        if ( leftsideValue == null )
+        {
+            if ( other.leftsideValue != null )
+            {
+                return false;
+            }
+        }
+        else if ( other.leftsideValue == null )
+        {
+            return false;
+        }
+        else if ( Math.round( 100.0 * leftsideValue ) != Math.round( 100.0 * other.leftsideValue ) )
+        {
+            return false;
+        }
+
+        if ( rightsideValue == null )
+        {
+            if ( other.rightsideValue != null )
+            {
+                return false;
+            }
+        }
+        else if ( other.rightsideValue == null )
+        {
+            return false;
+        }
+        else if ( Math.round( 100.0 * leftsideValue ) != Math.round( 100.0 * other.leftsideValue ) )
+        {
+            return false;
+        }
 
         return true;
+    }
+
+    //
+    // Note: this method is called from threads in which it may not be possible
+    // to initialize lazy Hibernate properties. So object properties to compare
+    // must be chosen accordingly.
+    //
+    public int compareTo( ValidationResult other )
+    {
+    	int result = source.getName().compareTo( other.source.getName() );
+    	
+    	if ( result != 0 )
+    	{
+    	    return result;
+    	}
+    	
+    	result = period.getStartDate().compareTo( other.period.getStartDate() );
+    	
+    	if ( result != 0 )
+    	{
+    	    return result;
+    	}
+
+    	result = period.getEndDate().compareTo( other.period.getEndDate() );
+    	
+    	if ( result != 0 )
+    	{
+    	    return result;
+    	}
+
+        result = attributeOptionCombo.getId() - other.attributeOptionCombo.getId();
+
+        if ( result != 0 )
+        {
+            return result;
+        }
+
+    	result = validationImportanceOrder( validationRule.getImportance() ) - validationImportanceOrder( other.validationRule.getImportance() );
+    	
+    	if ( result != 0 )
+    	{
+    	    return result;
+    	}
+
+    	result = validationRule.getLeftSide().getDescription().compareTo( other.validationRule.getLeftSide().getDescription() );
+    	
+    	if ( result != 0 )
+    	{
+    	    return result;
+    	}
+
+    	result = validationRule.getOperator().compareTo( other.validationRule.getOperator() );
+    	
+    	if ( result != 0 )
+    	{
+    	    return result;
+    	}
+
+    	result = validationRule.getRightSide().getDescription().compareTo( other.validationRule.getRightSide().getDescription() );
+    	
+    	if ( result != 0 )
+    	{
+    	    return result;
+    	}
+
+    	result = (int) Math.signum( Math.round( 100.0 * leftsideValue ) - Math.round( 100.0 * other.leftsideValue ) );
+    	
+    	if ( result != 0 )
+    	{
+    	    return result;
+    	}
+    	
+    	result = (int) Math.signum( Math.round( 100.0 * rightsideValue ) - Math.round( 100.0 * other.rightsideValue ) );
+    	
+    	if ( result != 0 )
+    	{
+    	    return result;
+    	}
+    	
+    	return 0;
+    }
+
+    private int validationImportanceOrder( String importance )
+    {
+        return ( importance.equals( "high" ) ? 0 : importance.equals( "medium" ) ? 1 : 2 );
     }
 
     @Override
     public String toString()
     {
-        return source + " - " + period + " - " + validationRule + " - " + leftsideValue + " - " + rightsideValue;
+        return source + " - " + period + " - " + attributeOptionCombo.getName() + " - " + validationRule + " - " + leftsideValue + " - " + rightsideValue;
     }
 
     // -------------------------------------------------------------------------
@@ -177,6 +316,16 @@ public class ValidationResult
     public void setPeriod( Period period )
     {
         this.period = period;
+    }
+
+    public DataElementCategoryOptionCombo getAttributeOptionCombo()
+    {
+        return attributeOptionCombo;
+    }
+
+    public void setAttributeOptionCombo( DataElementCategoryOptionCombo attributeOptionCombo )
+    {
+        this.attributeOptionCombo = attributeOptionCombo;
     }
 
     public ValidationRule getValidationRule()

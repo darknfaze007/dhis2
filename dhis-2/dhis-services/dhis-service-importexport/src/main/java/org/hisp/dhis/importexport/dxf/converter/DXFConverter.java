@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.dxf.converter;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -54,7 +55,6 @@ import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataelement.DataElementGroupSet;
 import org.hisp.dhis.dataelement.DataElementService;
-import org.hisp.dhis.dataset.CompleteDataSetRegistration;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.expression.ExpressionService;
@@ -75,7 +75,6 @@ import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.indicator.IndicatorType;
 import org.hisp.dhis.jdbc.batchhandler.CategoryCategoryOptionAssociationBatchHandler;
 import org.hisp.dhis.jdbc.batchhandler.CategoryComboCategoryAssociationBatchHandler;
-import org.hisp.dhis.jdbc.batchhandler.CompleteDataSetRegistrationBatchHandler;
 import org.hisp.dhis.jdbc.batchhandler.ConceptBatchHandler;
 import org.hisp.dhis.jdbc.batchhandler.ConstantBatchHandler;
 import org.hisp.dhis.jdbc.batchhandler.DataDictionaryBatchHandler;
@@ -380,7 +379,7 @@ public class DXFConverter
                     DataElementCategoryBatchHandler.class ).init();
 
                 XMLConverter converter = new DataElementCategoryConverter( batchHandler, importObjectService,
-                    categoryService, conceptService );
+                    categoryService );
 
                 converterInvoker.invokeRead( converter, reader, params );
 
@@ -975,27 +974,6 @@ public class DXFConverter
                 converterInvoker.invokeRead( converter, reader, params );
 
                 log.info( "Imported Charts" );
-            }
-            else if ( reader.isStartElement( CompleteDataSetRegistrationConverter.COLLECTION_NAME )
-                && params.isDataValues() )
-            {
-                log.debug("Starting CompleteDataSetRegistrations import");
-
-                state.setMessage( "importing_complete_data_set_registrations" );
-
-                BatchHandler<CompleteDataSetRegistration> batchHandler = batchHandlerFactory.createBatchHandler(
-                    CompleteDataSetRegistrationBatchHandler.class ).init();
-
-                XMLConverter converter = new CompleteDataSetRegistrationConverter( batchHandler, importObjectService,
-                    params, objectMappingGenerator.getDataSetMapping( params.skipMapping() ), objectMappingGenerator
-                        .getPeriodMapping( params.skipMapping() ), objectMappingGenerator
-                        .getOrganisationUnitMapping( params.skipMapping() ) );
-
-                converterInvoker.invokeRead( converter, reader, params );
-
-                batchHandler.flush();
-
-                log.info( "Imported CompleteDataSetRegistrations" );
             }
         }
 

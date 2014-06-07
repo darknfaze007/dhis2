@@ -1,19 +1,20 @@
 package org.hisp.dhis.common;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,6 +30,7 @@ package org.hisp.dhis.common;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,25 +40,25 @@ public class NameableObjectUtils
 {
     /**
      * Returns a list of NameableObjects.
-     * 
+     *
      * @param objects the NameableObjects to include in the list.
      * @return a list of NameableObjects.
      */
     public static List<NameableObject> getList( NameableObject... objects )
     {
         List<NameableObject> list = new ArrayList<NameableObject>();
-        
-        for ( NameableObject object : objects )
+
+        if ( objects != null )
         {
-            list.add( object );
+            Collections.addAll( list, objects );
         }
-        
+
         return list;
     }
-    
+
     /**
      * Returns a list with erasure NameableObject based on the given collection.
-     * 
+     *
      * @param collection the collection.
      * @return a list of NameableObjects.
      */
@@ -71,7 +73,7 @@ public class NameableObjectUtils
      * Returns a list typed with the desired erasure based on the given collection.
      * This operation implies an unchecked cast and it is the responsibility of
      * the caller to make sure the cast is valid.
-     * 
+     *
      * @param collection the collection.
      * @return a list.
      */
@@ -79,12 +81,29 @@ public class NameableObjectUtils
     public static <T extends NameableObject> List<T> asTypedList( Collection<NameableObject> collection )
     {
         List<T> list = new ArrayList<T>();
-        
-        for ( NameableObject object : collection )
+
+        if ( collection != null )
         {
-            list.add( (T) object );
+            for ( NameableObject object : collection )
+            {
+                list.add( (T) object );
+            }
         }
-        
+
         return list;
+    }
+
+    /**
+     * Returns a list typed with the desired erasure based on the given collection.
+     * This operation implies an unchecked cast and it is the responsibility of
+     * the caller to make sure the cast is valid.
+     *
+     * @param collection the collection.
+     * @param the        class type.
+     * @return a list.
+     */
+    public static <T extends NameableObject> List<T> asTypedList( Collection<NameableObject> collection, Class<T> clazz )
+    {
+        return asTypedList( collection );
     }
 }

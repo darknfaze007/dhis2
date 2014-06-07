@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapgeneration;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -30,8 +31,10 @@ package org.hisp.dhis.mapgeneration;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
+
+import org.hisp.dhis.i18n.I18nFormat;
 
 /**
  * A legend is a graphical presentation of data contained in a map layer. This
@@ -44,8 +47,8 @@ import java.util.List;
  */
 public class Legend
 {
-    public static final Font TITLE_FONT = new Font( "title", Font.BOLD, 15 );
-    public static final Font PLAIN_FONT = new Font( "plain", Font.PLAIN, 13 );
+    public static final Font TITLE_FONT = new Font( "title", Font.BOLD, 12 );
+    public static final Font PLAIN_FONT = new Font( "plain", Font.PLAIN, 11 );
 
     private InternalMapLayer mapLayer;
 
@@ -56,21 +59,20 @@ public class Legend
     public Legend( InternalMapLayer mapLayer )
     {
         this.mapLayer = mapLayer;
-        this.legendItems = new LinkedList<LegendItem>();
+        this.legendItems = new ArrayList<LegendItem>();
 
-        for ( Interval interval : mapLayer.getIntervalSet().getAllIntervals() )
+        for ( Interval interval : mapLayer.getIntervalSet().getIntervals() )
         {
             addLegendItem( new LegendItem( interval ) );
         }
     }
 
-    public void draw( Graphics2D g )
+    public void draw( Graphics2D g, I18nFormat format )
     {
         g.setColor( Color.BLACK );
-        g.setFont( TITLE_FONT );
-        g.drawString( mapLayer.getName(), 0, 15 );
         g.setFont( PLAIN_FONT );
-        g.drawString( mapLayer.getPeriod().getStartDateString() + "", 0, 35 );
+        g.drawString( mapLayer.getName(), 0, 15 );
+        g.drawString( format.formatPeriod( mapLayer.getPeriod() ) + "", 0, 35 );
 
         g.translate( 0, HEADER_HEIGHT );
 
@@ -80,7 +82,7 @@ public class Legend
             g.translate( 0, legendItem.getHeight() );
         }
     }
-
+    
     public int getHeight()
     {
         int height = 0;
@@ -101,5 +103,11 @@ public class Legend
     public void addLegendItem( LegendItem legendItem )
     {
         legendItems.add( legendItem );
+    }
+
+    @Override
+    public String toString()
+    {
+        return legendItems != null ? legendItems.toString() : "[No legend items]";
     }
 }

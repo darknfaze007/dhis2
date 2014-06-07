@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics.table;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,9 +29,7 @@ package org.hisp.dhis.analytics.table;
  */
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -39,13 +38,16 @@ import java.util.concurrent.Future;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.analytics.AnalyticsIndex;
+import org.hisp.dhis.analytics.AnalyticsTable;
 import org.hisp.dhis.analytics.AnalyticsTableManager;
 import org.hisp.dhis.analytics.AnalyticsTableService;
+import org.hisp.dhis.analytics.partition.PartitionManager;
 import org.hisp.dhis.common.IdentifiableObjectUtils;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
-import org.hisp.dhis.period.Cal;
+import org.hisp.dhis.resourcetable.ResourceTableService;
 import org.hisp.dhis.scheduling.TaskId;
+import org.hisp.dhis.sqlview.SqlViewService;
 import org.hisp.dhis.system.notification.Notifier;
 import org.hisp.dhis.system.util.Clock;
 import org.hisp.dhis.system.util.ConcurrentUtils;
@@ -74,31 +76,36 @@ public class DefaultAnalyticsTableService
     private DataElementService dataElementService;
     
     @Autowired
+    private ResourceTableService resourceTableService;
+    
+    @Autowired
+    private SqlViewService sqlViewService;
+    
+    @Autowired
+    private PartitionManager partitionManager;
+    
+    @Autowired
     private Notifier notifier;
 
     // -------------------------------------------------------------------------
     // Implementation
     // -------------------------------------------------------------------------
     
-    public void update( boolean last3YearsOnly, TaskId taskId )
+    public void update( Integer lastYears, TaskId taskId )
     {
         Clock clock = new Clock().startClock().logTime( "Starting update, no of processes: " + getProcessNo() );
         
-        boolean valid = tableManager.validState();
+        String validState = tableManager.validState();
         
-        if ( !valid )
+        if ( validState != null )
         {
-            notifier.notify( taskId, "Table not valid, aborted update" );
+            notifier.notify( taskId, validState );
             return;
         }
         
-        final Date threeYrsAgo = new Cal().subtract( Calendar.YEAR, 2 ).set( 1, 1 ).time();
-        final Date earliest = last3YearsOnly ? threeYrsAgo : tableManager.getEarliestData();
-        final Date latest = tableManager.getLatestData();
-        final String tableName = tableManager.getTableName();
-        final List<String> tables = PartitionUtils.getTempTableNames( earliest, latest, tableName );
+        final List<AnalyticsTable> tables = tableManager.getTables( lastYears );
         
-        clock.logTime( "Partition tables: " + tables + ", earliest: " + earliest + ", latest: " + latest + ", last 3 years: " + last3YearsOnly );
+        clock.logTime( "Partition tables: " + tables + ", last years: " + lastYears );
         
         notifier.notify( taskId, "Creating analytics tables" );
         
@@ -134,39 +141,58 @@ public class DefaultAnalyticsTableService
         
         swapTables( tables );
         
+        partitionManager.clearCaches();
+        
         clock.logTime( "Table update done" );
         notifier.notify( taskId, "Table update done" );
     }
 
     public void dropTables()
     {
-        List<String> tempTables = PartitionUtils.getTempTableNames( 
-            new Cal().set( 1900, 1, 1 ).time(), new Cal().set( 2100, 1, 1 ).time(), tableManager.getTableName() );
+        List<AnalyticsTable> tables = tableManager.getTables( null );
         
-        for ( String tempTable : tempTables )   
+        for ( AnalyticsTable table : tables )   
         {
-            String realTable = tempTable.replaceFirst( AnalyticsTableManager.TABLE_TEMP_SUFFIX, "" );
-            
-            tableManager.dropTable( tempTable );
-            tableManager.dropTable( realTable );            
+            tableManager.dropTable( table.getTableName() );
+            tableManager.dropTable( table.getTempTableName() );            
         }
+    }
+
+    public void generateResourceTables()
+    {
+        resourceTableService.dropAllSqlViews();
+        resourceTableService.generateOrganisationUnitStructures();        
+        resourceTableService.generateCategoryOptionComboNames();
+        resourceTableService.generateDataElementGroupSetTable();
+        resourceTableService.generateIndicatorGroupSetTable();
+        resourceTableService.generateOrganisationUnitGroupSetTable();
+        resourceTableService.generateCategoryTable();
+        resourceTableService.generateDataElementTable();
+        resourceTableService.generatePeriodTable();
+        resourceTableService.generateDatePeriodTable();
+        resourceTableService.generateDataElementCategoryOptionComboTable();
+        resourceTableService.createAllSqlViews();
     }
     
     // -------------------------------------------------------------------------
     // Supportive methods
     // -------------------------------------------------------------------------
-  
-    private void createTables( List<String> tables )
+
+    private void createTables( List<AnalyticsTable> tables )
     {
-        for ( String table : tables )
+        for ( AnalyticsTable table : tables )
         {
             tableManager.createTable( table );
         }
     }
     
-    private void populateTables( List<String> tables )
+    private void populateTables( List<AnalyticsTable> tables )
     {
-        ConcurrentLinkedQueue<String> tableQ = new ConcurrentLinkedQueue<String>( tables );
+        int taskNo = Math.min( getProcessNo(), tables.size() );
+        
+        log.info( "Populate table task number: " + taskNo );
+        
+        ConcurrentLinkedQueue<AnalyticsTable> tableQ = new ConcurrentLinkedQueue<AnalyticsTable>( tables );
         
         List<Future<?>> futures = new ArrayList<Future<?>>();
         
@@ -178,9 +204,9 @@ public class DefaultAnalyticsTableService
         ConcurrentUtils.waitForCompletion( futures );
     }
     
-    private void pruneTables( List<String> tables )
+    private void pruneTables( List<AnalyticsTable> tables )
     {
-        Iterator<String> iterator = tables.iterator();
+        Iterator<AnalyticsTable> iterator = tables.iterator();
         
         while ( iterator.hasNext() )
         {
@@ -191,7 +217,7 @@ public class DefaultAnalyticsTableService
         }
     }
     
-    private void applyAggregationLevels( List<String> tables )
+    private void applyAggregationLevels( List<AnalyticsTable> tables )
     {
         int maxLevels = organisationUnitService.getMaxOfOrganisationUnitLevels();
         
@@ -207,7 +233,7 @@ public class DefaultAnalyticsTableService
                 continue levelLoop;
             }
                         
-            ConcurrentLinkedQueue<String> tableQ = new ConcurrentLinkedQueue<String>( tables );
+            ConcurrentLinkedQueue<AnalyticsTable> tableQ = new ConcurrentLinkedQueue<AnalyticsTable>( tables );
 
             List<Future<?>> futures = new ArrayList<Future<?>>();
             
@@ -220,17 +246,17 @@ public class DefaultAnalyticsTableService
         }
     }
     
-    private void createIndexes( List<String> tables )
+    private void createIndexes( List<AnalyticsTable> tables )
     {
         ConcurrentLinkedQueue<AnalyticsIndex> indexes = new ConcurrentLinkedQueue<AnalyticsIndex>();
         
-        List<String> columns = tableManager.getDimensionColumnNames();
-        
-        for ( String table : tables )
+        for ( AnalyticsTable table : tables )
         {
-            for ( String column : columns )
+            List<String[]> columns = table.getDimensionColumns();
+            
+            for ( String[] column : columns )
             {
-                indexes.add( new AnalyticsIndex( table, column ) );
+                indexes.add( new AnalyticsIndex( table.getTempTableName(), column[0] ) );
             }
         }
         
@@ -246,9 +272,9 @@ public class DefaultAnalyticsTableService
         ConcurrentUtils.waitForCompletion( futures );
     }
 
-    private void vacuumTables( List<String> tables )
+    private void vacuumTables( List<AnalyticsTable> tables )
     {
-        ConcurrentLinkedQueue<String> tableQ = new ConcurrentLinkedQueue<String>( tables );
+        ConcurrentLinkedQueue<AnalyticsTable> tableQ = new ConcurrentLinkedQueue<AnalyticsTable>( tables );
         
         List<Future<?>> futures = new ArrayList<Future<?>>();
         
@@ -260,9 +286,9 @@ public class DefaultAnalyticsTableService
         ConcurrentUtils.waitForCompletion( futures );        
     }
     
-    private void swapTables( List<String> tables )
+    private void swapTables( List<AnalyticsTable> tables )
     {
-        for ( String table : tables )
+        for ( AnalyticsTable table : tables )
         {
             tableManager.swapTable( table );
         }

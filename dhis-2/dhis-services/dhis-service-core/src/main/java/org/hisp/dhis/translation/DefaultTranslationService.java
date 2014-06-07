@@ -1,19 +1,20 @@
 package org.hisp.dhis.translation;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -30,9 +31,7 @@ package org.hisp.dhis.translation;
 import java.util.Collection;
 import java.util.Locale;
 
-import org.hisp.dhis.translation.Translation;
-import org.hisp.dhis.translation.TranslationService;
-import org.hisp.dhis.translation.TranslationStore;
+import org.hisp.dhis.system.util.LocaleUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -63,24 +62,47 @@ public class DefaultTranslationService
         translationStore.addTranslation( translation );
     }
 
+    public void createOrUpdate( Collection<Translation> translations )
+    {
+        for ( Translation translation : translations )
+        {
+            createOrUpdate( translation );
+        }
+    }
+
     public void updateTranslation( Translation translation )
     {
         translationStore.updateTranslation( translation );
     }
 
-    public Translation getTranslation( String className, int id, Locale locale, String property )
+    public Translation getTranslation( String className, Locale locale, String property, String objectUid )
     {
-        return translationStore.getTranslation( className, id, locale, property );
+        return translationStore.getTranslation( className, locale, property, objectUid );
     }
 
-    public Collection<Translation> getTranslations( String className, int id, Locale locale )
+    public Translation getTranslationNoFallback( String className, Locale locale, String property, String objectUid )
     {
-        return translationStore.getTranslations( className, id, locale );
+        return translationStore.getTranslationNoFallback( className, locale, property, objectUid );
+    }
+
+    public Collection<Translation> getTranslations( String className, Locale locale, String objectUid )
+    {
+        return translationStore.getTranslations( className, locale, objectUid );
+    }
+
+    public Collection<Translation> getTranslationsNoFallback( String className, Locale locale, String objectUid )
+    {
+        return translationStore.getTranslationsNoFallback( className, objectUid, locale );
     }
 
     public Collection<Translation> getTranslations( String className, Locale locale )
     {
         return translationStore.getTranslations( className, locale );
+    }
+
+    public Collection<Translation> getTranslations( Locale locale )
+    {
+        return translationStore.getTranslations( locale );
     }
 
     public Collection<Translation> getAllTranslations()
@@ -93,8 +115,30 @@ public class DefaultTranslationService
         translationStore.deleteTranslation( translation );
     }
 
-    public void deleteTranslations( String className, int id )
+    public void deleteTranslations( String className, String objectUid )
     {
-        translationStore.deleteTranslations( className, id );
+        translationStore.deleteTranslations( className, objectUid );
+    }
+
+    public void createOrUpdate( Translation translation )
+    {
+        Translation translationNoFallback = getTranslationNoFallback( translation.getClassName(), LocaleUtils.getLocale( translation.getLocale() ), translation.getProperty(), translation.getObjectUid() );
+
+        if ( translation.getValue() != null && !translation.getValue().trim().isEmpty() )
+        {
+            if ( translationNoFallback != null )
+            {
+                translationNoFallback.setValue( translation.getValue() );
+                updateTranslation( translationNoFallback );
+            }
+            else
+            {
+                addTranslation( translation );
+            }
+        }
+        else if ( translationNoFallback != null )
+        {
+            deleteTranslation( translationNoFallback );
+        }
     }
 }

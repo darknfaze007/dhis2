@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics.table;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,16 +29,19 @@ package org.hisp.dhis.analytics.table;
  */
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
-import org.hisp.dhis.analytics.AnalyticsTableManager;
+import org.apache.commons.lang.StringUtils;
+import org.hisp.dhis.analytics.Partitions;
 import org.hisp.dhis.common.ListMap;
 import org.hisp.dhis.common.NameableObject;
+import org.hisp.dhis.period.Cal;
 import org.hisp.dhis.period.Period;
-import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.period.YearlyPeriodType;
+import org.hisp.dhis.system.util.UniqueArrayList;
 
 /**
  * @author Lars Helge Overland
@@ -48,63 +52,97 @@ public class PartitionUtils
     
     private static final String SEP = "_";
 
-    public static List<String> getTempTableNames( Date earliest, Date latest, String tableName )
-    {   
-        if ( earliest == null || latest == null )
-        {
-            return new ArrayList<String>( Arrays.asList( tableName + AnalyticsTableManager.TABLE_TEMP_SUFFIX ) );
-        }
-        
-        if ( earliest.after( latest ) )
-        {
-            throw new IllegalArgumentException( "Earliest date is after latest: " + earliest + ", " + latest );
-        }
-        
-        List<String> tables = new ArrayList<String>();
+    public static List<Period> getPeriods( Date earliest, Date latest )
+    {
+        List<Period> periods = new ArrayList<Period>();
         
         Period period = PERIODTYPE.createPeriod( earliest );
         
         while ( period != null && period.getStartDate().before( latest ) )
         {
-            String table = tableName + AnalyticsTableManager.TABLE_TEMP_SUFFIX + SEP + period.getIsoDate();
-            
-            tables.add( table );
-            
+            periods.add( period );            
             period = PERIODTYPE.getNextPeriod( period );
         }
         
-        return tables;
-    }
-    
-    public static String getTableName( Period period, String tableName )
-    {
-        Period year = PERIODTYPE.createPeriod( period.getStartDate() );
-        
-        return tableName + SEP + year.getIsoDate();
+        return periods;
     }
 
-    public static Period getPeriod( String tableName )
+    //TODO optimize by including required filter periods only
+    
+    public static Partitions getPartitions( Period period, String tablePrefix, String tableSuffix, Set<String> validPartitions )
     {
-        if ( tableName == null || tableName.indexOf( SEP ) == -1 )
+        tablePrefix = StringUtils.trimToEmpty( tablePrefix );
+        tableSuffix = StringUtils.trimToEmpty( tableSuffix );
+
+        Partitions partitions = new Partitions();
+        
+        int startYear = year( period.getStartDate() );
+        int endYear = year( period.getEndDate() );
+        
+        while ( startYear <= endYear )
         {
-            return null;
+            String name = tablePrefix + SEP + startYear + tableSuffix;            
+            partitions.add( name.toLowerCase() );
+            startYear++;
         }
-        
-        String[] split = tableName.split( SEP );
-        String isoPeriod = split[split.length - 1];
-        
-        return PeriodType.getPeriodFromIsoString( isoPeriod );
+
+        return partitions.prunePartitions( validPartitions );
     }
     
-    public static ListMap<String, NameableObject> getTableNamePeriodMap( List<NameableObject> periods, String tableName )
+    public static Partitions getPartitions( List<NameableObject> periods, String tablePrefix, String tableSuffix, Set<String> validPartitions )
+    {
+        UniqueArrayList<String> partitions = new UniqueArrayList<String>();
+        
+        for ( NameableObject period : periods )
+        {
+            partitions.addAll( getPartitions( (Period) period, tablePrefix, tableSuffix, null ).getPartitions() );
+        }
+        
+        return new Partitions( new ArrayList<String>( partitions ) ).prunePartitions( validPartitions );
+    }
+    
+    public static ListMap<Partitions, NameableObject> getPartitionPeriodMap( List<NameableObject> periods, String tablePrefix, String tableSuffix, Set<String> validPartitions )
+    {
+        ListMap<Partitions, NameableObject> map = new ListMap<Partitions, NameableObject>();
+        
+        for ( NameableObject period : periods )
+        {
+            map.putValue( getPartitions( (Period) period, tablePrefix, tableSuffix, null ).prunePartitions( validPartitions ), period );
+        }
+        
+        return map;
+    }
+
+    /**
+     * Creates a mapping between period type name and period for the given periods.
+     */
+    public static ListMap<String, NameableObject> getPeriodTypePeriodMap( Collection<NameableObject> periods )
     {
         ListMap<String, NameableObject> map = new ListMap<String, NameableObject>();
         
         for ( NameableObject period : periods )
         {
-            map.putValue( getTableName( (Period) period, tableName ), period );
+            String periodTypeName = ((Period) period).getPeriodType().getName();
+            
+            map.putValue( periodTypeName, period );
         }
         
         return map;
+    }
+    
+    /**
+     * Returns the year of the given date.
+     */
+    public static int year( Date date )
+    {
+        return new Cal( date ).getYear();
+    }
+    
+    /**
+     * Returns the max date within the year of the given date.
+     */
+    public static Date maxOfYear( Date date )
+    {
+        return new Cal( year( date ), 12, 31 ).time();
     }
 }

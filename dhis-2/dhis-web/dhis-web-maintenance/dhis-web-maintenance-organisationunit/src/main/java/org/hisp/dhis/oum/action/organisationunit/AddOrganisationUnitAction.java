@@ -1,19 +1,20 @@
 package org.hisp.dhis.oum.action.organisationunit;
 
 /*
- * Copyright (c) 2004-2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -30,13 +31,14 @@ package org.hisp.dhis.oum.action.organisationunit;
 import static org.hisp.dhis.system.util.TextUtils.nullIfEmpty;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
 import org.hisp.dhis.attribute.AttributeService;
+import org.hisp.dhis.calendar.CalendarService;
+import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.common.IdentifiableObjectManager;
 import org.hisp.dhis.dataset.DataSetService;
-import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
@@ -44,6 +46,7 @@ import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
 import org.hisp.dhis.system.util.AttributeUtils;
 import org.hisp.dhis.system.util.ValidationUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.opensymphony.xwork2.Action;
 
@@ -56,13 +59,6 @@ public class AddOrganisationUnitAction
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
-
-    private I18nFormat format;
-
-    public void setFormat( I18nFormat format )
-    {
-        this.format = format;
-    }
 
     private OrganisationUnitService organisationUnitService;
 
@@ -98,6 +94,17 @@ public class AddOrganisationUnitAction
     {
         this.attributeService = attributeService;
     }
+
+    private IdentifiableObjectManager manager;
+
+    @Autowired
+    public void setManager( IdentifiableObjectManager manager )
+    {
+        this.manager = manager;
+    }
+
+    @Autowired
+    private CalendarService calendarService;
 
     // -------------------------------------------------------------------------
     // Input & Output
@@ -248,8 +255,6 @@ public class AddOrganisationUnitAction
         email = nullIfEmpty( email );
         phoneNumber = nullIfEmpty( phoneNumber );
 
-        Date date = format.parseDate( openingDate );
-
         // ---------------------------------------------------------------------
         // Get parent
         // ---------------------------------------------------------------------
@@ -269,7 +274,9 @@ public class AddOrganisationUnitAction
         // Create organisation unit
         // ---------------------------------------------------------------------
 
-        OrganisationUnit organisationUnit = new OrganisationUnit( name, shortName, code, date, null, active, comment );
+        DateUnit isoOpeningDate = calendarService.getSystemCalendar().toIso( openingDate );
+
+        OrganisationUnit organisationUnit = new OrganisationUnit( name, shortName, code, isoOpeningDate.toJdkCalendar().getTime(), null, active, comment );
 
         organisationUnit.setDescription( description );
         organisationUnit.setUrl( url );
@@ -325,11 +332,13 @@ public class AddOrganisationUnitAction
             if ( group != null )
             {
                 group.addOrganisationUnit( organisationUnit );
-                organisationUnitGroupService.updateOrganisationUnitGroup( group );
+                manager.updateNoAcl( group );
             }
         }
 
         organisationUnitService.updateOrganisationUnit( organisationUnit );
+
+        organisationUnitService.updateOrganisationUnitVersion();
 
         return SUCCESS;
     }

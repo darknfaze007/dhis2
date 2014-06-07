@@ -1,19 +1,20 @@
 package org.hisp.dhis.translation;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,17 +28,12 @@ package org.hisp.dhis.translation;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.hisp.dhis.DhisSpringTest;
+import org.junit.Test;
 
 import java.util.Locale;
 
-import org.hisp.dhis.DhisSpringTest;
-import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  * @author Lars Helge Overland
@@ -48,6 +44,26 @@ public class TranslationServiceTest
     private TranslationService translationService;
 
     // -------------------------------------------------------------------------
+    // Testdata
+    // -------------------------------------------------------------------------
+
+    private String uid1 = "uid1";
+    private String uid2 = "uid2";
+
+    private String locale1 = Locale.UK.toString();
+    private String locale2 = Locale.US.toString();
+    private String locale3 = Locale.FRANCE.toString();
+
+    private String className1 = "class1";
+    private String className2 = "class2";
+
+    private Translation translation1a;
+    private Translation translation1b;
+    private Translation translation2a;
+    private Translation translation2b;
+    private Translation translation2c;
+
+    // -------------------------------------------------------------------------
     // Set up/tear down
     // -------------------------------------------------------------------------
 
@@ -55,27 +71,13 @@ public class TranslationServiceTest
     public void setUpTest()
     {
         translationService = (TranslationService) getBean( TranslationService.ID );
+
+        translation1a = new Translation( className1, locale1, "name", "cheers", uid1 );
+        translation1b = new Translation( className1, locale1, "shortName", "goodbye", uid1 );
+        translation2a = new Translation( className1, locale2, "name", "hello", uid1 );
+        translation2b = new Translation( className2, locale2, "name", "hey", uid1 );
+        translation2c = new Translation( className2, locale3, "name", "bonjour", uid2 );
     }
-    
-    // -------------------------------------------------------------------------
-    // Testdata
-    // -------------------------------------------------------------------------
-
-    private int id1 = 0;
-    private int id2 = 1;
-
-    private String locale1 = Locale.UK.toString();
-    private String locale2 = Locale.US.toString();
-    private String locale3 = Locale.FRANCE.toString();
-
-    private String className1 = OrganisationUnit.class.getName();
-    private String className2 = DataElement.class.getName();
-
-    private Translation translation1a = new Translation( className1, id1, locale1, "name", "cheers" );
-    private Translation translation1b = new Translation( className1, id1, locale1, "shortName", "goodbye" );
-    private Translation translation2a = new Translation( className1, id1, locale2, "name", "hello" );
-    private Translation translation2b = new Translation( className2, id1, locale2, "name", "hey" );
-    private Translation translation2c = new Translation( className2, id2, locale3, "name", "bonjour" );
 
     // -------------------------------------------------------------------------
     // Tests
@@ -86,73 +88,62 @@ public class TranslationServiceTest
     {
         translationService.addTranslation( translation1a );
         translationService.addTranslation( translation1b );
-        
-        assertEquals( translation1a, translationService.getTranslation( className1, id1, Locale.UK, "name" ) );
-        assertEquals( translation1b, translationService.getTranslation( className1, id1, Locale.UK, "shortName" ) );
+
+        assertEquals( translation1a, translationService.getTranslationNoFallback( className1, Locale.UK, "name", uid1 ) );
+        assertEquals( translation1b, translationService.getTranslationNoFallback( className1, Locale.UK, "shortName", uid1 ) );
     }
-    
+
     @Test
     public void delete()
     {
+        Translation translation1a = new Translation( className1, locale1, "name", "habari",  uid1 );
+        Translation translation1b = new Translation( className1, locale1, "shortName", "kesho",  uid1 );
+
         translationService.addTranslation( translation1a );
         translationService.addTranslation( translation1b );
-        
-        assertNotNull( translationService.getTranslation( className1, id1, Locale.UK, "name" ) );
-        assertNotNull( translationService.getTranslation( className1, id1, Locale.UK, "shortName" ) );
-        
+
+        assertNotNull( translationService.getTranslationNoFallback( className1, Locale.UK, "name", uid1 ) );
+        assertNotNull( translationService.getTranslationNoFallback( className1, Locale.UK, "shortName", uid1 ) );
+
         translationService.deleteTranslation( translation1a );
-        
-        assertNull( translationService.getTranslation( className1, id1, Locale.UK, "name" ) );
-        assertNotNull( translationService.getTranslation( className1, id1, Locale.UK, "shortName" ) );
 
-        translationService.deleteTranslation( translation1b );
+        assertNull( translationService.getTranslationNoFallback( className1, Locale.UK, "name", uid1 ) );
+        assertNotNull( translationService.getTranslationNoFallback( className1, Locale.UK, "shortName", uid1 ) );
 
-        assertNull( translationService.getTranslation( className1, id1, Locale.UK, "name" ) );
-        assertNull( translationService.getTranslation( className1, id1, Locale.UK, "shortName" ) );
+        translationService.deleteTranslations( translation1b.getClassName(),translation1b.getObjectUid() );
+
+        assertNull( translationService.getTranslationNoFallback( className1, Locale.UK, "name", uid1 ) );
+        assertNull( translationService.getTranslationNoFallback( className1, Locale.UK, "shortName", uid1 ) );
     }
-    
+
     @Test
     public void testUpdateTranslation()
     {
         translationService.addTranslation( translation1a );
-        
-        assertEquals( translation1a, translationService.getTranslation( className1, id1, Locale.UK, "name" ) );
-        
+
+        assertEquals( translation1a, translationService.getTranslationNoFallback( className1, Locale.UK, "name",  uid1 ) );
+
         translation1a.setValue( "regards" );
-        
+
         translationService.updateTranslation( translation1a );
 
-        assertEquals( "regards", translationService.getTranslation( className1, id1, Locale.UK, "name" ).getValue() );
+        assertEquals( "regards", translationService.getTranslationNoFallback( className1, Locale.UK, "name",  uid1 ).getValue() );
     }
 
     @Test
-    public void testGetTranslations1()
+    public void testGetTranslations()
     {
         translationService.addTranslation( translation1a );
         translationService.addTranslation( translation1b );
         translationService.addTranslation( translation2a );
         translationService.addTranslation( translation2b );
         translationService.addTranslation( translation2c );
-        
-        assertEquals( 2, translationService.getTranslations( className1, id1, Locale.UK ).size() );
-        assertTrue( translationService.getTranslations( className1, id1, Locale.UK ).contains( translation1a ) );
-        assertTrue( translationService.getTranslations( className1, id1, Locale.UK ).contains( translation1b ) );
-    }
 
-    @Test
-    public void testGetTranslations2()
-    {
-        translationService.addTranslation( translation1a );
-        translationService.addTranslation( translation1b );
-        translationService.addTranslation( translation2a );
-        translationService.addTranslation( translation2b );
-        translationService.addTranslation( translation2c );
-        
         assertEquals( 2, translationService.getTranslations( className1, Locale.UK ).size() );
-        assertTrue( translationService.getTranslations( className1, id1, Locale.UK ).contains( translation1a ) );
-        assertTrue( translationService.getTranslations( className1, id1, Locale.UK ).contains( translation1b ) );
+        assertTrue( translationService.getTranslationsNoFallback( className1, Locale.UK, uid1 ).contains( translation1a ) );
+        assertTrue( translationService.getTranslationsNoFallback( className1, Locale.UK, uid1 ).contains( translation1b ) );
     }
-    
+
     @Test
     public void testGetAllTranslations()
     {
@@ -161,7 +152,7 @@ public class TranslationServiceTest
         translationService.addTranslation( translation2a );
         translationService.addTranslation( translation2b );
         translationService.addTranslation( translation2c );
-        
+
         assertEquals( 5, translationService.getAllTranslations().size() );
     }
 }

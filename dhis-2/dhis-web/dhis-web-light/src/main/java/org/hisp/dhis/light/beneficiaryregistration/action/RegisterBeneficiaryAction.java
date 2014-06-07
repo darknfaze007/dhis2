@@ -1,17 +1,20 @@
+package org.hisp.dhis.light.beneficiaryregistration.action;
+
 /*
- * Copyright (c) 2004-2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,17 +28,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.light.beneficiaryregistration.action;
-
 import java.util.Collection;
 
-import org.hisp.dhis.patient.PatientAttribute;
-import org.hisp.dhis.patient.PatientAttributeService;
-import org.hisp.dhis.patient.PatientIdentifierType;
-import org.hisp.dhis.patient.PatientIdentifierTypeService;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramService;
 import org.hisp.dhis.setting.SystemSettingManager;
+import org.hisp.dhis.trackedentity.TrackedEntity;
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeService;
 
 import com.opensymphony.xwork2.Action;
 
@@ -46,16 +46,9 @@ public class RegisterBeneficiaryAction
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private PatientIdentifierTypeService patientIdentifierTypeService;
+    private TrackedEntityAttributeService patientAttributeService;
 
-    public void setPatientIdentifierTypeService( PatientIdentifierTypeService patientIdentifierTypeService )
-    {
-        this.patientIdentifierTypeService = patientIdentifierTypeService;
-    }
-
-    private PatientAttributeService patientAttributeService;
-
-    public void setPatientAttributeService( PatientAttributeService patientAttributeService )
+    public void setPatientAttributeService( TrackedEntityAttributeService patientAttributeService )
     {
         this.patientAttributeService = patientAttributeService;
     }
@@ -100,26 +93,14 @@ public class RegisterBeneficiaryAction
         this.orgUnitId = orgUnitId;
     }
 
-    private Collection<PatientIdentifierType> patientIdentifierTypes;
+    private Collection<TrackedEntityAttribute> patientAttributes;
 
-    public Collection<PatientIdentifierType> getPatientIdentifierTypes()
-    {
-        return patientIdentifierTypes;
-    }
-
-    public void setPatientIdentifierTypes( Collection<PatientIdentifierType> patientIdentifierTypes )
-    {
-        this.patientIdentifierTypes = patientIdentifierTypes;
-    }
-
-    private Collection<PatientAttribute> patientAttributes;
-
-    public Collection<PatientAttribute> getPatientAttributes()
+    public Collection<TrackedEntityAttribute> getPatientAttributes()
     {
         return patientAttributes;
     }
 
-    public void setPatientAttributes( Collection<PatientAttribute> patientAttributes )
+    public void setPatientAttributes( Collection<TrackedEntityAttribute> patientAttributes )
     {
         this.patientAttributes = patientAttributes;
     }
@@ -162,16 +143,28 @@ public class RegisterBeneficiaryAction
         this.phoneNumberAreaCode = phoneNumberAreaCode;
     }
 
+    private Collection<TrackedEntity> trackedEntities;
+
     // -------------------------------------------------------------------------
     // Action Implementation
     // -------------------------------------------------------------------------
+
+    public Collection<TrackedEntity> getTrackedEntities()
+    {
+        return trackedEntities;
+    }
+
+    public void setTrackedEntities( Collection<TrackedEntity> trackedEntities )
+    {
+        this.trackedEntities = trackedEntities;
+    }
 
     @Override
     public String execute()
         throws Exception
     {
-        patientIdentifierTypes = patientIdentifierTypeService.getAllPatientIdentifierTypes();
-        patientAttributes = patientAttributeService.getAllPatientAttributes();
+        patientAttributes = patientAttributeService.getAllTrackedEntityAttributes();
+
         phoneNumberAreaCode = (String) systemSettingManager
             .getSystemSetting( SystemSettingManager.KEY_PHONE_NUMBER_AREA_CODE );
         if ( phoneNumberAreaCode == null )
@@ -180,8 +173,7 @@ public class RegisterBeneficiaryAction
 
         for ( Program program : programs )
         {
-            patientIdentifierTypes.removeAll( program.getPatientIdentifierTypes() );
-            patientAttributes.removeAll( program.getPatientAttributes() );
+            patientAttributes.removeAll( program.getAttributes() );
         }
         return SUCCESS;
     }

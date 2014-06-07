@@ -1,19 +1,20 @@
 package org.hisp.dhis.common;
 
 /*
- * Copyright (c) 2004-2005, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the <ORGANIZATION> nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,13 +32,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.common.IdentifiableObject.IdentifiableProperty;
 import org.hisp.dhis.common.NameableObject.NameableProperty;
-import org.hisp.dhis.user.CurrentUserService;
+import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,9 +56,6 @@ public class DefaultIdentifiableObjectManager
     private static final Log log = LogFactory.getLog( DefaultIdentifiableObjectManager.class );
 
     @Autowired
-    private CurrentUserService currentUserService;
-
-    @Autowired
     private Set<GenericIdentifiableObjectStore<IdentifiableObject>> identifiableObjectStores;
 
     @Autowired
@@ -66,24 +64,6 @@ public class DefaultIdentifiableObjectManager
     private Map<Class<IdentifiableObject>, GenericIdentifiableObjectStore<IdentifiableObject>> identifiableObjectStoreMap;
 
     private Map<Class<NameableObject>, GenericNameableObjectStore<NameableObject>> nameableObjectStoreMap;
-
-    @PostConstruct
-    public void init()
-    {
-        identifiableObjectStoreMap = new HashMap<Class<IdentifiableObject>, GenericIdentifiableObjectStore<IdentifiableObject>>();
-
-        for ( GenericIdentifiableObjectStore<IdentifiableObject> store : identifiableObjectStores )
-        {
-            identifiableObjectStoreMap.put( store.getClazz(), store );
-        }
-
-        nameableObjectStoreMap = new HashMap<Class<NameableObject>, GenericNameableObjectStore<NameableObject>>();
-
-        for ( GenericNameableObjectStore<NameableObject> store : nameableObjectStores )
-        {
-            nameableObjectStoreMap.put( store.getClazz(), store );
-        }
-    }
 
     //--------------------------------------------------------------------------
     // IdentifiableObjectManager implementation
@@ -112,6 +92,20 @@ public class DefaultIdentifiableObjectManager
     }
 
     @Override
+    public void update( List<IdentifiableObject> objects )
+    {
+        if ( objects == null || objects.isEmpty() )
+        {
+            return;
+        }
+
+        for ( IdentifiableObject object : objects )
+        {
+            update( object );
+        }
+    }
+
+    @Override
     public void delete( IdentifiableObject object )
     {
         GenericIdentifiableObjectStore<IdentifiableObject> store = getIdentifiableObjectStore( object.getClass() );
@@ -120,6 +114,37 @@ public class DefaultIdentifiableObjectManager
         {
             store.delete( object );
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends IdentifiableObject> T get( String uid )
+    {
+        for ( GenericIdentifiableObjectStore<IdentifiableObject> store : identifiableObjectStores )
+        {
+            T object = (T) store.getByUid( uid );
+
+            if ( object != null )
+            {
+                return object;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends IdentifiableObject> T get( Class<T> clazz, int id )
+    {
+        GenericIdentifiableObjectStore<IdentifiableObject> store = getIdentifiableObjectStore( clazz );
+
+        if ( store == null )
+        {
+            return null;
+        }
+
+        return (T) store.get( id );
     }
 
     @Override
@@ -134,6 +159,12 @@ public class DefaultIdentifiableObjectManager
         }
 
         return (T) store.getByUid( uid );
+    }
+
+    @Override
+    public <T extends IdentifiableObject> boolean exists( Class<T> clazz, String uid )
+    {
+        return get( clazz, uid ) != null;
     }
 
     @Override
@@ -181,7 +212,35 @@ public class DefaultIdentifiableObjectManager
 
         return object;
     }
-    
+
+    @Override
+    public <T extends IdentifiableObject> Collection<T> filter( Class<T> clazz, String query )
+    {
+        Set<T> uniqueObjects = new HashSet<T>();
+
+        T uidObject = get( clazz, query );
+
+        if ( uidObject != null )
+        {
+            uniqueObjects.add( uidObject );
+        }
+
+        T codeObject = getByCode( clazz, query );
+
+        if ( codeObject != null )
+        {
+            uniqueObjects.add( codeObject );
+        }
+
+        uniqueObjects.addAll( getLikeName( clazz, query ) );
+
+        List<T> objects = new ArrayList<T>( uniqueObjects );
+
+        Collections.sort( objects, IdentifiableObjectNameComparator.INSTANCE );
+
+        return objects;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public <T extends IdentifiableObject> Collection<T> getAll( Class<T> clazz )
@@ -221,9 +280,9 @@ public class DefaultIdentifiableObjectManager
             return new ArrayList<T>();
         }
 
-        return (List<T>) store.getByUid( uids );        
+        return (List<T>) store.getByUid( uids );
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
     public <T extends IdentifiableObject> Collection<T> getLikeName( Class<T> clazz, String name )
@@ -240,7 +299,7 @@ public class DefaultIdentifiableObjectManager
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IdentifiableObject> Collection<T> getBetween( Class<T> clazz, int first, int max )
+    public <T extends IdentifiableObject> Collection<T> getLikeShortName( Class<T> clazz, String shortName )
     {
         GenericIdentifiableObjectStore<IdentifiableObject> store = getIdentifiableObjectStore( clazz );
 
@@ -249,12 +308,12 @@ public class DefaultIdentifiableObjectManager
             return new ArrayList<T>();
         }
 
-        return (Collection<T>) store.getAllOrderedName( first, max );
+        return (Collection<T>) store.getAllLikeShortName( shortName );
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IdentifiableObject> Collection<T> getBetweenByName( Class<T> clazz, String name, int first, int max )
+    public <T extends IdentifiableObject> List<T> getBetween( Class<T> clazz, int first, int max )
     {
         GenericIdentifiableObjectStore<IdentifiableObject> store = getIdentifiableObjectStore( clazz );
 
@@ -263,7 +322,21 @@ public class DefaultIdentifiableObjectManager
             return new ArrayList<T>();
         }
 
-        return (Collection<T>) store.getAllLikeNameOrderedName( name, first, max );
+        return (List<T>) store.getAllOrderedName( first, max );
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends IdentifiableObject> List<T> getBetweenByName( Class<T> clazz, String name, int first, int max )
+    {
+        GenericIdentifiableObjectStore<IdentifiableObject> store = getIdentifiableObjectStore( clazz );
+
+        if ( store == null )
+        {
+            return new ArrayList<T>();
+        }
+
+        return (List<T>) store.getAllLikeNameOrderedName( name, first, max );
     }
 
     @Override
@@ -281,7 +354,7 @@ public class DefaultIdentifiableObjectManager
     }
 
     @Override
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public <T extends IdentifiableObject> Collection<T> getByLastUpdatedSorted( Class<T> clazz, Date lastUpdated )
     {
         GenericIdentifiableObjectStore<IdentifiableObject> store = getIdentifiableObjectStore( clazz );
@@ -425,7 +498,7 @@ public class DefaultIdentifiableObjectManager
     {
         for ( GenericIdentifiableObjectStore<IdentifiableObject> objectStore : identifiableObjectStores )
         {
-            if ( simpleClassName.equals( objectStore.getClass().getSimpleName() ) )
+            if ( simpleClassName.equals( objectStore.getClazz().getSimpleName() ) )
             {
                 return objectStore.getByUid( uid );
             }
@@ -462,7 +535,7 @@ public class DefaultIdentifiableObjectManager
     }
 
     @Override
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     public <T extends IdentifiableObject> T getNoAcl( Class<T> clazz, String uid )
     {
         GenericIdentifiableObjectStore<IdentifiableObject> store = getIdentifiableObjectStore( clazz );
@@ -486,8 +559,14 @@ public class DefaultIdentifiableObjectManager
         }
     }
 
+    //--------------------------------------------------------------------------
+    // Supportive methods
+    //--------------------------------------------------------------------------
+
     private <T extends IdentifiableObject> GenericIdentifiableObjectStore<IdentifiableObject> getIdentifiableObjectStore( Class<T> clazz )
     {
+        initMaps();
+
         GenericIdentifiableObjectStore<IdentifiableObject> store = identifiableObjectStoreMap.get( clazz );
 
         if ( store == null )
@@ -505,6 +584,8 @@ public class DefaultIdentifiableObjectManager
 
     private <T extends NameableObject> GenericNameableObjectStore<NameableObject> getNameableObjectStore( Class<T> clazz )
     {
+        initMaps();
+
         GenericNameableObjectStore<NameableObject> store = nameableObjectStoreMap.get( clazz );
 
         if ( store == null )
@@ -518,5 +599,27 @@ public class DefaultIdentifiableObjectManager
         }
 
         return store;
+    }
+
+    private void initMaps()
+    {
+        if ( identifiableObjectStoreMap != null )
+        {
+            return; // Already initialized
+        }
+
+        identifiableObjectStoreMap = new HashMap<Class<IdentifiableObject>, GenericIdentifiableObjectStore<IdentifiableObject>>();
+
+        for ( GenericIdentifiableObjectStore<IdentifiableObject> store : identifiableObjectStores )
+        {
+            identifiableObjectStoreMap.put( store.getClazz(), store );
+        }
+
+        nameableObjectStoreMap = new HashMap<Class<NameableObject>, GenericNameableObjectStore<NameableObject>>();
+
+        for ( GenericNameableObjectStore<NameableObject> store : nameableObjectStores )
+        {
+            nameableObjectStoreMap.put( store.getClazz(), store );
+        }
     }
 }

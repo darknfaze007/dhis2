@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -38,8 +39,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.common.GenericDimensionalObjectStore;
-import org.hisp.dhis.common.GenericIdentifiableObjectStore;
+import org.hisp.dhis.common.GenericNameableObjectStore;
 import org.hisp.dhis.concept.Concept;
 import org.hisp.dhis.i18n.I18nService;
 import org.hisp.dhis.system.util.Filter;
@@ -53,39 +56,53 @@ import org.springframework.transaction.annotation.Transactional;
 public class DefaultDataElementCategoryService
     implements DataElementCategoryService
 {
+    private static final Log log = LogFactory.getLog( DefaultDataElementCategoryService.class );
+
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private GenericDimensionalObjectStore<DataElementCategory> dataElementCategoryStore;
+    private CategoryStore categoryStore;
 
-    public void setDataElementCategoryStore( GenericDimensionalObjectStore<DataElementCategory> dataElementCategoryStore )
+    public void setCategoryStore( CategoryStore categoryStore )
     {
-        this.dataElementCategoryStore = dataElementCategoryStore;
+        this.categoryStore = categoryStore;
     }
 
-    private GenericDimensionalObjectStore<DataElementCategoryOption> dataElementCategoryOptionStore;
+    private GenericDimensionalObjectStore<DataElementCategoryOption> categoryOptionStore;
 
-    public void setDataElementCategoryOptionStore(
-        GenericDimensionalObjectStore<DataElementCategoryOption> dataElementCategoryOptionStore )
+    public void setCategoryOptionStore( GenericDimensionalObjectStore<DataElementCategoryOption> categoryOptionStore )
     {
-        this.dataElementCategoryOptionStore = dataElementCategoryOptionStore;
+        this.categoryOptionStore = categoryOptionStore;
     }
 
-    private GenericIdentifiableObjectStore<DataElementCategoryCombo> dataElementCategoryComboStore;
+    private CategoryComboStore categoryComboStore;
 
-    public void setDataElementCategoryComboStore(
-        GenericIdentifiableObjectStore<DataElementCategoryCombo> dataElementCategoryComboStore )
+    public void setCategoryComboStore( CategoryComboStore categoryComboStore )
     {
-        this.dataElementCategoryComboStore = dataElementCategoryComboStore;
+        this.categoryComboStore = categoryComboStore;
     }
 
-    private GenericIdentifiableObjectStore<DataElementCategoryOptionCombo> dataElementCategoryOptionComboStore;
+    private CategoryOptionComboStore categoryOptionComboStore;
 
-    public void setDataElementCategoryOptionComboStore(
-        GenericIdentifiableObjectStore<DataElementCategoryOptionCombo> dataElementCategoryOptionComboStore )
+    public void setCategoryOptionComboStore( CategoryOptionComboStore categoryOptionComboStore )
     {
-        this.dataElementCategoryOptionComboStore = dataElementCategoryOptionComboStore;
+        this.categoryOptionComboStore = categoryOptionComboStore;
+    }
+
+    private GenericNameableObjectStore<CategoryOptionGroup> categoryOptionGroupStore;
+
+    public void setCategoryOptionGroupStore( GenericNameableObjectStore<CategoryOptionGroup> categoryOptionGroupStore )
+    {
+        this.categoryOptionGroupStore = categoryOptionGroupStore;
+    }
+
+    private GenericNameableObjectStore<CategoryOptionGroupSet> categoryOptionGroupSetStore;
+
+    public void setCategoryOptionGroupSetStore(
+        GenericNameableObjectStore<CategoryOptionGroupSet> categoryOptionGroupSetStore )
+    {
+        this.categoryOptionGroupSetStore = categoryOptionGroupSetStore;
     }
 
     private DataElementService dataElementService;
@@ -108,47 +125,47 @@ public class DefaultDataElementCategoryService
 
     public int addDataElementCategory( DataElementCategory dataElementCategory )
     {
-        return dataElementCategoryStore.save( dataElementCategory );
+        return categoryStore.save( dataElementCategory );
     }
 
     public void updateDataElementCategory( DataElementCategory dataElementCategory )
     {
-        dataElementCategoryStore.update( dataElementCategory );
+        categoryStore.update( dataElementCategory );
     }
 
     public void deleteDataElementCategory( DataElementCategory dataElementCategory )
     {
-        dataElementCategoryStore.delete( dataElementCategory );
+        categoryStore.delete( dataElementCategory );
     }
 
     public Collection<DataElementCategory> getDataDimensionDataElementCategories()
     {
         Collection<DataElementCategory> categories = getAllDataElementCategories();
-        
+
         FilterUtils.filter( categories, new Filter<DataElementCategory>()
         {
             public boolean retain( DataElementCategory category )
             {
                 return category != null && category.isDataDimension();
-            }            
+            }
         } );
-        
+
         return categories;
     }
-    
+
     public Collection<DataElementCategory> getAllDataElementCategories()
     {
-        return i18n( i18nService, dataElementCategoryStore.getAll() );
+        return i18n( i18nService, categoryStore.getAll() );
     }
 
     public DataElementCategory getDataElementCategory( int id )
     {
-        return i18n( i18nService, dataElementCategoryStore.get( id ) );
+        return i18n( i18nService, categoryStore.get( id ) );
     }
 
     public DataElementCategory getDataElementCategory( String uid )
     {
-        return i18n( i18nService, dataElementCategoryStore.getByUid( uid ) );
+        return i18n( i18nService, categoryStore.getByUid( uid ) );
     }
 
     public Collection<DataElementCategory> getDataElementCategories( final Collection<Integer> identifiers )
@@ -163,16 +180,16 @@ public class DefaultDataElementCategoryService
             }
         } );
     }
-    
+
     public Collection<DataElementCategory> getDataElementCategoriesByUid( Collection<String> uids )
     {
-        return dataElementCategoryStore.getByUid( uids );
+        return categoryStore.getByUid( uids );
     }
 
     public DataElementCategory getDataElementCategoryByName( String name )
     {
         List<DataElementCategory> dataElementCategories = new ArrayList<DataElementCategory>(
-            dataElementCategoryStore.getAllEqName( name ) );
+            categoryStore.getAllEqName( name ) );
 
         if ( dataElementCategories.isEmpty() )
         {
@@ -182,43 +199,123 @@ public class DefaultDataElementCategoryService
         return i18n( i18nService, dataElementCategories.get( 0 ) );
     }
 
+    @Override
+    public Collection<DataElementCategory> getDataElementCategoriesByConcept( Concept concept )
+    {
+        return i18n( i18nService, categoryStore.getByConcept( concept ) );
+    }
+
+    public Collection<DataElementCategory> getDisaggregationCategories()
+    {
+        return i18n( i18nService,
+            categoryStore.getCategoriesByDimensionType( DataElementCategoryCombo.DIMENSION_TYPE_DISAGGREGATION ) );
+    }
+
+    public Collection<DataElementCategory> getDisaggregationDataDimensionCategories()
+    {
+        Collection<DataElementCategory> categories = getDisaggregationCategories();
+
+        FilterUtils.filter( categories, new Filter<DataElementCategory>()
+        {
+            public boolean retain( DataElementCategory category )
+            {
+                return category != null && category.isDataDimension();
+            }
+        } );
+
+        return categories;
+    }
+
+    public Collection<DataElementCategory> getAttributeCategories()
+    {
+        return i18n( i18nService,
+            categoryStore.getCategoriesByDimensionType( DataElementCategoryCombo.DIMENSION_TYPE_ATTTRIBUTE ) );
+    }
+
+    public Collection<DataElementCategory> getAttributeDataDimensionCategories()
+    {
+        Collection<DataElementCategory> categories = getAttributeCategories();
+
+        FilterUtils.filter( categories, new Filter<DataElementCategory>()
+        {
+            public boolean retain( DataElementCategory category )
+            {
+                return category != null && category.isDataDimension();
+            }
+        } );
+
+        return categories;
+    }
+
+    @Override
+    public Collection<DataElementCategory> getDataElementCategoryBetween( int first, int max )
+    {
+        return i18n( i18nService, categoryStore.getAllOrderedName( first, max ) );
+    }
+
+    @Override
+    public Collection<DataElementCategory> getDataElementCategoryBetweenByName( String name, int first, int max )
+    {
+        return i18n( i18nService, categoryStore.getAllLikeNameOrderedName( name, first, max ) );
+    }
+
+    public Collection<DataElementCategory> getDataElementCategoriesBetween( int first, int max )
+    {
+        return i18n( i18nService, categoryStore.getAllOrderedName( first, max ) );
+    }
+
+    public Collection<DataElementCategory> getDataElementCategoriesBetweenByName( String name, int first, int max )
+    {
+        return i18n( i18nService, categoryStore.getAllLikeNameOrderedName( name, first, max ) );
+    }
+
+    public int getDataElementCategoryCount()
+    {
+        return categoryStore.getCount();
+    }
+
+    public int getDataElementCategoryCountByName( String name )
+    {
+        return categoryStore.getCountLikeName( name );
+    }
+
     // -------------------------------------------------------------------------
     // CategoryOption
     // -------------------------------------------------------------------------
 
     public int addDataElementCategoryOption( DataElementCategoryOption dataElementCategoryOption )
     {
-        return dataElementCategoryOptionStore.save( dataElementCategoryOption );
+        return categoryOptionStore.save( dataElementCategoryOption );
     }
 
     public void updateDataElementCategoryOption( DataElementCategoryOption dataElementCategoryOption )
     {
-        dataElementCategoryOptionStore.update( dataElementCategoryOption );
+        categoryOptionStore.update( dataElementCategoryOption );
     }
 
     public void deleteDataElementCategoryOption( DataElementCategoryOption dataElementCategoryOption )
     {
-        dataElementCategoryOptionStore.delete( dataElementCategoryOption );
+        categoryOptionStore.delete( dataElementCategoryOption );
     }
 
     public DataElementCategoryOption getDataElementCategoryOption( int id )
     {
-        return i18n( i18nService, dataElementCategoryOptionStore.get( id ) );
+        return i18n( i18nService, categoryOptionStore.get( id ) );
     }
 
     public DataElementCategoryOption getDataElementCategoryOption( String uid )
     {
-        return i18n( i18nService, dataElementCategoryOptionStore.getByUid( uid ) );
+        return i18n( i18nService, categoryOptionStore.getByUid( uid ) );
     }
 
     public DataElementCategoryOption getDataElementCategoryOptionByName( String name )
     {
-        return i18n( i18nService, dataElementCategoryOptionStore.getByName( name ) );
+        return i18n( i18nService, categoryOptionStore.getByName( name ) );
     }
 
     public DataElementCategoryOption getDataElementCategoryOptionByCode( String code )
     {
-        return i18n( i18nService, dataElementCategoryOptionStore.getByCode( code ) );
+        return i18n( i18nService, categoryOptionStore.getByCode( code ) );
     }
 
     public Collection<DataElementCategoryOption> getDataElementCategoryOptions( final Collection<Integer> identifiers )
@@ -237,12 +334,43 @@ public class DefaultDataElementCategoryService
 
     public Collection<DataElementCategoryOption> getDataElementCategoryOptionsByUid( Collection<String> uids )
     {
-        return dataElementCategoryOptionStore.getByUid( uids );
+        return categoryOptionStore.getByUid( uids );
     }
 
     public Collection<DataElementCategoryOption> getAllDataElementCategoryOptions()
     {
-        return i18n( i18nService, dataElementCategoryOptionStore.getAll() );
+        return i18n( i18nService, categoryOptionStore.getAll() );
+    }
+
+    @Override
+    public Collection<DataElementCategoryOption> getDataElementCategoryOptionsBetween( int first, int max )
+    {
+        return i18n( i18nService, categoryOptionStore.getAllOrderedName( first, max ) );
+    }
+
+    @Override
+    public Collection<DataElementCategoryOption> getDataElementCategoryOptionsBetweenByName( String name, int first,
+        int max )
+    {
+        return i18n( i18nService, categoryOptionStore.getAllLikeNameOrderedName( name, first, max ) );
+    }
+
+    @Override
+    public Collection<DataElementCategoryOption> getDataElementCategoryOptionsByConcept( Concept concept )
+    {
+        return categoryOptionStore.getByConcept( concept );
+    }
+
+    @Override
+    public int getDataElementCategoryOptionCount()
+    {
+        return categoryOptionStore.getCount();
+    }
+
+    @Override
+    public int getDataElementCategoryOptionCountByName( String name )
+    {
+        return categoryOptionStore.getCountLikeName( name );
     }
 
     // -------------------------------------------------------------------------
@@ -251,32 +379,32 @@ public class DefaultDataElementCategoryService
 
     public int addDataElementCategoryCombo( DataElementCategoryCombo dataElementCategoryCombo )
     {
-        return dataElementCategoryComboStore.save( dataElementCategoryCombo );
+        return categoryComboStore.save( dataElementCategoryCombo );
     }
 
     public void updateDataElementCategoryCombo( DataElementCategoryCombo dataElementCategoryCombo )
     {
-        dataElementCategoryComboStore.save( dataElementCategoryCombo );
+        categoryComboStore.save( dataElementCategoryCombo );
     }
 
     public void deleteDataElementCategoryCombo( DataElementCategoryCombo dataElementCategoryCombo )
     {
-        dataElementCategoryComboStore.delete( dataElementCategoryCombo );
+        categoryComboStore.delete( dataElementCategoryCombo );
     }
 
     public Collection<DataElementCategoryCombo> getAllDataElementCategoryCombos()
     {
-        return i18n( i18nService, dataElementCategoryComboStore.getAll() );
+        return i18n( i18nService, categoryComboStore.getAll() );
     }
 
     public DataElementCategoryCombo getDataElementCategoryCombo( int id )
     {
-        return i18n( i18nService, dataElementCategoryComboStore.get( id ) );
+        return i18n( i18nService, categoryComboStore.get( id ) );
     }
 
     public DataElementCategoryCombo getDataElementCategoryCombo( String uid )
     {
-        return i18n( i18nService, dataElementCategoryComboStore.getByUid( uid ) );
+        return i18n( i18nService, categoryComboStore.getByUid( uid ) );
     }
 
     public Collection<DataElementCategoryCombo> getDataElementCategoryCombos( final Collection<Integer> identifiers )
@@ -295,7 +423,46 @@ public class DefaultDataElementCategoryService
 
     public DataElementCategoryCombo getDataElementCategoryComboByName( String name )
     {
-        return i18n( i18nService, dataElementCategoryComboStore.getByName( name ) );
+        return i18n( i18nService, categoryComboStore.getByName( name ) );
+    }
+
+    public DataElementCategoryCombo getDefaultDataElementCategoryCombo()
+    {
+        return getDataElementCategoryComboByName( DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
+    }
+
+    public int getDataElementCategoryComboCount()
+    {
+        return categoryComboStore.getCount();
+    }
+
+    public int getDataElementCategoryComboCountByName( String name )
+    {
+        return categoryComboStore.getCountLikeName( name );
+    }
+
+    public Collection<DataElementCategoryCombo> getDataElementCategoryCombosBetween( int first, int max )
+    {
+        return i18n( i18nService, categoryComboStore.getAllOrderedName( first, max ) );
+    }
+
+    public Collection<DataElementCategoryCombo> getDataElementCategoryCombosBetweenByName( String name, int first,
+        int max )
+    {
+        return i18n( i18nService, categoryComboStore.getAllLikeNameOrderedName( name, first, max ) );
+    }
+
+    public Collection<DataElementCategoryCombo> getDisaggregationCategoryCombos()
+    {
+        return i18n( i18nService,
+            categoryComboStore
+                .getCategoryCombosByDimensionType( DataElementCategoryCombo.DIMENSION_TYPE_DISAGGREGATION ) );
+    }
+
+    public Collection<DataElementCategoryCombo> getAttributeCategoryCombos()
+    {
+        return i18n( i18nService,
+            categoryComboStore.getCategoryCombosByDimensionType( DataElementCategoryCombo.DIMENSION_TYPE_ATTTRIBUTE ) );
     }
 
     // -------------------------------------------------------------------------
@@ -304,27 +471,27 @@ public class DefaultDataElementCategoryService
 
     public int addDataElementCategoryOptionCombo( DataElementCategoryOptionCombo dataElementCategoryOptionCombo )
     {
-        return dataElementCategoryOptionComboStore.save( dataElementCategoryOptionCombo );
+        return categoryOptionComboStore.save( dataElementCategoryOptionCombo );
     }
 
     public void updateDataElementCategoryOptionCombo( DataElementCategoryOptionCombo dataElementCategoryOptionCombo )
     {
-        dataElementCategoryOptionComboStore.update( dataElementCategoryOptionCombo );
+        categoryOptionComboStore.update( dataElementCategoryOptionCombo );
     }
 
     public void deleteDataElementCategoryOptionCombo( DataElementCategoryOptionCombo dataElementCategoryOptionCombo )
     {
-        dataElementCategoryOptionComboStore.delete( dataElementCategoryOptionCombo );
+        categoryOptionComboStore.delete( dataElementCategoryOptionCombo );
     }
 
     public DataElementCategoryOptionCombo getDataElementCategoryOptionCombo( int id )
     {
-        return dataElementCategoryOptionComboStore.get( id );
+        return categoryOptionComboStore.get( id );
     }
 
     public DataElementCategoryOptionCombo getDataElementCategoryOptionCombo( String uid )
     {
-        return dataElementCategoryOptionComboStore.getByUid( uid );
+        return categoryOptionComboStore.getByUid( uid );
     }
 
     public Collection<DataElementCategoryOptionCombo> getDataElementCategoryOptionCombos(
@@ -344,7 +511,7 @@ public class DefaultDataElementCategoryService
 
     public Collection<DataElementCategoryOptionCombo> getDataElementCategoryOptionCombosByUid( Collection<String> uids )
     {
-        return dataElementCategoryOptionComboStore.getByUid( uids );
+        return categoryOptionComboStore.getByUid( uids );
     }
 
     public DataElementCategoryOptionCombo getDataElementCategoryOptionCombo(
@@ -380,9 +547,15 @@ public class DefaultDataElementCategoryService
         return null;
     }
 
+    public DataElementCategoryOptionCombo getDataElementCategoryOptionCombo( DataElementCategoryCombo categoryCombo,
+        Set<DataElementCategoryOption> categoryOptions )
+    {
+        return categoryOptionComboStore.getCategoryOptionCombo( categoryCombo, categoryOptions );
+    }
+
     public Collection<DataElementCategoryOptionCombo> getAllDataElementCategoryOptionCombos()
     {
-        return dataElementCategoryOptionComboStore.getAll();
+        return categoryOptionComboStore.getAll();
     }
 
     public void generateDefaultDimension()
@@ -408,7 +581,8 @@ public class DefaultDataElementCategoryService
         // DataElementCategoryCombo
         // ---------------------------------------------------------------------
 
-        DataElementCategoryCombo categoryCombo = new DataElementCategoryCombo( DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
+        DataElementCategoryCombo categoryCombo = new DataElementCategoryCombo(
+            DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
         categoryCombo.addDataElementCategory( category );
         addDataElementCategoryCombo( categoryCombo );
 
@@ -437,7 +611,7 @@ public class DefaultDataElementCategoryService
     {
         DataElementCategoryCombo categoryCombo = getDataElementCategoryComboByName( DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
 
-        return categoryCombo.getOptionCombos().iterator().next();
+        return categoryCombo != null && categoryCombo.hasOptionCombos() ? categoryCombo.getOptionCombos().iterator().next() : null;
     }
 
     public Collection<DataElementOperand> populateOperands( Collection<DataElementOperand> operands )
@@ -454,36 +628,38 @@ public class DefaultDataElementCategoryService
         return operands;
     }
 
+    public Collection<DataElementOperand> getOperands( Collection<DataElement> dataElements )
+    {
+        return getOperands( dataElements, false );
+    }
+
     public Collection<DataElementOperand> getOperands( Collection<DataElement> dataElements, boolean includeTotals )
     {
-        Collection<DataElementOperand> operands = new ArrayList<DataElementOperand>();
+        List<DataElementOperand> operands = new ArrayList<DataElementOperand>();
 
         for ( DataElement dataElement : dataElements )
         {
-            if ( !dataElement.getCategoryCombo().isDefault() && includeTotals )
+            if ( dataElement.getCategoryCombo() != null )
             {
-                DataElementOperand operand = new DataElementOperand();
-                operand.updateProperties( dataElement );
-
-                operands.add( operand );
-            }
-
-            for ( DataElementCategoryOptionCombo categoryOptionCombo : dataElement.getCategoryCombo()
-                .getSortedOptionCombos() )
-            {
-                DataElementOperand operand = new DataElementOperand();
-                operand.updateProperties( dataElement, categoryOptionCombo );
-
-                operands.add( operand );
+                if ( !dataElement.getCategoryCombo().isDefault() && includeTotals )
+                {
+                    DataElementOperand operand = new DataElementOperand();
+                    operand.updateProperties( dataElement );
+    
+                    operands.add( operand );
+                }
+    
+                for ( DataElementCategoryOptionCombo categoryOptionCombo : dataElement.getCategoryCombo().getSortedOptionCombos() )
+                {
+                    DataElementOperand operand = new DataElementOperand();
+                    operand.updateProperties( dataElement, categoryOptionCombo );
+    
+                    operands.add( operand );
+                }
             }
         }
 
         return operands;
-    }
-
-    public Collection<DataElementOperand> getOperands( Collection<DataElement> dataElements )
-    {
-        return getOperands( dataElements, false );
     }
 
     public Collection<DataElementOperand> getOperandsLikeName( String name )
@@ -499,12 +675,15 @@ public class DefaultDataElementCategoryService
 
         for ( DataElement dataElement : dataElements )
         {
-            for ( DataElementCategoryOptionCombo categoryOptionCombo : dataElement.getCategoryCombo().getOptionCombos() )
+            if ( dataElement.getCategoryCombo() != null )
             {
-                DataElementOperand operand = new DataElementOperand( dataElement, categoryOptionCombo );
-                operand.updateProperties( dataElement, categoryOptionCombo );
-
-                operands.add( operand );
+                for ( DataElementCategoryOptionCombo categoryOptionCombo : dataElement.getCategoryCombo().getOptionCombos() )
+                {
+                    DataElementOperand operand = new DataElementOperand( dataElement, categoryOptionCombo );
+                    operand.updateProperties( dataElement, categoryOptionCombo );
+    
+                    operands.add( operand );
+                }
             }
         }
 
@@ -540,16 +719,35 @@ public class DefaultDataElementCategoryService
         List<DataElementCategoryOptionCombo> generatedOptionCombos = categoryCombo.generateOptionCombosList();
         Set<DataElementCategoryOptionCombo> persistedOptionCombos = categoryCombo.getOptionCombos();
 
+        boolean modified = false;
+
         for ( DataElementCategoryOptionCombo optionCombo : generatedOptionCombos )
         {
             if ( !persistedOptionCombos.contains( optionCombo ) )
             {
                 categoryCombo.getOptionCombos().add( optionCombo );
                 addDataElementCategoryOptionCombo( optionCombo );
+
+                log.info( "Added missing category option combo: " + optionCombo + " for category combo: "
+                    + categoryCombo.getName() );
+                modified = true;
             }
         }
 
-        updateDataElementCategoryCombo( categoryCombo );
+        if ( modified )
+        {
+            updateDataElementCategoryCombo( categoryCombo );
+        }
+    }
+
+    public void updateAllOptionCombos()
+    {
+        Collection<DataElementCategoryCombo> categoryCombos = getAllDataElementCategoryCombos();
+
+        for ( DataElementCategoryCombo categoryCombo : categoryCombos )
+        {
+            updateOptionCombos( categoryCombo );
+        }
     }
 
     public Map<String, Integer> getDataElementCategoryOptionComboUidIdMap()
@@ -564,105 +762,175 @@ public class DefaultDataElementCategoryService
         return map;
     }
 
-    public int getDataElementCategoryCount()
-    {
-        return dataElementCategoryStore.getCount();
-    }
-
-    public int getDataElementCategoryCountByName( String name )
-    {
-        return dataElementCategoryStore.getCountLikeName( name );
-    }
-
-    @Override
-    public int getDataElementCategoryOptionCount()
-    {
-        return dataElementCategoryOptionStore.getCount();
-    }
-
-    @Override
-    public int getDataElementCategoryOptionCountByName( String name )
-    {
-        return dataElementCategoryOptionStore.getCountLikeName( name );
-    }
-
     @Override
     public int getDataElementCategoryOptionComboCount()
     {
-        return dataElementCategoryOptionComboStore.getCount();
+        return categoryOptionComboStore.getCount();
     }
 
     @Override
     public int getDataElementCategoryOptionComboCountByName( String name )
     {
-        return dataElementCategoryOptionComboStore.getCountLikeName( name );
+        return categoryOptionComboStore.getCountLikeName( name );
     }
 
-    public Collection<DataElementCategory> getDataElementCategorysBetween( int first, int max )
+    // -------------------------------------------------------------------------
+    // CategoryOptionGroup
+    // -------------------------------------------------------------------------
+
+    public int saveCategoryOptionGroup( CategoryOptionGroup group )
     {
-        return i18n( i18nService, dataElementCategoryStore.getAllOrderedName( first, max ) );
+        return categoryOptionGroupStore.save( group );
     }
 
-    public Collection<DataElementCategory> getDataElementCategorysBetweenByName( String name, int first, int max )
+    public void updateCategoryOptionGroup( CategoryOptionGroup group )
     {
-        return i18n( i18nService, dataElementCategoryStore.getAllLikeNameOrderedName( name, first, max ) );
+        categoryOptionGroupStore.update( group );
     }
 
-    public int getDataElementCategoryComboCount()
+    public CategoryOptionGroup getCategoryOptionGroup( int id )
     {
-        return dataElementCategoryComboStore.getCount();
+        return categoryOptionGroupStore.get( id );
     }
 
-    public int getDataElementCategoryComboCountByName( String name )
+    public CategoryOptionGroup getCategoryOptionGroup( String uid )
     {
-        return dataElementCategoryComboStore.getCountLikeName( name );
+        return categoryOptionGroupStore.getByUid( uid );
     }
 
-    public Collection<DataElementCategoryCombo> getDataElementCategoryCombosBetween( int first, int max )
+    public List<CategoryOptionGroup> getCategoryOptionGroupsByUid( Collection<String> uids )
     {
-        return i18n( i18nService, dataElementCategoryComboStore.getAllOrderedName( first, max ) );
+        return categoryOptionGroupStore.getByUid( uids );
+    }
+    
+    public void deleteCategoryOptionGroup( CategoryOptionGroup group )
+    {
+        categoryOptionGroupStore.delete( group );
     }
 
-    public Collection<DataElementCategoryCombo> getDataElementCategoryCombosBetweenByName( String name, int first,
-        int max )
+    public Collection<CategoryOptionGroup> getCategoryOptionGroupsBetween( int first, int max )
     {
-        return i18n( i18nService, dataElementCategoryComboStore.getAllLikeNameOrderedName( name, first, max ) );
+        return categoryOptionGroupStore.getAllOrderedName( first, max );
     }
 
-    @Override
-    public Collection<DataElementCategoryOption> getDataElementCategorOptionsByConcept( Concept concept )
+    public Collection<CategoryOptionGroup> getCategoryOptionGroupsBetweenByName( int first, int max, String name )
     {
-        return dataElementCategoryOptionStore.getByConcept( concept );
+        return categoryOptionGroupStore.getAllLikeNameOrderedName( name, first, max );
     }
 
-    @Override
-    public Collection<DataElementCategory> getDataElementCategorysByConcept( Concept concept )
+    public Collection<CategoryOptionGroup> getAllCategoryOptionGroups()
     {
-        return i18n( i18nService, dataElementCategoryStore.getByConcept( concept ) );
-    }
-
-    @Override
-    public Collection<DataElementCategory> getDataElementCategoryBetween( int first, int max )
-    {
-        return i18n( i18nService, dataElementCategoryStore.getAllOrderedName( first, max ) );
-    }
-
-    @Override
-    public Collection<DataElementCategory> getDataElementCategoryBetweenByName( String name, int first, int max )
-    {
-        return i18n( i18nService, dataElementCategoryStore.getAllLikeNameOrderedName( name, first, max ) );
+        return categoryOptionGroupStore.getAll();
     }
 
     @Override
-    public Collection<DataElementCategoryOption> getDataElementCategoryOptionsBetween( int first, int max )
+    public CategoryOptionGroup getCategoryOptionGroupByName( String name )
     {
-        return i18n( i18nService, dataElementCategoryOptionStore.getAllOrderedName( first, max ) );
+        return i18n( i18nService, categoryOptionGroupStore.getByName( name ) );
     }
 
     @Override
-    public Collection<DataElementCategoryOption> getDataElementCategoryOptionsBetweenByName( String name, int first,
-        int max )
+    public CategoryOptionGroup getCategoryOptionGroupByCode( String code )
     {
-        return i18n( i18nService, dataElementCategoryOptionStore.getAllLikeNameOrderedName( name, first, max ) );
+        return i18n( i18nService, categoryOptionGroupStore.getByCode( code ) );
     }
+
+    @Override
+    public CategoryOptionGroup getCategoryOptionGroupByShortName( String shortName )
+    {
+        List<CategoryOptionGroup> categoryOptionGroups = new ArrayList<CategoryOptionGroup>(
+            categoryOptionGroupStore.getAllLikeShortName( shortName ) );
+
+        if ( categoryOptionGroups.isEmpty() )
+        {
+            return null;
+        }
+
+        return i18n( i18nService, categoryOptionGroups.get( 0 ) );
+    }
+
+    @Override
+    public int getCategoryOptionGroupCount()
+    {
+        return categoryOptionGroupStore.getCount();
+    }
+
+    @Override
+    public int getCategoryOptionGroupCountByName( String name )
+    {
+        return categoryOptionGroupStore.getCountLikeName( name );
+    }
+
+    // -------------------------------------------------------------------------
+    // CategoryOptionGroupSet
+    // -------------------------------------------------------------------------
+
+    public int saveCategoryOptionGroupSet( CategoryOptionGroupSet group )
+    {
+        return categoryOptionGroupSetStore.save( group );
+    }
+
+    public void updateCategoryOptionGroupSet( CategoryOptionGroupSet group )
+    {
+        categoryOptionGroupSetStore.update( group );
+    }
+
+    public CategoryOptionGroupSet getCategoryOptionGroupSet( int id )
+    {
+        return categoryOptionGroupSetStore.get( id );
+    }
+
+    public CategoryOptionGroupSet getCategoryOptionGroupSet( String uid )
+    {
+        return categoryOptionGroupSetStore.getByUid( uid );
+    }
+    
+    public List<CategoryOptionGroupSet> getCategoryOptionGroupSetsByUid( Collection<String> uids )
+    {
+        return categoryOptionGroupSetStore.getByUid( uids );
+    }
+
+    public void deleteCategoryOptionGroupSet( CategoryOptionGroupSet group )
+    {
+        categoryOptionGroupSetStore.delete( group );
+    }
+
+    public Collection<CategoryOptionGroupSet> getCategoryOptionGroupSetsBetween( int first, int max )
+    {
+        return categoryOptionGroupSetStore.getAllOrderedName( first, max );
+    }
+
+    public Collection<CategoryOptionGroupSet> getCategoryOptionGroupSetsBetweenByName( int first, int max, String name )
+    {
+        return categoryOptionGroupSetStore.getAllLikeNameOrderedName( name, first, max );
+    }
+
+    public Collection<CategoryOptionGroupSet> getAllCategoryOptionGroupSets()
+    {
+        return categoryOptionGroupSetStore.getAll();
+    }
+
+    public Collection<CategoryOptionGroupSet> getDataDimensionCategoryOptionGroupSets()
+    {
+        return categoryOptionGroupSetStore.getByDataDimension( true );
+    }
+
+    @Override
+    public CategoryOptionGroupSet getCategoryOptionGroupSetByName( String name )
+    {
+        return categoryOptionGroupSetStore.getByName( name );
+    }
+
+    @Override
+    public int getCategoryOptionGroupSetCount()
+    {
+        return categoryOptionGroupSetStore.getCount();
+    }
+
+    @Override
+    public int getCategoryOptionGroupSetCountByName( String name )
+    {
+        return categoryOptionGroupSetStore.getCountLikeName( name );
+    }
+
 }

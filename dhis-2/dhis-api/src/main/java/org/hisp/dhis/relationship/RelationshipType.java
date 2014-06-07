@@ -1,17 +1,20 @@
+package org.hisp.dhis.relationship;
+
 /*
- * Copyright (c) 2004-2009, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,21 +27,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.hisp.dhis.relationship;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
+import org.hisp.dhis.common.IdentifiableObject;
+import org.hisp.dhis.common.view.DetailedView;
+import org.hisp.dhis.common.view.ExportView;
 
 /**
  * @author Abyot Asalefew
- * @version $Id$
  */
-@XmlRootElement( name = "relationshipType", namespace = DxfNamespaces.DXF_2_0 )
-@XmlAccessorType( value = XmlAccessType.NONE )
+@JacksonXmlRootElement(localName = "relationshipType", namespace = DxfNamespaces.DXF_2_0)
 public class RelationshipType
     extends BaseIdentifiableObject
 {
@@ -57,58 +60,23 @@ public class RelationshipType
 
     public RelationshipType()
     {
+        setAutoFields();
     }
 
     public RelationshipType( String aIsToB, String bIsToA )
     {
+        this();
         this.aIsToB = aIsToB;
         this.bIsToA = bIsToA;
-    }
-
-    // -------------------------------------------------------------------------
-    // hashCode, equals and toString
-    // -------------------------------------------------------------------------
-
-    @Override
-    public boolean equals( Object o )
-    {
-        if ( this == o )
-        {
-            return true;
-        }
-
-        if ( o == null )
-        {
-            return false;
-        }
-
-        if ( !(o instanceof RelationshipType) )
-        {
-            return false;
-        }
-
-        final RelationshipType other = (RelationshipType) o;
-
-        return aIsToB.equals( other.getaIsToB() ) && bIsToA.equals( other.getbIsToA() );
-
-    }
-
-    @Override
-    public int hashCode()
-    {
-        final int prime = 31;
-        int result = 1;
-
-        result = result * prime + aIsToB.hashCode();
-        result = result * prime + bIsToA.hashCode();
-
-        return result;
     }
 
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
 
+    @JsonProperty
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
     public String getaIsToB()
     {
         return aIsToB;
@@ -119,6 +87,9 @@ public class RelationshipType
         this.aIsToB = aIsToB;
     }
 
+    @JsonProperty
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
     public String getbIsToA()
     {
         return bIsToA;
@@ -127,5 +98,28 @@ public class RelationshipType
     public void setbIsToA( String bIsToA )
     {
         this.bIsToA = bIsToA;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "RelationshipType{" +
+            "aIsToB='" + aIsToB + '\'' +
+            ", bIsToA='" + bIsToA + '\'' +
+            '}';
+    }
+
+    @Override
+    public void mergeWith( IdentifiableObject other )
+    {
+        super.mergeWith( other );
+
+        if ( other.getClass().isInstance( this ) )
+        {
+            RelationshipType relationshipType = (RelationshipType) other;
+
+            this.aIsToB = relationshipType.getaIsToB();
+            this.bIsToA = relationshipType.getbIsToA();
+        }
     }
 }

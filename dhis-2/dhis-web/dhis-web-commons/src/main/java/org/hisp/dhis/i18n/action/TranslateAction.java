@@ -1,19 +1,20 @@
 package org.hisp.dhis.i18n.action;
 
 /*
- * Copyright (c) 2004-2005, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the <ORGANIZATION> nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -55,7 +56,7 @@ public class TranslateAction
 
     private String className;
 
-    private String objectId;
+    private String uid;
 
     private String loc;
 
@@ -90,9 +91,9 @@ public class TranslateAction
         this.className = className;
     }
 
-    public void setObjectId( String objectId )
+    public void setUid( String uid )
     {
-        this.objectId = objectId;
+        this.uid = uid;
     }
 
     public void setLoc( String locale )
@@ -114,9 +115,9 @@ public class TranslateAction
         return className;
     }
 
-    public String getObjectId()
+    public String getUid()
     {
-        return objectId;
+        return uid;
     }
 
     public String getLocale()
@@ -141,9 +142,9 @@ public class TranslateAction
     public String execute()
         throws Exception
     {
-        log.info( "Classname: " + className + ", id: " + objectId + ", loc: " + loc );
+        log.info( "Classname: " + className + ", uid: " + uid + ", loc: " + loc );
 
-        IdentifiableObject object = identifiableObjectManager.getObject( Integer.parseInt( objectId ), className );
+        IdentifiableObject object = identifiableObjectManager.getObject( uid , className );
 
         List<String> propertyNames = i18nService.getObjectPropertyNames( object );
         
@@ -156,8 +157,8 @@ public class TranslateAction
         for ( String propertyName : propertyNames )
         {
             String[] translation = request.getParameterValues( propertyName );
-
-            if ( translation != null && translation.length > 0 && translation[0] != null && !translation[0].trim().isEmpty() )
+            
+            if ( translation != null && translation.length > 0 )
             {
                 translations.put( propertyName, translation[0] );
             }
@@ -167,7 +168,7 @@ public class TranslateAction
 
         if ( thisLocale != null && !loc.equals( "NONE" ) )
         {
-            i18nService.updateTranslation( className, Integer.parseInt( objectId ), thisLocale, translations );
+            i18nService.updateTranslation( className, thisLocale, translations,object.getUid() );
         }
 
         return SUCCESS;

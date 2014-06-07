@@ -1,19 +1,20 @@
 package org.hisp.dhis.datavalue;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,9 +29,13 @@ package org.hisp.dhis.datavalue;
  */
 
 import java.util.Collection;
-import java.util.Map;
+import java.util.Date;
+import java.util.Set;
 
+import org.hisp.dhis.common.MapMap;
+import org.hisp.dhis.dataelement.CategoryOptionGroup;
 import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementOperand;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
@@ -59,11 +64,14 @@ public interface DataValueService
     /**
      * Adds a DataValue. If both the value and the comment properties of the
      * specified DataValue object are null, then the object should not be
-     * persisted.
+     * persisted. The value will be validated and not be saved if not passing
+     * validation.
      * 
      * @param dataValue the DataValue to add.
+     * @return false whether the data value is null or invalid, true if value is
+     *         valid and attempted to be saved.
      */
-    void addDataValue( DataValue dataValue );
+    boolean addDataValue( DataValue dataValue );
 
     /**
      * Updates a DataValue. If both the value and the comment properties of the
@@ -90,7 +98,7 @@ public interface DataValueService
     int deleteDataValuesBySource( OrganisationUnit source );
 
     /**
-     * Deletes all DataValues registered for the given DataElemt.
+     * Deletes all DataValues registered for the given DataElement.
      * 
      * @param dataElement the DataElement for which the DataValues should be deleted.
      * @return the number of deleted DataValues.
@@ -100,18 +108,39 @@ public interface DataValueService
     /**
      * Returns a DataValue.
      * 
-     * @param source the Source of the DataValue.
      * @param dataElement the DataElement of the DataValue.
      * @param period the Period of the DataValue.
+     * @param source the Source of the DataValue.
+     * @param categoryOptionCombo the category option combo.
      * @return the DataValue which corresponds to the given parameters, or null
      *         if no match.
      */
-    DataValue getDataValue( OrganisationUnit source, DataElement dataElement, Period period, DataElementCategoryOptionCombo optionCombo );
+    DataValue getDataValue( DataElement dataElement, Period period, OrganisationUnit source, DataElementCategoryOptionCombo optionCombo );
 
     /**
-     * Returns a non-persisted data value.
+     * Returns a DataValue.
+     * 
+     * @param dataElement the DataElement of the DataValue.
+     * @param period the Period of the DataValue.
+     * @param source the Source of the DataValue.
+     * @param categoryOptionCombo the category option combo.
+     * @param attributeOptionCombo the attribute option combo.
+     * @return the DataValue which corresponds to the given parameters, or null
+     *         if no match.
      */
-    DataValue getDataValue( int dataElementId, int categoryOptionComboId, int periodId, int sourceId );
+    DataValue getDataValue( DataElement dataElement, Period period, OrganisationUnit source, 
+        DataElementCategoryOptionCombo categoryOptionCombo, DataElementCategoryOptionCombo attributeOptionCombo );
+    
+    /**
+     * Returns a non-persisted DataValue.
+     * 
+     * @param dataElementId data element id
+     * @param periodId period id
+     * @param sourceId source id
+     * @param categoryOptionComboId category option combo id
+     * @param attributeOptionComboId attribute option combo id
+     */
+    DataValue getDataValue( int dataElementId, int periodId, int sourceId, int categoryOptionComboId );
     
     // -------------------------------------------------------------------------
     // Collections of DataValues
@@ -182,6 +211,21 @@ public interface DataValueService
      */
     Collection<DataValue> getDataValues( OrganisationUnit source, Period period, Collection<DataElement> dataElements );
 
+    /**
+     * Returns all DataValues for a given Source, Period, collection of
+     * DataElements and DataElementCategoryOptionCombo.
+     * 
+     * @param source the Source of the DataValues.
+     * @param period the Period of the DataValues.
+     * @param dataElements the DataElements of the DataValues.
+     * @param attributeOptionCombo the DataElementCategoryCombo.
+     * @return a collection of all DataValues which match the given Source,
+     *         Period, and any of the DataElements, or an empty collection if no
+     *         values match.
+     */
+    Collection<DataValue> getDataValues( OrganisationUnit source, Period period, 
+        Collection<DataElement> dataElements, DataElementCategoryOptionCombo attributeOptionCombo );
+    
     /**
      * Returns all DataValues for a given DataElement, Period, and collection of 
      * Sources.
@@ -255,8 +299,26 @@ public interface DataValueService
      * @return the number of DataValues.
      */
     int getDataValueCount( int days );
-    
-    Map<DataElementOperand, Double> getDataValueMap( Collection<DataElement> dataElements, Period period, OrganisationUnit unit );
+
+    /**
+     * Returns a map of values for each attribute option combo found.
+     * <p>
+     * In the (unlikely) event that the same dataElement/optionCombo is found in
+     * more than one period for the same organisationUnit, date, and attribute
+     * combo, the value is returned from the period with the shortest duration.
+     *
+     * @param dataElements collection of DataElements to fetch for
+     * @param date date which must be present in the period
+     * @param source OrganisationUnit for which to fetch the values
+     * @param periodTypes allowable period types in which to find the data
+     * @param attributeCombo the attribute combo to check (if restricted)
+     * @param lastUpdatedMap map in which to return the lastUpdated date for each value
+     * @return map of values by attribute option combo id, then DataElementOperand
+     */
+    MapMap<Integer, DataElementOperand, Double> getDataValueMapByAttributeCombo( Collection<DataElement> dataElements, Date date,
+            OrganisationUnit source, Collection<PeriodType> periodTypes, DataElementCategoryOptionCombo attributeCombo,
+            Set<CategoryOptionGroup> cogDimensionConstraints, Set<DataElementCategoryOption> coDimensionConstraints,
+            MapMap<Integer, DataElementOperand, Date> lastUpdatedMap );
 
     /**
      * Gets a Collection of DeflatedDataValues.

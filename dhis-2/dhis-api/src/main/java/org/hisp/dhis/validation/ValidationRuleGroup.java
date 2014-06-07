@@ -1,19 +1,20 @@
 package org.hisp.dhis.validation;
 
 /*
- * Copyright (c) 2004-2005, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the <ORGANIZATION> nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,21 +28,23 @@ package org.hisp.dhis.validation;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.annotation.Scanned;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
+import org.hisp.dhis.user.UserGroup;
 
-import java.util.HashSet;
-import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
 /**
  * @author Lars Helge Overland
@@ -59,6 +62,10 @@ public class ValidationRuleGroup
 
     @Scanned
     private Set<ValidationRule> members = new HashSet<ValidationRule>();
+    
+    private Set<UserGroup> userGroupsToAlert = new HashSet<UserGroup>();
+
+    private boolean alertByOrgUnits;
 
     // -------------------------------------------------------------------------
     // Constructors
@@ -66,10 +73,12 @@ public class ValidationRuleGroup
 
     public ValidationRuleGroup()
     {
+        setAutoFields();
     }
 
     public ValidationRuleGroup( String name, String description, Set<ValidationRule> members )
     {
+        this();
         this.name = name;
         this.description = description;
         this.members = members;
@@ -95,40 +104,13 @@ public class ValidationRuleGroup
     {
         members.clear();
     }
-
-    // -------------------------------------------------------------------------
-    // hashCode, equals and toString
-    // -------------------------------------------------------------------------     
-
-    public boolean equals( Object object )
+    
+    /**
+     * Indicates whether this group has user roles to alert.
+     */
+    public boolean hasUserGroupsToAlert()
     {
-        if ( this == object )
-        {
-            return true;
-        }
-        else if ( object == null )
-        {
-            return false;
-        }
-        else if ( !(object instanceof ValidationRuleGroup) )
-        {
-            return false;
-        }
-
-        final ValidationRuleGroup validationRuleGroup = (ValidationRuleGroup) object;
-
-        return name.equals( validationRuleGroup.getName() );
-    }
-
-    public int hashCode()
-    {
-        return name.hashCode();
-    }
-
-    @Override
-    public String toString()
-    {
-        return "[" + name + "]";
+        return userGroupsToAlert != null && !userGroupsToAlert.isEmpty();
     }
 
     // -------------------------------------------------------------------------
@@ -161,6 +143,34 @@ public class ValidationRuleGroup
     public void setMembers( Set<ValidationRule> members )
     {
         this.members = members;
+    }
+
+    @JsonProperty
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonView( {DetailedView.class, ExportView.class} )
+    @JacksonXmlElementWrapper( localName = "userGroupsToAlert", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( localName = "userGroupToAlert", namespace = DxfNamespaces.DXF_2_0)
+    public Set<UserGroup> getUserGroupsToAlert()
+    {
+        return userGroupsToAlert;
+    }
+
+    public void setUserGroupsToAlert( Set<UserGroup> userGroupsToAlert )
+    {
+        this.userGroupsToAlert = userGroupsToAlert;
+    }
+
+    @JsonProperty
+    @JsonView( {DetailedView.class, ExportView.class} )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    public boolean isAlertByOrgUnits()
+    {
+        return alertByOrgUnits;
+    }
+
+    public void setAlertByOrgUnits( boolean alertByOrgUnits )
+    {
+        this.alertByOrgUnits = alertByOrgUnits;
     }
 
     @Override

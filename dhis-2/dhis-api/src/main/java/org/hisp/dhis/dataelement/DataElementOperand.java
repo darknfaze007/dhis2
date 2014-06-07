@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -174,6 +175,11 @@ public class DataElementOperand
     @Override
     public String getName()
     {
+        if ( name != null )
+        {
+            return name;
+        }
+        
         String name = null;
         
         if ( dataElement != null )
@@ -243,7 +249,7 @@ public class DataElementOperand
      * organisation unit level. If no aggregation levels lower than the
      * organisation unit level exist, null is returned.
      *
-     * @param organisationUnitLevel the hiearchy level of the relevant
+     * @param organisationUnitLevel the hierarchy level of the relevant
      *                              OrganisationUnit.
      */
     public Integer getRelevantAggregationLevel( int organisationUnitLevel )
@@ -367,6 +373,9 @@ public class DataElementOperand
         this.frequencyOrder = dataElement.getFrequencyOrder();
         this.aggregationLevels = new ArrayList<Integer>( dataElement.getAggregationLevels() );
         this.valueType = dataElement.getType();
+
+        this.uid = dataElementId + SEPARATOR + optionComboId;
+        this.name = getPrettyName( dataElement, categoryOptionCombo );
     }
 
     /**
@@ -378,11 +387,14 @@ public class DataElementOperand
     {
         this.dataElementId = dataElement.getUid();
         this.operandId = String.valueOf( dataElementId );
-        this.operandName = dataElement.getDisplayName() + SPACE + NAME_TOTAL;
+        this.operandName = getPrettyName( dataElement, null );
         this.aggregationOperator = dataElement.getAggregationOperator();
         this.frequencyOrder = dataElement.getFrequencyOrder();
         this.aggregationLevels = new ArrayList<Integer>( dataElement.getAggregationLevels() );
         this.valueType = dataElement.getType();
+
+        this.uid = dataElementId;
+        this.name = getPrettyName( dataElement, null );
     }
 
     /**
@@ -587,7 +599,7 @@ public class DataElementOperand
             return false;
         }
         
-        if ( getClass() != object.getClass() )
+        if ( !getClass().isAssignableFrom( object.getClass() ) )
         {
             return false;
         }

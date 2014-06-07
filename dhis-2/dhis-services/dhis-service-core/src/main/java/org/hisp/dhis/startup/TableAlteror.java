@@ -1,19 +1,20 @@
 package org.hisp.dhis.startup;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,25 +28,26 @@ package org.hisp.dhis.startup;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.amplecode.quick.BatchHandler;
-import org.amplecode.quick.BatchHandlerFactory;
-import org.amplecode.quick.StatementHolder;
-import org.amplecode.quick.StatementManager;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.hisp.dhis.jdbc.StatementBuilder;
-import org.hisp.dhis.jdbc.batchhandler.RelativePeriodsBatchHandler;
-import org.hisp.dhis.period.RelativePeriods;
-import org.hisp.dhis.system.startup.AbstractStartupRoutine;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.amplecode.quick.BatchHandler;
+import org.amplecode.quick.BatchHandlerFactory;
+import org.amplecode.quick.StatementHolder;
+import org.amplecode.quick.StatementManager;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hisp.dhis.dataelement.DataElementCategoryCombo;
+import org.hisp.dhis.jdbc.StatementBuilder;
+import org.hisp.dhis.jdbc.batchhandler.RelativePeriodsBatchHandler;
+import org.hisp.dhis.period.RelativePeriods;
+import org.hisp.dhis.system.startup.AbstractStartupRoutine;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Lars Helge Overland
@@ -75,6 +77,8 @@ public class TableAlteror
     @Transactional
     public void execute()
     {
+        int defaultCategoryComboId = getDefaultCategoryCombo();
+
         // ---------------------------------------------------------------------
         // Drop outdated tables
         // ---------------------------------------------------------------------
@@ -92,6 +96,11 @@ public class TableAlteror
         executeSql( "DROP TABLE reporttable_dataelementgroupsets" );
         executeSql( "DROP TABLE dashboardcontent_datamartexports" );
         executeSql( "DROP TABLE dashboardcontent_mapviews" );
+        executeSql( "DROP TABLE dashboardcontent_documents" );
+        executeSql( "DROP TABLE dashboardcontent_maps" );
+        executeSql( "DROP TABLE dashboardcontent_reports" );
+        executeSql( "DROP TABLE dashboardcontent_reporttables" );
+        executeSql( "DROP TABLE dashboardcontent" );
         executeSql( "DROP TABLE customvalue" );
         executeSql( "DROP TABLE reporttable_displaycolumns" );
         executeSql( "DROP TABLE reportreporttables" );
@@ -116,6 +125,11 @@ public class TableAlteror
         executeSql( "DROP TABLE maplegendsetindicator" );
         executeSql( "DROP TABLE maplegendsetdataelement" );
         executeSql( "DROP TABLE loginfailure" );
+        executeSql( "DROP TABLE dashboarditem_trackedentitytabularreports" );
+        executeSql( "DROP TABLE categoryoptioncombousergroupaccesses" );
+        executeSql( "DROP TABLE validationrulegroupuserrolestoalert" );
+        executeSql( "ALTER TABLE categoryoptioncombo drop column userid" );
+        executeSql( "ALTER TABLE categoryoptioncombo drop column publicaccess" );
         executeSql( "ALTER TABLE dataelementcategoryoption drop column categoryid" );
         executeSql( "ALTER TABLE reporttable DROP column paramleafparentorganisationunit" );
         executeSql( "ALTER TABLE reporttable DROP column dimension_type" );
@@ -129,6 +143,7 @@ public class TableAlteror
         executeSql( "ALTER TABLE section DROP COLUMN label" );
         executeSql( "ALTER TABLE section DROP COLUMN title" );
         executeSql( "ALTER TABLE organisationunit DROP COLUMN polygoncoordinates" );
+        executeSql( "ALTER TABLE organisationunit DROP COLUMN geocode" );
         executeSql( "ALTER TABLE indicator DROP COLUMN extendeddataelementid" );
         executeSql( "ALTER TABLE indicator DROP COLUMN numeratoraggregationtype" );
         executeSql( "ALTER TABLE indicator DROP COLUMN denominatoraggregationtype" );
@@ -145,6 +160,10 @@ public class TableAlteror
         executeSql( "DELETE FROM period WHERE periodtypeid=(select periodtypeid from periodtype where name in ( 'Survey', 'OnChange', 'Relative' ))" );
         executeSql( "DELETE FROM periodtype WHERE name in ( 'Survey', 'OnChange', 'Relative' )" );
 
+        // upgrade report table totals
+        executeSql( "UPDATE reporttable SET rowtotals = totals, coltotals = totals" );
+        executeSql( "ALTER TABLE reporttable DROP COLUMN totals" );
+        
         // mapping
         executeSql( "DROP TABLE maporganisationunitrelation" );
         executeSql( "ALTER TABLE mapview DROP COLUMN mapid" );
@@ -155,16 +174,17 @@ public class TableAlteror
         executeSql( "ALTER TABLE mapview DROP COLUMN mapdatetype" );
         executeSql( "ALTER TABLE mapview DROP COLUMN featuretype" );
         executeSql( "ALTER TABLE mapview DROP COLUMN bounds" );
+        executeSql( "ALTER TABLE mapview DROP COLUMN valuetype" );
+        executeSql( "ALTER TABLE mapview DROP COLUMN legendtype" );
         executeSql( "ALTER TABLE mapview RENAME COLUMN mapvaluetype TO valuetype" );
         executeSql( "ALTER TABLE mapview RENAME COLUMN maplegendtype TO legendtype" );
         executeSql( "ALTER TABLE mapview RENAME COLUMN maplegendsetid TO legendsetid" );
         executeSql( "ALTER TABLE mapview ALTER COLUMN opacity TYPE double precision" );
 
-        //TODO executeSql( "ALTER TABLE datavalue ALTER COLUMN storedby TYPE character varying(100)" );
-
         executeSql( "ALTER TABLE maplegend DROP CONSTRAINT maplegend_name_key" );
 
         executeSql( "UPDATE mapview SET layer = 'thematic1' WHERE layer IS NULL" );
+        executeSql( "UPDATE mapview SET hidden = false WHERE hidden IS NULL" );
 
         executeSql( "DELETE FROM systemsetting WHERE name = 'longitude'" );
         executeSql( "DELETE FROM systemsetting WHERE name = 'latitude'" );
@@ -246,20 +266,15 @@ public class TableAlteror
 
         executeSql( "ALTER TABLE minmaxdataelement RENAME minvalue TO minimumvalue" );
         executeSql( "ALTER TABLE minmaxdataelement RENAME maxvalue TO maximumvalue" );
-        
+
         // orgunit shortname uniqueness
         executeSql( "ALTER TABLE organisationunit DROP CONSTRAINT organisationunit_shortname_key" );
-
-        // update dataset-dataentryform association and programstage-cde association
-        if ( updateDataSetAssociation() && updateProgramStageAssociation() )
-        {
-            // delete table dataentryformassociation
-            executeSql( "DROP TABLE dataentryformassociation" );
-        }
 
         executeSql( "ALTER TABLE section DROP CONSTRAINT section_name_key" );
         executeSql( "UPDATE patientattribute set inheritable=false where inheritable is null" );
         executeSql( "UPDATE dataelement SET numbertype='number' where numbertype is null and valuetype='int'" );
+        executeSql( "UPDATE dataelement SET valuetype='posInt' where valuetype='positiveNumber'" );
+        executeSql( "UPDATE dataelement SET valuetype='negInt' where valuetype='negativeNumber'" );
 
         // revert prepare aggregate*Value tables for offline diffs
 
@@ -363,6 +378,8 @@ public class TableAlteror
         executeSql( "ALTER TABLE dataelement ADD CONSTRAINT dataelement_code_key UNIQUE(code)" );
         executeSql( "ALTER TABLE indicator ADD CONSTRAINT indicator_code_key UNIQUE(code)" );
         executeSql( "ALTER TABLE organisationunit ADD CONSTRAINT organisationunit_code_key UNIQUE(code)" );
+        executeSql( "ALTER TABLE organisationunit ALTER COLUMN code TYPE varchar(50)" );
+        executeSql( "ALTER TABLE indicator ALTER COLUMN code TYPE varchar(50)" );
 
         // remove uuid
 
@@ -398,16 +415,22 @@ public class TableAlteror
         executeSql( "update chart set regression = false where regression is null" );
         executeSql( "update chart set hidesubtitle = false where hidesubtitle is null" );
         executeSql( "update chart set userorganisationunit = false where userorganisationunit is null" );
+        executeSql( "update chart set hideemptyrows = false where hideemptyrows is null" );
         executeSql( "update indicator set annualized = false where annualized is null" );
         executeSql( "update indicatortype set indicatornumber = false where indicatornumber is null" );
         executeSql( "update dataset set mobile = false where mobile is null" );
         executeSql( "update dataset set allowfutureperiods = false where allowfutureperiods is null" );
         executeSql( "update dataset set validcompleteonly = false where validcompleteonly is null" );
         executeSql( "update dataset set notifycompletinguser = false where notifycompletinguser is null" );
+        executeSql( "update dataset set approvedata = false where approvedata is null" );
         executeSql( "update dataelement set zeroissignificant = false where zeroissignificant is null" );
         executeSql( "update organisationunit set haspatients = false where haspatients is null" );
         executeSql( "update dataset set expirydays = 0 where expirydays is null" );
         executeSql( "update expression set nullifblank = true where nullifblank is null" );
+
+        // move timelydays from system setting => dataset property
+        executeSql( "update dataset set timelydays = 15 where timelydays is null" );
+        executeSql( "delete from systemsetting where name='completenessOffset'" );
 
         executeSql( "update reporttable set reportingmonth = false where reportingmonth is null" );
         executeSql( "update reporttable set reportingbimonth = false where reportingbimonth is null" );
@@ -432,6 +455,7 @@ public class TableAlteror
         executeSql( "update reporttable set cumulative = false where cumulative is null" );
         executeSql( "update reporttable set userorganisationunit = false where userorganisationunit is null" );
         executeSql( "update reporttable set userorganisationunitchildren = false where userorganisationunitchildren is null" );
+        executeSql( "update reporttable set userorganisationunitgrandchildren = false where userorganisationunitgrandchildren is null" );
         executeSql( "update reporttable set totals = true where totals is null" );
         executeSql( "update reporttable set subtotals = true where subtotals is null" );
         executeSql( "update reporttable set hideemptyrows = false where hideemptyrows is null" );
@@ -440,6 +464,8 @@ public class TableAlteror
         executeSql( "update reporttable set digitgroupseparator = 'space' where digitgroupseparator is null" );
         executeSql( "update reporttable set sortorder = 0 where sortorder is null" );
         executeSql( "update reporttable set toplimit = 0 where toplimit is null" );
+        executeSql( "update reporttable set showhierarchy = false where showhierarchy is null" );
+        executeSql( "update reporttable set aggregationtype = 'default' where aggregationtype is null" );
 
         executeSql( "update chart set reportingmonth = false where reportingmonth is null" );
         executeSql( "update chart set reportingbimonth = false where reportingbimonth is null" );
@@ -459,17 +485,21 @@ public class TableAlteror
         executeSql( "update chart set last4quarters = false where last4quarters is null" );
         executeSql( "update chart set last2sixmonths = false where last2sixmonths is null" );
         executeSql( "update chart set showdata = false where showdata is null" );
-        executeSql( "update chart set userorganisationunitchildren = false where userorganisationunitchildren is null" );
         executeSql( "update chart set userorganisationunit = false where userorganisationunit is null" );
+        executeSql( "update chart set userorganisationunitchildren = false where userorganisationunitchildren is null" );
+        executeSql( "update chart set userorganisationunitgrandchildren = false where userorganisationunitgrandchildren is null" );
         executeSql( "update chart set hidetitle = false where hidetitle is null" );
+        
+        executeSql( "update eventreport set showhierarchy = false where showhierarchy is null" );
+        executeSql( "update eventreport set counttype = 'events' where counttype is null" );
 
         // Move chart filters to chart_filters table
-        
+
         executeSql( "insert into chart_filters (chartid, sort_order, filter) select chartid, 0, filter from chart" );
         executeSql( "alter table chart drop column filter" );
-                
+
         // Upgrade chart dimension identifiers
-        
+
         executeSql( "update chart set series = 'dx' where series = 'data'" );
         executeSql( "update chart set series = 'pe' where series = 'period'" );
         executeSql( "update chart set series = 'ou' where series = 'organisationunit'" );
@@ -479,7 +509,7 @@ public class TableAlteror
         executeSql( "update chart_filters set filter = 'dx' where filter = 'data'" );
         executeSql( "update chart_filters set filter = 'pe' where filter = 'period'" );
         executeSql( "update chart_filters set filter = 'ou' where filter = 'organisationunit'" );
-                
+
         executeSql( "update users set selfregistered = false where selfregistered is null" );
         executeSql( "update users set disabled = false where disabled is null" );
         executeSql( "update dataentryform set format = 1 where format is null" );
@@ -505,11 +535,11 @@ public class TableAlteror
         executeSql( "UPDATE dataset SET skipoffline = false WHERE skipoffline IS NULL" );
         executeSql( "UPDATE dataset SET renderastabs = false WHERE renderastabs IS NULL" );
         executeSql( "UPDATE dataset SET renderhorizontally = false WHERE renderhorizontally IS NULL" );
+        executeSql( "UPDATE dataset SET novaluerequirescomment = false WHERE novaluerequirescomment IS NULL" );
 
         executeSql( "UPDATE categorycombo SET skiptotal = false WHERE skiptotal IS NULL" );
 
         // short names
-
         executeSql( "ALTER TABLE dataelement ALTER COLUMN shortname TYPE character varying(50)" );
         executeSql( "ALTER TABLE indicator ALTER COLUMN shortname TYPE character varying(50)" );
         executeSql( "ALTER TABLE dataset ALTER COLUMN shortname TYPE character varying(50)" );
@@ -519,7 +549,6 @@ public class TableAlteror
         executeSql( "update report set type='jasperJdbc' where type is null and reporttableid is null" );
 
         // upgrade authorities
-
         executeSql( "UPDATE userroleauthorities SET authority='F_DOCUMENT_PUBLIC_ADD' WHERE authority='F_DOCUMENT_ADD'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_REPORT_PUBLIC_ADD' WHERE authority='F_REPORT_ADD'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_REPORTTABLE_PUBLIC_ADD' WHERE authority='F_REPORTTABLE_ADD'" );
@@ -530,14 +559,60 @@ public class TableAlteror
         executeSql( "UPDATE userroleauthorities SET authority='F_DATAELEMENTGROUP_PUBLIC_ADD' WHERE authority='F_DATAELEMENTGROUP_ADD'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_DATAELEMENTGROUPSET_PUBLIC_ADD' WHERE authority='F_DATAELEMENTGROUPSET_ADD'" );
 
+        executeSql( "UPDATE userroleauthorities SET authority='F_ORGUNITGROUP_PUBLIC_ADD' WHERE authority='F_ORGUNITGROUP_ADD'" );
+        executeSql( "UPDATE userroleauthorities SET authority='F_ORGUNITGROUPSET_PUBLIC_ADD' WHERE authority='F_ORGUNITGROUPSET_ADD'" );
+
         executeSql( "UPDATE userroleauthorities SET authority='F_INDICATOR_PUBLIC_ADD' WHERE authority='F_INDICATOR_ADD'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_INDICATORGROUP_PUBLIC_ADD' WHERE authority='F_INDICATORGROUP_ADD'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_INDICATORGROUPSET_PUBLIC_ADD' WHERE authority='F_INDICATORGROUPSET_ADD'" );
 
+        executeSql( "UPDATE userroleauthorities SET authority='F_USERROLE_PUBLIC_ADD' WHERE authority='F_USERROLE_ADD'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_USERGROUP_PUBLIC_ADD' WHERE authority='F_USER_GRUP_ADD'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_USERGROUP_UPDATE' WHERE authority='F_USER_GRUP_UPDATE'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_USERGROUP_DELETE' WHERE authority='F_USER_GRUP_DELETE'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_USERGROUP_LIST' WHERE authority='F_USER_GRUP_LIST'" );
+
+        executeSql( "UPDATE userroleauthorities SET authority='F_SQLVIEW_PUBLIC_ADD' WHERE authority='F_SQLVIEW_ADD'" );
+        executeSql( "UPDATE userroleauthorities SET authority='F_OPTIONSET_PUBLIC_ADD' WHERE authority='F_OPTIONSET_ADD'" );
+        executeSql( "UPDATE userroleauthorities SET authority='F_VALIDATIONRULEGROUP_PUBLIC_ADD' WHERE authority='F_VALIDATIONRULEGROUP_ADD'" );
+        executeSql( "UPDATE userroleauthorities SET authority='F_TRACKED_ENTITY_ATTRIBUTE_PUBLIC_ADD' WHERE authority='F_TRACKED_ENTITY_ATTRIBUTE_ADD'" );
+
+        // remove unused authorities
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_CONCEPT_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_CONSTANT_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATAELEMENT_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATAELEMENTGROUP_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATAELEMENTGROUPSET_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATADICTIONARY_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATAELEMENT_MINMAX_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATASET_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_SECTION_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATAVALUE_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_INDICATOR_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_INDICATORTYPE_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_INDICATORGROUP_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_INDICATORGROUPSET_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_ORGANISATIONUNIT_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_ORGUNITGROUP_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_ORGUNITGROUPSET_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_USERROLE_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_USERGROUP_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_VALIDATIONRULE_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_VALIDATIONRULEGROUP_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_REPORT_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_SQLVIEW_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_VALIDATIONCRITERIA_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_OPTIONSET_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_ATTRIBUTE_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_PATIENTATTRIBUTE_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_PATIENT_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_UPDATE_PROGRAM_INDICATOR'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_PROGRAM_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_PROGRAMSTAGE_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_PROGRAMSTAGE_SECTION_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_PATIENTIDENTIFIERTYPE_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_PROGRAM_ATTRIBUTE_UPDATE'" );
+        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_PATIENT_DATAVALUE_UPDATE'" );
 
         // update denominator of indicator which has indicatortype as 'number'
         executeSql( "UPDATE indicator SET denominator = 1, denominatordescription = '' WHERE indicatortypeid IN (SELECT DISTINCT indicatortypeid FROM indicatortype WHERE indicatornumber = true) AND denominator IS NULL" );
@@ -572,6 +647,9 @@ public class TableAlteror
         executeSql( "UPDATE dataelementgroupset SET userid=NULL WHERE userid IS NOT NULL" );
         executeSql( "UPDATE dataelementgroupset SET publicaccess=NULL WHERE userid IS NOT NULL" );
 
+        executeSql( "ALTER TABLE dataelementcategory DROP COLUMN conceptid" );
+        executeSql( "ALTER TABLE dataelementcategoryoption DROP COLUMN conceptid" );
+
         // upgrade system charts/maps to public read-only sharing
         executeSql( "UPDATE chart SET publicaccess='r-------' WHERE user IS NULL AND publicaccess IS NULL;" );
         executeSql( "UPDATE map SET publicaccess='r-------' WHERE user IS NULL AND publicaccess IS NULL;" );
@@ -581,16 +659,138 @@ public class TableAlteror
 
         executeSql( "ALTER TABLE dataelement ALTER COLUMN domaintype SET NOT NULL" );
         executeSql( "update dataelementcategory set datadimension = false where datadimension is null" );
-        
+
+        executeSql( "UPDATE dataset SET dataelementdecoration=false WHERE dataelementdecoration is null" );
+
         executeSql( "alter table validationrulegroup rename column validationgroupid to validationrulegroupid" );
-        executeSql( "alter table sqlview rename column viewid to sqlviewid" );
+        executeSql( "update sqlview set sqlviewid=viweid" );
+        executeSql( "alter table sqlview drop column viewid" );
+
+        executeSql( "UPDATE dashboard SET publicaccess='--------' WHERE publicaccess is null" );
+
+        executeSql( "UPDATE optionset SET version=1 WHERE version IS NULL" );
+
+        executeSql( "ALTER TABLE datavalue ALTER COLUMN lastupdated TYPE timestamp" );
+        executeSql( "ALTER TABLE completedatasetregistration ALTER COLUMN date TYPE timestamp" );
+        executeSql( "ALTER TABLE message ALTER COLUMN userid DROP NOT NULL" );
+        executeSql( "ALTER TABLE message ALTER COLUMN messagetext TYPE text" );
+        executeSql( "drop index crosstab" );
+
+        executeSql( "delete from usersetting where name = 'dashboardConfig' or name = 'dashboardConfiguration'" );
+        executeSql( "update usersetting set name = 'keyUiLocale' where name = 'currentLocale'" );
+        executeSql( "update usersetting set name = 'keyDbLocale' where name = 'keyLocaleUserSetting'" );
+        executeSql( "ALTER TABLE interpretation ALTER COLUMN userid DROP NOT NULL" );
+        executeSql( "UPDATE interpretation SET publicaccess='r-------' WHERE publicaccess IS NULL;" );
+
+        executeSql( "ALTER TABLE dataset DROP COLUMN symbol" );
+        executeSql( "ALTER TABLE users ALTER COLUMN password DROP NOT NULL" );
+
+        executeSql( "update categorycombo set dimensiontype = '"
+            + DataElementCategoryCombo.DIMENSION_TYPE_DISAGGREGATION + "' where dimensiontype is null" );
+        executeSql( "update dataelementcategory set dimensiontype = '"
+            + DataElementCategoryCombo.DIMENSION_TYPE_DISAGGREGATION + "' where dimensiontype is null" );
+        executeSql( "update dataset set categorycomboid = " + defaultCategoryComboId + " where categorycomboid is null" );
+
+        // set default dataDimension on orgUnitGroupSet and deGroupSet
+        executeSql( "UPDATE dataelementgroupset SET datadimension=true WHERE datadimension IS NULL" );
+        executeSql( "ALTER TABLE dataelementgroupset ALTER COLUMN datadimension SET NOT NULL" );
+        executeSql( "UPDATE orgunitgroupset SET datadimension=true WHERE datadimension IS NULL" );
+        executeSql( "ALTER TABLE orgunitgroupset ALTER COLUMN datadimension SET NOT NULL" );
+
+        // set attribute defaults
+        executeSql( "UPDATE attribute SET dataelementattribute=false WHERE dataelementattribute IS NULL" );
+        executeSql( "UPDATE attribute SET dataelementgroupattribute=false WHERE dataelementgroupattribute IS NULL" );
+        executeSql( "UPDATE attribute SET indicatorattribute=false WHERE indicatorattribute IS NULL" );
+        executeSql( "UPDATE attribute SET indicatorgroupattribute=false WHERE indicatorgroupattribute IS NULL" );
+        executeSql( "UPDATE attribute SET organisationunitattribute=false WHERE organisationunitattribute IS NULL" );
+        executeSql( "UPDATE attribute SET organisationunitgroupattribute=false WHERE organisationunitgroupattribute IS NULL" );
+        executeSql( "UPDATE attribute SET organisationunitgroupsetattribute=false WHERE organisationunitgroupsetattribute IS NULL" );
+        executeSql( "UPDATE attribute SET userattribute=false WHERE userattribute IS NULL" );
+        executeSql( "UPDATE attribute SET usergroupattribute=false WHERE usergroupattribute IS NULL" );
+        executeSql( "UPDATE attribute SET datasetattribute=false WHERE datasetattribute IS NULL" );
         
+        executeSql( "ALTER TABLE trackedentityattributedimension DROP COLUMN operator" );
+        executeSql( "ALTER TABLE trackedentitydataelementdimension DROP COLUMN operator" );
+
+        // update attribute.code, set to null if code=''
+        executeSql( "UPDATE attribute SET code=NULL WHERE code=''" );
+
+        // data approval, new column accepted
+        executeSql( "UPDATE dataapproval SET accepted=false WHERE accepted IS NULL" );
+
+        // validation rule group, new column alertbyorgunits
+        executeSql( "UPDATE validationrulegroup SET alertbyorgunits=false WHERE alertbyorgunits IS NULL" );
+
+        upgradeDataValuesWithAttributeOptionCombo();
+        upgradeMapViewsToAnalyticalObject();
+        upgradeTranslations();
+
         log.info( "Tables updated" );
+    }
+
+    private void upgradeDataValuesWithAttributeOptionCombo()
+    {
+        final String sql = statementBuilder.getNumberOfColumnsInPrimaryKey( "datavalue" );
+
+        Integer no = statementManager.getHolder().queryForInteger( sql );
+
+        if ( no >= 5 )
+        {
+            return; // attributeoptioncomboid already part of datavalue pkey
+        }
+
+        int optionComboId = getDefaultOptionCombo();
+
+        executeSql( "alter table datavalue_audit drop constraint fk_datavalueaudit_datavalue;" );
+
+        executeSql( "alter table datavalue drop constraint datavalue_pkey;" );
+
+        executeSql( "alter table datavalue add column attributeoptioncomboid integer;" );
+        executeSql( "update datavalue set attributeoptioncomboid = " + optionComboId
+            + " where attributeoptioncomboid is null;" );
+        executeSql( "alter table datavalue alter column attributeoptioncomboid set not null;" );
+        executeSql( "alter table datavalue add constraint fk_datavalue_attributeoptioncomboid foreign key (attributeoptioncomboid) references categoryoptioncombo (categoryoptioncomboid) match simple;" );
+        executeSql( "alter table datavalue add constraint datavalue_pkey primary key(dataelementid, periodid, sourceid, categoryoptioncomboid, attributeoptioncomboid);" );
+
+        executeSql( "alter table datavalue_audit add constraint fk_datavalueaudit_datavalue foreign key (dataelementid, periodid, sourceid, categoryoptioncomboid, attributeoptioncomboid) "
+            + "references datavalue (dataelementid, periodid, sourceid, categoryoptioncomboid, attributeoptioncomboid) match simple;" );
+
+        log.info( "Data value table upgraded with attributeoptioncomboid column" );
+    }
+
+    private void upgradeMapViewsToAnalyticalObject()
+    {
+        executeSql( "insert into mapview_dataelements ( mapviewid, sort_order, dataelementid ) select mapviewid, 0, dataelementid from mapview where dataelementid is not null" );
+        executeSql( "alter table mapview drop column dataelementid" );
+
+        executeSql( "insert into mapview_dataelementoperands ( mapviewid, sort_order, dataelementoperandid ) select mapviewid, 0, dataelementoperandid from mapview where dataelementoperandid is not null" );
+        executeSql( "alter table mapview drop column dataelementoperandid" );
+
+        executeSql( "insert into mapview_indicators ( mapviewid, sort_order, indicatorid ) select mapviewid, 0, indicatorid from mapview where indicatorid is not null" );
+        executeSql( "alter table mapview drop column indicatorid" );
+
+        executeSql( "insert into mapview_organisationunits ( mapviewid, sort_order, organisationunitid ) select mapviewid, 0, parentorganisationunitid from mapview where parentorganisationunitid is not null" );
+        executeSql( "alter table mapview drop column parentorganisationunitid" );
+
+        executeSql( "insert into mapview_periods ( mapviewid, sort_order, periodid ) select mapviewid, 0, periodid from mapview where periodid is not null" );
+        executeSql( "alter table mapview drop column periodid" );
+
+        executeSql( "insert into mapview_orgunitlevels ( mapviewid, sort_order, orgunitlevel ) select m.mapviewid, 0, o.level "
+            + "from mapview m join orgunitlevel o on (m.organisationunitlevelid=o.orgunitlevelid) where m.organisationunitlevelid is not null" );
+        executeSql( "alter table mapview drop column organisationunitlevelid" );
+
+        executeSql( "alter table mapview drop column dataelementgroupid" );
+        executeSql( "alter table mapview drop column indicatorgroupid" );
+
+        executeSql( "update mapview set userorganisationunit = false where userorganisationunit is null" );
+        executeSql( "update mapview set userorganisationunitchildren = false where userorganisationunitchildren is null" );
+        executeSql( "update mapview set userorganisationunitgrandchildren = false where userorganisationunitgrandchildren is null" );
     }
 
     private void upgradeChartRelativePeriods()
     {
-        BatchHandler<RelativePeriods> batchHandler = batchHandlerFactory.createBatchHandler( RelativePeriodsBatchHandler.class ).init();
+        BatchHandler<RelativePeriods> batchHandler = batchHandlerFactory.createBatchHandler(
+            RelativePeriodsBatchHandler.class ).init();
 
         try
         {
@@ -600,23 +800,12 @@ public class TableAlteror
 
             while ( rs.next() )
             {
-                RelativePeriods r = new RelativePeriods(
-                    rs.getBoolean( "reportingmonth" ),
-                    false,
-                    rs.getBoolean( "reportingquarter" ),
-                    rs.getBoolean( "lastsixmonth" ),
-                    rs.getBoolean( "monthsthisyear" ),
-                    rs.getBoolean( "quartersthisyear" ),
-                    rs.getBoolean( "thisyear" ),
-                    false, false,
-                    rs.getBoolean( "lastyear" ),
-                    rs.getBoolean( "last5years" ),
-                    rs.getBoolean( "last12months" ),
-                    rs.getBoolean( "last3months" ),
-                    false,
-                    rs.getBoolean( "last4quarters" ),
-                    rs.getBoolean( "last2sixmonths" ),
-                    false, false, false,
+                RelativePeriods r = new RelativePeriods( rs.getBoolean( "reportingmonth" ), false,
+                    rs.getBoolean( "reportingquarter" ), rs.getBoolean( "lastsixmonth" ),
+                    rs.getBoolean( "monthsthisyear" ), rs.getBoolean( "quartersthisyear" ),
+                    rs.getBoolean( "thisyear" ), false, false, rs.getBoolean( "lastyear" ),
+                    rs.getBoolean( "last5years" ), rs.getBoolean( "last12months" ), rs.getBoolean( "last3months" ),
+                    false, rs.getBoolean( "last4quarters" ), rs.getBoolean( "last2sixmonths" ), false, false, false,
                     false, false, false, false );
 
                 int chartId = rs.getInt( "chartid" );
@@ -625,7 +814,8 @@ public class TableAlteror
                 {
                     int relativePeriodsId = batchHandler.insertObject( r, true );
 
-                    String update = "update chart set relativeperiodsid=" + relativePeriodsId + " where chartid=" + chartId;
+                    String update = "update chart set relativeperiodsid=" + relativePeriodsId + " where chartid="
+                        + chartId;
 
                     executeSql( update );
 
@@ -658,7 +848,8 @@ public class TableAlteror
 
     private void upgradeReportTableRelativePeriods()
     {
-        BatchHandler<RelativePeriods> batchHandler = batchHandlerFactory.createBatchHandler( RelativePeriodsBatchHandler.class ).init();
+        BatchHandler<RelativePeriods> batchHandler = batchHandlerFactory.createBatchHandler(
+            RelativePeriodsBatchHandler.class ).init();
 
         try
         {
@@ -668,27 +859,16 @@ public class TableAlteror
 
             while ( rs.next() )
             {
-                RelativePeriods r = new RelativePeriods(
-                    rs.getBoolean( "reportingmonth" ),
-                    rs.getBoolean( "reportingbimonth" ),
-                    rs.getBoolean( "reportingquarter" ),
-                    rs.getBoolean( "lastsixmonth" ),
-                    rs.getBoolean( "monthsthisyear" ),
-                    rs.getBoolean( "quartersthisyear" ),
-                    rs.getBoolean( "thisyear" ),
-                    rs.getBoolean( "monthslastyear" ),
-                    rs.getBoolean( "quarterslastyear" ),
-                    rs.getBoolean( "lastyear" ),
-                    rs.getBoolean( "last5years" ),
-                    rs.getBoolean( "last12months" ),
-                    rs.getBoolean( "last3months" ),
-                    false,
-                    rs.getBoolean( "last4quarters" ),
-                    rs.getBoolean( "last2sixmonths" ),
-                    rs.getBoolean( "thisfinancialyear" ),
-                    rs.getBoolean( "lastfinancialyear" ),
-                    rs.getBoolean( "last5financialyears" ),
-                    false, false, false, false );
+                RelativePeriods r = new RelativePeriods( rs.getBoolean( "reportingmonth" ),
+                    rs.getBoolean( "reportingbimonth" ), rs.getBoolean( "reportingquarter" ),
+                    rs.getBoolean( "lastsixmonth" ), rs.getBoolean( "monthsthisyear" ),
+                    rs.getBoolean( "quartersthisyear" ), rs.getBoolean( "thisyear" ),
+                    rs.getBoolean( "monthslastyear" ), rs.getBoolean( "quarterslastyear" ),
+                    rs.getBoolean( "lastyear" ), rs.getBoolean( "last5years" ), rs.getBoolean( "last12months" ),
+                    rs.getBoolean( "last3months" ), false, rs.getBoolean( "last4quarters" ),
+                    rs.getBoolean( "last2sixmonths" ), rs.getBoolean( "thisfinancialyear" ),
+                    rs.getBoolean( "lastfinancialyear" ), rs.getBoolean( "last5financialyears" ), false, false, false,
+                    false );
 
                 int reportTableId = rs.getInt( "reporttableid" );
 
@@ -696,7 +876,8 @@ public class TableAlteror
                 {
                     int relativePeriodsId = batchHandler.insertObject( r, true );
 
-                    String update = "update reporttable set relativeperiodsid=" + relativePeriodsId + " where reporttableid=" + reportTableId;
+                    String update = "update reporttable set relativeperiodsid=" + relativePeriodsId
+                        + " where reporttableid=" + reportTableId;
 
                     executeSql( update );
 
@@ -754,40 +935,47 @@ public class TableAlteror
 
                 if ( doIndicators )
                 {
-                    executeSql( "insert into reporttable_columns (reporttableid, dimension, sort_order) values (" + id + ",'dx'," + columnSortOrder + ");" );
+                    executeSql( "insert into reporttable_columns (reporttableid, dimension, sort_order) values (" + id
+                        + ",'dx'," + columnSortOrder + ");" );
                     columnSortOrder++;
                 }
                 else
                 {
-                    executeSql( "insert into reporttable_rows (reporttableid, dimension, sort_order) values (" + id + ",'dx'," + rowSortOrder + ");" );
+                    executeSql( "insert into reporttable_rows (reporttableid, dimension, sort_order) values (" + id
+                        + ",'dx'," + rowSortOrder + ");" );
                     rowSortOrder++;
                 }
 
                 if ( doPeriods )
                 {
-                    executeSql( "insert into reporttable_columns (reporttableid, dimension, sort_order) values (" + id + ",'pe'," + columnSortOrder + ");" );
+                    executeSql( "insert into reporttable_columns (reporttableid, dimension, sort_order) values (" + id
+                        + ",'pe'," + columnSortOrder + ");" );
                     columnSortOrder++;
                 }
                 else
                 {
-                    executeSql( "insert into reporttable_rows (reporttableid, dimension, sort_order) values (" + id + ",'pe'," + rowSortOrder + ");" );
+                    executeSql( "insert into reporttable_rows (reporttableid, dimension, sort_order) values (" + id
+                        + ",'pe'," + rowSortOrder + ");" );
                     rowSortOrder++;
                 }
 
                 if ( doUnits )
                 {
-                    executeSql( "insert into reporttable_columns (reporttableid, dimension, sort_order) values (" + id + ",'ou'," + columnSortOrder + ");" );
+                    executeSql( "insert into reporttable_columns (reporttableid, dimension, sort_order) values (" + id
+                        + ",'ou'," + columnSortOrder + ");" );
                     columnSortOrder++;
                 }
                 else
                 {
-                    executeSql( "insert into reporttable_rows (reporttableid, dimension, sort_order) values (" + id + ",'ou'," + rowSortOrder + ");" );
+                    executeSql( "insert into reporttable_rows (reporttableid, dimension, sort_order) values (" + id
+                        + ",'ou'," + rowSortOrder + ");" );
                     rowSortOrder++;
                 }
 
                 if ( categoryComboId > 0 )
                 {
-                    executeSql( "insert into reporttable_columns (reporttableid, dimension, sort_order) values (" + id + ",'co'," + columnSortOrder + ");" );
+                    executeSql( "insert into reporttable_columns (reporttableid, dimension, sort_order) values (" + id
+                        + ",'co'," + columnSortOrder + ");" );
                 }
             }
 
@@ -795,11 +983,29 @@ public class TableAlteror
             executeSql( "alter table reporttable drop column doperiods" );
             executeSql( "alter table reporttable drop column dounits" );
             executeSql( "alter table reporttable drop column categorycomboid" );
+
+            executeSql( "delete from configuration where configurationid not in (select configurationid from configuration limit 1)" );
         }
         catch ( Exception ex )
         {
             log.debug( ex );
         }
+    }
+    
+    private void upgradeTranslations()
+    {
+        final String sql = statementBuilder.getNumberOfColumnsInPrimaryKey( "translation" );
+
+        Integer no = statementManager.getHolder().queryForInteger( sql );
+
+        if ( no == 1 )
+        {
+            return; // translationid already set as single pkey
+        }
+        
+        executeSql( statementBuilder.getDropPrimaryKey( "translation" ) );
+        executeSql( statementBuilder.getAddPrimaryKeyToExistingTable( "translation", "translationid" ) );
+        executeSql( statementBuilder.getDropNotNullConstraint( "translation", "objectid", "integer" ) );
     }
 
     private List<Integer> getDistinctIdList( String table, String col1 )
@@ -898,6 +1104,8 @@ public class TableAlteror
     {
         try
         {
+            // TODO use jdbcTemplate
+
             return statementManager.getHolder().executeUpdate( sql );
         }
         catch ( Exception ex )
@@ -908,78 +1116,20 @@ public class TableAlteror
         }
     }
 
-    private boolean updateDataSetAssociation()
+    private Integer getDefaultOptionCombo()
     {
-        StatementHolder holder = statementManager.getHolder();
+        String sql = "select coc.categoryoptioncomboid from categoryoptioncombo coc "
+            + "inner join categorycombos_optioncombos cco on coc.categoryoptioncomboid=cco.categoryoptioncomboid "
+            + "inner join categorycombo cc on cco.categorycomboid=cc.categorycomboid " + "where cc.name='default';";
 
-        try
-        {
-            Statement statement = holder.getStatement();
-
-            ResultSet isUpdated = statement
-                .executeQuery( "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'dataentryformassociation'" );
-
-            if ( isUpdated.next() )
-            {
-
-                ResultSet resultSet = statement
-                    .executeQuery( "SELECT associationid, dataentryformid FROM dataentryformassociation WHERE associationtablename = 'dataset'" );
-
-                while ( resultSet.next() )
-                {
-                    executeSql( "UPDATE dataset SET dataentryform=" + resultSet.getInt( 2 ) + " WHERE datasetid="
-                        + resultSet.getInt( 1 ) );
-                }
-                return true;
-            }
-
-            return false;
-
-        }
-        catch ( Exception ex )
-        {
-            log.debug( ex );
-            return false;
-        }
-        finally
-        {
-            holder.close();
-        }
-
+        return statementManager.getHolder().queryForInteger( sql );
     }
 
-    private boolean updateProgramStageAssociation()
+    private Integer getDefaultCategoryCombo()
     {
-        StatementHolder holder = statementManager.getHolder();
+        String sql = "select categorycomboid from categorycombo where name = 'default'";
 
-        try
-        {
-            Statement statement = holder.getStatement();
-
-            ResultSet isUpdated = statement
-                .executeQuery( "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'dataentryformassociation'" );
-
-            if ( isUpdated.next() )
-            {
-                ResultSet resultSet = statement
-                    .executeQuery( "SELECT associationid, dataentryformid FROM dataentryformassociation WHERE associationtablename = 'programstage'" );
-
-                while ( resultSet.next() )
-                {
-                    executeSql( "UPDATE programstage SET dataentryform=" + resultSet.getInt( 2 )
-                        + " WHERE programstageid=" + resultSet.getInt( 1 ) );
-                }
-            }
-            return true;
-        }
-        catch ( Exception ex )
-        {
-            log.debug( ex );
-            return false;
-        }
-        finally
-        {
-            holder.close();
-        }
+        return statementManager.getHolder().queryForInteger( sql );
     }
+
 }

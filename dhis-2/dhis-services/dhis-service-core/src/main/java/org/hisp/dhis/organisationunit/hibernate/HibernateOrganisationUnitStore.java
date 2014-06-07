@@ -1,19 +1,20 @@
 package org.hisp.dhis.organisationunit.hibernate;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -26,6 +27,16 @@ package org.hisp.dhis.organisationunit.hibernate;
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -46,16 +57,6 @@ import org.hisp.dhis.user.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.security.access.AccessDeniedException;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Kristian Nordal
@@ -187,24 +188,58 @@ public class HibernateOrganisationUnitStore
         return q.list();
     }
 
-    public Map<Integer, Set<Integer>> getOrganisationUnitDataSetAssocationMap()
+    public Map<String, Set<String>> getOrganisationUnitDataSetAssocationMap()
     {
-        final String sql = "select datasetid, sourceid from datasetsource";
+        final String sql = "select ds.uid as ds_uid, ou.uid as ou_uid from datasetsource d " +
+            "left join organisationunit ou on ou.organisationunitid=d.sourceid " +
+            "left join dataset ds on ds.datasetid=d.datasetid";
 
-        final Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        final Map<String, Set<String>> map = new HashMap<String, Set<String>>();
 
         jdbcTemplate.query( sql, new RowCallbackHandler()
         {
             public void processRow( ResultSet rs ) throws SQLException
             {
-                int dataSetId = rs.getInt( 1 );
-                int organisationUnitId = rs.getInt( 2 );
+                String dataSetId = rs.getString( "ds_uid" );
+                String organisationUnitId = rs.getString( "ou_uid" );
 
-                Set<Integer> dataSets = map.get( organisationUnitId );
+                Set<String> dataSets = map.get( organisationUnitId );
 
                 if ( dataSets == null )
                 {
-                    dataSets = new HashSet<Integer>();
+                    dataSets = new HashSet<String>();
+                    map.put( organisationUnitId, dataSets );
+                }
+
+                dataSets.add( dataSetId );
+            }
+        } );
+
+        return map;
+    }
+
+    @Override
+    public Map<String, Set<String>> getOrganisationUnitGroupDataSetAssocationMap()
+    {
+        final String sql = "select ds.uid as ds_uid, ou.uid as ou_uid from orgunitgroupdatasets ougds " +
+            "left join orgunitgroupmembers ougm on ougds.orgunitgroupid=ougm.orgunitgroupid " +
+            "left join organisationunit ou on ou.organisationunitid=ougm.organisationunitid " +
+            "left join dataset ds on ds.datasetid=ougds.datasetid";
+
+        final Map<String, Set<String>> map = new HashMap<String, Set<String>>();
+
+        jdbcTemplate.query( sql, new RowCallbackHandler()
+        {
+            public void processRow( ResultSet rs ) throws SQLException
+            {
+                String dataSetId = rs.getString( "ds_uid" );
+                String organisationUnitId = rs.getString( "ou_uid" );
+
+                Set<String> dataSets = map.get( organisationUnitId );
+
+                if ( dataSets == null )
+                {
+                    dataSets = new HashSet<String>();
                     map.put( organisationUnitId, dataSets );
                 }
 
@@ -264,6 +299,19 @@ public class HibernateOrganisationUnitStore
         criteria.setMaxResults( max );
 
         return criteria.list();
+    }
+
+    @SuppressWarnings("unchecked")
+    public Collection<OrganisationUnit> getWithinCoordinateArea( double[] box )
+    {
+        return getQuery( "from OrganisationUnit o"
+            + " where o.featureType='Point'"
+            + " and o.coordinates is not null"
+            + " and CAST( SUBSTRING(o.coordinates, 2, LOCATE(',', o.coordinates) - 2) AS big_decimal ) >= " + box[3]
+            + " and CAST( SUBSTRING(o.coordinates, 2, LOCATE(',', o.coordinates) - 2) AS big_decimal ) <= " + box[1]
+            + " and CAST( SUBSTRING(coordinates, LOCATE(',', o.coordinates) + 1, LOCATE(']', o.coordinates) - LOCATE(',', o.coordinates) - 1 ) AS big_decimal ) >= " + box[2]
+            + " and CAST( SUBSTRING(coordinates, LOCATE(',', o.coordinates) + 1, LOCATE(']', o.coordinates) - LOCATE(',', o.coordinates) - 1 ) AS big_decimal ) <= " + box[0]
+        ).list();
     }
 
     // -------------------------------------------------------------------------

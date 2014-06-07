@@ -1,19 +1,20 @@
 package org.hisp.dhis.caseentry.action.caseentry;
 
 /*
- * Copyright (c) 2004-2013, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,16 +30,14 @@ package org.hisp.dhis.caseentry.action.caseentry;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.opensymphony.xwork2.Action;
+
 import org.apache.struts2.ServletActionContext;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementService;
-import org.hisp.dhis.dxf2.event.Coordinate;
 import org.hisp.dhis.dxf2.utils.JacksonUtils;
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
-import org.hisp.dhis.patientdatavalue.PatientDataValue;
-import org.hisp.dhis.patientdatavalue.PatientDataValueService;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramInstanceService;
@@ -46,10 +45,13 @@ import org.hisp.dhis.program.ProgramService;
 import org.hisp.dhis.program.ProgramStage;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
 import org.hisp.dhis.user.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.ServletInputStream;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +59,8 @@ import java.util.Map;
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
-public class UploadAnonymousEventAction implements Action
+public class UploadAnonymousEventAction
+    implements Action
 {
     // -------------------------------------------------------------------------
     // Dependencies
@@ -82,7 +85,7 @@ public class UploadAnonymousEventAction implements Action
     private CurrentUserService currentUserService;
 
     @Autowired
-    private PatientDataValueService patientDataValueService;
+    private TrackedEntityDataValueService dataValueService;
 
     private I18nFormat format;
 
@@ -107,13 +110,16 @@ public class UploadAnonymousEventAction implements Action
     // -------------------------------------------------------------------------
 
     @Override
-    public String execute() throws Exception
+    @SuppressWarnings("unchecked")
+    public String execute()
+        throws Exception
     {
         ServletInputStream inputStream = ServletActionContext.getRequest().getInputStream();
 
-        Map<String, Object> input = JacksonUtils.getJsonMapper().readValue( inputStream, new TypeReference<HashMap<String, Object>>()
-        {
-        } );
+        Map<String, Object> input = JacksonUtils.getJsonMapper().readValue( inputStream,
+            new TypeReference<HashMap<String, Object>>()
+            {
+            } );
 
         Map<String, Object> executionDate = (Map<String, Object>) input.get( "executionDate" );
 
@@ -134,17 +140,16 @@ public class UploadAnonymousEventAction implements Action
         {
         }
 
-        Coordinate coordinate = null;
+        Double longitude = null;
+        Double latitude = null;
         Map<String, String> coord = (Map<String, String>) input.get( "coordinate" );
 
         if ( coord != null )
         {
             try
             {
-                double lng = Double.parseDouble( coord.get( "longitude" ) );
-                double lat = Double.parseDouble( coord.get( "latitude" ) );
-
-                coordinate = new Coordinate( lng, lat );
+                longitude = Double.parseDouble( coord.get( "longitude" ) );
+                latitude = Double.parseDouble( coord.get( "latitude" ) );
             }
             catch ( NullPointerException ignored )
             {
@@ -169,14 +174,13 @@ public class UploadAnonymousEventAction implements Action
         if ( programStageInstanceId != null )
         {
             programStageInstance = programStageInstanceService.getProgramStageInstance( programStageInstanceId );
-            updateExecutionDate( programStageInstance, date, completed, coordinate );
+            updateExecutionDate( programStageInstance, date, completed, longitude, latitude );
         }
         else
         {
             try
             {
                 programId = Integer.parseInt( (String) executionDate.get( "programId" ) );
-                organisationUnitId = Integer.parseInt( (String) executionDate.get( "organisationUnitId" ) );
             }
             catch ( NumberFormatException e )
             {
@@ -184,12 +188,29 @@ public class UploadAnonymousEventAction implements Action
                 return ERROR;
             }
 
+            try
+            {
+                organisationUnitId = Integer.parseInt( (String) executionDate.get( "organisationUnitId" ) );
+            }
+            catch ( NumberFormatException e )
+            {
+                OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( (String) executionDate.get( "organisationUnitId" ) );
+
+                if ( organisationUnit == null )
+                {
+                    message = e.getMessage();
+                    return ERROR;
+                }
+
+                organisationUnitId = organisationUnit.getId();
+            }
+
             if ( date == null )
             {
                 return INPUT;
             }
 
-            programStageInstance = saveExecutionDate( programId, organisationUnitId, date, completed, coordinate );
+            programStageInstance = saveExecutionDate( programId, organisationUnitId, date, completed, longitude, latitude );
         }
 
         Map<String, Object> values = (Map<String, Object>) input.get( "values" );
@@ -211,7 +232,8 @@ public class UploadAnonymousEventAction implements Action
         return SUCCESS;
     }
 
-    private void updateExecutionDate( ProgramStageInstance programStageInstance, Date date, Boolean completed, Coordinate coordinate )
+    private void updateExecutionDate( ProgramStageInstance programStageInstance, Date date, Boolean completed,
+        Double longitude, Double latitude )
     {
         if ( date != null )
         {
@@ -228,13 +250,10 @@ public class UploadAnonymousEventAction implements Action
 
         if ( programStageInstance.getProgramStage().getCaptureCoordinates() )
         {
-            if ( coordinate != null && coordinate.isValid() )
+            if ( longitude != null && latitude != null )
             {
-                programStageInstance.setCoordinates( coordinate.getCoordinateString() );
-            }
-            else
-            {
-                programStageInstance.setCoordinates( null );
+                programStageInstance.setLongitude( longitude );
+                programStageInstance.setLatitude( latitude );
             }
         }
 
@@ -243,8 +262,8 @@ public class UploadAnonymousEventAction implements Action
         programStageInstanceService.updateProgramStageInstance( programStageInstance );
     }
 
-    private ProgramStageInstance saveExecutionDate( Integer programId, Integer organisationUnitId, Date date, Boolean completed,
-        Coordinate coordinate )
+    private ProgramStageInstance saveExecutionDate( Integer programId, Integer organisationUnitId, Date date,
+        Boolean completed, Double longitude, Double latitude )
     {
         OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( organisationUnitId );
         Program program = programService.getProgram( programId );
@@ -267,13 +286,10 @@ public class UploadAnonymousEventAction implements Action
 
         if ( programStage.getCaptureCoordinates() )
         {
-            if ( coordinate != null && coordinate.isValid() )
+            if ( longitude != null && latitude != null )
             {
-                programStageInstance.setCoordinates( coordinate.getCoordinateString() );
-            }
-            else
-            {
-                programStageInstance.setCoordinates( null );
+                programStageInstance.setLongitude( longitude );
+                programStageInstance.setLatitude( latitude );
             }
         }
 
@@ -284,7 +300,8 @@ public class UploadAnonymousEventAction implements Action
         return programStageInstance;
     }
 
-    private void saveDataValue( ProgramStageInstance programStageInstance, DataElement dataElement, String value, Boolean providedElsewhere )
+    private void saveDataValue( ProgramStageInstance programStageInstance, DataElement dataElement, String value,
+        Boolean providedElsewhere )
     {
         String storedBy = currentUserService.getCurrentUsername();
 
@@ -293,31 +310,32 @@ public class UploadAnonymousEventAction implements Action
             value = null;
         }
 
-        PatientDataValue patientDataValue = patientDataValueService.getPatientDataValue( programStageInstance, dataElement );
+        TrackedEntityDataValue dataValue = dataValueService.getTrackedEntityDataValue( programStageInstance,
+            dataElement );
 
         if ( value != null )
         {
-            if ( patientDataValue == null )
+            if ( dataValue == null )
             {
-                patientDataValue = new PatientDataValue( programStageInstance, dataElement, new Date(), value );
-                patientDataValue.setStoredBy( storedBy );
-                patientDataValue.setProvidedElsewhere( providedElsewhere );
+                dataValue = new TrackedEntityDataValue( programStageInstance, dataElement, new Date(), value );
+                dataValue.setStoredBy( storedBy );
+                dataValue.setProvidedElsewhere( providedElsewhere );
 
-                patientDataValueService.savePatientDataValue( patientDataValue );
+                dataValueService.saveTrackedEntityDataValue( dataValue );
             }
             else
             {
-                patientDataValue.setValue( value );
-                patientDataValue.setTimestamp( new Date() );
-                patientDataValue.setProvidedElsewhere( providedElsewhere );
-                patientDataValue.setStoredBy( storedBy );
+                dataValue.setValue( value );
+                dataValue.setTimestamp( new Date() );
+                dataValue.setProvidedElsewhere( providedElsewhere );
+                dataValue.setStoredBy( storedBy );
 
-                patientDataValueService.updatePatientDataValue( patientDataValue );
+                dataValueService.updateTrackedEntityDataValue( dataValue );
             }
         }
-        else if ( patientDataValue != null )
+        else if ( dataValue != null )
         {
-            patientDataValueService.deletePatientDataValue( patientDataValue );
+            dataValueService.deleteTrackedEntityDataValue( dataValue );
         }
     }
 }

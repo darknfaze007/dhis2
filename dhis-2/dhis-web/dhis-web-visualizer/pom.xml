@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.hisp.dhis</groupId>
     <artifactId>dhis-web</artifactId>
-    <version>2.13-SNAPSHOT</version>
+    <version>2.16-SNAPSHOT</version>
   </parent>
   
   <artifactId>dhis-web-visualizer</artifactId>
@@ -19,24 +19,11 @@
   
   <dependencies>
     
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-	</dependency>
-	
     <!-- DHIS -->
     
     <dependency>
       <groupId>org.hisp.dhis</groupId>
       <artifactId>dhis-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.hisp.dhis</groupId>
-      <artifactId>dhis-service-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.hisp.dhis</groupId>
-      <artifactId>dhis-service-reporting</artifactId>
     </dependency>
     <dependency>
       <groupId>org.hisp.dhis</groupId>
@@ -46,10 +33,21 @@
       <groupId>org.hisp.dhis</groupId>
       <artifactId>dhis-web-commons-resources</artifactId>
       <type>war</type>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.hisp.dhis</groupId>
       <artifactId>dhis-web-api</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.hisp.dhis</groupId>
+      <artifactId>dhis-service-core</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.hisp.dhis</groupId>
+      <artifactId>dhis-service-reporting</artifactId>
     </dependency>
 	
 	<!-- JSON -->
@@ -71,6 +69,11 @@
       <artifactId>batik-codec</artifactId>
     </dependency>
 	
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+    </dependency>
+    
   </dependencies>
 
   <properties>

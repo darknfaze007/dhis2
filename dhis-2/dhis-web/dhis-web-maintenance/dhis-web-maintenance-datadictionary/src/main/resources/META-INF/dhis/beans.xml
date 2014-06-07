@@ -9,7 +9,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
     scope="prototype">
     <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
     <property name="userSettingService" ref="org.hisp.dhis.user.UserSettingService" />
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
   </bean>
 
   <bean id="org.hisp.dhis.dd.action.dataelement.GetDataElementListSortOrderAction" class="org.hisp.dhis.dd.action.dataelement.GetDataElementListSortOrderAction"
@@ -31,16 +30,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
   <bean id="org.hisp.dhis.dd.action.dataelement.GetDataElementGroupMembersAction" class="org.hisp.dhis.dd.action.dataelement.GetDataElementGroupMembersAction"
     scope="prototype">
     <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.dataelement.ShowAddDataElementForm" class="org.hisp.dhis.dd.action.dataelement.ShowAddDataElementForm"
-    scope="prototype">
-    <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
-    <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
-    <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
-    <property name="attributeService" ref="org.hisp.dhis.attribute.AttributeService" />
-    <property name="optionService" ref="org.hisp.dhis.option.OptionService" />
-    <property name="mappingService" ref="org.hisp.dhis.mapping.MappingService" />
   </bean>
 
   <bean id="org.hisp.dhis.dd.action.dataelement.GetDataElementAction" class="org.hisp.dhis.dd.action.dataelement.GetDataElementAction"
@@ -320,8 +309,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
   <bean id="org.hisp.dhis.dd.action.indicator.GetIndicatorListAction" class="org.hisp.dhis.dd.action.indicator.GetIndicatorListAction"
     scope="prototype">
     <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
-    <property name="userSettingService" ref="org.hisp.dhis.user.UserSettingService" />
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
   </bean>
 
   <bean id="org.hisp.dhis.dd.action.indicator.GetIndicatorListSortOrderAction" class="org.hisp.dhis.dd.action.indicator.GetIndicatorListSortOrderAction"
@@ -406,17 +393,11 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
     <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
   </bean>
 
-  <bean id="org.hisp.dhis.dd.action.datadictionary.SetCurrentDataDictionaryAction" class="org.hisp.dhis.dd.action.datadictionary.SetCurrentDataDictionaryAction"
-    scope="prototype">
-    <property name="userSettingService" ref="org.hisp.dhis.user.UserSettingService" />
-  </bean>
-
   <!-- Category -->
 
   <bean id="org.hisp.dhis.dd.action.category.AddDataElementCategoryAction" class="org.hisp.dhis.dd.action.category.AddDataElementCategoryAction"
     scope="prototype">
     <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
   </bean>
 
   <bean id="org.hisp.dhis.dd.action.category.ValidateDataElementCategoryAction" class="org.hisp.dhis.dd.action.category.ValidateDataElementCategoryAction"
@@ -432,30 +413,17 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
   <bean id="org.hisp.dhis.dd.action.category.UpdateDataElementCategoryAction" class="org.hisp.dhis.dd.action.category.UpdateDataElementCategoryAction"
     scope="prototype">
     <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
   </bean>
 
   <bean id="org.hisp.dhis.dd.action.category.GetDataElementCategoryAction" class="org.hisp.dhis.dd.action.category.GetDataElementCategoryAction"
     scope="prototype">
     <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
   </bean>
 
   <bean id="org.hisp.dhis.dd.action.category.RemoveDataElementCategoryAction" class="org.hisp.dhis.dd.action.category.RemoveDataElementCategoryAction"
     scope="prototype">
     <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
   </bean>
-
-  <!--
-  <bean id="org.hisp.dhis.dd.action.category.ShowCategoryEditorAction" class="org.hisp.dhis.dd.action.category.ShowCategoryEditorAction"
-    scope="prototype">
-    <property name="categoryService">
-      <ref bean="org.hisp.dhis.dataelement.DataElementCategoryService" />
-    </property>
-    <property name="conceptService">
-      <ref bean="org.hisp.dhis.concept.ConceptService" />
-    </property>
-  </bean>-->
 
   <!-- CategoryOption -->
 
@@ -467,13 +435,11 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
   <bean id="org.hisp.dhis.dd.action.category.AddDataElementCategoryOptionAction" class="org.hisp.dhis.dd.action.category.AddDataElementCategoryOptionAction"
     scope="prototype">
     <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
   </bean>
 
   <bean id="org.hisp.dhis.dd.action.category.UpdateDataElementCategoryOptionAction" class="org.hisp.dhis.dd.action.category.UpdateDataElementCategoryOptionAction"
     scope="prototype">
     <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
   </bean>
 
   <bean id="org.hisp.dhis.dd.action.category.RemoveDataElementCategoryOptionAction" class="org.hisp.dhis.dd.action.category.RemoveDataElementCategoryOptionAction"
@@ -484,7 +450,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
  <bean id="org.hisp.dhis.dd.action.category.GetDataElementCategoryOptionAction" class="org.hisp.dhis.dd.action.category.GetDataElementCategoryOptionAction"
     scope="prototype">
     <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
   </bean>
   
   <!-- CategoryCombo -->
@@ -524,16 +489,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
     <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
   </bean>
 
-  <!-- PDF -->
-
-  <bean id="org.hisp.dhis.dd.action.pdf.ExportToPdfAction" class="org.hisp.dhis.dd.action.pdf.ExportToPdfAction"
-    scope="prototype">
-    <property name="serviceProvider" ref="exportServiceProvider" />
-    <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
-    <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
-  </bean>
-
   <!-- Validate CategoryOption -->
 
   <bean id="org.hisp.dhis.dd.action.category.ValidateDataElementCategoryOptionAction" class="org.hisp.dhis.dd.action.category.ValidateDataElementCategoryOptionAction"
@@ -541,40 +496,68 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
     <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
   </bean>
 
-  <!-- Concept -->
-
-  <bean id="org.hisp.dhis.dd.action.concept.AddConceptAction" class="org.hisp.dhis.dd.action.concept.AddConceptAction"
-    scope="prototype">
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.concept.UpdateConceptAction" class="org.hisp.dhis.dd.action.concept.UpdateConceptAction"
-    scope="prototype">
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.concept.RemoveConceptAction" class="org.hisp.dhis.dd.action.concept.RemoveConceptAction"
-    scope="prototype">
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.concept.GetConceptAction" class="org.hisp.dhis.dd.action.concept.GetConceptAction"
-    scope="prototype">
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.concept.GetConceptListAction" class="org.hisp.dhis.dd.action.concept.GetConceptListAction"
-    scope="prototype">
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.concept.ValidateAddUpdateConceptAction" class="org.hisp.dhis.dd.action.concept.ValidateAddUpdateConceptAction"
-    scope="prototype">
-    <property name="conceptService" ref="org.hisp.dhis.concept.ConceptService" />
-  </bean>
-
   <!-- Other -->
 
   <bean id="org.hisp.dhis.dd.action.NoAction" class="org.hisp.dhis.dd.action.NoAction" />
 
+  <!-- CategoryOptionGroup  -->
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroup.AddCategoryOptionGroupAction" class="org.hisp.dhis.dd.action.categoryoptiongroup.AddCategoryOptionGroupAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroup.GetCategoryOptionGroupAction" class="org.hisp.dhis.dd.action.categoryoptiongroup.GetCategoryOptionGroupAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroup.GetCategoryOptionGroupListAction" class="org.hisp.dhis.dd.action.categoryoptiongroup.GetCategoryOptionGroupListAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroup.RemoveCategoryOptionGroupAction" class="org.hisp.dhis.dd.action.categoryoptiongroup.RemoveCategoryOptionGroupAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroup.ShowUpdateCategoryOptionGroupAction" class="org.hisp.dhis.dd.action.categoryoptiongroup.ShowUpdateCategoryOptionGroupAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroup.UpdateCategoryOptionGroupAction" class="org.hisp.dhis.dd.action.categoryoptiongroup.UpdateCategoryOptionGroupAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroup.ValidateCategoryOptionGroupAction" class="org.hisp.dhis.dd.action.categoryoptiongroup.ValidateCategoryOptionGroupAction"
+    scope="prototype">
+  </bean>
+  
+   <!-- CategoryOptionGroupSet  -->
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroupset.AddCategoryOptionGroupSetAction" class="org.hisp.dhis.dd.action.categoryoptiongroupset.AddCategoryOptionGroupSetAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroupset.GetCategoryOptionGroupSetAction" class="org.hisp.dhis.dd.action.categoryoptiongroupset.GetCategoryOptionGroupSetAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroupset.GetCategoryOptionGroupSetListAction" class="org.hisp.dhis.dd.action.categoryoptiongroupset.GetCategoryOptionGroupSetListAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroupset.RemoveCategoryOptionGroupSetAction" class="org.hisp.dhis.dd.action.categoryoptiongroupset.RemoveCategoryOptionGroupSetAction"
+    scope="prototype">
+  </bean>
+    
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroupset.ShowUpdateCategoryOptionGroupSetAction" class="org.hisp.dhis.dd.action.categoryoptiongroupset.ShowUpdateCategoryOptionGroupSetAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroupset.UpdateCategoryOptionGroupSetAction" class="org.hisp.dhis.dd.action.categoryoptiongroupset.UpdateCategoryOptionGroupSetAction"
+    scope="prototype">
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.categoryoptiongroupset.ValidateCategoryOptionGroupSetAction" class="org.hisp.dhis.dd.action.categoryoptiongroupset.ValidateCategoryOptionGroupSetAction"
+    scope="prototype">
+  </bean>
+  
 </beans>

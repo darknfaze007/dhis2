@@ -1,19 +1,20 @@
 package org.hisp.dhis.dbms;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -84,10 +85,13 @@ public class HibernateDbmsManager
         emptyTable( "datavalue" );
         emptyTable( "completedatasetregistration" );
 
+        emptyTable( "reporttable_categorydimensions" );
+        emptyTable( "reporttable_categoryoptiongroups" );
         emptyTable( "reporttable_dataelements" );
         emptyTable( "reporttable_datasets" );
         emptyTable( "reporttable_indicators" );
         emptyTable( "reporttable_periods" );
+        emptyTable( "reporttable_itemorgunitgroups" );
         emptyTable( "reporttable_organisationunits" );
         emptyTable( "reporttable_dataelementgroups" );
         emptyTable( "reporttable_orgunitgroups" );
@@ -95,6 +99,30 @@ public class HibernateDbmsManager
         emptyTable( "reporttable_rows" );
         emptyTable( "reporttable_filters" );
         emptyTable( "reporttable" );
+        
+        emptyTable( "chart_periods" );
+        emptyTable( "chart_orgunitlevels" );
+        emptyTable( "chart_orgunitgroups" );
+        emptyTable( "chart_organisationunits" );
+        emptyTable( "chart_itemorgunitgroups" );
+        emptyTable( "chart_indicators" );
+        emptyTable( "chart_filters" );
+        emptyTable( "chart_datasets" );
+        emptyTable( "chart_dataelements" );
+        emptyTable( "chart_dataelementoperands" );
+        emptyTable( "chart_dataelementgroups" );
+        emptyTable( "chart_categoryoptiongroups" );
+        emptyTable( "chart_categorydimensions" );
+        emptyTable( "chart" );
+
+        emptyTable( "userrolemembers" );
+        emptyTable( "userroledataset" );
+        emptyTable( "userroleauthorities" );
+        emptyTable( "usergroupmembers" );
+        emptyTable( "usergroup" );
+        emptyTable( "users" );
+        emptyTable( "userinfo" );
+        emptyTable( "userrole" );
 
         emptyTable( "orgunitgroupsetmembers" );
         emptyTable( "orgunitgroupset" );
@@ -105,6 +133,7 @@ public class HibernateDbmsManager
         emptyTable( "datadictionaryindicators" );
         emptyTable( "datadictionary" );
 
+        emptyTable( "validationrulegroupusergroupstoalert" );
         emptyTable( "validationrulegroupmembers" );
         emptyTable( "validationrulegroup" );
         emptyTable( "validationrule" );
@@ -114,6 +143,15 @@ public class HibernateDbmsManager
         emptyTable( "datasetindicators" );
         emptyTable( "datasetoperands" );
         emptyTable( "dataset" );
+
+        emptyTable( "trackedentitydatavalue" );
+        emptyTable( "programstageinstance" );
+        emptyTable( "programinstance" );
+        emptyTable( "programstage_dataelements" );
+        emptyTable( "programstage" );
+        emptyTable( "program_organisationunits" );
+        emptyTable( "program" );
+        emptyTable( "trackedentityinstance" );
 
         emptyTable( "minmaxdataelement" );
         emptyTable( "expressiondataelement" );
@@ -131,7 +169,12 @@ public class HibernateDbmsManager
         emptyTable( "categorycombos_categories" );
         emptyTable( "categories_categoryoptions" );
 
+        emptyTable( "orgunitgroupsetmembers" );
+        emptyTable( "orgunitgroupmembers" );
+        emptyTable( "orgunitgroupset" );
+        emptyTable( "orgunitgroup" );
         emptyTable( "organisationunit" );
+        
         emptyTable( "version" );
         emptyTable( "mocksource" );
         emptyTable( "period" );
@@ -148,14 +191,14 @@ public class HibernateDbmsManager
         emptyTable( "categorycombo" );
         emptyTable( "dataelementcategory" );
         emptyTable( "dataelementcategoryoption" );
-        
+
         emptyTable( "optionsetmembers" );
         emptyTable( "optionset" );
 
         dropTable( "aggregateddatavalue" );
         dropTable( "aggregatedindicatorvalue" );
         dropTable( "aggregateddatasetcompleteness" );
-        
+
         dropTable( "aggregatedorgunitdatavalue" );
         dropTable( "aggregatedorgunitindicatorvalue" );
         dropTable( "aggregatedorgunitdatasetcompleteness" );
@@ -172,11 +215,7 @@ public class HibernateDbmsManager
         sessionFactory.getCurrentSession().clear();
     }
 
-    // -------------------------------------------------------------------------
-    // Supportive methods
-    // -------------------------------------------------------------------------
-
-    private void emptyTable( String table )
+    public void emptyTable( String table )
     {
         try
         {
@@ -187,6 +226,10 @@ public class HibernateDbmsManager
             log.debug( "Table " + table + " does not exist" );
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Supportive methods
+    // -------------------------------------------------------------------------
 
     private void dropTable( String table )
     {

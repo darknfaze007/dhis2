@@ -1,8 +1,38 @@
 package org.hisp.dhis.databrowser.jdbc;
 
+/*
+ * Copyright (c) 2004-2014, University of Oslo
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.common.GridHeader;
 import org.hisp.dhis.databrowser.DataBrowserGridStore;
@@ -21,6 +51,8 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 public class JDBCDataBrowserStore
     implements DataBrowserGridStore
 {
+    private static final Log log = LogFactory.getLog( JDBCDataBrowserStore.class );
+    
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
@@ -64,15 +96,14 @@ public class JDBCDataBrowserStore
         sqlsb.append( "ORDER BY counts_of_aggregated_values DESC)" );
 
         // Gets all the dataSets in a period with a count attached to the
-        // dataSet. The table returned has only 2 columns. They are created here
-        // in this method directly
+        // dataSet. The table returned has 2 columns.
 
         Grid dataSetGrid = new ListGrid();
 
         dataSetGrid.addHeader( new GridHeader( "drilldown_data_set", false, false ) );
         dataSetGrid.addHeader( new GridHeader( "counts_of_aggregated_values", false, false ) );
 
-        fillUpDataBasic( dataSetGrid, sqlsb, isZeroAdded, jdbcTemplate );
+        populateGrid( dataSetGrid, sqlsb.toString(), isZeroAdded, jdbcTemplate );
 
         return dataSetGrid;
     }
@@ -94,7 +125,7 @@ public class JDBCDataBrowserStore
         gridDEG.addHeader( new GridHeader( "drilldown_data_element_group", false, false ) );
         gridDEG.addHeader( new GridHeader( "counts_of_aggregated_values", false, false ) );
 
-        fillUpDataBasic( gridDEG, sqlsb, isZeroAdded, jdbcTemplate );
+        populateGrid( gridDEG, sqlsb.toString(), isZeroAdded, jdbcTemplate );
 
         return gridDEG;
     }
@@ -117,7 +148,7 @@ public class JDBCDataBrowserStore
         gridOUG.addHeader( new GridHeader( "drilldown_orgunit_group", false, false ) );
         gridOUG.addHeader( new GridHeader( "counts_of_aggregated_values", false, false ) );
 
-        fillUpDataBasic( gridOUG, sqlsb, isZeroAdded, jdbcTemplate );
+        populateGrid( gridOUG, sqlsb.toString(), isZeroAdded, jdbcTemplate );
 
         return gridOUG;
     }
@@ -137,7 +168,7 @@ public class JDBCDataBrowserStore
         sqlsb.append( "ORDER BY de.name) " );
 
         grid.addHeader( new GridHeader( "drilldown_data_element", false, false ) );
-        setMetaStructure( grid, sqlsb, metaIds, jdbcTemplate );
+        populateMetaStructure( grid, sqlsb.toString(), metaIds, jdbcTemplate );
     }
 
     public void setDataElementStructureForDataElementGroup( Grid grid, Integer dataElementGroupId, List<Integer> metaIds )
@@ -152,7 +183,7 @@ public class JDBCDataBrowserStore
         sqlsb.append( "ORDER BY de.name) " );
 
         grid.addHeader( new GridHeader( "drilldown_data_element", false, false ) );
-        setMetaStructure( grid, sqlsb, metaIds, jdbcTemplate );
+        populateMetaStructure( grid, sqlsb.toString(), metaIds, jdbcTemplate );
     }
 
     public void setDataElementGroupStructureForOrgUnitGroup( Grid grid, Integer orgUnitGroupId, List<Integer> metaIds )
@@ -170,7 +201,7 @@ public class JDBCDataBrowserStore
         sqlsb.append( "ORDER BY deg.name ASC) " );
 
         grid.addHeader( new GridHeader( "drilldown_data_element_group", false, false ) );
-        setMetaStructure( grid, sqlsb, metaIds, jdbcTemplate );
+        populateMetaStructure( grid, sqlsb.toString(), metaIds, jdbcTemplate );
 
     }
 
@@ -184,7 +215,7 @@ public class JDBCDataBrowserStore
         sqlsb.append( "ORDER BY o.name)" );
 
         grid.addHeader( new GridHeader( "drilldown_orgunit", false, false ) );
-        setMetaStructure( grid, sqlsb, metaIds, jdbcTemplate );
+        populateMetaStructure( grid, sqlsb.toString(), metaIds, jdbcTemplate );
     }
 
     public void setDataElementStructureForOrgUnit( Grid grid, Integer orgUnitId, List<Integer> metaIds )
@@ -194,7 +225,7 @@ public class JDBCDataBrowserStore
         sqlsb.append( statementBuilder.queryDataElementStructureForOrgUnit() );
 
         grid.addHeader( new GridHeader( "drilldown_data_element", false, false ) );
-        setMetaStructure( grid, sqlsb, metaIds, jdbcTemplate );
+        populateMetaStructure( grid, sqlsb.toString(), metaIds, jdbcTemplate );
     }
 
     // -------------------------------------------------------------------------
@@ -231,7 +262,7 @@ public class JDBCDataBrowserStore
             sqlsb.append( i == betweenPeriodIds.size() ? "ORDER BY ColumnHeader" : " UNION " );
         }
 
-        return fillUpDataAdvance( grid, sqlsb, metaIds, isZeroAdded, jdbcTemplate );
+        return populateGridAdvanced( grid, sqlsb.toString(), metaIds, isZeroAdded, jdbcTemplate );
     }
 
     public Integer setCountDataElementsForDataElementGroupBetweenPeriods( Grid grid, Integer dataElementGroupId,
@@ -255,7 +286,7 @@ public class JDBCDataBrowserStore
             sqlsb.append( i == betweenPeriodIds.size() ? "ORDER BY ColumnHeader" : " UNION " );
         }
 
-        return fillUpDataAdvance( grid, sqlsb, metaIds, isZeroAdded, jdbcTemplate );
+        return populateGridAdvanced( grid, sqlsb.toString(), metaIds, isZeroAdded, jdbcTemplate );
     }
 
     public Integer setCountDataElementGroupsForOrgUnitGroupBetweenPeriods( Grid grid, Integer orgUnitGroupId,
@@ -280,18 +311,18 @@ public class JDBCDataBrowserStore
             sqlsb.append( i == betweenPeriodIds.size() ? "ORDER BY ColumnHeader" : " UNION " );
         }
 
-        return fillUpDataAdvance( grid, sqlsb, metaIds, isZeroAdded, jdbcTemplate );
+        return populateGridAdvanced( grid, sqlsb.toString(), metaIds, isZeroAdded, jdbcTemplate );
     }
 
     public Integer setCountOrgUnitsBetweenPeriods( Grid grid, Integer orgUnitParent, List<Integer> betweenPeriodIds,
         Integer maxLevel, List<Integer> metaIds, boolean isZeroAdded )
     {
-        StringBuffer sqlsbDescentdants = new StringBuffer();
+        StringBuffer sql = new StringBuffer();
 
-        boolean valid = this.setUpQueryForDrillDownDescendants( sqlsbDescentdants, orgUnitParent, betweenPeriodIds,
+        boolean valid = this.setUpQueryForDrillDownDescendants( sql, orgUnitParent, betweenPeriodIds,
             maxLevel );
 
-        return (valid ? fillUpDataAdvance( grid, sqlsbDescentdants, metaIds, isZeroAdded, jdbcTemplate ) : 0);
+        return valid ? populateGridAdvanced( grid, sql.toString(), metaIds, isZeroAdded, jdbcTemplate ) : 0;
 
     }
 
@@ -302,23 +333,23 @@ public class JDBCDataBrowserStore
 
         sqlsb.append( statementBuilder.queryRawDataElementsForOrgUnitBetweenPeriods( orgUnitId, betweenPeriodIds ) );
 
-        return fillUpDataAdvance( grid, sqlsb, metaIds, isZeroAdded, jdbcTemplate );
+        return populateGridAdvanced( grid, sqlsb.toString(), metaIds, isZeroAdded, jdbcTemplate );
     }
 
     // -------------------------------------------------------------------------
     // Private methods
     // -------------------------------------------------------------------------
 
-    private static void setMetaStructure( Grid grid, StringBuffer sqlsb, List<Integer> metaIds, JdbcTemplate jdbcTemplate )
+    private static void populateMetaStructure( Grid grid, final String sql, List<Integer> metaIds, JdbcTemplate jdbcTemplate )
     {
-        Integer metaId = null;
-        String metaName = null;
-        SqlRowSet resultSet = jdbcTemplate.queryForRowSet( sqlsb.toString() );
+        log.info( "Meta SQL: " + sql );
+        
+        SqlRowSet resultSet = jdbcTemplate.queryForRowSet( sql );
 
         while ( resultSet.next() )
         {
-            metaId = resultSet.getInt( 1 );
-            metaName = resultSet.getString( 2 );
+            Integer metaId = resultSet.getInt( 1 );
+            String metaName = resultSet.getString( 2 );
 
             metaIds.add( metaId );
             grid.addRow().addValue( new MetaValue( metaId, metaName ) );
@@ -350,9 +381,11 @@ public class JDBCDataBrowserStore
         }
     }
 
-    private static void fillUpDataBasic( Grid grid, StringBuffer sqlsb, boolean isZeroAdded, JdbcTemplate jdbcTemplate )
+    private static void populateGrid( Grid grid, final String sql, boolean isZeroAdded, JdbcTemplate jdbcTemplate )
     {
-        SqlRowSet resultSet = jdbcTemplate.queryForRowSet( sqlsb.toString() );
+        log.info( "Grid SQL: " + sql );
+        
+        SqlRowSet resultSet = jdbcTemplate.queryForRowSet( sql );
 
         while ( resultSet.next() )
         {
@@ -362,15 +395,15 @@ public class JDBCDataBrowserStore
         }
     }
 
-    private static int fillUpDataAdvance( Grid grid, StringBuffer sqlsb, List<Integer> metaIds, boolean isZeroAdded,
+    private static int populateGridAdvanced( Grid grid, final String sql, List<Integer> metaIds, boolean isZeroAdded,
         JdbcTemplate jdbcTemplate )
     {
         int countRows = 0;
-        int rowIndex = -1;
-        int columnIndex = -1;
         int oldWidth = grid.getWidth();
 
-        SqlRowSet rs = jdbcTemplate.queryForRowSet( sqlsb.toString() );
+        log.info( "Advanced SQL: " + sql );
+        
+        SqlRowSet rs = jdbcTemplate.queryForRowSet( sql );
 
         List<Integer> headerIds = new ArrayList<Integer>();
         setHeaderStructure( grid, rs, headerIds, isZeroAdded );
@@ -384,8 +417,8 @@ public class JDBCDataBrowserStore
 
         while ( rs.next() )
         {
-            rowIndex = metaIds.indexOf( rs.getInt( 1 ) );
-            columnIndex = headerIds.indexOf( rs.getInt( 4 ) ) + oldWidth;
+            int rowIndex = metaIds.indexOf( rs.getInt( 1 ) );
+            int columnIndex = headerIds.indexOf( rs.getInt( 4 ) ) + oldWidth;
 
             grid.getRow( rowIndex ).set( columnIndex, checkValue( rs.getString( 3 ), isZeroAdded ) );
 

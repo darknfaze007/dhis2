@@ -15,13 +15,14 @@
       <column name="periodid" />
       <column name="sourceid" />
       <column name="categoryoptioncomboid" />
+      <column name="attributeoptioncomboid" />
     </many-to-one>
 
     <property name="value" />
 
     <property name="storedBy" column="storedby" length="31" />
 
-    <property name="timeStamp" column="lastupdated" type="date" />
+    <property name="timestamp" column="lastupdated" type="timestamp" />
 
     <property name="comment" length="360" />
 

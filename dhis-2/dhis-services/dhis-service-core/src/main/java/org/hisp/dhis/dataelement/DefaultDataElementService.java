@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,7 +28,6 @@ package org.hisp.dhis.dataelement;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.common.GenericIdentifiableObjectStore;
 import org.hisp.dhis.common.GenericNameableObjectStore;
 import org.hisp.dhis.common.ListMap;
 import org.hisp.dhis.dataelement.comparator.DataElementCategoryComboSizeComparator;
@@ -75,10 +75,9 @@ public class DefaultDataElementService
         this.dataElementGroupStore = dataElementGroupStore;
     }
 
-    private GenericIdentifiableObjectStore<DataElementGroupSet> dataElementGroupSetStore;
+    private DataElementGroupSetStore dataElementGroupSetStore;
 
-    public void setDataElementGroupSetStore(
-        GenericIdentifiableObjectStore<DataElementGroupSet> dataElementGroupSetStore )
+    public void setDataElementGroupSetStore( DataElementGroupSetStore dataElementGroupSetStore )
     {
         this.dataElementGroupSetStore = dataElementGroupSetStore;
     }
@@ -243,6 +242,11 @@ public class DefaultDataElementService
         return i18n( i18nService, dataElementStore.getDataElementsByDomainType( domainType ) );
     }
 
+    public Collection<DataElement> getDataElementsByDomainType( String domainType, int first, int max )
+    {
+        return i18n( i18nService, dataElementStore.getDataElementsByDomainType( domainType, first, max ) );
+    }
+
     public Collection<DataElement> getDataElementByCategoryCombo( DataElementCategoryCombo categoryCombo )
     {
         return i18n( i18nService, dataElementStore.getDataElementByCategoryCombo( categoryCombo ) );
@@ -322,6 +326,11 @@ public class DefaultDataElementService
         return getCountByName( i18nService, dataElementStore, name );
     }
 
+    public int getDataElementCountByDomainType( String domainType )
+    {
+        return dataElementStore.getCountByDomainType( domainType );
+    }
+
     public Collection<DataElement> getDataElementsBetween( int first, int max )
     {
         return getObjectsBetween( i18nService, dataElementStore, first, max );
@@ -346,7 +355,7 @@ public class DefaultDataElementService
     {
         return dataElementStore.getDataElementCategoryOptionComboMap( dataElementUids );
     }
-    
+
     public Map<String, Integer> getDataElementUidIdMap()
     {
         Map<String, Integer> map = new HashMap<String, Integer>();
@@ -603,6 +612,12 @@ public class DefaultDataElementService
     public Collection<DataElementGroupSet> getAllDataElementGroupSets()
     {
         return i18n( i18nService, dataElementGroupSetStore.getAll() );
+    }
+
+    @Override
+    public Collection<DataElementGroupSet> getDataDimensionDataElementGroupSets()
+    {
+        return i18n( i18nService, dataElementGroupSetStore.getByDataDimension( true ) );
     }
 
     public Collection<DataElementGroupSet> getDataElementGroupSets( final Collection<Integer> identifiers )

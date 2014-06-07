@@ -1,19 +1,20 @@
 package org.hisp.dhis.indicator;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,18 +28,23 @@ package org.hisp.dhis.indicator;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.common.GenericIdentifiableObjectStore;
-import org.hisp.dhis.i18n.I18nService;
-import org.hisp.dhis.system.util.Filter;
-import org.hisp.dhis.system.util.FilterUtils;
-import org.springframework.transaction.annotation.Transactional;
+import static org.hisp.dhis.i18n.I18nUtils.getCountByName;
+import static org.hisp.dhis.i18n.I18nUtils.getObjectsBetween;
+import static org.hisp.dhis.i18n.I18nUtils.getObjectsBetweenByName;
+import static org.hisp.dhis.i18n.I18nUtils.getObjectsByName;
+import static org.hisp.dhis.i18n.I18nUtils.i18n;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.hisp.dhis.i18n.I18nUtils.*;
+import org.hisp.dhis.common.GenericIdentifiableObjectStore;
+import org.hisp.dhis.i18n.I18nService;
+import org.hisp.dhis.mapping.MapLegendSet;
+import org.hisp.dhis.system.util.Filter;
+import org.hisp.dhis.system.util.FilterUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Lars Helge Overland
@@ -192,6 +198,12 @@ public class DefaultIndicatorService
     public Collection<Indicator> getIndicatorsBetweenByName( String name, int first, int max )
     {
         return getObjectsBetweenByName( i18nService, indicatorStore, name, first, max );
+    }
+
+    @Override
+    public int countMapLegendSetIndicators( MapLegendSet mapLegendSet )
+    {
+        return indicatorStore.countMapLegendSetIndicators( mapLegendSet );
     }
 
     // -------------------------------------------------------------------------

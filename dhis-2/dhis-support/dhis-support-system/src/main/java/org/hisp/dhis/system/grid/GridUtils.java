@@ -1,19 +1,20 @@
 package org.hisp.dhis.system.grid;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -81,6 +82,7 @@ import org.htmlparser.Parser;
 import org.htmlparser.filters.OrFilter;
 import org.htmlparser.filters.TagNameFilter;
 import org.htmlparser.nodes.TagNode;
+import org.htmlparser.tags.CompositeTag;
 import org.htmlparser.tags.TableRow;
 import org.htmlparser.tags.TableTag;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -567,11 +569,27 @@ public class GridUtils
     }
     
     /**
-     * Retrieves the value of a table cell.
+     * Retrieves the value of a table cell. Appends the text of child nodes of
+     * the cell. In case of composite tags like span or div the inner text is
+     * appended.
      */
     public static String getValue( TagNode cell )
     {
-        return cell.getFirstChild() != null ? cell.getFirstChild().getText().trim().replaceAll( "&nbsp;", EMPTY ) : EMPTY;
+        String value = EMPTY;
+
+        for ( Node child : cell.getChildren().toNodeArray() )
+        {
+            if ( child instanceof CompositeTag )
+            {
+                value += ((CompositeTag) child).getStringText();
+            }
+            else
+            {
+                value = value + child.getText();
+            }
+        }
+        
+        return value.trim().replaceAll( "&nbsp;", EMPTY );
     }
     
     // -------------------------------------------------------------------------

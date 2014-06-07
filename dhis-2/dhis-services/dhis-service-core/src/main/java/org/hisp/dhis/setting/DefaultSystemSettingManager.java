@@ -1,19 +1,20 @@
 package org.hisp.dhis.setting;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,14 +28,15 @@ package org.hisp.dhis.setting;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import org.apache.commons.lang.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-
-import org.apache.commons.lang.StringUtils;
-import org.hisp.dhis.common.GenericIdentifiableObjectStore;
-import org.springframework.transaction.annotation.Transactional;
+import java.util.Map;
 
 /**
  * @author Stian Strandli
@@ -48,9 +50,9 @@ public class DefaultSystemSettingManager
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private GenericIdentifiableObjectStore<SystemSetting> systemSettingStore;
+    private SystemSettingStore systemSettingStore;
 
-    public void setSystemSettingStore( GenericIdentifiableObjectStore<SystemSetting> systemSettingStore )
+    public void setSystemSettingStore( SystemSettingStore systemSettingStore )
     {
         this.systemSettingStore = systemSettingStore;
     }
@@ -67,7 +69,7 @@ public class DefaultSystemSettingManager
     // -------------------------------------------------------------------------
 
     public void saveSystemSetting( String name, Serializable value )
-    {
+    {        
         SystemSetting setting = systemSettingStore.getByName( name );
 
         if ( setting == null )
@@ -128,7 +130,7 @@ public class DefaultSystemSettingManager
 
     public String getFlagImage()
     {
-        String flag = (String) getSystemSetting( KEY_FLAG );
+        String flag = (String) getSystemSetting( KEY_FLAG, DEFAULT_FLAG );
 
         return flag != null ? flag + ".png" : null;
     }
@@ -137,7 +139,7 @@ public class DefaultSystemSettingManager
     {
         return StringUtils.trimToNull( (String) getSystemSetting( KEY_EMAIL_HOST_NAME ) );
     }
-    
+
     public int getEmailPort()
     {
         return (Integer) getSystemSetting( KEY_EMAIL_PORT, DEFAULT_EMAIL_PORT );
@@ -152,19 +154,59 @@ public class DefaultSystemSettingManager
     {
         return StringUtils.trimToNull( (String) getSystemSetting( KEY_EMAIL_USERNAME ) );
     }
-    
+
     public boolean getEmailTls()
     {
         return (Boolean) getSystemSetting( KEY_EMAIL_TLS, true );
+    }
+    
+    public String getEmailSender()
+    {
+        return StringUtils.trimToNull( (String) getSystemSetting( KEY_EMAIL_SENDER ) );
     }
     
     public boolean accountRecoveryEnabled()
     {
         return (Boolean) getSystemSetting( KEY_ACCOUNT_RECOVERY, false );
     }
-    
+
+    public boolean accountInviteEnabled()
+    {
+        return (Boolean) getSystemSetting( KEY_ACCOUNT_INVITE, false );
+    }
+
+    @Override
+    public boolean selfRegistrationNoRecaptcha()
+    {
+        return (Boolean) getSystemSetting( KEY_SELF_REGISTRATION_NO_RECAPTCHA, false );
+    }
+
     public boolean emailEnabled()
     {
         return getEmailHostName() != null;
+    }
+
+    public String googleAnalyticsUA()
+    {
+        return StringUtils.trimToNull( (String) getSystemSetting( KEY_GOOGLE_ANALYTICS_UA ) );
+    }
+
+    @Override
+    public Integer credentialsExpires()
+    {
+        return (Integer) (getSystemSetting( KEY_CREDENTIALS_EXPIRES ) == null ? 0 : getSystemSetting( KEY_CREDENTIALS_EXPIRES ));
+    }
+
+    public Map<String, Serializable> getSystemSettingsAsMap()
+    {
+        Map<String, Serializable> settingsMap = new HashMap<String, Serializable>();
+        Collection<SystemSetting> systemSettings = getAllSystemSettings();
+
+        for ( SystemSetting systemSetting : systemSettings )
+        {
+            settingsMap.put( systemSetting.getName(), systemSetting.getValue() );
+        }
+
+        return settingsMap;
     }
 }

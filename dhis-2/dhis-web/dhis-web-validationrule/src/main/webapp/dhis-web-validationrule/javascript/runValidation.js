@@ -1,7 +1,7 @@
 var startDate;
 var endDate;
-var aggregate;
 var validationRuleGroupId;
+var sendAlerts;
 var organisationUnitId;
 
 function organisationUnitSelected( ids )
@@ -13,11 +13,15 @@ function validateRunValidation()
 {
 	startDate = $( '#startDate' ).val();
 	endDate = $( '#endDate' ).val();
-	aggregate = $( '#aggregate' ).val();
 	validationRuleGroupId = $( '#validationRuleGroupId' ).val();
+	sendAlerts =  $( '#sendAlerts' ).is( ':checked' );
 
-	$.getJSON( 'validateRunValidation.action',
-	{ startDate:startDate, endDate:endDate, aggregate:aggregate }, function( json )
+	$.getJSON( 'validateRunValidation.action', 
+	{ 
+		startDate:startDate, 
+		endDate:endDate
+	}, 
+	function( json )
 	{
 		if ( json.response == 'success' )
 	    {
@@ -26,8 +30,15 @@ function validateRunValidation()
 	        setWaitMessage( i18n_analysing_please_wait );
 
 	        $.get( 'runValidationAction.action', 
-	        { organisationUnitId:organisationUnitId, startDate:startDate, endDate:endDate, validationRuleGroupId:validationRuleGroupId, aggregate:aggregate }, function( data )
+	        { 
+	        	organisationUnitId: organisationUnitId, 
+	        	startDate:startDate, endDate:endDate, 
+	        	validationRuleGroupId: validationRuleGroupId,
+	        	sendAlerts: sendAlerts
+	        }, 
+	        function( data )
 	        {
+	            hideMessage();
 	            $( 'div#analysisInput' ).hide();
 	            $( 'div#analysisResult' ).show();
 	            $( 'div#analysisResult' ).html( data );
@@ -45,6 +56,12 @@ function validateRunValidation()
     return false;
 }
 
+function displayAnalysisInput()
+{
+    $( 'div#analysisInput' ).show();
+    $( 'div#analysisResult' ).empty().hide();
+}
+
 function displayValidationDetailsDialog()
 {
 	$( '#validationResultDetailsDiv' ).dialog( {
@@ -57,9 +74,13 @@ function displayValidationDetailsDialog()
 
 function viewValidationResultDetails( validationRuleId, sourceId, periodId )
 {
-	$( '#validationResultDetailsDiv' ).load( 'viewValidationResultDetails.action', {
-		validationRuleId: validationRuleId, sourceId: sourceId, periodId: periodId },
-		displayValidationDetailsDialog 
+	$( '#validationResultDetailsDiv' ).load( 'viewValidationResultDetails.action', 
+	{
+		validationRuleId: validationRuleId, 
+		sourceId: sourceId, 
+		periodId: periodId
+	},
+	displayValidationDetailsDialog 
 	);
 }
 

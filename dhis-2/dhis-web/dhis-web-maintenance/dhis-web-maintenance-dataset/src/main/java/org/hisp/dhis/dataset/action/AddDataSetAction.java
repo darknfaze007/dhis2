@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataset.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,25 +28,30 @@ package org.hisp.dhis.dataset.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import com.google.common.collect.Lists;
 import com.opensymphony.xwork2.Action;
+import org.hisp.dhis.attribute.AttributeService;
+import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.indicator.IndicatorService;
+import org.hisp.dhis.mapping.MapLegendSet;
+import org.hisp.dhis.mapping.MappingService;
 import org.hisp.dhis.period.PeriodType;
+import org.hisp.dhis.system.util.AttributeUtils;
 import org.hisp.dhis.user.UserGroupService;
 import org.hisp.dhis.user.UserService;
 
-import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.hisp.dhis.system.util.TextUtils.nullIfEmpty;
 
 /**
  * @author Kristian
- * @version $Id: AddDataSetAction.java 6255 2008-11-10 16:01:24Z larshelg $
  */
 public class AddDataSetAction
     implements Action
@@ -75,6 +81,13 @@ public class AddDataSetAction
         this.indicatorService = indicatorService;
     }
 
+    private DataElementCategoryService categoryService;
+
+    public void setCategoryService( DataElementCategoryService categoryService )
+    {
+        this.categoryService = categoryService;
+    }
+
     private UserService userService;
 
     public void setUserService( UserService userService )
@@ -87,6 +100,20 @@ public class AddDataSetAction
     public void setUserGroupService( UserGroupService userGroupService )
     {
         this.userGroupService = userGroupService;
+    }
+
+    private MappingService mappingService;
+
+    public void setMappingService( MappingService mappingService )
+    {
+        this.mappingService = mappingService;
+    }
+
+    private AttributeService attributeService;
+
+    public void setAttributeService( AttributeService attributeService )
+    {
+        this.attributeService = attributeService;
     }
 
     // -------------------------------------------------------------------------
@@ -128,6 +155,13 @@ public class AddDataSetAction
         this.expiryDays = expiryDays;
     }
 
+    private int timelyDays;
+
+    public void setTimelyDays( int timelyDays )
+    {
+        this.timelyDays = timelyDays;
+    }
+
     private int notificationRecipients;
 
     public void setNotificationRecipients( int notificationRecipients )
@@ -140,6 +174,13 @@ public class AddDataSetAction
     public void setNotifyCompletingUser( boolean notifyCompletingUser )
     {
         this.notifyCompletingUser = notifyCompletingUser;
+    }
+
+    private boolean approveData;
+
+    public void setApproveData( boolean approveData )
+    {
+        this.approveData = approveData;
     }
 
     private boolean skipAggregation;
@@ -177,11 +218,25 @@ public class AddDataSetAction
         this.validCompleteOnly = validCompleteOnly;
     }
 
+    private boolean noValueRequiresComment;
+
+    public void setNoValueRequiresComment( boolean noValueRequiresComment )
+    {
+        this.noValueRequiresComment = noValueRequiresComment;
+    }
+
     private boolean skipOffline;
 
     public void setSkipOffline( boolean skipOffline )
     {
         this.skipOffline = skipOffline;
+    }
+
+    private boolean dataElementDecoration;
+
+    public void setDataElementDecoration( boolean dataElementDecoration )
+    {
+        this.dataElementDecoration = dataElementDecoration;
     }
 
     private boolean renderAsTabs;
@@ -198,18 +253,39 @@ public class AddDataSetAction
         this.renderHorizontally = renderHorizontally;
     }
 
-    private Collection<String> dataElementsSelectedList = new HashSet<String>();
+    private List<String> deSelected = Lists.newArrayList();
 
-    public void setDataElementsSelectedList( Collection<String> dataElementsSelectedList )
+    public void setDeSelected( List<String> deSelected )
     {
-        this.dataElementsSelectedList = dataElementsSelectedList;
+        this.deSelected = deSelected;
     }
 
-    private Collection<String> indicatorsSelectedList = new HashSet<String>();
+    private List<String> inSelected = Lists.newArrayList();
 
-    public void setIndicatorsSelectedList( Collection<String> indicatorsSelectedList )
+    public void setInSelected( List<String> inSelected )
     {
-        this.indicatorsSelectedList = indicatorsSelectedList;
+        this.inSelected = inSelected;
+    }
+
+    private Integer categoryComboId;
+
+    public void setCategoryComboId( Integer categoryComboId )
+    {
+        this.categoryComboId = categoryComboId;
+    }
+
+    private Integer selectedLegendSetId;
+
+    public void setSelectedLegendSetId( Integer selectedLegendSetId )
+    {
+        this.selectedLegendSetId = selectedLegendSetId;
+    }
+
+    private List<String> jsonAttributeValues;
+
+    public void setJsonAttributeValues( List<String> jsonAttributeValues )
+    {
+        this.jsonAttributeValues = jsonAttributeValues;
     }
 
     // -------------------------------------------------------------------------
@@ -231,19 +307,27 @@ public class AddDataSetAction
 
         DataSet dataSet = new DataSet( name, shortName, code, periodType );
 
+        MapLegendSet legendSet = mappingService.getMapLegendSet( selectedLegendSetId );
+
         dataSet.setExpiryDays( expiryDays );
+        dataSet.setTimelyDays( timelyDays );
         dataSet.setSkipAggregation( skipAggregation );
 
-        for ( String id : dataElementsSelectedList )
+        for ( String id : deSelected )
         {
-            dataSet.addDataElement( dataElementService.getDataElement( Integer.parseInt( id ) ) );
+            dataSet.addDataElement( dataElementService.getDataElement( id ) );
         }
 
         Set<Indicator> indicators = new HashSet<Indicator>();
 
-        for ( String id : indicatorsSelectedList )
+        for ( String id : inSelected )
         {
-            indicators.add( indicatorService.getIndicator( Integer.parseInt( id ) ) );
+            indicators.add( indicatorService.getIndicator( id ) );
+        }
+
+        if ( categoryComboId != null )
+        {
+            dataSet.setCategoryCombo( categoryService.getDataElementCategoryCombo( categoryComboId ) );
         }
 
         dataSet.setDescription( description );
@@ -254,10 +338,20 @@ public class AddDataSetAction
         dataSet.setAllowFuturePeriods( allowFuturePeriods );
         dataSet.setFieldCombinationRequired( fieldCombinationRequired );
         dataSet.setValidCompleteOnly( validCompleteOnly );
+        dataSet.setNoValueRequiresComment( noValueRequiresComment );
         dataSet.setNotifyCompletingUser( notifyCompletingUser );
+        dataSet.setApproveData( approveData );
         dataSet.setSkipOffline( skipOffline );
+        dataSet.setDataElementDecoration( dataElementDecoration );
         dataSet.setRenderAsTabs( renderAsTabs );
         dataSet.setRenderHorizontally( renderHorizontally );
+        dataSet.setLegendSet( legendSet );
+
+        if ( jsonAttributeValues != null )
+        {
+            AttributeUtils.updateAttributeValuesFromJson( dataSet.getAttributeValues(), jsonAttributeValues,
+                attributeService );
+        }
 
         dataSetService.addDataSet( dataSet );
 

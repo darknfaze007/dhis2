@@ -54,7 +54,7 @@ function updateIndicators()
     {
         var indicatorId = $( this ).attr( 'indicatorid' );
 
-        var formula = indicatorFormulas[indicatorId];
+        var formula = dhis2.de.indicatorFormulas[indicatorId];
         
         if ( isDefined( formula ) )
         {        
@@ -112,26 +112,13 @@ function generateExpression( expression )
     return expression;
 }
 
-function saveDynamicVal( code, optionComboId, fieldId )
-{
-    var dataElementId = $( '#' + code + '-dynselect option:selected' ).val();
-    
-    if ( !isDefined( dataElementId ) || dataElementId == -1 )
-    {
-    	log( 'There is no select list in form or no option selected for code: ' + code );
-    	return;
-    }
-    
-    saveVal( dataElementId, optionComboId, fieldId );
-}
-
 function saveVal( dataElementId, optionComboId, fieldId )
 {
 	var fieldIds = fieldId.split( "-" );
 
 	if ( fieldIds.length > 3 )
 	{
-		currentOrganisationUnitId = fieldIds[0];
+		dhis2.de.currentOrganisationUnitId = fieldIds[0];
 	}
 
     fieldId = '#' + fieldId;
@@ -149,43 +136,53 @@ function saveVal( dataElementId, optionComboId, fieldId )
 		value = '';
 	}
 
+	var warning = undefined;
+	
     if ( value != '' )
     {
-        if ( type == 'string' || type == 'int' || type == 'number' || type == 'positiveNumber' || type == 'negativeNumber' )
+        if ( type == 'string' || type == 'int' || type == 'number' || type == 'unitInterval' || type == 'posInt' || type == 'negInt' || type == 'zeroPositiveInt' )
         {
             if ( value.length > 255 )
             {
-                return alertField( fieldId, i18n_value_too_long + ': ' + dataElementName );
+                return alertField( fieldId, i18n_value_too_long + '\n\n' + dataElementName );
             }
-            if ( type == 'int' && !isInt( value ) )
+            if ( type == 'int' && !dhis2.validation.isInt( value ) )
             {
-                return alertField( fieldId, i18n_value_must_integer + ': ' + dataElementName );
+                return alertField( fieldId, i18n_value_must_integer + '\n\n' + dataElementName );
             }
-            if ( type == 'number' && !isNumber( value ) )
+            if ( type == 'number' && !dhis2.validation.isNumber( value ) )
             {
-                return alertField( fieldId, i18n_value_must_number + ': ' + dataElementName );
+                return alertField( fieldId, i18n_value_must_number + '\n\n' + dataElementName );
             }
-            if ( type == 'positiveNumber' && !isPositiveInt( value ) )
+            if ( type == 'unitInterval' && !dhis2.validation.isUnitInterval( value ) )
             {
-                return alertField( fieldId, i18n_value_must_positive_integer + ': ' + dataElementName );
+            	return alertField( fieldId, i18n_value_must_unit_interval + '\n\n' + dataElementName );
             }
-            if ( type == 'negativeNumber' && !isNegativeInt( value ) )
+            if ( type == 'posInt' && !dhis2.validation.isPositiveInt( value ) )
             {
-                return alertField( fieldId, i18n_value_must_negative_integer + ': ' + dataElementName );
+                return alertField( fieldId, i18n_value_must_positive_integer + '\n\n' + dataElementName );
             }
-            if ( isValidZeroNumber( value ) )
+            if ( type == 'negInt' && !dhis2.validation.isNegativeInt( value ) )
+            {
+                return alertField( fieldId, i18n_value_must_negative_integer + '\n\n' + dataElementName );
+            }
+            if ( type == 'zeroPositiveInt' && !dhis2.validation.isZeroOrPositiveInt( value ) )
+            {
+                return alertField( fieldId, i18n_value_must_zero_or_positive_integer + '\n\n' + dataElementName );
+            }
+            if ( dhis2.validation.isValidZeroNumber( value ) )
             {
                 // If value = 0 and zero not significant for data element, skip
 
-                if ( significantZeros.indexOf( dataElementId ) == -1 )
+                if ( dhis2.de.significantZeros.indexOf( dataElementId ) == -1 )
                 {
                     $( fieldId ).css( 'background-color', COLOR_GREEN );
                     return false;
                 }
             }
 
-            var minString = currentMinMaxValueMap[dataElementId + '-' + optionComboId + '-min'];
-            var maxString = currentMinMaxValueMap[dataElementId + '-' + optionComboId + '-max'];
+            var minString = dhis2.de.currentMinMaxValueMap[dataElementId + '-' + optionComboId + '-min'];
+            var maxString = dhis2.de.currentMinMaxValueMap[dataElementId + '-' + optionComboId + '-max'];
 
             if ( minString && maxString ) // TODO if only one exists?
             {
@@ -195,33 +192,29 @@ function saveVal( dataElementId, optionComboId, fieldId )
 
                 if ( valueNo < min )
                 {
-                    var valueSaver = new ValueSaver( dataElementId, optionComboId, currentOrganisationUnitId, periodId,
-                            value, fieldId, COLOR_ORANGE );
-                    valueSaver.save();
-
-                    window.alert( i18n_value_of_data_element_less + ': ' + min + '\n\n' + dataElementName );
-                    return;
+                    warning = i18n_value_of_data_element_less + ': ' + min + '\n\n' + dataElementName;
                 }
 
                 if ( valueNo > max )
                 {
-                    var valueSaver = new ValueSaver( dataElementId, optionComboId, currentOrganisationUnitId, periodId,
-                            value, fieldId, COLOR_ORANGE );
-                    valueSaver.save();
-
-                    window.alert( i18n_value_of_data_element_greater + ': ' + max + '\n\n' + dataElementName );
-                    return;
+                    warning = i18n_value_of_data_element_greater + ': ' + max + '\n\n' + dataElementName;
                 }
             }
         }
     }
-
-    var valueSaver = new ValueSaver( dataElementId, optionComboId, 
-    	currentOrganisationUnitId, periodId, value, fieldId, COLOR_GREEN );
+    
+    var color = warning ? COLOR_ORANGE : COLOR_GREEN;
+    
+    var valueSaver = new ValueSaver( dataElementId,	periodId, optionComboId, value, fieldId, color );
     valueSaver.save();
 
     updateIndicators(); // Update indicators for custom form
     updateDataElementTotals(); // Update data element totals for custom forms
+    
+    if ( warning )
+    {
+    	window.alert( warning );
+    }
 }
 
 function saveBoolean( dataElementId, optionComboId, fieldId )
@@ -234,8 +227,7 @@ function saveBoolean( dataElementId, optionComboId, fieldId )
 
     var periodId = $( '#selectedPeriodId' ).val();
 
-    var valueSaver = new ValueSaver( dataElementId, optionComboId, 
-    	currentOrganisationUnitId, periodId, value, fieldId, COLOR_GREEN );
+    var valueSaver = new ValueSaver( dataElementId, periodId, optionComboId, value, fieldId, COLOR_GREEN );
     valueSaver.save();
 }
 
@@ -243,14 +235,15 @@ function saveTrueOnly( dataElementId, optionComboId, fieldId )
 {
     fieldId = '#' + fieldId;
 
-    var value = $( fieldId ).attr('checked');
+    var value = $( fieldId ).is( ':checked' );
+    
+    value = ( value == true) ? value : undefined; // Send nothing if un-ticked
 
     $( fieldId ).css( 'background-color', COLOR_YELLOW );
 
     var periodId = $( '#selectedPeriodId' ).val();
 
-    var valueSaver = new ValueSaver( dataElementId, optionComboId,
-    	currentOrganisationUnitId, periodId, value, fieldId, COLOR_GREEN );
+    var valueSaver = new ValueSaver( dataElementId, periodId, optionComboId, value, fieldId, COLOR_GREEN );
     valueSaver.save();
 }
 
@@ -279,56 +272,68 @@ function onValueSave( fn )
 // Saver objects
 // -----------------------------------------------------------------------------
 
-function ValueSaver( dataElementId, optionComboId, organisationUnitId, periodId, value, fieldId, resultColor )
+/**
+ * @param de data element identifier.
+ * @param pe iso period.
+ * @param co category option combo.
+ * @param value value.
+ * @param fieldId identifier of data input field.
+ * @param resultColor the color code to set on input field for success.
+ */
+function ValueSaver( de, pe, co, value, fieldId, resultColor )
 {
+	var ou = getCurrentOrganisationUnit();
+	
     var dataValue = {
-        'dataElementId' : dataElementId,
-        'optionComboId' : optionComboId,
-        'organisationUnitId' : organisationUnitId,
-        'periodId' : periodId,
+        'de' : de,
+        'co' : co,
+        'ou' : ou,
+        'pe' : pe,
         'value' : value
     };
 
+    var cc = dhis2.de.getCurrentCategoryCombo();
+    var cp = dhis2.de.getCurrentCategoryOptionsQueryValue();
+    
+    if ( cc && cp )
+    {
+    	dataValue.cc = cc;
+    	dataValue.cp = cp;
+    }
+    
     this.save = function()
     {
-        storageManager.saveDataValue( dataValue );
+    	dhis2.de.storageManager.saveDataValue( dataValue );
 
         $.ajax( {
-            url: 'saveValue.action',
+            url: '../api/dataValues',
             data: dataValue,
             dataType: 'json',
+            type: 'post',
             success: handleSuccess,
             error: handleError
         } );
     };
-
-    function handleSuccess( json )
+    
+    function handleSuccess()
     {
-        var code = json.c;
-
-        if ( code == 0 ) // Value successfully saved on server
-        {
-        	storageManager.clearDataValueJSON( dataValue );
-            markValue( fieldId, resultColor );
-        }
-        else if ( code == 2 )
-        {
-            markValue( fieldId, COLOR_RED );
-            window.alert( i18n_saving_value_failed_dataset_is_locked );
-        }
-        else // Server error during save
-        {
-            markValue( fieldId, COLOR_RED );
-            window.alert( i18n_saving_value_failed_status_code + '\n\n' + code );
-        }
-        
+    	dhis2.de.storageManager.clearDataValueJSON( dataValue );
+        markValue( fieldId, resultColor );
         $( 'body' ).trigger( EVENT_VALUE_SAVED, dataValue );
     }
 
-    function handleError( jqXHR, textStatus, errorThrown )
+    function handleError( xhr, textStatus, errorThrown )
     {
-        setHeaderMessage( i18n_offline_notification );
-        markValue( fieldId, resultColor );
+    	if ( 409 == xhr.status || 500 == xhr.status ) // Invalid value or locked
+    	{
+    		markValue( fieldId, COLOR_RED );
+    		setHeaderMessage( xhr.responseText );
+    	}
+    	else // Offline, keep local value
+    	{
+    		markValue( fieldId, resultColor );
+    		setHeaderMessage( i18n_offline_notification );
+    	}
     }
 
     function markValue( fieldId, color )

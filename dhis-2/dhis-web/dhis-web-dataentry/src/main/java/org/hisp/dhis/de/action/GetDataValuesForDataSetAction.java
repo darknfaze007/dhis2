@@ -1,19 +1,20 @@
 package org.hisp.dhis.de.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,7 +28,16 @@ package org.hisp.dhis.de.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.opensymphony.xwork2.Action;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.struts2.ServletActionContext;
+import org.hisp.dhis.webapi.utils.InputUtils;
+import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataset.CompleteDataSetRegistration;
 import org.hisp.dhis.dataset.CompleteDataSetRegistrationService;
 import org.hisp.dhis.dataset.DataSet;
@@ -40,11 +50,9 @@ import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Set;
+import com.opensymphony.xwork2.Action;
 
 /**
  * @author Lars Helge Overland
@@ -52,6 +60,8 @@ import java.util.Set;
 public class GetDataValuesForDataSetAction
     implements Action
 {
+    private static final Log log = LogFactory.getLog( GetDataValuesForDataSetAction.class );
+    
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
@@ -90,6 +100,9 @@ public class GetDataValuesForDataSetAction
     {
         this.organisationUnitService = organisationUnitService;
     }
+    
+    @Autowired
+    private InputUtils inputUtils;
 
     // -------------------------------------------------------------------------
     // Input
@@ -102,16 +115,16 @@ public class GetDataValuesForDataSetAction
         this.periodId = periodId;
     }
 
-    private Integer dataSetId;
+    private String dataSetId;
 
-    public void setDataSetId( Integer dataSetId )
+    public void setDataSetId( String dataSetId )
     {
         this.dataSetId = dataSetId;
     }
 
-    private Integer organisationUnitId;
+    private String organisationUnitId;
 
-    public void setOrganisationUnitId( Integer organisationUnitId )
+    public void setOrganisationUnitId( String organisationUnitId )
     {
         this.organisationUnitId = organisationUnitId;
     }
@@ -126,6 +139,20 @@ public class GetDataValuesForDataSetAction
     public boolean isMultiOrganisationUnit()
     {
         return multiOrganisationUnit;
+    }
+    
+    private String cc;
+
+    public void setCc( String cc )
+    {
+        this.cc = cc;
+    }
+
+    private String cp;
+
+    public void setCp( String cp )
+    {
+        this.cp = cp;
     }
 
     // -------------------------------------------------------------------------
@@ -180,34 +207,47 @@ public class GetDataValuesForDataSetAction
 
     public String execute()
     {
-        OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( organisationUnitId );
-        Set<OrganisationUnit> children = organisationUnit.getChildren();
+        // ---------------------------------------------------------------------
+        // Validation
+        // ---------------------------------------------------------------------
 
         DataSet dataSet = dataSetService.getDataSet( dataSetId );
-        Period period = PeriodType.createPeriodExternalId( periodId );
 
-        // TODO null-checks
+        Period period = PeriodType.getPeriodFromIsoString( periodId );
+
+        OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( organisationUnitId );
+
+        if ( organisationUnit == null || period == null || dataSet == null )
+        {
+            log.warn( "Illegal input, org unit: " + organisationUnit + ", period: " + period + ", data set: " + dataSet );
+            return SUCCESS;
+        }
+
+        Set<OrganisationUnit> children = organisationUnit.getChildren();
+
+        // ---------------------------------------------------------------------
+        // Attributes
+        // ---------------------------------------------------------------------
+
+        DataElementCategoryOptionCombo attributeOptionCombo = inputUtils.getAttributeOptionCombo( ServletActionContext.getResponse(), cc, cp );
         
         // ---------------------------------------------------------------------
         // Data values & Min-max data elements
         // ---------------------------------------------------------------------
 
-        dataValues.addAll( dataValueService.getDataValues( organisationUnit, period, dataSet.getDataElements() ) );
-        
-        minMaxDataElements.addAll( minMaxDataElementService.getMinMaxDataElements( organisationUnit, dataSet
-            .getDataElements() ) );
+        minMaxDataElements.addAll( minMaxDataElementService.getMinMaxDataElements( organisationUnit, dataSet.getDataElements() ) );
 
-        if ( multiOrganisationUnit )
+        if ( !multiOrganisationUnit )
+        {
+            dataValues.addAll( dataValueService.getDataValues( organisationUnit, period, dataSet.getDataElements(), attributeOptionCombo ) );
+        }
+        else
         {
             for ( OrganisationUnit ou : children )
             {
-                // -------------------------------------------------------------
-                // Make sure that the org unit have this data set 
-                // -------------------------------------------------------------
-
                 if ( ou.getDataSets().contains( dataSet ) )
                 {
-                    dataValues.addAll( dataValueService.getDataValues( ou, period, dataSet.getDataElements() ) );
+                    dataValues.addAll( dataValueService.getDataValues( ou, period, dataSet.getDataElements(), attributeOptionCombo ) );
                     minMaxDataElements.addAll( minMaxDataElementService.getMinMaxDataElements( ou, dataSet
                         .getDataElements() ) );
                 }
@@ -218,48 +258,45 @@ public class GetDataValuesForDataSetAction
         // Data set completeness info
         // ---------------------------------------------------------------------
 
-        if ( period != null )
+        if ( !multiOrganisationUnit )
         {
-            if ( !multiOrganisationUnit )
-            {
-                CompleteDataSetRegistration registration = registrationService.getCompleteDataSetRegistration( dataSet,
-                    period, organisationUnit );
+            CompleteDataSetRegistration registration = registrationService.getCompleteDataSetRegistration( dataSet,
+                period, organisationUnit );
 
-                if ( registration != null )
-                {
-                    complete = true;
-                    date = registration.getDate();
-                    storedBy = registration.getStoredBy();
-                }
-
-                locked = dataSetService.isLocked( dataSet, period, organisationUnit, null );
-            }
-            else
+            if ( registration != null )
             {
                 complete = true;
+                date = registration.getDate();
+                storedBy = registration.getStoredBy();
+            }
 
-                // -------------------------------------------------------------
-                // If multi-org and one of the children is locked, lock all
-                // -------------------------------------------------------------
+            locked = dataSetService.isLocked( dataSet, period, organisationUnit, attributeOptionCombo, null );
+        }
+        else
+        {
+            complete = true;
 
-                for ( OrganisationUnit ou : children )
+            // -----------------------------------------------------------------
+            // If multi-org and one of the children is locked, lock all
+            // -----------------------------------------------------------------
+
+            for ( OrganisationUnit ou : children )
+            {
+                if ( ou.getDataSets().contains( dataSet ) )
                 {
-                    if ( ou.getDataSets().contains( dataSet ) )
+                    locked = dataSetService.isLocked( dataSet, period, organisationUnit, attributeOptionCombo, null );
+
+                    if ( locked )
                     {
-                        locked = dataSetService.isLocked( dataSet, period, organisationUnit, null );
+                        break;
+                    }
 
-                        if ( locked )
-                        {
-                            break;
-                        }
+                    CompleteDataSetRegistration registration = registrationService.getCompleteDataSetRegistration(
+                        dataSet, period, ou );
 
-                        CompleteDataSetRegistration registration = registrationService.getCompleteDataSetRegistration(
-                            dataSet, period, ou );
-
-                        if ( complete && registration == null )
-                        {
-                            complete = false;
-                        }
+                    if ( complete && registration == null )
+                    {
+                        complete = false;
                     }
                 }
             }

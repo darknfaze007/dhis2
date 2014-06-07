@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapgeneration;
 
 /*
- * Copyright (c) 2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,14 +29,13 @@ package org.hisp.dhis.mapgeneration;
  */
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
+
+import org.hisp.dhis.i18n.I18nFormat;
 
 /**
  * This class can be used to render a set of legends onto one image.
@@ -49,26 +49,26 @@ public class LegendSet
 
     private Color backgroundColor = null;
 
-    private static final int LEGEND_WIDTH = 250;
-
-    private static final int LEGEND_MARGIN_LEFT = 5;
-
-    private static final int LEGEND_MARGIN_BOTTOM = 20;
+    public static final int LEGEND_WIDTH = 132;
+    public static final int LEGEND_MARGIN_LEFT = 3;
+    public static final int LEGEND_MARGIN_BOTTOM = 20;
+    
+    public static final int LEGEND_TOTAL_WIDTH = LEGEND_WIDTH + LEGEND_MARGIN_LEFT;
 
     public LegendSet()
     {
-        legends = new LinkedList<Legend>();
+        legends = new ArrayList<Legend>();
     }
 
     public LegendSet( InternalMapLayer mapLayer )
     {
-        legends = new LinkedList<Legend>();
+        legends = new ArrayList<Legend>();
         addMapLayer( mapLayer );
     }
 
     public LegendSet( List<InternalMapLayer> mapLayers )
     {
-        legends = new LinkedList<Legend>();
+        legends = new ArrayList<Legend>();
         addMapLayers( mapLayers );
     }
 
@@ -82,52 +82,21 @@ public class LegendSet
      * @param imageMaxHeight
      * @return
      */
-    public BufferedImage render( int imageMaxHeight )
+    public BufferedImage render( I18nFormat format )
     {
-        Dimension imageDimensions = calculateImageWidthAndHeight( imageMaxHeight );
-        int imageWidth = (int) imageDimensions.getWidth();
-        int imageHeight = (int) imageDimensions.getHeight();
+        int imageWidth = LEGEND_TOTAL_WIDTH;
+        int imageHeight = calculateImageHeight();
         BufferedImage image = new BufferedImage( imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB );
         Graphics2D g = (Graphics2D) image.getGraphics();
 
-        // Overwrite if one of the legends is bigger than imageMaxHeight
-        if ( imageDimensions.getHeight() > imageMaxHeight )
-        {
-            imageMaxHeight = (int) imageDimensions.getHeight();
-        }
-
-        // Draw a background if the background color is specified
-        // NOTE It will be transparent otherwise, which is desired
-        if ( backgroundColor != null )
-        {
-            g.setColor( backgroundColor );
-            g.fill( new Rectangle( 0, 0, imageWidth, imageHeight ) );
-        }
-
-        // Turn anti-aliasing on
         g.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-
-        int y = 0;
-        int col = 0;
-        AffineTransform orginalTransform = g.getTransform();
-
         g.translate( LEGEND_MARGIN_LEFT, 0 );
 
         // Draw legends
         for ( Legend legend : legends )
         {
-            if ( y + legend.getHeight() >= imageMaxHeight )
-            {
-                col++;
-                y = 0;
-                g.setTransform( orginalTransform );
-                g.translate( col * LEGEND_WIDTH, 0 );
-            }
-
-            legend.draw( g );
+            legend.draw( g, format );
             g.translate( 0, LEGEND_MARGIN_BOTTOM );
-
-            y += legend.getHeight() + LEGEND_MARGIN_BOTTOM;
         }
 
         return image;
@@ -174,34 +143,21 @@ public class LegendSet
         backgroundColor = c;
     }
 
-    private Dimension calculateImageWidthAndHeight( int maxImageHeight )
+    private int calculateImageHeight()
     {
-        int imageWidth = LEGEND_WIDTH;
-        int imageHeight = maxImageHeight;
+        int imageHeight = 0;
 
-        // Ensure that every legend fits the maxImageHeight
         for ( Legend legend : legends )
         {
-            if ( legend.getHeight() + LEGEND_MARGIN_BOTTOM > imageHeight )
-            {
-                imageHeight = legend.getHeight() + LEGEND_MARGIN_BOTTOM;
-            }
+            imageHeight += legend.getHeight() + LEGEND_MARGIN_BOTTOM;
         }
-
-        int y = 0;
-
-        // Calculate image width
-        for ( Legend legend : legends )
-        {
-            if ( legend.getHeight() + LEGEND_MARGIN_BOTTOM + y >= imageHeight )
-            {
-                imageWidth += LEGEND_WIDTH;
-                y = 0;
-            }
-
-            y += legend.getHeight() + LEGEND_MARGIN_BOTTOM;
-        }
-
-        return new Dimension( imageWidth, imageHeight );
+        
+        return imageHeight;
+    }
+    
+    @Override
+    public String toString()
+    {
+        return legends != null ? legends.toString() : "[No legends]";
     }
 }

@@ -1,19 +1,20 @@
 package org.hisp.dhis.mapping;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,16 +28,10 @@ package org.hisp.dhis.mapping;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.Iterator;
-
 import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.dataelement.DataElementGroup;
-import org.hisp.dhis.dataelement.DataElementOperand;
-import org.hisp.dhis.dataelement.DataElementOperandService;
+import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.indicator.Indicator;
-import org.hisp.dhis.indicator.IndicatorGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.period.Period;
 import org.hisp.dhis.system.deletion.DeletionHandler;
 
 /**
@@ -56,13 +51,6 @@ public class MapViewDeletionHandler
     {
         this.mappingService = mappingService;
     }
-    
-    private DataElementOperandService operandService;
-
-    public void setOperandService( DataElementOperandService operandService )
-    {
-        this.operandService = operandService;
-    }
 
     // -------------------------------------------------------------------------
     // DeletionHandler implementation
@@ -71,134 +59,42 @@ public class MapViewDeletionHandler
     @Override
     protected String getClassName()
     {
-        return MapView.class.getName();
+        return MapView.class.getSimpleName();
+    }
+
+    @Override
+    public String allowDeleteMapView( MapView mapView )
+    {
+        return mappingService.countMapViewMaps( mapView ) == 0 ? null : ERROR;
+    }
+
+    @Override
+    public String allowDeleteDataSet( DataSet dataSet )
+    {
+        return mappingService.countDataSetMapViews( dataSet ) == 0 ? null : ERROR;
+    }
+
+    @Override
+    public String allowDeleteIndicator( Indicator indicator )
+    {
+        return mappingService.countIndicatorMapViews( indicator ) == 0 ? null : ERROR;
+    }
+
+    @Override
+    public String allowDeleteDataElement( DataElement dataElement )
+    {
+        return mappingService.countDataElementMapViews( dataElement ) == 0 ? null : ERROR;
     }
     
     @Override
-    public void deleteMapView( MapView mapView )
+    public String allowDeleteOrganisationUnit( OrganisationUnit organisationUnit )
     {
-        DataElementOperand operand = mapView.getDataElementOperand();
-        
-        if ( operand != null )
-        {
-            mapView.setDataElementOperand( null );
-            operandService.deleteDataElementOperand( operand );
-        }
+        return mappingService.countOrganisationUnitMapViews( organisationUnit ) == 0 ? null : ERROR;
     }
-    
+
     @Override
-    public String allowDeletePeriod( Period period )
+    public String allowDeleteMapLegendSet( MapLegendSet mapLegendSet )
     {
-        for ( MapView mapView : mappingService.getAllMapViews() )
-        {
-            if ( mapView.getPeriod().equals( period ) )
-            {
-                return mapView.getName();
-            }
-        }
-        
-        return null;
-    }
-    
-    @Override
-    public void deleteIndicatorGroup( IndicatorGroup indicatorGroup )
-    {
-        Iterator<MapView> mapViews = mappingService.getAllMapViews().iterator();
-        
-        while ( mapViews.hasNext() )
-        {
-            MapView mapView = mapViews.next();
-            
-            if ( mapView.getIndicatorGroup() != null && mapView.getIndicatorGroup().equals( indicatorGroup ) )
-            {
-                mapViews.remove();
-                mappingService.deleteMapView( mapView );
-            }
-        }
-    }
-    
-    @Override
-    public void deleteIndicator( Indicator indicator )
-    {
-        Iterator<MapView> mapViews = mappingService.getAllMapViews().iterator();
-        
-        while ( mapViews.hasNext() )
-        {
-            MapView mapView = mapViews.next();
-            
-            if ( mapView.getIndicator() != null && mapView.getIndicator().equals( indicator ) )
-            {
-                mapViews.remove();
-                mappingService.deleteMapView( mapView );
-            }
-        }
-    }
-    
-    @Override
-    public void deleteDataElementGroup( DataElementGroup dataElementGroup )
-    {
-        Iterator<MapView> mapViews = mappingService.getAllMapViews().iterator();
-        
-        while ( mapViews.hasNext() )
-        {
-            MapView mapView = mapViews.next();
-            
-            if ( mapView.getDataElementGroup() != null && mapView.getDataElementGroup().equals( dataElementGroup ) )
-            {
-                mapViews.remove();
-                mappingService.deleteMapView( mapView );
-            }
-        }
-    }
-    
-    @Override
-    public void deleteDataElement( DataElement dataElement )
-    {
-        Iterator<MapView> mapViews = mappingService.getAllMapViews().iterator();
-        
-        while ( mapViews.hasNext() )
-        {
-            MapView mapView = mapViews.next();
-            
-            if ( mapView.getDataElement() != null && mapView.getDataElement().equals( dataElement ) )
-            {
-                mapViews.remove();
-                mappingService.deleteMapView( mapView );
-            }
-        }
-    }
-    
-    @Override
-    public void deleteOrganisationUnit( OrganisationUnit organisationUnit )
-    {
-        Iterator<MapView> mapViews = mappingService.getAllMapViews().iterator();
-        
-        while ( mapViews.hasNext() )
-        {
-            MapView mapView = mapViews.next();
-            
-            if ( mapView.getParentOrganisationUnit() != null && mapView.getParentOrganisationUnit().equals( organisationUnit ) )
-            {
-                mapViews.remove();
-                mappingService.deleteMapView( mapView );
-            }
-        }
-    }
-    
-    @Override
-    public void deleteMapLegendSet( MapLegendSet mapLegendSet )
-    {
-        Iterator<MapView> mapViews = mappingService.getAllMapViews().iterator();
-        
-        while ( mapViews.hasNext() )
-        {
-            MapView mapView = mapViews.next();
-            
-            if ( mapView.getLegendSet() != null && mapView.getLegendSet().equals( mapLegendSet ) )
-            {
-                mapViews.remove();
-                mappingService.deleteMapView( mapView );
-            }
-        }
+        return mappingService.countMapLegendSetMapViews( mapLegendSet ) == 0 ? null : ERROR;
     }
 }

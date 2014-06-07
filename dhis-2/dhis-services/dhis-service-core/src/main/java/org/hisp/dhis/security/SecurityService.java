@@ -1,19 +1,20 @@
 package org.hisp.dhis.security;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,6 +29,7 @@ package org.hisp.dhis.security;
  */
 
 import org.hisp.dhis.common.IdentifiableObject;
+import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserCredentials;
 
 /**
@@ -36,27 +38,50 @@ import org.hisp.dhis.user.UserCredentials;
 public interface SecurityService
 {
     /**
-     * Will invoke the initiateRestore method and dispatch email messages with
-     * restore information to the user.
+     * Sets information for a user who will be invited by email to finish
+     * setting up their user account.
      *
-     * @param username the user name of the user to send restore messages.
+     * @param user the user to invite.
+     * @return true if the invitation was sent, otherwise false.
+     */
+    boolean prepareUserForInvite( User user );
+
+    /**
+     * Invokes the initRestore method and dispatches email messages with
+     * restore information to the user.
+     * <p>
+     * In the case of inviting a user to finish setting up an account,
+     * the user account must already be configured with the profile desired
+     * for the user (e.g., locale, organisation unit(s), role(s), etc.)
+     *
+     * @param credentials the credentials for the user to send restore message.
      * @param rootPath the root path of the request.
+     * @param restoreOptions restore options, including type of restore.
      * @return false if any of the arguments are null or if the user credentials
      *         identified by the user name does not exist, true otherwise.
      */
-    boolean sendRestoreMessage( String username, String rootPath );
+    boolean sendRestoreMessage( UserCredentials credentials, String rootPath, RestoreOptions restoreOptions );
 
     /**
-     * Will populate the restoreToken and restoreCode property of the given
-     * credentials with a hashed version of auto-generated values. Will set the
-     * restoreExpiry property with a date time one hour from now. Changes will be
-     * persisted.
+     * Populates the restoreToken and restoreCode property of the given
+     * credentials with a hashed version of auto-generated values. Sets the
+     * restoreExpiry property with a date time some interval from now depending
+     * on the restore type. Changes are persisted.
      *
      * @param credentials the user credentials.
+     * @param restoreOptions restore options, including type of restore.
      * @return an array where index 0 is the clear-text token and index 1 the
      *         clear-text code.
      */
-    String[] initRestore( UserCredentials credentials );
+    String[] initRestore( UserCredentials credentials, RestoreOptions restoreOptions );
+
+    /**
+     * Gets the restore options by parsing them from a restore token string.
+     *
+     * @param token the restore token.
+     * @return the restore options.
+     */
+    RestoreOptions getRestoreOptions( String token );
 
     /**
      * Tests whether the given token and code are valid for the given user name.
@@ -65,26 +90,41 @@ public interface SecurityService
      * must match the ones on the credentials, and the current date must be before
      * the expiry date time of the credentials.
      *
-     * @param username    the user name.
-     * @param token       the token.
-     * @param code        the code.
+     * @param credentials the user credentials.
+     * @param token the token.
+     * @param code the code.
      * @param newPassword the proposed new password.
+     * @param restoreType type of restore operation (e.g. pw recovery, invite).
      * @return true or false.
      */
-    boolean restore( String username, String token, String code, String newPassword );
+    boolean restore( UserCredentials credentials, String token, String code, String newPassword, RestoreType restoreType );
+
+    /**
+     * Tests whether the given token and code are valid for the given user name.
+     * In order to succeed, the given token and code must match the ones on the
+     * credentials, and the current date must be before the expiry date time of
+     * the credentials.
+     *
+     * @param credentials the user credentials.
+     * @param token the token.
+     * @param code the code.
+     * @param restoreType type of restore operation (e.g. pw recovery, invite).
+     * @return true or false.
+     */
+    boolean canRestoreNow( UserCredentials credentials, String token, String code, RestoreType restoreType );
 
     /**
      * Tests whether the given token in combination with the given user name is
      * valid, i.e. whether the hashed version of the token matches the one on the
      * user credentials identified by the given user name.
      *
-     * @param username the user name.
-     * @param token    the token.
+     * @param credentials the user credentials.
+     * @param token the token.
      * @return false if any of the arguments are null or if the user credentials
      *         identified by the user name does not exist, true if the arguments
      *         are valid.
      */
-    boolean verifyToken( String username, String token );
+    boolean verifyToken( UserCredentials credentials, String token, RestoreType restoreType );
 
     /**
      * Checks whether current user has read access to object.

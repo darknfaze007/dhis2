@@ -1,17 +1,20 @@
+package org.hisp.dhis.light.singleevent.action;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -24,8 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-package org.hisp.dhis.light.singleevent.action;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,10 +44,6 @@ import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.light.utils.NamebasedUtils;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientService;
-import org.hisp.dhis.patientdatavalue.PatientDataValue;
-import org.hisp.dhis.patientdatavalue.PatientDataValueService;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramInstanceService;
@@ -56,6 +53,10 @@ import org.hisp.dhis.program.ProgramStageDataElement;
 import org.hisp.dhis.program.ProgramStageDataElementService;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.trackedentity.TrackedEntityInstance;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
 import org.hisp.dhis.user.UserService;
 import org.hisp.dhis.util.ContextUtils;
 import org.hisp.dhis.util.SessionUtils;
@@ -93,16 +94,16 @@ public class SaveSingleEventAction
         this.programService = programService;
     }
 
-    private PatientService patientService;
+    private TrackedEntityInstanceService patientService;
 
-    public void setPatientService( PatientService patientService )
+    public void setPatientService( TrackedEntityInstanceService patientService )
     {
         this.patientService = patientService;
     }
 
-    private PatientDataValueService patientDataValueService;
+    private TrackedEntityDataValueService patientDataValueService;
 
-    public void setPatientDataValueService( PatientDataValueService patientDataValueService )
+    public void setPatientDataValueService( TrackedEntityDataValueService patientDataValueService )
     {
         this.patientDataValueService = patientDataValueService;
     }
@@ -199,9 +200,9 @@ public class SaveSingleEventAction
         this.patientId = patientId;
     }
 
-    private Patient patient;
+    private TrackedEntityInstance patient;
 
-    public Patient getPatient()
+    public TrackedEntityInstance getPatient()
     {
         return patient;
     }
@@ -335,7 +336,7 @@ public class SaveSingleEventAction
         Program program = programService.getProgram( programId );
         eventName = program.getName();
 
-        Patient patient = patientService.getPatient( patientId );
+        TrackedEntityInstance patient = patientService.getTrackedEntityInstance( patientId );
         ProgramStage programStage = program.getProgramStages().iterator().next();
         OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( organisationUnitId );
 
@@ -418,7 +419,7 @@ public class SaveSingleEventAction
             {
                 DataElement dataElement = programStageDataElement.getDataElement();
 
-                PatientDataValue patientDataValue = patientDataValueService.getPatientDataValue( programStageInstance,
+                TrackedEntityDataValue patientDataValue = patientDataValueService.getTrackedEntityDataValue( programStageInstance,
                     dataElement );
 
                 String id = "DE" + dataElement.getId();
@@ -428,21 +429,21 @@ public class SaveSingleEventAction
                 if ( patientDataValue == null && value != null )
                 {
 
-                    patientDataValue = new PatientDataValue( programStageInstance, dataElement, new Date(), value );
+                    patientDataValue = new TrackedEntityDataValue( programStageInstance, dataElement, new Date(), value );
 
                     patientDataValue.setProvidedElsewhere( false );
 
-                    patientDataValueService.savePatientDataValue( patientDataValue );
+                    patientDataValueService.saveTrackedEntityDataValue( patientDataValue );
                 }
                 if ( patientDataValue != null && value == null )
                 {
-                    patientDataValueService.deletePatientDataValue( patientDataValue );
+                    patientDataValueService.deleteTrackedEntityDataValue( patientDataValue );
                 }
                 else if ( patientDataValue != null && value != null )
                 {
                     if ( value.trim().equals( "" ) )
                     {
-                        patientDataValueService.deletePatientDataValue( patientDataValue );
+                        patientDataValueService.deleteTrackedEntityDataValue( patientDataValue );
                     }
                     else
                     {
@@ -452,7 +453,7 @@ public class SaveSingleEventAction
 
                         patientDataValue.setProvidedElsewhere( false );
 
-                        patientDataValueService.updatePatientDataValue( patientDataValue );
+                        patientDataValueService.updateTrackedEntityDataValue( patientDataValue );
                     }
                 }
             }
@@ -468,7 +469,7 @@ public class SaveSingleEventAction
             programInstance.setEnrollmentDate( new Date() );
             programInstance.setDateOfIncident( new Date() );
             programInstance.setProgram( program );
-            programInstance.setPatient( patient );
+            programInstance.setEntityInstance( patient );
             programInstance.setStatus( ProgramInstance.STATUS_COMPLETED );
             programInstanceService.addProgramInstance( programInstance );
 
@@ -485,7 +486,7 @@ public class SaveSingleEventAction
             {
                 DataElement dataElement = programStageDataElement.getDataElement();
 
-                PatientDataValue patientDataValue = new PatientDataValue();
+                TrackedEntityDataValue patientDataValue = new TrackedEntityDataValue();
 
                 patientDataValue.setDataElement( dataElement );
 
@@ -504,7 +505,7 @@ public class SaveSingleEventAction
 
                     patientDataValue.setTimestamp( new Date() );
 
-                    patientDataValueService.savePatientDataValue( patientDataValue );
+                    patientDataValueService.saveTrackedEntityDataValue( patientDataValue );
                 }
             }
         }

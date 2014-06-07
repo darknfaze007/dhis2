@@ -1,19 +1,20 @@
 package org.hisp.dhis.expression;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -38,6 +39,7 @@ import static org.hisp.dhis.system.util.MathUtils.isEqual;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -56,6 +58,8 @@ import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementOperand;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.indicator.Indicator;
+import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
+import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.system.util.DateUtils;
 import org.hisp.dhis.system.util.MathUtils;
@@ -105,6 +109,13 @@ public class DefaultExpressionService
     {
         this.categoryService = categoryService;
     }
+    
+    private OrganisationUnitGroupService organisationUnitGroupService;
+
+    public void setOrganisationUnitGroupService( OrganisationUnitGroupService organisationUnitGroupService )
+    {
+        this.organisationUnitGroupService = organisationUnitGroupService;
+    }
 
     // -------------------------------------------------------------------------
     // Expression CRUD operations
@@ -145,18 +156,32 @@ public class DefaultExpressionService
     // -------------------------------------------------------------------------
     
     public Double getIndicatorValue( Indicator indicator, Period period, Map<DataElementOperand, Double> valueMap, 
-        Map<String, Double> constantMap, Integer days )
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days )
     {
         if ( indicator == null || indicator.getExplodedNumeratorFallback() == null || indicator.getExplodedDenominatorFallback() == null )
         {
             return null;
         }
         
-        final double denominatorValue = calculateExpression( generateExpression( indicator.getExplodedDenominatorFallback(), valueMap, constantMap, days, false ) );
+        final String denominatorExpression = generateExpression( indicator.getExplodedDenominatorFallback(), valueMap, constantMap, orgUnitCountMap, days, false );
+        
+        if ( denominatorExpression == null )
+        {
+            return null;
+        }
+        
+        final double denominatorValue = calculateExpression( denominatorExpression );
         
         if ( !isEqual( denominatorValue, 0d ) )
         {
-            final double numeratorValue = calculateExpression( generateExpression( indicator.getExplodedNumeratorFallback(), valueMap, constantMap, days, false ) );
+            final String numeratorExpression = generateExpression( indicator.getExplodedNumeratorFallback(), valueMap, constantMap, orgUnitCountMap, days, false );
+            
+            if ( numeratorExpression == null )
+            {
+                return null;
+            }
+            
+            final double numeratorValue = calculateExpression( numeratorExpression );
             
             final double annualizationFactor = period != null ? DateUtils.getAnnualizationFactor( indicator, period.getStartDate(), period.getEndDate() ) : 1d;
             final double factor = indicator.getIndicatorType().getFactor();
@@ -167,11 +192,21 @@ public class DefaultExpressionService
         
         return null;
     }
-    
-    public Double getExpressionValue( Expression expression, Map<DataElementOperand, Double> valueMap, 
-        Map<String, Double> constantMap, Integer days )
+
+    public Double getExpressionValue( Expression expression, Map<DataElementOperand, Double> valueMap,
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days )
     {
-        final String expressionString = generateExpression( expression.getExpression(), valueMap, constantMap, days, expression.isNullIfBlank() );
+        final String expressionString = generateExpression( expression.getExpression(), valueMap, constantMap, 
+            orgUnitCountMap, days, expression.isNullIfBlank() );
+
+        return expressionString != null ? calculateExpression( expressionString ) : null;
+    }
+
+    public Double getExpressionValue( Expression expression, Map<DataElementOperand, Double> valueMap,
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, Set<DataElementOperand> incompleteValues )
+    {
+        final String expressionString = generateExpression( expression.getExpression(), valueMap, constantMap, orgUnitCountMap, days,
+            expression.isNullIfBlank(), incompleteValues );
 
         return expressionString != null ? calculateExpression( expressionString ) : null;
     }
@@ -199,6 +234,48 @@ public class DefaultExpressionService
         }
 
         return dataElementsInExpression;
+    }
+    
+    public Set<OrganisationUnitGroup> getOrganisationUnitGroupsInIndicators( Collection<Indicator> indicators )
+    {
+        Set<OrganisationUnitGroup> groups = null;
+        
+        if ( indicators != null )
+        {
+            groups = new HashSet<OrganisationUnitGroup>();
+            
+            for ( Indicator indicator : indicators )
+            {
+                groups.addAll( getOrganisationUnitGroupsInExpression( indicator.getNumerator() ) );
+                groups.addAll( getOrganisationUnitGroupsInExpression( indicator.getDenominator() ) );
+            }
+        }
+        
+        return groups;
+    }
+    
+    public Set<OrganisationUnitGroup> getOrganisationUnitGroupsInExpression( String expression )
+    {
+        Set<OrganisationUnitGroup> groupsInExpression = null;
+        
+        if ( expression != null )
+        {
+            groupsInExpression = new HashSet<OrganisationUnitGroup>();
+            
+            final Matcher matcher = OU_GROUP_PATTERN.matcher( expression );
+            
+            while ( matcher.find() )
+            {
+                final OrganisationUnitGroup group = organisationUnitGroupService.getOrganisationUnitGroup( matcher.group( 1 ) );
+                
+                if ( group != null )
+                {
+                    groupsInExpression.add( group );
+                }
+            }
+        }
+        
+        return groupsInExpression;
     }
     
     public Set<String> getDataElementTotalUids( String expression )
@@ -312,11 +389,11 @@ public class DefaultExpressionService
     @Transactional
     public String expressionIsValid( String formula )
     {
-        return expressionIsValid( formula, null, null, null );
+        return expressionIsValid( formula, null, null, null, null );
     }
 
     @Transactional
-    public String expressionIsValid( String expression, Set<String> dataElements, Set<String> categoryOptionCombos, Set<String> constants )
+    public String expressionIsValid( String expression, Set<String> dataElements, Set<String> categoryOptionCombos, Set<String> orgUnitGroups, Set<String> constants )
     {
         if ( expression == null || expression.isEmpty() )
         {
@@ -372,6 +449,31 @@ public class DefaultExpressionService
 
         expression = appendTail( matcher, sb );
 
+        // ---------------------------------------------------------------------
+        // Org unit groups
+        // ---------------------------------------------------------------------
+        
+        matcher = OU_GROUP_PATTERN.matcher( expression );
+        sb = new StringBuffer();
+        
+        while ( matcher.find() )
+        {
+            String group = matcher.group( 1 );
+            
+            if ( orgUnitGroups != null ? !orgUnitGroups.contains( group ) : organisationUnitGroupService.getOrganisationUnitGroup( group ) == null )
+            {
+                return OU_GROUP_DOES_NOT_EXIST;
+            }
+
+            matcher.appendReplacement( sb, "1.1" );
+        }
+
+        expression = appendTail( matcher, sb );
+        
+        // ---------------------------------------------------------------------
+        // Days
+        // ---------------------------------------------------------------------
+        
         expression = expression.replaceAll( DAYS_EXPRESSION, "1.1" );
         
         // ---------------------------------------------------------------------
@@ -448,6 +550,29 @@ public class DefaultExpressionService
         expression = appendTail( matcher, sb );
 
         // ---------------------------------------------------------------------
+        // Org unit groups
+        // ---------------------------------------------------------------------
+
+        sb = new StringBuffer();
+        matcher = OU_GROUP_PATTERN.matcher( expression );
+        
+        while ( matcher.find() )
+        {
+            String oug = matcher.group( 1 );
+            
+            OrganisationUnitGroup group = organisationUnitGroupService.getOrganisationUnitGroup( oug );
+            
+            if ( group == null )
+            {
+                throw new IllegalArgumentException( "Identifier does not reference an organisation unit group: " + oug );
+            }
+            
+            matcher.appendReplacement( sb, group.getDisplayName() );
+        }
+
+        expression = appendTail( matcher, sb );
+
+        // ---------------------------------------------------------------------
         // Days
         // ---------------------------------------------------------------------
 
@@ -475,6 +600,15 @@ public class DefaultExpressionService
                 indicator.setExplodedDenominator( substituteExpression( indicator.getDenominator(), days ) );
             }
 
+            explodeExpressions( indicators );
+        }
+    }
+
+    @Transactional
+    public void explodeExpressions( Collection<Indicator> indicators )
+    {
+        if ( indicators != null && !indicators.isEmpty() )
+        {
             Set<String> dataElementTotals = new HashSet<String>();
             
             for ( Indicator indicator : indicators )
@@ -491,8 +625,8 @@ public class DefaultExpressionService
                 {
                     for ( Indicator indicator : indicators )
                     {
-                        indicator.setExplodedNumerator( explodeExpression( indicator.getExplodedNumerator() != null ? indicator.getExplodedNumerator() : "", dataElementMap ) );
-                        indicator.setExplodedDenominator( explodeExpression( indicator.getExplodedDenominator() != null ? indicator.getExplodedDenominator() : "", dataElementMap ) );
+                        indicator.setExplodedNumerator( explodeExpression( indicator.getExplodedNumeratorFallback(), dataElementMap ) );
+                        indicator.setExplodedDenominator( explodeExpression( indicator.getExplodedDenominatorFallback(), dataElementMap ) );
                     }
                 }
             }
@@ -515,7 +649,11 @@ public class DefaultExpressionService
             {
                 final StringBuilder replace = new StringBuilder( PAR_OPEN );
 
-                for ( String coc : dataElementOptionComboMap.get( matcher.group( 1 ) ) )
+                String de = matcher.group( 1 );
+                
+                List<String> cocs = dataElementOptionComboMap.get( de );
+                
+                for ( String coc : cocs )
                 {
                     replace.append( EXP_OPEN ).append( matcher.group( 1 ) ).append( SEPARATOR ).append(
                         coc ).append( EXP_CLOSE ).append( "+" );
@@ -591,6 +729,28 @@ public class DefaultExpressionService
         }
 
         expression = appendTail( matcher, sb );
+
+        // ---------------------------------------------------------------------
+        // Org unit groups
+        // ---------------------------------------------------------------------
+
+        sb = new StringBuffer();
+        matcher = OU_GROUP_PATTERN.matcher( expression );
+        
+        while ( matcher.find() )
+        {
+            String oug = matcher.group( 1 );
+            
+            OrganisationUnitGroup group = organisationUnitGroupService.getOrganisationUnitGroup( oug );
+            
+            String replacement = group != null ? String.valueOf( group.getMembers().size() ) : NULL_REPLACEMENT;
+
+            matcher.appendReplacement( sb, replacement );            
+            
+            //TODO sub tree
+        }
+
+        expression = appendTail( matcher, sb );
         
         // ---------------------------------------------------------------------
         // Days
@@ -610,13 +770,20 @@ public class DefaultExpressionService
     }
 
     @Transactional
-    public String generateExpression( String expression, Map<DataElementOperand, Double> valueMap, Map<String, Double> constantMap, Integer days, boolean nullIfNoValues )
+    public String generateExpression( String expression, Map<DataElementOperand, Double> valueMap, 
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, boolean nullIfNoValues )
+    {
+    	return generateExpression( expression, valueMap, constantMap, orgUnitCountMap, days, nullIfNoValues, null );
+    }
+
+    private String generateExpression( String expression, Map<DataElementOperand, Double> valueMap, 
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, boolean nullIfNoValues, Set<DataElementOperand> incompleteValues )
     {
         if ( expression == null || expression.isEmpty() )
         {
             return null;
         }
-
+        
         // ---------------------------------------------------------------------
         // Operands
         // ---------------------------------------------------------------------
@@ -630,7 +797,7 @@ public class DefaultExpressionService
 
             final Double value = valueMap.get( operand );
             
-            if ( value == null && nullIfNoValues )
+            if ( nullIfNoValues && ( value == null || ( incompleteValues != null && incompleteValues.contains( operand ) ) ) )
             {
                 return null;
             }
@@ -651,7 +818,7 @@ public class DefaultExpressionService
         
         while ( matcher.find() )
         {
-            final Double constant = constantMap.get( matcher.group( 1 ) );
+            final Double constant = constantMap != null ? constantMap.get( matcher.group( 1 ) ) : null;
             
             String replacement = constant != null ? String.valueOf( constant ) : NULL_REPLACEMENT;
             
@@ -659,6 +826,24 @@ public class DefaultExpressionService
         }
         
         expression = appendTail( matcher, sb );
+
+        // ---------------------------------------------------------------------
+        // Org unit groups
+        // ---------------------------------------------------------------------
+
+        sb = new StringBuffer();
+        matcher = OU_GROUP_PATTERN.matcher( expression );
+        
+        while ( matcher.find() )
+        {
+            final Integer count = orgUnitCountMap != null ? orgUnitCountMap.get( matcher.group( 1 ) ) : null;
+            
+            String replacement = count != null ? String.valueOf( count ) : NULL_REPLACEMENT;
+            
+            matcher.appendReplacement( sb, replacement );
+        }
+
+        expression = appendTail( matcher, sb );        
         
         // ---------------------------------------------------------------------
         // Days
@@ -668,7 +853,7 @@ public class DefaultExpressionService
         matcher = DAYS_PATTERN.matcher( expression );
         
         while ( matcher.find() )
-        {            
+        {
             String replacement = days != null ? String.valueOf( days ) : NULL_REPLACEMENT;
             
             matcher.appendReplacement( sb, replacement );

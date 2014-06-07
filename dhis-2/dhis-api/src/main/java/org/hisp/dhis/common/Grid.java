@@ -1,19 +1,20 @@
 package org.hisp.dhis.common;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -127,6 +128,13 @@ public interface Grid
      * Adds a new row the the grid and moves the cursor accordingly.
      */
     Grid addRow();
+    
+    /**
+     * Adds all rows of the given grid to this grid.
+     * 
+     * @param grid the grid to add to this grid.
+     */
+    Grid addRows( Grid grid );
 
     /**
      * Adds the value to the end of the current row.
@@ -206,6 +214,18 @@ public interface Grid
     Grid removeColumn( GridHeader header );
     
     /**
+     * Removes the current row from the grid.
+     */
+    Grid removeCurrentWriteRow();
+    
+    /**
+     * Indicates whether meta data exists and contains the given key.
+     * 
+     * @param key the meta data key.
+     */
+    boolean hasMetaDataKey( String key );
+    
+    /**
      * Limits the grid from top by the given argument number.
      * 
      * @param limit the top limit, must be greater than zero to have an effect.
@@ -268,6 +288,15 @@ public interface Grid
      * @param metaDataMap meta-data map of keys and substitutions.
      */
     Grid substituteMetaData( Map<Object, Object> metaDataMap );
+    
+    /**
+     * Substitutes the values in the meta columns with the mapped value in the
+     * meta-data map for the column with the given index.
+     * 
+     * @param columnIndex the index of the column to substitute.
+     * @param metaDataMap meta-data map of keys and substitutions.
+     */
+    Grid substituteMetaData( int columnIndex, Map<Object, Object> metaDataMap );
     
     /**
      * Adds a set of headers based on the column names of the given SQL result set.

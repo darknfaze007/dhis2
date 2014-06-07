@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataadmin.action.scheduling;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,6 +34,7 @@ import static org.hisp.dhis.scheduling.SchedulingManager.TASK_DATAMART_FROM_6_TO
 import static org.hisp.dhis.scheduling.SchedulingManager.TASK_DATAMART_LAST_12_MONTHS;
 import static org.hisp.dhis.scheduling.SchedulingManager.TASK_DATAMART_LAST_6_MONTHS;
 import static org.hisp.dhis.scheduling.SchedulingManager.TASK_RESOURCE_TABLE;
+import static org.hisp.dhis.scheduling.SchedulingManager.TASK_MONITORING_LAST_DAY;
 import static org.hisp.dhis.setting.SystemSettingManager.DEFAULT_ORGUNITGROUPSET_AGG_LEVEL;
 import static org.hisp.dhis.setting.SystemSettingManager.DEFAULT_SCHEDULED_PERIOD_TYPES;
 import static org.hisp.dhis.setting.SystemSettingManager.KEY_ORGUNITGROUPSET_AGG_LEVEL;
@@ -47,6 +49,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.common.ListMap;
 import org.hisp.dhis.organisationunit.OrganisationUnitLevel;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
@@ -66,6 +70,8 @@ public class ScheduleTasksAction
     private static final String STRATEGY_LAST_6_DAILY_6_TO_12_WEEKLY = "last6Daily6To12Weekly";
     private static final String STRATEGY_ALL_DAILY = "allDaily";
     private static final String STRATEGY_LAST_3_YEARS_DAILY = "last3YearsDaily";
+    
+    private static final Log log = LogFactory.getLog( ScheduleTasksAction.class );
     
     // -------------------------------------------------------------------------
     // Dependencies
@@ -162,6 +168,18 @@ public class ScheduleTasksAction
     {
         this.dataMartStrategy = dataMartStrategy;
     }
+    
+    private String monitoringStrategy;
+
+    public String getMonitoringStrategy()
+    {
+        return monitoringStrategy;
+    }
+
+    public void setMonitoringStrategy( String monitoringStrategy )
+    {
+        this.monitoringStrategy = monitoringStrategy;
+    }
 
     // -------------------------------------------------------------------------
     // Output
@@ -194,7 +212,7 @@ public class ScheduleTasksAction
 
     @SuppressWarnings("unchecked")
     public String execute()
-    {
+    {        
         if ( schedule )
         {
             systemSettingManager.saveSystemSetting( KEY_SCHEDULED_PERIOD_TYPES, (HashSet<String>) scheduledPeriodTypes );
@@ -247,6 +265,16 @@ public class ScheduleTasksAction
                     cronKeyMap.putValue( CRON_DAILY_0AM_EXCEPT_SUNDAY, TASK_DATAMART_LAST_6_MONTHS );
                     cronKeyMap.putValue( CRON_WEEKLY_SUNDAY_0AM, TASK_DATAMART_FROM_6_TO_12_MONTS );
                 }
+
+                // -------------------------------------------------------------
+                // Monitoring
+                // -------------------------------------------------------------
+                
+                if ( STRATEGY_ALL_DAILY.equals( monitoringStrategy ) )
+                {
+                    cronKeyMap.putValue( CRON_DAILY_0AM_EXCEPT_SUNDAY, TASK_MONITORING_LAST_DAY );
+                    cronKeyMap.putValue( CRON_WEEKLY_SUNDAY_0AM, TASK_MONITORING_LAST_DAY );
+                }
                 
                 schedulingManager.scheduleTasks( cronKeyMap );
             }
@@ -288,7 +316,16 @@ public class ScheduleTasksAction
             else if ( keys.contains( TASK_DATAMART_LAST_6_MONTHS ) )
             {
                 dataMartStrategy = STRATEGY_LAST_6_DAILY_6_TO_12_WEEKLY;
-            }            
+            }
+
+            // -------------------------------------------------------------
+            // Monitoring
+            // -------------------------------------------------------------
+            
+            if ( keys.contains( TASK_MONITORING_LAST_DAY ) )
+            {
+                monitoringStrategy = STRATEGY_ALL_DAILY;
+            }
         }
         
         scheduledPeriodTypes = (Set<String>) systemSettingManager.getSystemSetting( KEY_SCHEDULED_PERIOD_TYPES, DEFAULT_SCHEDULED_PERIOD_TYPES );
@@ -296,8 +333,12 @@ public class ScheduleTasksAction
         
         status = schedulingManager.getTaskStatus();        
         running = STATUS_RUNNING.equals( status );
+        
         levels = organisationUnitService.getOrganisationUnitLevels();
 
+        log.info( "Status: " + status );
+        log.info( "Running: " + running );
+        
         return SUCCESS;
     }
 }

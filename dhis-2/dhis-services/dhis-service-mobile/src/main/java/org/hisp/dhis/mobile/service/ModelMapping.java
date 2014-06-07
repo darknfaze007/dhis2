@@ -1,19 +1,20 @@
 package org.hisp.dhis.mobile.service;
 
 /*
- * Copyright (c) 2010, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -40,7 +41,7 @@ import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 
 public class ModelMapping
 {
-    public DataElement getDataElement( org.hisp.dhis.dataelement.DataElement dataElement )
+    public static DataElement getDataElement( org.hisp.dhis.dataelement.DataElement dataElement )
     {
         DataElement de = new DataElement();
         de.setId( dataElement.getId() );
@@ -57,7 +58,7 @@ public class ModelMapping
         return de;
     }
 
-    public ProgramStageDataElement getDataElementLWUIT( org.hisp.dhis.dataelement.DataElement dataElement )
+    public static ProgramStageDataElement getDataElementLWUIT( org.hisp.dhis.dataelement.DataElement dataElement )
     {
         ProgramStageDataElement de = new ProgramStageDataElement();
         de.setId( dataElement.getId() );
@@ -75,7 +76,7 @@ public class ModelMapping
         return de;
     }
 
-    public OptionSet getOptionSet( org.hisp.dhis.dataelement.DataElement dataElement )
+    public static OptionSet getOptionSet( org.hisp.dhis.dataelement.DataElement dataElement )
     {
         org.hisp.dhis.option.OptionSet dhisOptionSet = dataElement.getOptionSet();
         OptionSet mobileOptionSet = new OptionSet();
@@ -93,7 +94,7 @@ public class ModelMapping
         return mobileOptionSet;
     }
 
-    public ModelList getCategoryOptionCombos( org.hisp.dhis.dataelement.DataElement dataElement )
+    public static ModelList getCategoryOptionCombos( org.hisp.dhis.dataelement.DataElement dataElement )
     {
         DataElementCategoryCombo categoryCombo = dataElement.getCategoryCombo();
 

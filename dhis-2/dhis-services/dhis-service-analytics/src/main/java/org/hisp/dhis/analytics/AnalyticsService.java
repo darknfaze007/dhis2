@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,11 +28,13 @@ package org.hisp.dhis.analytics;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.hisp.dhis.common.BaseAnalyticalObject;
+import org.hisp.dhis.common.DimensionalObject;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.i18n.I18nFormat;
 
@@ -91,6 +94,9 @@ import org.hisp.dhis.i18n.I18nFormat;
 public interface AnalyticsService
 {
     final String NAMES_META_KEY = "names";
+    final String PAGER_META_KEY = "pager";
+    final String OU_HIERARCHY_KEY = "ouHierarchy";
+    final String OU_NAME_HIERARCHY_KEY = "ouNameHierarchy";
     
     /**
      * Generates aggregated values for the given query.
@@ -143,11 +149,17 @@ public interface AnalyticsService
      * @param aggregationType the aggregation type.
      * @param measureCriteria the measure criteria.
      * @param skipMeta whether to skip the meta data part of the response.
+     * @param skipRounding whether to skip rounding and provide full precision for values.
+     * @param hierarchyMeta whether to include meta data about the org units 
+     *        in the hierarchy.
+     * @param ignoreLimit whether to ignore the max number of cells limit.
+     * @param hideEmptyRows whether to hide rows without data values, applis to table layout.
+     * @param showHierarchy whether to show the org unit hierarchy together with the name.
      * @param format the i18n format.
      * @return a data query parameter object created based on the given URL info.
      */
-    DataQueryParams getFromUrl( Set<String> dimensionParams, Set<String> filterParams, 
-        AggregationType aggregationType, String measureCriteria, boolean skipMeta, I18nFormat format );
+    DataQueryParams getFromUrl( Set<String> dimensionParams, Set<String> filterParams, AggregationType aggregationType, String measureCriteria, 
+        boolean skipMeta, boolean skipRounding, boolean hierarchyMeta, boolean ignoreLimit, boolean hideEmptyRows, boolean showHierarchy, I18nFormat format );
     
     /**
      * Creates a data query parameter object from the given BaseAnalyticalObject.
@@ -157,4 +169,24 @@ public interface AnalyticsService
      * @return a data query parameter object created based on the given BaseAnalyticalObject.
      */
     DataQueryParams getFromAnalyticalObject( BaseAnalyticalObject object, I18nFormat format );
+    
+    /**
+     * Returns a list of persisted DimensionalObjects generated from the given 
+     * dimension identifier and list of dimension options. The dx dimension
+     * will be exploded into concrete in|de|ds object identifiers and returned
+     * as separate DimensionalObjects. 
+     * 
+     * For the pe dimension items, relative periods represented by enums will be 
+     * replaced by real ISO periods relative to the current date. For the ou 
+     * dimension items, the user  organisation unit enums 
+     * USER_ORG_UNIT|USER_ORG_UNIT_CHILDREN will be replaced by the persisted 
+     * organisation units for the current user.
+     * 
+     * @param dimension the dimension identifier.
+     * @param items the dimension items.
+     * @param relativePeriodDate the date to use for generating relative periods, can be null.
+     * @parma format the I18nFormat, can be null.
+     * @return list of DimensionalObjects.
+     */
+    List<DimensionalObject> getDimension( String dimension, List<String> items, Date relativePeriodDate, I18nFormat format );
 }

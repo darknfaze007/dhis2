@@ -1,10 +1,3 @@
-<script type="text/javascript">
-jQuery(function() {
-	/* make sure that the leftBar is always visible when entering page. */
-	leftBar.showAnimated()
-});
-</script>
-
 <h3>$i18n.getString( "dhis-web-reporting" )</h3>
 
 <ul class="introList">
@@ -13,5 +6,6 @@ jQuery(function() {
     #introListImgItem( "displayViewDataCompletenessForm.action" "reporting_rate_summary" "reportingratesummary" )
     #introListImgItem( "displayViewDocumentForm.action" "resource" "resource" )
     #introListImgItem( "displayOrgUnitDistribution.action" "orgunit_distribution_report" "distribution" )
+    #introListImgItem( "showDataApprovalForm.action" "data_approval" "dataapproval" )
     #introListImgItem( "displayManageTableForm.action" "report_table" "reporttable" )
 </ul>

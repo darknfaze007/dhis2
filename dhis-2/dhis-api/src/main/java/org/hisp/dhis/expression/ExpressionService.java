@@ -1,19 +1,20 @@
 package org.hisp.dhis.expression;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -36,6 +37,7 @@ import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementOperand;
 import org.hisp.dhis.indicator.Indicator;
+import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.period.Period;
 
 /**
@@ -60,6 +62,7 @@ public interface ExpressionService
     final String DATAELEMENT_DOES_NOT_EXIST = "data_element_does_not_exist";
     final String CATEGORYOPTIONCOMBO_DOES_NOT_EXIST = "category_option_combo_does_not_exist";
     final String CONSTANT_DOES_NOT_EXIST = "constant_does_not_exist";
+    final String OU_GROUP_DOES_NOT_EXIST = "org_unit_group_does_not_exist";
     final String EXPRESSION_NOT_WELL_FORMED = "expression_not_well_formed";
 
     final String DAYS_DESCRIPTION = "[Number of days]";
@@ -70,12 +73,14 @@ public interface ExpressionService
     final String OPERAND_UID_EXPRESSION = "(\\w+)\\.?(\\w*)";
     final String DATA_ELEMENT_TOTAL_EXPRESSION = "#\\{(\\w+)\\}";
     final String CONSTANT_EXPRESSION = "C\\{(\\w+)\\}";
+    final String OU_GROUP_EXPRESSION = "OUG\\{(\\w+)\\}";
     final String DAYS_EXPRESSION = "\\[days\\]";
 
     final Pattern OPERAND_PATTERN = Pattern.compile( OPERAND_EXPRESSION );
     final Pattern OPERAND_UID_PATTERN = Pattern.compile( OPERAND_UID_EXPRESSION );
     final Pattern DATA_ELEMENT_TOTAL_PATTERN = Pattern.compile( DATA_ELEMENT_TOTAL_EXPRESSION );
     final Pattern CONSTANT_PATTERN = Pattern.compile( CONSTANT_EXPRESSION );
+    final Pattern OU_GROUP_PATTERN = Pattern.compile( OU_GROUP_EXPRESSION );
     final Pattern DAYS_PATTERN = Pattern.compile( DAYS_EXPRESSION );
 
     final String DAYS_SYMBOL = "[days]";
@@ -118,7 +123,7 @@ public interface ExpressionService
     Collection<Expression> getAllExpressions();
     
     Double getIndicatorValue( Indicator indicator, Period period, Map<DataElementOperand, Double> valueMap, 
-        Map<String, Double> constantMap, Integer days );
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days );
     
     /**
      * Generates the calculated value for the given expression base on the values
@@ -129,11 +134,33 @@ public interface ExpressionService
      *        use in the calculation.
      * @param constantMap the mapping between the constant uid and value to use
      *        in the calculation.
+     * @param orgUnitCountMap the mapping between organisation unit group uid and
+     *        count of org units to use in the calculation.
      * @param days the number of days to use in the calculation.
      * @return the calculated value as a double.
      */
     Double getExpressionValue( Expression expression, Map<DataElementOperand, Double> valueMap, 
-        Map<String, Double> constantMap, Integer days );
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days );
+    
+    /**
+     * Generates the calculated value for the given expression base on the values
+     * supplied in the value map, constant map and days.
+     * 
+     * @param expression the expression which holds the formula for the calculation.
+     * @param valueMap the mapping between data element operands and values to
+     *        use in the calculation.
+     * @param constantMap the mapping between the constant uid and value to use
+     *        in the calculation.
+     * @param orgUnitCountMap the mapping between organisation unit group uid and
+     *        count of org units to use in the calculation.
+     * @param days the number of days to use in the calculation.
+     * @param set of data element operands that have values but they are incomplete
+     *        (for example due to aggregation from organisationUnit children where
+     *        not all children had a value.)
+     * @return the calculated value as a double.
+     */
+    Double getExpressionValue( Expression expression, Map<DataElementOperand, Double> valueMap, 
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, Set<DataElementOperand> incompleteValues );
     
     /**
      * Returns the uids of the data element totals in the given expression.
@@ -150,6 +177,23 @@ public interface ExpressionService
      * @return a Set of DataElements included in the expression string.
      */
     Set<DataElement> getDataElementsInExpression( String expression );
+    
+    /**
+     * Returns all OrganisationUnitGroups in the numerator and denominator
+     * expressions in the given Indicators.
+     * 
+     * @param indicators the set of indicators.
+     * @return a Set of OrganisationUnitGroups.
+     */
+    Set<OrganisationUnitGroup> getOrganisationUnitGroupsInIndicators( Collection<Indicator> indicators );
+    
+    /**
+     * Returns all OrganisationUnitGroups in the given expression string.
+     * 
+     * @param expression the expression string.
+     * @return a Set of OrganisationUnitGroups included in the expression string.
+     */
+    Set<OrganisationUnitGroup> getOrganisationUnitGroupsInExpression( String expression );
     
     /**
      * Returns all CategoryOptionCombos in the given expression string.
@@ -211,7 +255,7 @@ public interface ExpressionService
      *         CONSTANT_DOES_NOT_EXIST if the constant does not exist.
      *         EXPRESSION_NOT_WELL_FORMED if the expression is not well-formed.
      */
-    String expressionIsValid( String formula, Set<String> dataElements, Set<String> categoryOptionCombos, Set<String> constants );
+    String expressionIsValid( String formula, Set<String> dataElements, Set<String> categoryOptionCombos, Set<String> constants, Set<String> orgUnitGroups );
     
     /**
      * Creates an expression string containing DataElement names and the names of
@@ -233,14 +277,23 @@ public interface ExpressionService
      * Populates the explodedNumerator and explodedDenominator property on all
      * indicators in the given collection. This method uses
      * explodeExpression( String ) internally to generate the exploded expressions.
-     * This method will perform compared to calling explodeExpression( String )
+     * This method will perform better compared to calling explodeExpression( String )
      * multiple times outside a transactional context as the transactional
      * overhead is avoided.
      * 
      * @param indicators the collection of indicators.
-     * @param 
+     * @param days the number of days in aggregation period.
      */
     void explodeAndSubstituteExpressions( Collection<Indicator> indicators, Integer days );
+
+    /**
+     * Populates the explodedNumerator and explodedDenominator property on all
+     * indicators in the given collection. This method uses
+     * explodeExpression( String ) internally to generate the exploded expressions.
+     * 
+     * @param indicators the collection of indicators.
+     */    
+    void explodeExpressions( Collection<Indicator> indicators );
     
     /**
      * Replaces references to data element totals with references to all
@@ -267,11 +320,16 @@ public interface ExpressionService
      * by the aggregated value for the relevant combination of data element,
      * period, and source.
      * 
-     * @param formula The formula to parse.
-     * @param valueMap The map containing data element identifiers and aggregated value.
-     * @param days The number to be substituted with the days expression in the formula.
+     * @param formula formula to parse.
+     * @param valueMap the mapping between data element operands and values to
+     *        use in the calculation.
+     * @param constantMap the mapping between the constant uid and value to use
+     *        in the calculation.
+     * @param orgUnitCountMap the mapping between organisation unit group uid and
+     *        count of org units to use in the calculation.
+     * @param days the number of days to use in the calculation.
      */
-    String generateExpression( String expression, Map<DataElementOperand, Double> valueMap, Map<String, Double> constantMap, Integer days, boolean nullIfNoValues );
+    String generateExpression( String expression, Map<DataElementOperand, Double> valueMap, Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, boolean nullIfNoValues );
     
     /**
      * Returns all Operands included in the formulas for the given collection of

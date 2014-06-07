@@ -1,58 +1,41 @@
 <script>
-	
 	jQuery("#singleEventForm").ready(	function(){
-
-		currentDiv = 'patientForm';
-		checkedDuplicate = false;
+		currentDiv = 'entityInstanceForm';
 		
-		jQuery("#patientForm").validate({
-				 meta:"validate"
-				,errorElement:"span"
-				,submitHandler: function(form)
-					{
-						validateAddPatient();
-					}
-				,beforeValidateHandler: function(form)
-					{
-						var dobType = $('#patientForm [id=dobType]').val();
-						
-						if( dobType=='V' || dobType=='D' ) 
-						{
-							var birthDate = $('#patientForm [id=birthDate]').val();
-							if( birthDate != '' ){
-								$("#patientForm [id=memberValidator]").val(birthDate);
-							}
-						}else{
-							var age = $('#patientForm [id=age]').val();
-							$("#patientForm [id=memberValidator]").val(age);
-						}
-					}
-			});
-		#if($!customRegistrationForm)
-		#else
-			datePickerValid( 'patientForm [id=registrationDate]', true );
-			datePickerValid( 'patientForm [id=birthDate]' );
-		#end
-		addEventForPatientForm( 'patientForm' );
+		jQuery("#singleEventForm").validate({
+			 meta:"validate"
+			,errorElement:"span"
+			,submitHandler: function(form)
+				{
+					validateData();
+				}
+		});
 	});	
 	
 </script>
-	
+
+<h3>
+	<a href="javascript:onClickBackBtn();" id='entityInstanceMamagementLink'>$i18n.getString( 'tracked_entity_instance_management' )</a>
+	#if($!relatedProgram)
+		&#8226; <a href="javascript:showTrackedEntityInstanceDashboardForm('$!entityInstanceUid');">$i18n.getString( 'dashboard' )</a>
+	#end
+	&#8226; $i18n.getString( "add_new_tracked_entity_instance" )
+</h3>
+
 <form id='singleEventForm'>
 	<input type="hidden" id="representativeId" name="representativeId"/> 
 	<input type="hidden" id="relationshipTypeId" name="relationshipTypeId"/>
-	<input type="hidden" id="programStageId" name="programStageId" value='$programStage.id'/>
+	<input type="hidden" id="programStageId" name="programStageId"/>
 	
 	<table>
-		<tbody id='patientForm'>
-			#parse( "/dhis-web-caseentry/patientForm.vm" )
+		<tbody id='entityInstanceForm'>
+			#parse( "/dhis-web-caseentry/trackedEntityInstanceForm.vm" )
 		</tbody>
 		<tbody>
 			#parse( "/dhis-web-caseentry/singleDataEntryForm.vm" )
 		</tbody>
 		<tr>
-			<td></td>
-			<td>
+			<td colspan='2'>
 				<input type="submit" class="button" value="$i18n.getString( 'add' )" onclick='_continue=false;' style="width:70px;"/>
 				<input type="submit" class="button" value="$i18n.getString( 'add_and_register_new' )" style="width:140px;" onclick="_continue=true;"/>
 				<input type="button" class="button" value="$i18n.getString( 'back' )" onclick="javascript:backEventList();" style="width:70px;"/>
@@ -64,32 +47,6 @@
 <script>
 	var i18n_error_connect_to_server = '$encoder.jsEscape( $i18n.getString( "error_connect_to_server" ) , "'" )';
 	var i18n_add_person_successfully = '$encoder.jsEscape( $i18n.getString( "add_person_successfully" ) , "'" )';
-	setInnerHTML('entryName', jQuery('#programIdAddPatient option:selected').text() );
-	
-	jQuery(document).ready(	function(){
-
-		jQuery("#singleEventForm").validate({
-			 meta:"validate"
-			,errorElement:"span"
-			,submitHandler: function(form)
-				{
-					validateData();
-				}
-				,beforeValidateHandler: function(form)
-				{
-					var dobType = $('#singleEventForm [id=dobType]').val();
-					
-					if( dobType=='V' || dobType=='D' ) 
-					{
-						var birthDate = $('#singleEventForm [id=birthDate]').val();
-						if( birthDate != '' ){
-							$("#singleEventForm [id=memberValidator]").val(birthDate);
-						}
-					}else{
-						var age = $('#singleEventForm [id=age]').val();
-						$("#singleEventForm [id=memberValidator]").val(age);
-					}
-				}
-			});
-	});
+	setInnerHTML('entryName', jQuery('#program option:selected').text() );
+	setFieldValue("programStageId", getFieldValue("program"));
 </script>

@@ -1,19 +1,20 @@
 package org.hisp.dhis.indicator;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -53,7 +54,7 @@ import java.util.List;
  *
  * @author Lars Helge Overland
  */
-@JacksonXmlRootElement( localName = "indicatorGroupSet", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement(localName = "indicatorGroupSet", namespace = DxfNamespaces.DXF_2_0)
 public class IndicatorGroupSet
     extends BaseIdentifiableObject
 {
@@ -75,25 +76,26 @@ public class IndicatorGroupSet
 
     public IndicatorGroupSet()
     {
+        setAutoFields();
     }
 
     public IndicatorGroupSet( String name )
     {
+        this();
         this.name = name;
         this.compulsory = false;
     }
 
     public IndicatorGroupSet( String name, Boolean compulsory )
     {
-        this.name = name;
+        this( name );
         this.compulsory = compulsory;
     }
 
     public IndicatorGroupSet( String name, String description, Boolean compulsory )
     {
-        this.name = name;
+        this( name, compulsory );
         this.description = description;
-        this.compulsory = compulsory;
     }
 
     // -------------------------------------------------------------------------
@@ -153,39 +155,6 @@ public class IndicatorGroupSet
     }
 
     // -------------------------------------------------------------------------
-    // equals and hashCode
-    // -------------------------------------------------------------------------
-
-    @Override
-    public boolean equals( Object o )
-    {
-        if ( this == o )
-        {
-            return true;
-        }
-
-        if ( o == null )
-        {
-            return false;
-        }
-
-        if ( !(o instanceof IndicatorGroupSet) )
-        {
-            return false;
-        }
-
-        final IndicatorGroupSet other = (IndicatorGroupSet) o;
-
-        return name.equals( other.getName() );
-    }
-
-    @Override
-    public String toString()
-    {
-        return "[" + name + "]";
-    }
-
-    // -------------------------------------------------------------------------
     // Logic
     // -------------------------------------------------------------------------
 
@@ -196,18 +165,19 @@ public class IndicatorGroupSet
 
     public void addIndicatorGroup( IndicatorGroup indicatorGroup )
     {
-        if ( !members.contains( indicatorGroup ) )
-        {
-            this.members.add( indicatorGroup );
-        }
-
+        members.add( indicatorGroup );
         indicatorGroup.setGroupSet( this );
+    }
+
+    public void removeIndicatorGroup( IndicatorGroup indicatorGroup )
+    {
+        members.remove( indicatorGroup );
+        indicatorGroup.setGroupSet( null );
     }
 
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
-
 
     @Override
     public boolean haveUniqueNames()
@@ -216,8 +186,8 @@ public class IndicatorGroupSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
     public String getDescription()
     {
         return description;
@@ -229,8 +199,8 @@ public class IndicatorGroupSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
     public Boolean isCompulsory()
     {
         if ( compulsory == null )
@@ -246,11 +216,11 @@ public class IndicatorGroupSet
         this.compulsory = compulsory;
     }
 
-    @JsonProperty( value = "indicatorGroups" )
-    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "indicatorGroups", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty( localName = "indicatorGroup", namespace = DxfNamespaces.DXF_2_0)
+    @JsonProperty(value = "indicatorGroups")
+    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
+    @JsonView({ DetailedView.class, ExportView.class })
+    @JacksonXmlElementWrapper(localName = "indicatorGroups", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty(localName = "indicatorGroup", namespace = DxfNamespaces.DXF_2_0)
     public List<IndicatorGroup> getMembers()
     {
         return members;

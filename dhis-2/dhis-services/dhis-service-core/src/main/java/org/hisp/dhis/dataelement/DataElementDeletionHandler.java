@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataelement;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,8 +30,6 @@ package org.hisp.dhis.dataelement;
 
 import static org.hisp.dhis.dataelement.DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME;
 
-import java.util.Iterator;
-
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.option.OptionSet;
 import org.hisp.dhis.system.deletion.DeletionHandler;
@@ -38,7 +37,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * @author Lars Helge Overland
- * @version $Id$
  */
 public class DataElementDeletionHandler
     extends DeletionHandler
@@ -98,24 +96,18 @@ public class DataElementDeletionHandler
     @Override
     public void deleteDataSet( DataSet dataSet )
     {
-        Iterator<DataElement> iterator = dataSet.getDataElements().iterator();
-        
-        while ( iterator.hasNext() )
+        for ( DataElement element : dataSet.getDataElements() )
         {
-            DataElement element = iterator.next();
             element.getDataSets().remove( dataSet );
-            dataElementService.updateDataElement( element );            
+            dataElementService.updateDataElement( element );
         }
     }
 
     @Override
     public void deleteDataElementGroup( DataElementGroup group )
     {
-        Iterator<DataElement> iterator = group.getMembers().iterator();
-        
-        while ( iterator.hasNext() )
+        for ( DataElement element : group.getMembers() )
         {
-            DataElement element = iterator.next();
             element.getGroups().remove( group );
             dataElementService.updateDataElement( element );
         }

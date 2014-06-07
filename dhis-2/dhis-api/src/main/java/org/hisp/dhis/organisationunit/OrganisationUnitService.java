@@ -1,19 +1,20 @@
 package org.hisp.dhis.organisationunit;
 
 /*
- * Copyright (c) 2004-2011, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -57,7 +58,7 @@ public interface OrganisationUnitService
      * @param organisationUnit the OrganisationUnit to add.
      * @return a generated unique id of the added OrganisationUnit.
      */
-    public int addOrganisationUnit( OrganisationUnit organisationUnit );
+    int addOrganisationUnit( OrganisationUnit organisationUnit );
 
     /**
      * Updates an OrganisationUnit.
@@ -66,6 +67,11 @@ public interface OrganisationUnitService
      */
     void updateOrganisationUnit( OrganisationUnit organisationUnit );
 
+    /**
+     * Updates the version of the organisation unit hierarchy.
+     */
+    void updateOrganisationUnitVersion();
+    
     /**
      * Updates an OrganisationUnit.
      *
@@ -211,21 +217,26 @@ public interface OrganisationUnitService
     int getLevelOfOrganisationUnit( int id );
 
     /**
-     * Returns the level of the organisation unit with the given uid.
-     *
-     * @return the level of the organisation unit with the given uid.
-     */
-    int getLevelOfOrganisationUnit( String uid );
-
-    /**
      * Returns all OrganisationUnits which are part of the subtree of the
-     * OrganisationUnit with the given identifer and have no children.
+     * OrganisationUnit with the given identifier and have no children.
      *
      * @param id the identifier of the parent OrganisationUnit.
      * @return a collection of OrganisationUnits.
      */
     Collection<OrganisationUnit> getLeafOrganisationUnits( int id );
 
+    /**
+     * Returns the intersection of the members of the given OrganisationUnitGroups
+     * and the OrganisationUnits which are children of the given collection of
+     * parents in the hierarchy. If the given parent collection is null or empty, 
+     * the members of the group are returned.
+     * 
+     * @param groups the collection of OrganisationUnitGroups.
+     * @param parents the collection of OrganisationUnit parents in the hierarchy.
+     * @return collection of OrganisationUnits.
+     */
+    Collection<OrganisationUnit> getOrganisationUnits( Collection<OrganisationUnitGroup> groups, Collection<OrganisationUnit> parents );
+    
     /**
      * Returns an OrganisationUnit and all its children.
      *
@@ -235,6 +246,16 @@ public interface OrganisationUnitService
      *         OrganisationUnits match.
      */
     Collection<OrganisationUnit> getOrganisationUnitsWithChildren( String uid );
+
+    /**
+     * Returns the OrganisationUnits and all their children.
+     *
+     * @param uids the uids of the parent OrganisationUnits.
+     * @return a collection containing the OrganisationUnit with the given id
+     *         and all its children, or an empty collection if no
+     *         OrganisationUnits match.
+     */
+    Collection<OrganisationUnit> getOrganisationUnitsWithChildren( Collection<String> uids );
     
     /**
      * Returns an OrganisationUnit and all its children.
@@ -272,8 +293,9 @@ public interface OrganisationUnitService
     /**
      * Returns all OrganisationUnits which are children of the given unit and are
      * at the given hierarchical level. The root OrganisationUnits are at level 1.
+     * If parent is null, then all OrganisationUnits at the given level are returned.
      *
-     * @param level  the hierarchical level.
+     * @param level the hierarchical level.
      * @param parent the parent unit.
      * @return all OrganisationUnits which are children of the given unit and are
      *         at the given hierarchical level.
@@ -282,8 +304,22 @@ public interface OrganisationUnitService
     Collection<OrganisationUnit> getOrganisationUnitsAtLevel( int level, OrganisationUnit parent );
 
     /**
+     * Returns all OrganisationUnits which are children of the given unit and are
+     * at the given hierarchical levels. The root OrganisationUnits are at level 1.
+     * If parent is null, then all OrganisationUnits at the given level are returned.
+     *
+     * @param levels the hierarchical levels.
+     * @param parent the parent unit.
+     * @return all OrganisationUnits which are children of the given unit and are
+     *         at the given hierarchical level.
+     * @throws IllegalArgumentException if the level is illegal.
+     */
+    Collection<OrganisationUnit> getOrganisationUnitsAtLevels( Collection<Integer> levels, Collection<OrganisationUnit> parents );
+    
+    /**
      * Returns all OrganisationUnits which are children of the given units and are
      * at the given hierarchical level. The root OrganisationUnits are at level 1.
+     * If parents is null, then all OrganisationUnits at the given level are returned.
      *
      * @param level  the hierarchical level.
      * @param parent the parent units.
@@ -343,6 +379,33 @@ public interface OrganisationUnitService
 
     Collection<OrganisationUnit> getOrganisationUnitsBetweenByStatusLastUpdated( boolean status, Date lastUpdated, int first, int max );
 
+    /**
+     * Retrieves all the org units within the distance from center location.
+     *
+     * @param longitude        The longitude of the center location.
+     * @param latitude         The latitude of the center location.
+     * @param distance         The distance from center location.
+     * 
+     * @return collection of objects.
+     */
+    Collection<OrganisationUnit> getOrganisationUnitWithinDistance( double longitude, double latitude, double distance );
+
+    /**
+     * Retrieves the orgunit(s) by coordinate.
+     * 
+     * @param longitude The longitude of the location.
+     * @param latitude The latitude of the location.
+     * @param topOrgUnitUid Optional. Uid of the search top level org unit (ex.
+     *        Country level orgunit)
+     * @param targetLevel Optional. The level being searched.
+     * 
+     * @return collection of objects.
+     */
+    Collection<OrganisationUnit> getOrganisationUnitByCoordinate( double longitude, double latitude, String topOrgUnitUid,
+        Integer targetLevel );
+    
+    boolean isInUserHierarchy( OrganisationUnit organisationUnit );
+    
     // -------------------------------------------------------------------------
     // OrganisationUnitHierarchy
     // -------------------------------------------------------------------------

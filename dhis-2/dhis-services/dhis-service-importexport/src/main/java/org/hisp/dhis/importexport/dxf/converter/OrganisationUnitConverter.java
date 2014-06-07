@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.dxf.converter;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -66,7 +67,6 @@ public class OrganisationUnitConverter
     private static final String FIELD_CLOSED_DATE = "closedDate";
     private static final String FIELD_ACTIVE = "active";
     private static final String FIELD_COMMENT = "comment";
-    private static final String FIELD_GEO_CODE = "geoCode";
     private static final String FIELD_COORDINATES_TUPLE = "coordinatesTuple";
     private static final String FIELD_COORDINATES = "coord";
     private static final String FIELD_FEATURE = "feature";
@@ -128,7 +128,6 @@ public class OrganisationUnitConverter
                 writer.writeElement( FIELD_CLOSED_DATE, DateUtils.getMediumDateString( unit.getClosedDate() ) );
                 writer.writeElement( FIELD_ACTIVE, String.valueOf( unit.isActive() ) );
                 writer.writeElement( FIELD_COMMENT, unit.getComment() );
-                writer.writeElement( FIELD_GEO_CODE, unit.getGeoCode() );
 
                 writer.openElement( FIELD_FEATURE, ATTRIBUTE_TYPE, unit.getFeatureType() );
                 
@@ -199,10 +198,7 @@ public class OrganisationUnitConverter
             unit.setComment( reader.getElementValue() );
             
             if ( params.minorVersionGreaterOrEqual( MINOR_VERSION_11 ) )
-            {
-                reader.moveToStartElement( FIELD_GEO_CODE );
-                unit.setGeoCode( reader.getElementValue() );
-                
+            {                
                 reader.moveToStartElement( FIELD_FEATURE );
                 unit.setFeatureType( reader.getAttributeValue( ATTRIBUTE_TYPE ) );
                 

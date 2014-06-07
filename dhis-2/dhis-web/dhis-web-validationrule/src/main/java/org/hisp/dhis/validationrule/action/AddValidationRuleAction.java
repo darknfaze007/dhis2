@@ -1,19 +1,20 @@
 package org.hisp.dhis.validationrule.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -90,6 +91,27 @@ public class AddValidationRuleAction
         this.description = description;
     }
 
+    private String instruction;
+    
+    public void setInstruction( String instruction )
+    {
+        this.instruction = instruction;
+    }
+
+    private String importance;
+
+    public void setImportance( String importance )
+    {
+        this.importance = importance;
+    }
+
+    private String ruleType;
+
+    public void setRuleType( String ruleType )
+    {
+        this.ruleType = ruleType;
+    }
+
     private String operator;
 
     public void setOperator( String operator )
@@ -139,6 +161,13 @@ public class AddValidationRuleAction
         this.rightSideNullIfBlank = rightSideNullIfBlank;
     }
 
+    private Integer organisationUnitLevel;
+    
+    public void setOrganisationUnitLevel( Integer organisationUnitLevel )
+    {
+        this.organisationUnitLevel = organisationUnitLevel;
+    }
+
     private String periodTypeName;
     
     public void setPeriodTypeName(String periodTypeName) 
@@ -146,6 +175,34 @@ public class AddValidationRuleAction
         this.periodTypeName = periodTypeName;
     }
     
+    private Integer sequentialSampleCount;
+    
+    public void setSequentialSampleCount(Integer sequentialSampleCount) 
+    {
+        this.sequentialSampleCount = sequentialSampleCount;
+    }
+
+    private Integer annualSampleCount;
+    
+    public void setAnnualSampleCount(Integer annualSampleCount) 
+    {
+        this.annualSampleCount = annualSampleCount;
+    }
+
+    private Integer highOutliers;
+    
+    public void setHighOutliers(Integer highOutliers) 
+    {
+        this.highOutliers = highOutliers;
+    }
+
+    private Integer lowOutliers;
+    
+    public void setLowOutliers(Integer lowOutliers) 
+    {
+        this.lowOutliers = lowOutliers;
+    }
+
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
@@ -172,14 +229,22 @@ public class AddValidationRuleAction
         
         validationRule.setName( name );
         validationRule.setDescription( description );
+        validationRule.setInstruction( instruction );
+        validationRule.setImportance( importance );
+        validationRule.setRuleType( ruleType );
         validationRule.setType( ValidationRule.TYPE_ABSOLUTE );
         validationRule.setOperator( Operator.valueOf(operator) );
         validationRule.setLeftSide( leftSide );
         validationRule.setRightSide( rightSide );
+        validationRule.setOrganisationUnitLevel( organisationUnitLevel );
 
         PeriodType periodType = periodService.getPeriodTypeByName(periodTypeName);
         validationRule.setPeriodType(periodType);
-        
+
+        validationRule.setSequentialSampleCount( sequentialSampleCount );
+        validationRule.setAnnualSampleCount( annualSampleCount );
+        validationRule.setHighOutliers( highOutliers );
+        validationRule.setLowOutliers( lowOutliers );
         validationRuleService.saveValidationRule( validationRule );
         
         return SUCCESS;

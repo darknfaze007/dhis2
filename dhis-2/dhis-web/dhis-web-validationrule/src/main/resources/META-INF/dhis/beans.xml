@@ -7,7 +7,8 @@
 
   <!-- ValidationRule CRUD operations -->
 
-  <bean id="org.hisp.dhis.validationrule.action.AddValidationRuleAction" class="org.hisp.dhis.validationrule.action.AddValidationRuleAction"
+  <bean id="org.hisp.dhis.validationrule.action.AddValidationRuleAction" 
+    class="org.hisp.dhis.validationrule.action.AddValidationRuleAction"
     scope="prototype">
     <property name="validationRuleService" ref="org.hisp.dhis.validation.ValidationRuleService" />
     <property name="expressionService" ref="org.hisp.dhis.expression.ExpressionService" />
@@ -20,9 +21,11 @@
     <property name="validationRuleService" ref="org.hisp.dhis.validation.ValidationRuleService" />
     <property name="expressionService" ref="org.hisp.dhis.expression.ExpressionService" />
     <property name="periodService" ref="org.hisp.dhis.period.PeriodService" />
+    <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
   </bean>
 
-  <bean id="org.hisp.dhis.validationrule.action.GetValidationRuleAction" class="org.hisp.dhis.validationrule.action.GetValidationRuleAction"
+  <bean id="org.hisp.dhis.validationrule.action.GetValidationRuleAction" 
+    class="org.hisp.dhis.validationrule.action.GetValidationRuleAction"
     scope="prototype">
     <property name="validationRuleService" ref="org.hisp.dhis.validation.ValidationRuleService" />
     <property name="expressionService" ref="org.hisp.dhis.expression.ExpressionService" />
@@ -65,6 +68,7 @@
   <bean id="org.hisp.dhis.validationrule.action.GetPeriodTypesAction" class="org.hisp.dhis.validationrule.action.GetPeriodTypesAction"
     scope="prototype">
     <property name="periodService" ref="org.hisp.dhis.period.PeriodService" />
+    <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
   </bean>
 
   <!-- ValidationRuleGroup CRUD operations -->
@@ -73,6 +77,7 @@
     class="org.hisp.dhis.validationrule.action.validationrulegroup.AddValidationRuleGroupAction"
     scope="prototype">
     <property name="validationRuleService" ref="org.hisp.dhis.validation.ValidationRuleService" />
+    <property name="userGroupService" ref="org.hisp.dhis.user.UserGroupService" />
   </bean>
 
   <bean id="org.hisp.dhis.validationrule.action.validationrulegroup.GetValidationRuleGroupAction"
@@ -97,12 +102,14 @@
     class="org.hisp.dhis.validationrule.action.validationrulegroup.ShowUpdateValidationRuleGroupFormAction"
     scope="prototype">
     <property name="validationRuleService" ref="org.hisp.dhis.validation.ValidationRuleService" />
+    <property name="userGroupService" ref="org.hisp.dhis.user.UserGroupService" />
   </bean>
 
   <bean id="org.hisp.dhis.validationrule.action.validationrulegroup.UpdateValidationRuleGroupAction"
     class="org.hisp.dhis.validationrule.action.validationrulegroup.UpdateValidationRuleGroupAction"
     scope="prototype">
     <property name="validationRuleService" ref="org.hisp.dhis.validation.ValidationRuleService" />
+    <property name="userGroupService" ref="org.hisp.dhis.user.UserGroupService" />
   </bean>
 
   <bean id="org.hisp.dhis.validationrule.action.validationrulegroup.ValidateValidationRuleGroupAction"
@@ -139,6 +146,7 @@
     scope="prototype">
     <property name="validationRuleService" ref="org.hisp.dhis.validation.ValidationRuleService" />
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
+    <property name="dataElementCategoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
   </bean>
 
   <bean id="org.hisp.dhis.validationrule.action.GetValidationResultDetailsAction"
@@ -202,13 +210,6 @@
     class="org.hisp.dhis.validationrule.action.dataanalysis.ValidationRunAnalysisAction"
     scope="prototype">
     <property name="selectionTreeManager" ref="org.hisp.dhis.oust.manager.SelectionTreeManager" />
-  </bean>
-  <!-- PDF -->
-
-  <bean id="org.hisp.dhis.validationrule.action.pdf.ExportToPdfAction" class="org.hisp.dhis.validationrule.action.pdf.ExportToPdfAction"
-    scope="prototype">
-    <property name="serviceProvider" ref="exportServiceProvider" />
-    <property name="validationRuleService" ref="org.hisp.dhis.validation.ValidationRuleService" />
   </bean>
 
 </beans>

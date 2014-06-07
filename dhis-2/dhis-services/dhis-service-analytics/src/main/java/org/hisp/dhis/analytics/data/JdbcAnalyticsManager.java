@@ -1,19 +1,20 @@
 package org.hisp.dhis.analytics.data;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,16 +32,20 @@ import static org.hisp.dhis.analytics.AggregationType.AVERAGE_BOOL;
 import static org.hisp.dhis.analytics.AggregationType.AVERAGE_INT;
 import static org.hisp.dhis.analytics.AggregationType.AVERAGE_INT_DISAGGREGATION;
 import static org.hisp.dhis.analytics.AggregationType.COUNT;
-import static org.hisp.dhis.common.DimensionalObject.DIMENSION_SEP;
+import static org.hisp.dhis.analytics.AggregationType.STDDEV;
+import static org.hisp.dhis.analytics.AggregationType.VARIANCE;
 import static org.hisp.dhis.analytics.DataQueryParams.VALUE_ID;
 import static org.hisp.dhis.analytics.MeasureFilter.EQ;
 import static org.hisp.dhis.analytics.MeasureFilter.GE;
 import static org.hisp.dhis.analytics.MeasureFilter.GT;
 import static org.hisp.dhis.analytics.MeasureFilter.LE;
 import static org.hisp.dhis.analytics.MeasureFilter.LT;
+import static org.hisp.dhis.common.DimensionalObject.DIMENSION_SEP;
 import static org.hisp.dhis.common.IdentifiableObjectUtils.getUids;
 import static org.hisp.dhis.system.util.TextUtils.getQuotedCommaDelimitedString;
+import static org.hisp.dhis.system.util.TextUtils.removeLastOr;
 import static org.hisp.dhis.system.util.TextUtils.trimEnd;
+import static org.hisp.dhis.analytics.DataQueryParams.LEVEL_PREFIX;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,8 +61,11 @@ import org.hisp.dhis.analytics.AnalyticsManager;
 import org.hisp.dhis.analytics.DataQueryParams;
 import org.hisp.dhis.analytics.MeasureFilter;
 import org.hisp.dhis.common.DimensionalObject;
+import org.hisp.dhis.common.DimensionalObjectUtils;
 import org.hisp.dhis.common.ListMap;
 import org.hisp.dhis.common.NameableObject;
+import org.hisp.dhis.jdbc.StatementBuilder;
+import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.system.util.MathUtils;
@@ -86,8 +94,13 @@ public class JdbcAnalyticsManager
     
     private static final Log log = LogFactory.getLog( JdbcAnalyticsManager.class );
         
+    private static final String COL_APPROVALLEVEL = "approvallevel";
+    
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    
+    @Autowired
+    private StatementBuilder statementBuilder;
     
     // -------------------------------------------------------------------------
     // Implementation
@@ -102,13 +115,13 @@ public class JdbcAnalyticsManager
         
         String sql = getSelectClause( params );
         
-        if ( params.filterSpansMultiplePartitions() )
+        if ( params.spansMultiplePartitions() )
         {
             sql += getFromWhereClauseMultiplePartitionFilters( params );
         }
         else
         {
-            sql += getFromWhereClause( params );
+            sql += getFromWhereClause( params, params.getPartitions().getSinglePartition() );
         }
         
         sql += getGroupByClause( params );
@@ -150,7 +163,7 @@ public class JdbcAnalyticsManager
             {
                 String[] keyArray = key.split( DIMENSION_SEP );
                 
-                Assert.notNull( keyArray[periodIndex], keyArray.toString() );
+                Assert.notNull( keyArray[periodIndex] );
                 
                 List<NameableObject> periods = dataPeriodAggregationPeriodMap.get( PeriodType.getPeriodFromIsoString( keyArray[periodIndex] ) );
                 
@@ -179,7 +192,7 @@ public class JdbcAnalyticsManager
      */
     private String getSelectClause( DataQueryParams params )
     {
-        String sql = "select " + getCommaDelimitedString( params.getQueryDimensions() ) + ", ";
+        String sql = "select " + getCommaDelimitedQuotedColumns( params.getQueryDimensions() ) + ", ";
         
         if ( params.isAggregationType( AVERAGE_INT ) )
         {
@@ -194,6 +207,14 @@ public class JdbcAnalyticsManager
         else if ( params.isAggregationType( COUNT ) )
         {
             sql += "count(value)";
+        }
+        else if ( params.isAggregationType( STDDEV ) )
+        {
+            sql += "stddev(value)";
+        }
+        else if ( params.isAggregationType( VARIANCE ) )
+        {
+            sql += "variance(value)";
         }
         else // SUM, AVERAGE_DISAGGREGATION and undefined //TODO
         {
@@ -213,9 +234,9 @@ public class JdbcAnalyticsManager
     {
         String sql = "from (";
         
-        for ( DataQueryParams filterParams : params.getPartitionFilterParams() )
+        for ( String partition : params.getPartitions().getPartitions() )
         {
-            sql += "select " + getCommaDelimitedString( filterParams.getQueryDimensions() ) + ", ";
+            sql += "select " + getCommaDelimitedQuotedColumns( params.getQueryDimensions() ) + ", ";
             
             if ( params.isAggregationType( AVERAGE_INT ) )
             {
@@ -230,7 +251,7 @@ public class JdbcAnalyticsManager
                 sql += "value";
             }
             
-            sql += " " + getFromWhereClause( filterParams );
+            sql += " " + getFromWhereClause( params, partition );
             
             sql += "union all ";
         }
@@ -243,17 +264,19 @@ public class JdbcAnalyticsManager
     /**
      * Generates the from clause of the query SQL.
      */
-    private String getFromWhereClause( DataQueryParams params )
+    private String getFromWhereClause( DataQueryParams params, String partition )
     {
         SqlHelper sqlHelper = new SqlHelper();
 
-        String sql = "from " + params.getTableName() + " ";
+        String sql = "from " + partition + " ";
         
         for ( DimensionalObject dim : params.getQueryDimensions() )
         {
             if ( !dim.isAllItems() )
             {
-                sql += sqlHelper.whereAnd() + " " + dim.getDimensionName() + " in (" + getQuotedCommaDelimitedString( getUids( dim.getItems() ) ) + ") ";
+                String col = statementBuilder.columnQuote( dim.getDimensionName() );
+                
+                sql += sqlHelper.whereAnd() + " " + col + " in (" + getQuotedCommaDelimitedString( getUids( dim.getItems() ) ) + ") ";
             }
         }
 
@@ -263,20 +286,37 @@ public class JdbcAnalyticsManager
         {
             List<DimensionalObject> filters = filterMap.get( dimension );
             
-            if ( DataQueryParams.anyDimensionHasItems( filters ) )
+            if ( DimensionalObjectUtils.anyDimensionHasItems( filters ) )
             {
-                sql += sqlHelper.whereAnd() + " (";
+                sql += sqlHelper.whereAnd() + " ( ";
                 
                 for ( DimensionalObject filter : filters )
                 {
                     if ( filter.hasItems() )
                     {
-                        sql += filter.getDimensionName() + " in (" + getQuotedCommaDelimitedString( getUids( filter.getItems() ) ) + ") or ";
+                        String col = statementBuilder.columnQuote( filter.getDimensionName() );
+                        
+                        sql += col + " in (" + getQuotedCommaDelimitedString( getUids( filter.getItems() ) ) + ") or ";
                     }
                 }
+                
+                sql = removeLastOr( sql ) + ") ";
+            }
+        }
+        
+        if ( params.isDataApproval() )
+        {
+            sql += sqlHelper.whereAnd() + " ( ";
+            
+            for ( OrganisationUnit unit : params.getDataApprovalLevels().keySet() )
+            {
+                String ouCol = LEVEL_PREFIX + unit.getLevel();
+                Integer level = params.getDataApprovalLevels().get( unit );
+                
+                sql += "(" + ouCol + " = '" + unit.getUid() + "' and " + COL_APPROVALLEVEL + " <= " + level + ") or ";
             }
             
-            sql = trimEnd( sql, " or ".length() ) + ") ";
+            sql = removeLastOr( sql ) + ") ";
         }
         
         return sql;
@@ -287,7 +327,7 @@ public class JdbcAnalyticsManager
      */
     private String getGroupByClause( DataQueryParams params )
     {
-        String sql = "group by " + getCommaDelimitedString( params.getQueryDimensions() );
+        String sql = "group by " + getCommaDelimitedQuotedColumns( params.getQueryDimensions() );
         
         return sql;
     }
@@ -377,17 +417,17 @@ public class JdbcAnalyticsManager
     
     /**
      * Generates a comma-delimited string based on the dimension names of the
-     * given dimensions.
+     * given dimensions where each dimension name is quoted.
      */
-    private String getCommaDelimitedString( Collection<DimensionalObject> dimensions )
-    {
+    private String getCommaDelimitedQuotedColumns( Collection<DimensionalObject> dimensions )
+    {        
         final StringBuilder builder = new StringBuilder();
         
         if ( dimensions != null && !dimensions.isEmpty() )
         {
             for ( DimensionalObject dimension : dimensions )
             {
-                builder.append( dimension.getDimensionName() ).append( "," );
+                builder.append( statementBuilder.columnQuote( dimension.getDimensionName() ) ).append( "," );
             }
             
             return builder.substring( 0, builder.length() - 1 );

@@ -1,19 +1,20 @@
 package org.hisp.dhis.importexport.dhis14.xml.converter.xsd;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -40,8 +41,8 @@ import org.hisp.dhis.importexport.XMLConverter;
 public class DataRootXSDConverter
     implements XMLConverter
 {
-    private static final String DHIS_VERSION = "1.4.0.129";
-    
+    private static final String DHIS_VERSION = "1.4.1.10";
+
     // -------------------------------------------------------------------------
     // Constructor
     // -------------------------------------------------------------------------
@@ -50,46 +51,58 @@ public class DataRootXSDConverter
      * Constructor for write operations.
      */
     public DataRootXSDConverter()
-    {   
+    {
     }
 
     // -------------------------------------------------------------------------
     // XMLConverter implementation
     // -------------------------------------------------------------------------
-    
+
     public void write( XMLWriter writer, ExportParams params )
     {
-        writer.openElement( "xsd:element", "name", "dataroot", "dhis-version", DHIS_VERSION, "dhis-application", "DHIS_CORE" );
+        writer.openElement( "xsd:element", "name", "dataroot", "dhis-version", DHIS_VERSION, "dhis-application",
+            "DHIS_CORE","DHIS-CheckSum","RD-481:76165563.97" );
 
-        writer.closeElement();
-        
-        
         writer.openElement( "xsd:complexType" );
-        
+
         writer.openElement( "xsd:sequence" );
-        
+
         writer.writeElement( "xsd:element", "", "ref", "DataElement", "minOccurs", "0", "maxOccurs", "unbounded" );
-        writer.writeElement( "xsd:element", "", "ref", "DataElementCalculauted", "minOccurs", "0", "maxOccurs", "unbounded" );
-        writer.writeElement( "xsd:element", "", "ref", "DataElementGroupMember", "minOccurs", "0", "maxOccurs", "unbounded" );
+
+        writer.writeElement( "xsd:element", "", "ref", "DataElementGroupMember", "minOccurs", "0", "maxOccurs",
+            "unbounded" );
+
+        writer.writeElement( "xsd:element", "", "ref", "DataElementAndIndicatorGroup", "minOccurs", "0", "maxOccurs",
+            "unbounded" );
+
         writer.writeElement( "xsd:element", "", "ref", "OrgUnit", "minOccurs", "0", "maxOccurs", "unbounded" );
-        writer.writeElement( "xsd:element", "", "ref", "OrgUnitHierarchy", "minOccurs", "0", "maxOccurs", "unbounded" );
+
+        writer.writeElement( "xsd:element", "", "ref", "OrgUnitGroup", "minOccurs", "0", "maxOccurs", "unbounded" );
+        writer
+            .writeElement( "xsd:element", "", "ref", "OrgUnitGroupMember", "minOccurs", "0", "maxOccurs", "unbounded" );
+
+        writer.writeElement( "xsd:element", "", "ref", "OrgHierarchy", "minOccurs", "0", "maxOccurs", "unbounded" );
         writer.writeElement( "xsd:element", "", "ref", "OrgUnitStructure", "minOccurs", "0", "maxOccurs", "unbounded" );
         writer.writeElement( "xsd:element", "", "ref", "DataType", "minOccurs", "0", "maxOccurs", "unbounded" );
-        //writer.writeElement( "xsd:element", "", "ref", "Indicator", "minOccurs", "0", "maxOccurs", "unbounded" );
-        //writer.writeElement( "xsd:element", "", "ref", "IndicatorType", "minOccurs", "0", "maxOccurs", "unbounded" );
-        //writer.writeElement( "xsd:element", "", "ref", "IndicatorGroupMember", "minOccurs", "0", "maxOccurs", "unbounded" );
+
+        writer.writeElement( "xsd:element", "", "ref", "IndicatorGroupMember", "minOccurs", "0", "maxOccurs",
+            "unbounded" );
+
         writer.writeElement( "xsd:element", "", "ref", "UserName", "minOccurs", "0", "maxOccurs", "unbounded" );
         writer.writeElement( "xsd:element", "", "ref", "UserInfoRole", "minOccurs", "0", "maxOccurs", "unbounded" );
-        //writer.writeElement( "xsd:element", "", "ref", "DataType", "minOccurs", "0", "maxOccurs", "unbounded" );
+
         writer.writeElement( "xsd:element", "", "ref", "DataPeriod", "minOccurs", "0", "maxOccurs", "unbounded" );
-        //writer.writeElement( "xsd:element", "", "ref", "DataPeriodType", "minOccurs", "0", "maxOccurs", "unbounded" );
+
+        writer.writeElement( "xsd:element", "", "ref", "DataPeriodType", "minOccurs", "0", "maxOccurs", "unbounded" );
+
+        writer.closeElement();
 
         writer.closeElement();
         
         writer.closeElement();
-        
+
     }
-    
+
     public void read( XMLReader reader, ImportParams params )
     {
         // Not implemented

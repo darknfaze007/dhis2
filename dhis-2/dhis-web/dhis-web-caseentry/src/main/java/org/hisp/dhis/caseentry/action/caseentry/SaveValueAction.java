@@ -1,19 +1,20 @@
 package org.hisp.dhis.caseentry.action.caseentry;
 
 /*
- * Copyright (c) 2004-2013, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -28,14 +29,15 @@ package org.hisp.dhis.caseentry.action.caseentry;
  */
 
 import com.opensymphony.xwork2.Action;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementService;
-import org.hisp.dhis.patientdatavalue.PatientDataValue;
-import org.hisp.dhis.patientdatavalue.PatientDataValueService;
 import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
+import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
 import org.hisp.dhis.user.CurrentUserService;
 
 import java.util.Date;
@@ -67,11 +69,11 @@ public class SaveValueAction
         this.dataElementService = dataElementService;
     }
 
-    private PatientDataValueService patientDataValueService;
+    private TrackedEntityDataValueService dataValueService;
 
-    public void setPatientDataValueService( PatientDataValueService patientDataValueService )
+    public void setDataValueService( TrackedEntityDataValueService dataValueService )
     {
-        this.patientDataValueService = patientDataValueService;
+        this.dataValueService = dataValueService;
     }
 
     private CurrentUserService currentUserService;
@@ -131,7 +133,7 @@ public class SaveValueAction
 
         DataElement dataElement = dataElementService.getDataElement( dataElementUid );
 
-        PatientDataValue patientDataValue = patientDataValueService.getPatientDataValue( programStageInstance,
+        TrackedEntityDataValue dataValue = dataValueService.getTrackedEntityDataValue( programStageInstance,
             dataElement );
 
         if ( value != null && value.trim().length() == 0 )
@@ -152,31 +154,31 @@ public class SaveValueAction
         providedElsewhere = (providedElsewhere == null) ? false : providedElsewhere;
         String storedBy = currentUserService.getCurrentUsername();
 
-        if ( patientDataValue == null && value != null )
+        if ( dataValue == null && value != null )
         {
-            LOG.debug( "Adding PatientDataValue, value added" );
+            LOG.debug( "Adding Tracked Entity DataValue, value added" );
 
-            patientDataValue = new PatientDataValue( programStageInstance, dataElement, new Date(), value );
-            patientDataValue.setStoredBy( storedBy );
-            patientDataValue.setProvidedElsewhere( providedElsewhere );
+            dataValue = new TrackedEntityDataValue( programStageInstance, dataElement, new Date(), value );
+            dataValue.setStoredBy( storedBy );
+            dataValue.setProvidedElsewhere( providedElsewhere );
 
-            patientDataValueService.savePatientDataValue( patientDataValue );
+            dataValueService.saveTrackedEntityDataValue( dataValue );
         }
 
-        if ( patientDataValue != null && value == null )
+        if ( dataValue != null && value == null )
         {
-            patientDataValueService.deletePatientDataValue( patientDataValue );
+            dataValueService.deleteTrackedEntityDataValue( dataValue );
         }
-        else if ( patientDataValue != null && value != null )
+        else if ( dataValue != null && value != null )
         {
-            LOG.debug( "Updating PatientDataValue, value added/changed" );
+            LOG.debug( "Updating Tracked Entity DataValue, value added/changed" );
 
-            patientDataValue.setValue( value );
-            patientDataValue.setTimestamp( new Date() );
-            patientDataValue.setProvidedElsewhere( providedElsewhere );
-            patientDataValue.setStoredBy( storedBy );
+            dataValue.setValue( value );
+            dataValue.setTimestamp( new Date() );
+            dataValue.setProvidedElsewhere( providedElsewhere );
+            dataValue.setStoredBy( storedBy );
 
-            patientDataValueService.updatePatientDataValue( patientDataValue );
+            dataValueService.updateTrackedEntityDataValue( dataValue );
         }
 
         statusCode = 0;

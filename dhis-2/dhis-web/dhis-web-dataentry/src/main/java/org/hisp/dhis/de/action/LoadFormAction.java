@@ -1,19 +1,20 @@
 package org.hisp.dhis.de.action;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -103,16 +104,16 @@ public class LoadFormAction
     // Input
     // -------------------------------------------------------------------------
 
-    private Integer dataSetId;
+    private String dataSetId;
 
-    public void setDataSetId( Integer dataSetId )
+    public void setDataSetId( String dataSetId )
     {
         this.dataSetId = dataSetId;
     }
 
-    private Integer multiOrganisationUnit;
+    private String multiOrganisationUnit;
 
-    public void setMultiOrganisationUnit( Integer multiOrganisationUnit )
+    public void setMultiOrganisationUnit( String multiOrganisationUnit )
     {
         this.multiOrganisationUnit = multiOrganisationUnit;
     }
@@ -149,7 +150,7 @@ public class LoadFormAction
         return dataEntryForm;
     }
 
-    private List<Section> sections;
+    private List<Section> sections = new ArrayList<Section>();
 
     public List<Section> getSections()
     {
@@ -317,19 +318,20 @@ public class LoadFormAction
 
         if ( displayMode.equals( DataSet.TYPE_DEFAULT ) )
         {
-            DataSet newDataSet = new DataSet();
-            newDataSet.mergeWith( dataSet );
-            dataSet = newDataSet;
+            DataSet dataSetCopy = new DataSet();
+            dataSetCopy.setName( dataSet.getName() );
+            dataSetCopy.setShortName( dataSet.getShortName() );
+            dataSetCopy.setRenderAsTabs( dataSet.isRenderAsTabs() );
+            dataSetCopy.setRenderHorizontally( dataSet.isRenderHorizontally() );
+            dataSet = dataSetCopy;
 
             for ( int i = 0; i < orderedCategoryCombos.size(); i++ )
             {
                 Section section = new Section();
-                section.setId( i );
-                section.setSortOrder( i );
-
-                // generate a random uid so that equals work
                 section.setUid( CodeGenerator.generateCode() );
-
+                section.setId( i );
+                section.setName( orderedCategoryCombos.get( i ).getName() );
+                section.setSortOrder( i );
                 section.setDataSet( dataSet );
                 dataSet.getSections().add( section );
 
@@ -340,10 +342,10 @@ public class LoadFormAction
         }
 
         // ---------------------------------------------------------------------
-        // For multi-org unit we only support custom forms
+        // For multi-org unit we only support section forms
         // ---------------------------------------------------------------------
 
-        if ( multiOrganisationUnit != null && multiOrganisationUnit != 0 )
+        if ( CodeGenerator.isValidCode( multiOrganisationUnit ) )
         {
             OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( multiOrganisationUnit );
             List<OrganisationUnit> organisationUnitChildren = new ArrayList<OrganisationUnit>();
@@ -405,8 +407,10 @@ public class LoadFormAction
 
             for ( DataElementOperand operand : section.getGreyedFields() )
             {
-                greyedFields.put( operand.getDataElement().getUid() + ":" + operand.getCategoryOptionCombo().getUid(),
-                    true );
+                if ( operand != null && operand.getDataElement() != null && operand.getCategoryOptionCombo() != null )
+                {
+                    greyedFields.put( operand.getDataElement().getUid() + ":" + operand.getCategoryOptionCombo().getUid(), true );
+                }
             }
         }
     }

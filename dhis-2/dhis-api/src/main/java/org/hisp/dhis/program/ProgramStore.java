@@ -1,17 +1,20 @@
+package org.hisp.dhis.program;
+
 /*
- * Copyright (c) 2004-2010, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,10 +28,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.program;
-
 import org.hisp.dhis.common.GenericNameableObjectStore;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
+import org.hisp.dhis.trackedentity.TrackedEntity;
 
 import java.util.Collection;
 
@@ -41,13 +43,69 @@ public interface ProgramStore
 {
     String ID = ProgramStore.class.getName();
 
+    /**
+     * Get {@link Program} by a type
+     *
+     * @param type The type of program. There are three types, include Multi
+     *             events with registration, Single event with registration and
+     *             Single event without registration
+     * @return Program list by a type specified
+     */
     Collection<Program> getByType( int type );
 
+    /**
+     * Get {@link Program} assigned to an {@link OrganisationUnit} by a type
+     *
+     * @param organisationUnit Where programs assigned
+     * @return Program list by a type specified
+     */
+    Collection<Program> get( OrganisationUnit organisationUnit );
+
+    /**
+     * Get {@link Program} assigned to an {@link OrganisationUnit} by a type
+     *
+     * @param type    The type of program. There are three types, include Multi
+     *                events with registration, Single event with registration and
+     *                Single event without registration
+     * @param orgunit Where programs assigned
+     * @return Program list by a type specified
+     */
     Collection<Program> get( int type, OrganisationUnit orgunit );
 
+    /**
+     * Get {@link Program} by the current user.
+     *
+     * @return The program list the current user
+     */
     Collection<Program> getByCurrentUser();
 
+    /**
+     * Get {@link Program} by the current user and a certain type
+     *
+     * @param type The type of program. There are three types, include Multi
+     *             events with registration, Single event with registration and
+     *             Single event without registration.
+     * @return Program list by a type specified
+     */
     Collection<Program> getByCurrentUser( int type );
-    
-    Collection<Program> getProgramsByDisplayOnAllOrgunit( boolean displayOnAllOrgunit, OrganisationUnit orgunit  );
+
+    /**
+     * Get {@link Program} which are displayed on all {@link OrganisationUnit}
+     * for searching or enrolling a person
+     *
+     * @param displayOnAllOrgunit Optional flag to specify programs can
+     *                            displayed for searching or enrolling (<code>true</code> ) or
+     *                            cannot be used on the orgunit (<code>false</code>) instances.
+     * @param orgunit             {@link OrganisationUnit}
+     * @return Program list
+     */
+    Collection<Program> getProgramsByDisplayOnAllOrgunit( boolean displayOnAllOrgunit, OrganisationUnit orgunit );
+
+    /**
+     * Get {@link Program} by TrackedEntity
+     *
+     * @param trackedEntity {@link TrackedEntity}
+     */
+    Collection<Program> getByTrackedEntity( TrackedEntity trackedEntity );
+
 }

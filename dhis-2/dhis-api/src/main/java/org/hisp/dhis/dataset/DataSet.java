@@ -1,19 +1,20 @@
 package org.hisp.dhis.dataset;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,6 +35,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import org.hisp.dhis.attribute.AttributeValue;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.BaseNameableObject;
 import org.hisp.dhis.common.DxfNamespaces;
@@ -43,10 +45,16 @@ import org.hisp.dhis.common.adapter.JacksonPeriodTypeSerializer;
 import org.hisp.dhis.common.annotation.Scanned;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
+import org.hisp.dhis.common.view.WithoutOrganisationUnitsView;
+import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataelement.DataElementCategory;
+import org.hisp.dhis.dataelement.DataElementCategoryCombo;
+import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataelement.DataElementOperand;
 import org.hisp.dhis.dataentryform.DataEntryForm;
 import org.hisp.dhis.indicator.Indicator;
+import org.hisp.dhis.mapping.MapLegendSet;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.period.PeriodType;
@@ -118,6 +126,11 @@ public class DataSet
     private Set<Section> sections = new HashSet<Section>();
 
     /**
+     * The CategoryCombo used for data attributes.
+     */
+    private DataElementCategoryCombo categoryCombo;
+
+    /**
      * Indicating position in the custom sort order.
      */
     private Integer sortOrder;
@@ -144,6 +157,11 @@ public class DataSet
     private int expiryDays;
 
     /**
+     * Days after period end to qualify for timely data submission
+     */
+    private int timelyDays;
+
+    /**
      * Indicating whether aggregation should be skipped.
      */
     private boolean skipAggregation;
@@ -159,6 +177,16 @@ public class DataSet
      * notification.
      */
     private boolean notifyCompletingUser;
+
+    /**
+     * Indicating whether to approve data for this data set.
+     */
+    private boolean approveData;
+
+    /**
+     * Set of the dynamic attributes values that belong to this data element.
+     */
+    private Set<AttributeValue> attributeValues = new HashSet<AttributeValue>();
 
     // -------------------------------------------------------------------------
     // Form properties
@@ -182,10 +210,21 @@ public class DataSet
     private boolean validCompleteOnly;
 
     /**
+     * Property indicating whether a comment is required for all fields in a form
+     * which are not entered, including false for boolean values.
+     */
+    private boolean noValueRequiresComment;
+
+    /**
      * Property indicating whether offline storage is enabled for this dataSet
      * or not
      */
     private boolean skipOffline;
+
+    /**
+     * Property indicating whether it should enable data elements decoration in forms.
+     */
+    private boolean dataElementDecoration;
 
     /**
      * Render default and section forms with tabs instead of multiple sections in one page
@@ -197,38 +236,42 @@ public class DataSet
      */
     private boolean renderHorizontally;
 
+    /**
+     * The legend set for this indicator.
+     */
+    private MapLegendSet legendSet;
+
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
 
     public DataSet()
     {
+        setAutoFields();
     }
 
     public DataSet( String name )
     {
+        this();
         this.name = name;
     }
 
     public DataSet( String name, PeriodType periodType )
     {
-        this.name = name;
+        this( name );
         this.periodType = periodType;
     }
 
     public DataSet( String name, String shortName, PeriodType periodType )
     {
-        this.name = name;
+        this( name, periodType );
         this.shortName = shortName;
-        this.periodType = periodType;
     }
 
     public DataSet( String name, String shortName, String code, PeriodType periodType )
     {
-        this.name = name;
-        this.shortName = shortName;
+        this( name, shortName, periodType );
         this.code = code;
-        this.periodType = periodType;
     }
 
     // -------------------------------------------------------------------------
@@ -241,10 +284,10 @@ public class DataSet
         organisationUnit.getDataSets().add( this );
     }
 
-    public void removeOrganisationUnit( OrganisationUnit organisationUnit )
+    public boolean removeOrganisationUnit( OrganisationUnit organisationUnit )
     {
         sources.remove( organisationUnit );
-        organisationUnit.getDataSets().remove( this );
+        return organisationUnit.getDataSets().remove( this );
     }
 
     public void removeAllOrganisationUnits()
@@ -279,10 +322,10 @@ public class DataSet
         group.getDataSets().add( this );
     }
 
-    public void removeOrganisationUnitGroup( OrganisationUnitGroup group )
+    public boolean removeOrganisationUnitGroup( OrganisationUnitGroup group )
     {
         organisationUnitGroups.remove( group );
-        group.getDataSets().remove( this );
+        return group.getDataSets().remove( this );
     }
 
     public void removeAllOrganisationUnitGroups()
@@ -317,15 +360,10 @@ public class DataSet
         dataElement.getDataSets().add( this );
     }
 
-    public void removeDataElement( DataElement dataElement )
+    public boolean removeDataElement( DataElement dataElement )
     {
         dataElements.remove( dataElement );
-        dataElement.getDataSets().remove( dataElement );
-    }
-
-    public void removeAllDataElements()
-    {
-        dataElements.clear();
+        return dataElement.getDataSets().remove( dataElement );
     }
 
     public void updateDataElements( Set<DataElement> updates )
@@ -350,15 +388,10 @@ public class DataSet
         indicator.getDataSets().add( this );
     }
 
-    public void removeIndicator( Indicator indicator )
+    public boolean removeIndicator( Indicator indicator )
     {
         indicators.remove( indicator );
-        indicator.getDataSets().remove( this );
-    }
-
-    public void removeAllIndicators()
-    {
-        indicators.clear();
+        return indicator.getDataSets().remove( this );
     }
 
     public void addCompulsoryDataElementOperand( DataElementOperand dataElementOperand )
@@ -371,9 +404,22 @@ public class DataSet
         compulsoryDataElementOperands.remove( dataElementOperand );
     }
 
-    public void removeAllCompulsoryDataElementOperands()
+    /**
+     * Returns all organisation units assigned to this data set, including
+     * org units assigned directly and organisation units assigned through groups.
+     */
+    public Set<OrganisationUnit> getAllOrganisationUnits()
     {
-        compulsoryDataElementOperands.clear();
+        Set<OrganisationUnit> units = new HashSet<OrganisationUnit>();
+
+        units.addAll( sources );
+
+        for ( OrganisationUnitGroup group : organisationUnitGroups )
+        {
+            units.addAll( group.getMembers() );
+        }
+
+        return units;
     }
 
     public boolean hasDataEntryForm()
@@ -419,6 +465,37 @@ public class DataSet
         return this;
     }
 
+    /**
+     * Returns a set of category option group sets which are linked to this data
+     * set through its category combination.
+     */
+    public Set<CategoryOptionGroupSet> getCategoryOptionGroupSets()
+    {
+        Set<CategoryOptionGroupSet> groupSets = new HashSet<CategoryOptionGroupSet>();
+
+        if ( categoryCombo != null )
+        {
+            for ( DataElementCategory category : categoryCombo.getCategories() )
+            {
+                for ( DataElementCategoryOption categoryOption : category.getCategoryOptions() )
+                {
+                    groupSets.addAll( categoryOption.getGroupSets() );
+                }
+            }
+        }
+
+        return groupSets;
+    }
+
+    /**
+     * Indicates whether this data set has a category combination which is different
+     * from the default category combination.
+     */
+    public boolean hasCategoryCombo()
+    {
+        return categoryCombo != null && !DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME.equals( categoryCombo.getName() );
+    }
+
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
@@ -432,7 +509,7 @@ public class DataSet
     @JsonProperty
     @JsonSerialize( using = JacksonPeriodTypeSerializer.class )
     @JsonDeserialize( using = JacksonPeriodTypeDeserializer.class )
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public PeriodType getPeriodType()
     {
@@ -445,7 +522,7 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public DataEntryForm getDataEntryForm()
     {
@@ -459,7 +536,7 @@ public class DataSet
 
     @JsonProperty
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlElementWrapper( localName = "dataElements", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "dataElement", namespace = DxfNamespaces.DXF_2_0 )
     public Set<DataElement> getDataElements()
@@ -474,7 +551,7 @@ public class DataSet
 
     @JsonProperty
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlElementWrapper( localName = "indicators", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "indicator", namespace = DxfNamespaces.DXF_2_0 )
     public Set<Indicator> getIndicators()
@@ -488,7 +565,7 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlElementWrapper( localName = "compulsoryDataElementOperands", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "compulsoryDataElementOperand", namespace = DxfNamespaces.DXF_2_0 )
     public Set<DataElementOperand> getCompulsoryDataElementOperands()
@@ -518,7 +595,7 @@ public class DataSet
 
     @JsonProperty( value = "organisationUnitGroups" )
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlElementWrapper( localName = "organisationUnitGroups", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "organisationUnitGroup", namespace = DxfNamespaces.DXF_2_0 )
     public Set<OrganisationUnitGroup> getOrganisationUnitGroups()
@@ -543,7 +620,7 @@ public class DataSet
 
     @JsonProperty
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( { DetailedView.class } )
+    @JsonView( { DetailedView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlElementWrapper( localName = "sections", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "section", namespace = DxfNamespaces.DXF_2_0 )
     public Set<Section> getSections()
@@ -557,7 +634,21 @@ public class DataSet
     }
 
     @JsonProperty
+    @JsonSerialize( as = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public DataElementCategoryCombo getCategoryCombo()
+    {
+        return categoryCombo;
+    }
+
+    public void setCategoryCombo( DataElementCategoryCombo categoryCombo )
+    {
+        this.categoryCombo = categoryCombo;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isMobile()
     {
@@ -570,7 +661,7 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Integer getVersion()
     {
@@ -583,7 +674,7 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public int getExpiryDays()
     {
@@ -596,7 +687,20 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public int getTimelyDays()
+    {
+        return timelyDays;
+    }
+
+    public void setTimelyDays( int timelyDays )
+    {
+        this.timelyDays = timelyDays;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isSkipAggregation()
     {
@@ -609,7 +713,7 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public UserGroup getNotificationRecipients()
     {
@@ -622,7 +726,7 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isNotifyCompletingUser()
     {
@@ -632,6 +736,33 @@ public class DataSet
     public void setNotifyCompletingUser( boolean notifyCompletingUser )
     {
         this.notifyCompletingUser = notifyCompletingUser;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isApproveData()
+    {
+        return approveData;
+    }
+
+    public void setApproveData( boolean approveData )
+    {
+        this.approveData = approveData;
+    }
+
+    @JsonProperty( value = "attributeValues" )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "attributeValues", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "attributeValue", namespace = DxfNamespaces.DXF_2_0 )
+    public Set<AttributeValue> getAttributeValues()
+    {
+        return attributeValues;
+    }
+
+    public void setAttributeValues( Set<AttributeValue> attributeValues )
+    {
+        this.attributeValues = attributeValues;
     }
 
     @JsonProperty
@@ -648,7 +779,7 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isFieldCombinationRequired()
     {
@@ -661,7 +792,7 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isValidCompleteOnly()
     {
@@ -674,7 +805,20 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isNoValueRequiresComment()
+    {
+        return noValueRequiresComment;
+    }
+
+    public void setNoValueRequiresComment( boolean noValueRequiresComment )
+    {
+        this.noValueRequiresComment = noValueRequiresComment;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isSkipOffline()
     {
@@ -687,7 +831,7 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isRenderAsTabs()
     {
@@ -700,7 +844,7 @@ public class DataSet
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isRenderHorizontally()
     {
@@ -710,6 +854,33 @@ public class DataSet
     public void setRenderHorizontally( boolean renderHorizontally )
     {
         this.renderHorizontally = renderHorizontally;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isDataElementDecoration()
+    {
+        return dataElementDecoration;
+    }
+
+    public void setDataElementDecoration( boolean dataElementDecoration )
+    {
+        this.dataElementDecoration = dataElementDecoration;
+    }
+
+    @JsonProperty
+    @JsonSerialize( as = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public MapLegendSet getLegendSet()
+    {
+        return legendSet;
+    }
+
+    public void setLegendSet( MapLegendSet legendSet )
+    {
+        this.legendSet = legendSet;
     }
 
     @Override
@@ -734,22 +905,26 @@ public class DataSet
             skipOffline = dataSet.isSkipOffline();
             renderAsTabs = dataSet.isRenderAsTabs();
             renderHorizontally = dataSet.isRenderHorizontally();
+            legendSet = dataSet.getLegendSet() == null ? legendSet : dataSet.getLegendSet();
 
-            removeAllDataElements();
+            dataElementDecoration = dataSet.isDataElementDecoration();
+            notificationRecipients = dataSet.getNotificationRecipients();
+
+            dataElements.clear();
 
             for ( DataElement dataElement : dataSet.getDataElements() )
             {
                 addDataElement( dataElement );
             }
 
-            removeAllIndicators();
+            indicators.clear();
 
             for ( Indicator indicator : dataSet.getIndicators() )
             {
                 addIndicator( indicator );
             }
 
-            removeAllCompulsoryDataElementOperands();
+            compulsoryDataElementOperands.clear();
 
             for ( DataElementOperand dataElementOperand : dataSet.getCompulsoryDataElementOperands() )
             {
@@ -762,6 +937,9 @@ public class DataSet
             {
                 addOrganisationUnit( organisationUnit );
             }
+
+            attributeValues.clear();
+            attributeValues.addAll( dataSet.getAttributeValues() );
         }
     }
 }

@@ -1,19 +1,20 @@
 package org.hisp.dhis.resourcetable;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,6 +30,7 @@ package org.hisp.dhis.resourcetable;
 
 import java.util.List;
 
+import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementGroupSet;
 import org.hisp.dhis.indicator.IndicatorGroupSet;
@@ -45,6 +47,7 @@ public interface ResourceTableStore
     final String TABLE_NAME_ORGANISATION_UNIT_STRUCTURE = "_orgunitstructure";
     final String TABLE_NAME_DATA_ELEMENT_STRUCTURE = "_dataelementstructure";
     final String TABLE_NAME_PERIOD_STRUCTURE = "_periodstructure";
+    final String TABLE_NAME_DATE_PERIOD_STRUCTURE = "_dateperiodstructure";
     final String TABLE_NAME_DATA_ELEMENT_CATEGORY_OPTION_COMBO = "_dataelementcategoryoptioncombo";
     
     /**
@@ -67,11 +70,20 @@ public interface ResourceTableStore
     void createDataElementCategoryOptionComboName();
     
     /**
+     * Creates a table.
+     * 
+     * @param groupSets the group sets.
+     */
+    void createCategoryOptionGroupSetStructure( List<CategoryOptionGroupSet> groupSets );
+    
+    /**
      * Creates table.
      * 
      * @param groupSets the group sets.
      */
     void createDataElementGroupSetStructure( List<DataElementGroupSet> groupSets );
+    
+    void populateDataElementGroupSetStructure( List<DataElementGroupSet> groupSets );
 
     /**
      * Creates table.
@@ -80,12 +92,16 @@ public interface ResourceTableStore
      */
     void createIndicatorGroupSetStructure( List<IndicatorGroupSet> groupSets );
     
+    void populateIndicatorGroupSetStructure( List<IndicatorGroupSet> groupSets );
+    
     /**
      * Creates table.
      * 
      * @param groupSets the group sets.
      */
     void createOrganisationUnitGroupSetStructure( List<OrganisationUnitGroupSet> groupSets );
+    
+    void populateOrganisationUnitGroupSetStructure( List<OrganisationUnitGroupSet> groupSets );
     
     /**
      * Creates table.
@@ -98,6 +114,11 @@ public interface ResourceTableStore
      * Creates table.
      */
     void createDataElementStructure();
+
+    /**
+     * Creates table.
+     */
+    void createDatePeriodStructure();
     
     /**
      * Creates table.

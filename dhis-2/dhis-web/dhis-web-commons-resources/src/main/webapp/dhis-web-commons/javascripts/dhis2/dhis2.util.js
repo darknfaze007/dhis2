@@ -1,17 +1,20 @@
+"use strict";
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2013, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -35,120 +38,160 @@ dhis2['util'] = dhis2['util'] || {};
  *
  * @returns {object} Namespace object
  */
-dhis2.util.namespace = function ( path ) {
-    var parts = path.split( '.' );
-    var parent = window;
-    var currentPart = '';
+dhis2.util.namespace = function( path ) {
+  var parts = path.split('.');
+  var parent = window;
+  var currentPart = '';
 
-    for ( var i = 0, length = parts.length; i < length; i++ ) {
-        currentPart = parts[i];
-        parent[currentPart] = parent[currentPart] || {};
-        parent = parent[currentPart];
-    }
+  for( var i = 0, length = parts.length; i < length; i++ ) {
+    currentPart = parts[i];
+    parent[currentPart] = parent[currentPart] || {};
+    parent = parent[currentPart];
+  }
 
-    return parent;
+  return parent;
 };
 
 /**
  * Escape function for regular expressions.
  */
-dhis2.util.escape = function ( text ) {
-    return text.replace( /[-[\]{}()*+?.,\/\\^$|#\s]/g, "\\$&" );
+dhis2.util.escape = function( text ) {
+  return text.replace(/[-[\]{}()*+?.,\/\\^$|#\s]/g, "\\$&");
 };
 
 /**
  * jQuery cannot correctly filter strings with () in them, so here is a fix
  * until jQuery gets updated.
  */
-dhis2.util.jqTextFilterCaseSensitive = function ( key, not ) {
-    key = dhis2.util.escape( key );
-    not = not || false;
+dhis2.util.jqTextFilterCaseSensitive = function( key, not ) {
+  key = dhis2.util.escape(key);
+  not = not || false;
 
-    if ( not ) {
-        return function ( i, el ) {
-            return !!!$( el ).text().match( "" + key );
-        };
-    }
-    else {
-        return function ( i, el ) {
-            return !!$( el ).text().match( "" + key );
-        };
-    }
-};
-
-dhis2.util.jqTextFilter = function ( key, not ) {
-    key = dhis2.util.escape( key ).toLowerCase();
-    not = not || false;
-
-    if ( not ) {
-        return function ( i, el ) {
-            return !!!$( el ).text().toLowerCase().match( "" + key );
-        };
-    }
-    else {
-        return function ( i, el ) {
-            return !!$( el ).text().toLowerCase().match( "" + key );
-        };
-    }
-};
-
-dhis2.util.uuid = function () {
-    var S4 = function () {
-        return (((1 + Math.random()) * 0x10000) | 0).toString( 16 ).substring( 1 );
+  if( not ) {
+    return function( i, el ) {
+      return !!!$(el).text().match("" + key);
     };
+  }
+  else {
+    return function( i, el ) {
+      return !!$(el).text().match("" + key);
+    };
+  }
+};
 
-    return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
-}
+dhis2.util.jqTextFilter = function( key, not ) {
+  key = dhis2.util.escape(key).toLowerCase();
+  not = not || false;
+
+  if( not ) {
+    return function( i, el ) {
+      return !!!$(el).text().toLowerCase().match("" + key);
+    };
+  }
+  else {
+    return function( i, el ) {
+      return !!$(el).text().toLowerCase().match("" + key);
+    };
+  }
+};
+
+dhis2.util.uuid = function() {
+  var S4 = function() {
+    return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+  };
+
+  return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
+};
+
+/**
+ * Normalizes an argument object returned from a jQuery promise. If the argument
+ * is undefined, not an array or an empty array, undefined is returned. If the
+ * argument is a single promise object, the object is wrapped in an array. If the
+ * argument is an array of promise objects, the array is returned unmodified.
+ */
+dhis2.util.normalizeArguments = function( args ) {
+  if( !args || !args.length || !args[0] ) {
+    return undefined;
+  }
+
+  if( $.isArray(args[0]) ) {
+    return args;
+  }
+  else {
+    var arr = [];
+    arr[0] = args;
+    return arr;
+  }
+};
 
 /**
  * adds ':containsNC' to filtering.
  * $(sel).find(':containsNC(key)').doSomething();
  */
-$.expr[":"].containsNC = function ( a, i, m, r ) {
-    var search = dhis2.util.escape( m[3] );
-    return jQuery( a ).text().toUpperCase().indexOf( m[search].toUpperCase() ) >= 0;
+$.expr[":"].containsNC = function( a, i, m, r ) {
+  var search = dhis2.util.escape(m[3]);
+  return jQuery(a).text().toUpperCase().indexOf(m[search].toUpperCase()) >= 0;
 };
 
 /**
  * adds ':regex' to filtering, use to filter by regular expression
  */
-$.expr[":"].regex = function ( a, i, m, r ) {
-    var re = new RegExp( m[3], 'i' );
-    return re.test( jQuery( a ).text() );
+$.expr[":"].regex = function( a, i, m, r ) {
+  var re = new RegExp(m[3], 'i');
+  return re.test(jQuery(a).text());
 };
 
 /**
  * adds ':regex' to filtering, use to filter by regular expression
- *
  * (this is the case sensitive version)
  */
-$.expr[":"].regexCS = function ( a, i, m, r ) {
-    var re = new RegExp( m[3] );
-    return re.test( jQuery( a ).text() );
+$.expr[":"].regexCS = function( a, i, m, r ) {
+  var re = new RegExp(m[3]);
+  return re.test(jQuery(a).text());
 };
 
 /**
  * Returns an array of the keys in a given object. Will use ES5 Object.keys() if
  * available, if not it will provide a pure javascript implementation.
- *
  * @returns array of keys
  */
-if ( !Object.keys ) {
-    Object.keys = function ( obj ) {
-        var keys = new Array();
-        for ( k in obj )
-            if ( obj.hasOwnProperty( k ) )
-                keys.push( k );
-        return keys;
-    };
+if( !Object.keys ) {
+  Object.keys = function( obj ) {
+    var keys = [];
+    for( var k in obj )
+      if( obj.hasOwnProperty(k) )
+        keys.push(k);
+    return keys;
+  };
 }
 
-/**
- * Define a window.log object, and output to console.log if it exists. (this is
- * a fix for IE8 and FF 3.6).
- */
-window.log = function ( str ) {
-    if ( this.console ) {
-        console.log( str );
+// http://stackoverflow.com/questions/3326650/console-is-undefined-error-for-internet-explorer
+(function() {
+  var method;
+  var noop = function() {
+  };
+
+  var methods = [
+    'assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error',
+    'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'log',
+    'markTimeline', 'profile', 'profileEnd', 'table', 'time', 'timeEnd',
+    'timeStamp', 'trace', 'warn'
+  ];
+
+  var length = methods.length;
+  var console = (window.console = window.console || {});
+
+  while( length-- ) {
+    method = methods[length];
+
+    // Only stub undefined methods.
+    if( !console[method] ) {
+      console[method] = noop;
     }
-};
+  }
+
+  // this shouldn't really be used anymore, but leaving it in for legacy reasons
+  window.log = function( msg ) {
+    console.log(msg);
+  }
+}());

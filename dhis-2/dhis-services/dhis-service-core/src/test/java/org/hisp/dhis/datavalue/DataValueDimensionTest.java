@@ -1,19 +1,20 @@
 package org.hisp.dhis.datavalue;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -36,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.hisp.dhis.DhisSpringTest;
+import org.hisp.dhis.DhisTest;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
@@ -52,10 +53,9 @@ import org.junit.Test;
 
 /**
  * @author Lars Helge Overland
- * @version $Id$
  */
 public class DataValueDimensionTest
-    extends DhisSpringTest
+    extends DhisTest
 {
     private DataElementCategoryOption male;
     private DataElementCategoryOption female;
@@ -66,6 +66,8 @@ public class DataValueDimensionTest
     private DataElementCategory ageGroup;
     
     private DataElementCategoryCombo genderAndAgeGroup;
+    
+    private DataElementCategoryOptionCombo defaultOptionCombo;
     
     private DataElement dataElementA;
     
@@ -81,6 +83,7 @@ public class DataValueDimensionTest
         dataValueService = (DataValueService) getBean( DataValueService.ID );
         periodService = (PeriodService) getBean( PeriodService.ID );
         organisationUnitService = (OrganisationUnitService) getBean( OrganisationUnitService.ID );
+        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
         
         male = new DataElementCategoryOption( "Male" );
         female = new DataElementCategoryOption( "Female" );
@@ -123,10 +126,18 @@ public class DataValueDimensionTest
         
         organisationUnitService.addOrganisationUnit( sourceA );
         
+        defaultOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
+        
         for ( DataElementCategoryOptionCombo categoryOptionCombo : genderAndAgeGroup.getOptionCombos() )
         {
-            dataValueService.addDataValue( createDataValue( dataElementA, periodA, sourceA, "10", categoryOptionCombo ) );
+            dataValueService.addDataValue( createDataValue( dataElementA, periodA, sourceA, "10", categoryOptionCombo, defaultOptionCombo ) );
         }
+    }
+    
+    @Override
+    public boolean emptyDatabaseAfterTest()
+    {
+        return true;
     }
     
     @Test
@@ -138,7 +149,7 @@ public class DataValueDimensionTest
         
         DataElementCategoryOptionCombo categoryOptionCombo = categoryService.getDataElementCategoryOptionCombo( categoryOptions );
         
-        DataValue dataValue = dataValueService.getDataValue( sourceA, dataElementA, periodA, categoryOptionCombo );
+        DataValue dataValue = dataValueService.getDataValue( dataElementA, periodA, sourceA, categoryOptionCombo );
         
         assertNotNull( dataValue );
     }

@@ -1,19 +1,20 @@
 package org.hisp.dhis.oum.action.organisationunitgroupset;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,13 +30,16 @@ package org.hisp.dhis.oum.action.organisationunitgroupset;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.hisp.dhis.attribute.AttributeService;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 
 import com.opensymphony.xwork2.Action;
+import org.hisp.dhis.system.util.AttributeUtils;
 
 /**
  * @author Lars Helge Overland
@@ -53,6 +57,13 @@ public class AddGroupSetAction
     public void setOrganisationUnitGroupService( OrganisationUnitGroupService organisationUnitGroupService )
     {
         this.organisationUnitGroupService = organisationUnitGroupService;
+    }
+
+    private AttributeService attributeService;
+
+    public void setAttributeService( AttributeService attributeService )
+    {
+        this.attributeService = attributeService;
     }
 
     // -------------------------------------------------------------------------
@@ -80,11 +91,25 @@ public class AddGroupSetAction
         this.compulsory = compulsory;
     }
 
+    private boolean dataDimension;
+
+    public void setDataDimension( boolean dataDimension )
+    {
+        this.dataDimension = dataDimension;
+    }
+
     private Collection<String> selectedGroups;
 
     public void setSelectedGroups( Collection<String> selectedGroups )
     {
         this.selectedGroups = selectedGroups;
+    }
+
+    private List<String> jsonAttributeValues;
+
+    public void setJsonAttributeValues( List<String> jsonAttributeValues )
+    {
+        this.jsonAttributeValues = jsonAttributeValues;
     }
 
     // -------------------------------------------------------------------------
@@ -94,7 +119,7 @@ public class AddGroupSetAction
     public String execute()
         throws Exception
     {
-        OrganisationUnitGroupSet groupSet = new OrganisationUnitGroupSet( name, description, compulsory );
+        OrganisationUnitGroupSet groupSet = new OrganisationUnitGroupSet( name, description, compulsory, dataDimension );
 
         Set<OrganisationUnitGroup> selectedMembers = new HashSet<OrganisationUnitGroup>();
 
@@ -104,6 +129,12 @@ public class AddGroupSetAction
             {
                 selectedMembers.add( organisationUnitGroupService.getOrganisationUnitGroup( Integer.parseInt( groupId ) ) );
             }
+        }
+
+        if ( jsonAttributeValues != null )
+        {
+            AttributeUtils.updateAttributeValuesFromJson( groupSet.getAttributeValues(),
+                jsonAttributeValues, attributeService );
         }
 
         groupSet.setOrganisationUnitGroups( selectedMembers );

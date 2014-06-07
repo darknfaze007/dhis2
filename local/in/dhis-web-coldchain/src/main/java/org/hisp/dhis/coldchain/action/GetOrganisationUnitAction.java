@@ -28,16 +28,36 @@ public class GetOrganisationUnitAction implements Action
         return message;
     }
     
+    private String orgunitId;
+    
+    public String getOrgunitId()
+    {
+        return orgunitId;
+    }
+
+    public void setOrgunitId( String orgunitId )
+    {
+        this.orgunitId = orgunitId;
+    }
+    
+    /*
     private Integer orgunitId;
 
     public void setOrgunitId( Integer orgunitId )
     {
         this.orgunitId = orgunitId;
     }
-
+    
+    public Integer getOrgunitId()
+    {
+        return orgunitId;
+    }
+    */
+    
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
+
 
     public String execute() throws Exception
     {

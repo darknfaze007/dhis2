@@ -1,19 +1,20 @@
 package org.hisp.dhis.sms.outcoming;
 
 /*
- * Copyright (c) 2004-2013, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,34 +28,35 @@ package org.hisp.dhis.sms.outcoming;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.opensymphony.xwork2.Action;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.annotate.JsonMethod;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.hisp.dhis.i18n.I18n;
-import org.hisp.dhis.message.MessageSender;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.oust.manager.SelectionTreeManager;
-import org.hisp.dhis.patient.Patient;
-import org.hisp.dhis.patient.PatientService;
+import org.hisp.dhis.scheduling.TaskCategory;
+import org.hisp.dhis.scheduling.TaskId;
 import org.hisp.dhis.sms.outbound.OutboundSmsTransportService;
+import org.hisp.dhis.sms.task.SendSmsTask;
+import org.hisp.dhis.system.notification.Notifier;
+import org.hisp.dhis.system.scheduling.Scheduler;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserGroup;
 import org.hisp.dhis.user.UserGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opensymphony.xwork2.Action;
 
 /**
  * @author Dang Duy Hieu
- * @version $Id$
  */
 public class ProcessingSendSMSAction
     implements Action
@@ -70,20 +72,19 @@ public class ProcessingSendSMSAction
     private CurrentUserService currentUserService;
 
     @Autowired
-    private PatientService patientService;
-
-    @Autowired
     private UserGroupService userGroupService;
 
     @Autowired
     private OutboundSmsTransportService transportService;
+    
+    @Autowired
+    private Scheduler scheduler;
 
-    private MessageSender messageSender;
+    @Autowired
+    private Notifier notifier;
 
-    public void setMessageSender( MessageSender messageSender )
-    {
-        this.messageSender = messageSender;
-    }
+    @Autowired
+    private SendSmsTask sendSmsTask;
 
     // -------------------------------------------------------------------------
     // Input & Output
@@ -103,11 +104,11 @@ public class ProcessingSendSMSAction
         this.smsSubject = smsSubject;
     }
 
-    private String smsMessage;
+    private String text;
 
-    public void setSmsMessage( String smsMessage )
+    public void setText( String text )
     {
-        this.smsMessage = smsMessage;
+        this.text = text;
     }
 
     private String sendTarget;
@@ -153,8 +154,9 @@ public class ProcessingSendSMSAction
     // Action Implementation
     // -------------------------------------------------------------------------
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings( "unchecked" )
     public String execute()
+        throws Exception
     {
         gatewayId = transportService.getDefaultGateway();
 
@@ -165,7 +167,7 @@ public class ProcessingSendSMSAction
             return ERROR;
         }
 
-        if ( smsMessage == null || smsMessage.trim().length() == 0 )
+        if ( text == null || text.trim().length() == 0 )
         {
             message = i18n.getString( "no_message" );
 
@@ -174,38 +176,30 @@ public class ProcessingSendSMSAction
 
         User currentUser = currentUserService.getCurrentUser();
 
-        Set<User> recipientsList = new HashSet<User>();
+        List<User> recipientsList = new ArrayList<User>();
+
+        // Set<User> recipientsList = new HashSet<User>();
 
         if ( sendTarget != null && sendTarget.equals( "phone" ) )
         {
-            try
-            {
-                ObjectMapper mapper = new ObjectMapper().setVisibility( JsonMethod.FIELD, Visibility.ANY );
-                mapper.configure( DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false );
-                recipients = mapper.readValue( recipients.iterator().next(), Set.class );
+            ObjectMapper mapper = new ObjectMapper().setVisibility( PropertyAccessor.FIELD,
+                JsonAutoDetect.Visibility.ANY );
+            mapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
+            recipients = mapper.readValue( recipients.iterator().next(), Set.class );
 
-                for ( String each : recipients )
+            for ( String each : recipients )
+            {
+                if ( !each.startsWith( "+" ) )
                 {
-                    User user = new User();
-                    user.setPhoneNumber( each );
-                    recipientsList.add( user );
+                    each = "+" + each;
                 }
-            }
-            catch ( JsonParseException e )
-            {
-                e.printStackTrace();
-            }
-            catch ( JsonMappingException e )
-            {
-                e.printStackTrace();
-            }
-            catch ( IOException e )
-            {
-                e.printStackTrace();
-            }
-            //message = messageSender.sendMessage( smsSubject, smsMessage, currentUser, true, recipients, gatewayId );
-            message = messageSender.sendMessage( smsSubject, smsMessage, currentUser, recipientsList, false );
 
+                User user = new User();
+                user.setPhoneNumber( each );
+                recipientsList.add( user );
+            }
+            // message = messageSender.sendMessage( smsSubject, smsMessage,
+            // currentUser, true, recipients, gatewayId );
         }
         else if ( sendTarget.equals( "userGroup" ) )
         {
@@ -225,8 +219,7 @@ public class ProcessingSendSMSAction
                 return ERROR;
             }
 
-            //message = messageSender.sendMessage( smsSubject, smsMessage, currentUser, false, group.getMembers(), gatewayId );
-            message = messageSender.sendMessage( smsSubject, smsMessage, currentUser, group.getMembers(), false );
+            recipientsList = new ArrayList<User>( group.getMembers());
         }
         else if ( sendTarget.equals( "user" ) )
         {
@@ -234,15 +227,11 @@ public class ProcessingSendSMSAction
 
             if ( units != null && !units.isEmpty() )
             {
-                //Set<User> users = new HashSet<User>();
-
                 for ( OrganisationUnit unit : units )
                 {
-                    //users.addAll( unit.getUsers() );
                     recipientsList.addAll( unit.getUsers() );
                 }
 
-                //if ( users.isEmpty() )
                 if ( recipientsList.isEmpty() )
                 {
                     message = i18n.getString( "there_is_no_user_assigned_to_selected_units" );
@@ -250,8 +239,8 @@ public class ProcessingSendSMSAction
                     return ERROR;
                 }
 
-                //message = messageSender.sendMessage( smsSubject, smsMessage, currentUser, false, users, gatewayId );
-                message = messageSender.sendMessage( smsSubject, smsMessage, currentUser, recipientsList, false );
+                // message = messageSender.sendMessage( smsSubject, smsMessage,
+                // currentUser, false, users, gatewayId );
             }
         }
         else if ( sendTarget.equals( "unit" ) )
@@ -260,7 +249,6 @@ public class ProcessingSendSMSAction
             {
                 if ( unit.getPhoneNumber() != null && !unit.getPhoneNumber().isEmpty() )
                 {
-                    //recipients.add( unit.getPhoneNumber() );
                     User user = new User();
                     user.setPhoneNumber( unit.getPhoneNumber() );
                     recipientsList.add( user );
@@ -273,63 +261,28 @@ public class ProcessingSendSMSAction
 
                 return ERROR;
             }
-
-            //message = messageSender.sendMessage( smsSubject, smsMessage, currentUser, true, recipients, gatewayId );
-            message = messageSender.sendMessage( smsSubject, smsMessage, currentUser, recipientsList, false );
         }
-        else
-        {
-            Patient patient = null;
-            //Set<String> phones = new HashSet<String>();
+        
+        TaskId taskId = new TaskId( TaskCategory.SENDING_SMS, currentUser );
+        notifier.clear( taskId );
 
-            try
-            {
-                ObjectMapper mapper = new ObjectMapper().setVisibility( JsonMethod.FIELD, Visibility.ANY );
-                mapper.configure( DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false );
-
-                recipients = mapper.readValue( recipients.iterator().next(), Set.class );
-            }
-            catch ( JsonParseException e )
-            {
-                e.printStackTrace();
-            }
-            catch ( JsonMappingException e )
-            {
-                e.printStackTrace();
-            }
-            catch ( IOException e )
-            {
-                e.printStackTrace();
-            }
-
-            for ( String patientId : recipients )
-            {
-                patient = patientService.getPatient( Integer.parseInt( patientId ) );
-
-                if ( patient != null && patient.getPhoneNumber() != null && !patient.getPhoneNumber().isEmpty() )
-                {
-                    //phones.add( patient.getPhoneNumber() );
-                    User user = new User();
-                    user.setPhoneNumber( patient.getPhoneNumber() );
-                    recipientsList.add( user );
-                }
-            }
-
-            if ( recipientsList.isEmpty() )
-            {
-                message = i18n.getString( "selected_persons_have_no_phone_number" );
-
-                return ERROR;
-            }
-
-            //message = messageSender.sendMessage( smsSubject, smsMessage, currentUser, true, phones, gatewayId );
-            message = messageSender.sendMessage( smsSubject, smsMessage, currentUser, recipientsList, false );
-        }
+        sendSmsTask.setTaskId( taskId );
+        sendSmsTask.setCurrentUser( currentUser );
+        sendSmsTask.setRecipientsList( recipientsList );
+        sendSmsTask.setSmsSubject( smsSubject );
+        sendSmsTask.setText( text );
+        
+        scheduler.executeTask( sendSmsTask );
 
         if ( message != null && !message.equals( "success" ) )
         {
             message = i18n.getString( message );
-
+            return ERROR;
+        }
+        
+        if ( message == null )
+        {
+            message = "An inter error occurs, please contact your administration";
             return ERROR;
         }
 

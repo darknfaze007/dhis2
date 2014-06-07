@@ -1,19 +1,20 @@
 package org.hisp.dhis.reporttable;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -42,11 +43,12 @@ import java.util.Set;
 
 import org.amplecode.quick.BatchHandler;
 import org.amplecode.quick.BatchHandlerFactory;
-import org.hisp.dhis.DhisTest;
+import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.aggregation.AggregatedDataValue;
 import org.hisp.dhis.aggregation.AggregatedIndicatorValue;
 import org.hisp.dhis.analytics.AnalyticsService;
 import org.hisp.dhis.analytics.data.MockAnalyticsService;
+import org.hisp.dhis.common.BaseAnalyticalObject;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.completeness.DataSetCompletenessResult;
 import org.hisp.dhis.dataelement.DataElement;
@@ -79,7 +81,7 @@ import org.junit.Test;
  * @author Lars Helge Overland
  */
 public class ReportTableGridTest
-    extends DhisTest
+    extends DhisSpringTest
 {
     private ReportTableService reportTableService;
     
@@ -335,12 +337,6 @@ public class ReportTableGridTest
         completenessBatchHandler.addObject( new DataSetCompletenessResult( dataSetIdB, periodIdB, null, unitIdB, null, 100, 18, 18 ) );
         
         completenessBatchHandler.flush();
-    }
-    
-    @Override
-    public boolean emptyDatabaseAfterTest()
-    {
-        return true;
     }
     
     private Set<DataElementCategoryOptionCombo> getSet( DataElementCategoryOptionCombo c )
@@ -920,7 +916,7 @@ public class ReportTableGridTest
         ReportTable reportTable = new ReportTable( "Embezzlement",
             new ArrayList<DataElement>(), indicators, new ArrayList<DataSet>(), periods, units, 
             false, false, true, null, null, "january_2000" );
-        reportTable.setSortOrder( ReportTable.DESC );
+        reportTable.setSortOrder( BaseAnalyticalObject.DESC );
         
         reportTableService.saveReportTable( reportTable );
 

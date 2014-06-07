@@ -1,17 +1,20 @@
+package org.hisp.dhis.caseentry.action.caseentry;
+
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,8 +28,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.hisp.dhis.caseentry.action.caseentry;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,21 +40,23 @@ import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
-import org.hisp.dhis.patient.PatientAttribute;
-import org.hisp.dhis.patient.PatientAttributeGroup;
-import org.hisp.dhis.patient.PatientAttributeGroupService;
-import org.hisp.dhis.patient.PatientAttributeService;
-import org.hisp.dhis.patient.PatientIdentifierType;
-import org.hisp.dhis.patient.PatientIdentifierTypeService;
-import org.hisp.dhis.patient.PatientRegistrationForm;
-import org.hisp.dhis.patient.PatientRegistrationFormService;
-import org.hisp.dhis.patient.comparator.PatientAttributeGroupSortOrderComparator;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramDataEntryService;
 import org.hisp.dhis.program.ProgramService;
 import org.hisp.dhis.program.ProgramStage;
 import org.hisp.dhis.program.ProgramStageDataElement;
+import org.hisp.dhis.program.ProgramTrackedEntityAttribute;
+import org.hisp.dhis.trackedentity.TrackedEntity;
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeGroup;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeGroupService;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeService;
+import org.hisp.dhis.trackedentity.TrackedEntityForm;
+import org.hisp.dhis.trackedentity.TrackedEntityFormService;
+import org.hisp.dhis.trackedentity.TrackedEntityService;
+import org.hisp.dhis.trackedentity.comparator.TrackedEntityAttributeGroupSortOrderComparator;
 import org.hisp.dhis.user.User;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.opensymphony.xwork2.Action;
 
@@ -74,13 +77,6 @@ public class ShowEventWithRegistrationFormAction
         this.selectionManager = selectionManager;
     }
 
-    private PatientIdentifierTypeService patientIdentifierTypeService;
-
-    public void setPatientIdentifierTypeService( PatientIdentifierTypeService patientIdentifierTypeService )
-    {
-        this.patientIdentifierTypeService = patientIdentifierTypeService;
-    }
-
     private ProgramService programService;
 
     public void setProgramService( ProgramService programService )
@@ -88,11 +84,11 @@ public class ShowEventWithRegistrationFormAction
         this.programService = programService;
     }
 
-    private PatientRegistrationFormService patientRegistrationFormService;
+    private TrackedEntityFormService trackedEntityFormService;
 
-    public void setPatientRegistrationFormService( PatientRegistrationFormService patientRegistrationFormService )
+    public void setTrackedEntityFormService( TrackedEntityFormService trackedEntityFormService )
     {
-        this.patientRegistrationFormService = patientRegistrationFormService;
+        this.trackedEntityFormService = trackedEntityFormService;
     }
 
     private ProgramDataEntryService programDataEntryService;
@@ -102,19 +98,22 @@ public class ShowEventWithRegistrationFormAction
         this.programDataEntryService = programDataEntryService;
     }
 
-    private PatientAttributeService attributeService;
+    private TrackedEntityAttributeService attributeService;
 
-    public void setAttributeService( PatientAttributeService attributeService )
+    public void setAttributeService( TrackedEntityAttributeService attributeService )
     {
         this.attributeService = attributeService;
     }
 
-    private PatientAttributeGroupService attributeGroupService;
+    private TrackedEntityAttributeGroupService attributeGroupService;
 
-    public void setAttributeGroupService( PatientAttributeGroupService attributeGroupService )
+    public void setAttributeGroupService( TrackedEntityAttributeGroupService attributeGroupService )
     {
         this.attributeGroupService = attributeGroupService;
     }
+
+    @Autowired
+    private TrackedEntityService trackedEntityService;
 
     private I18n i18n;
 
@@ -134,11 +133,9 @@ public class ShowEventWithRegistrationFormAction
     // Input/Output
     // -------------------------------------------------------------------------
 
-    private Integer programId;
+    private String programId;
 
-    private Collection<PatientAttribute> noGroupAttributes = new HashSet<PatientAttribute>();
-
-    private Collection<PatientIdentifierType> identifierTypes;
+    private Collection<TrackedEntityAttribute> noGroupAttributes = new HashSet<TrackedEntityAttribute>();
 
     private OrganisationUnit organisationUnit;
 
@@ -152,9 +149,44 @@ public class ShowEventWithRegistrationFormAction
 
     private String customRegistrationForm;
 
-    private List<PatientAttributeGroup> attributeGroups;
+    private List<TrackedEntityAttributeGroup> attributeGroups;
 
-    private Map<Integer, Collection<PatientAttribute>> attributeGroupsMap = new HashMap<Integer, Collection<PatientAttribute>>();
+    private Program program;
+
+    private TrackedEntityForm trackedEntityForm;
+
+    public TrackedEntityForm getTrackedEntityForm()
+    {
+        return trackedEntityForm;
+    }
+
+    private List<TrackedEntity> trackedEntities;
+
+    public List<TrackedEntity> getTrackedEntities()
+    {
+        return trackedEntities;
+    }
+
+    private Map<Integer, String> trackedEntityAttributeValueMap = new HashMap<Integer, String>();
+
+    public Map<Integer, String> getTrackedEntityAttributeValueMap()
+    {
+        return trackedEntityAttributeValueMap;
+    }
+
+    private Map<Integer, Boolean> mandatoryMap = new HashMap<Integer, Boolean>();
+
+    public Map<Integer, Boolean> getMandatoryMap()
+    {
+        return mandatoryMap;
+    }
+
+    private Map<String, List<TrackedEntityAttribute>> attributesMap = new HashMap<String, List<TrackedEntityAttribute>>();
+
+    public Map<String, List<TrackedEntityAttribute>> getAttributesMap()
+    {
+        return attributesMap;
+    }
 
     // -------------------------------------------------------------------------
     // Action implementation
@@ -162,52 +194,95 @@ public class ShowEventWithRegistrationFormAction
 
     public String execute()
     {
-        // Get health workers
+        // ---------------------------------------------------------------------
+        // Get registration form
+        // ---------------------------------------------------------------------
+
+        trackedEntities = new ArrayList<TrackedEntity>( trackedEntityService.getAllTrackedEntity() );
+
         organisationUnit = selectionManager.getSelectedOrganisationUnit();
         healthWorkers = organisationUnit.getUsers();
 
-        Program program = programService.getProgram( programId );
-        PatientRegistrationForm patientRegistrationForm = patientRegistrationFormService
-            .getPatientRegistrationForm( program );
-
-        if ( patientRegistrationForm != null )
+        if ( programId == null || programId.isEmpty() )
         {
-            customRegistrationForm = patientRegistrationFormService.prepareDataEntryFormForAdd( patientRegistrationForm
-                .getDataEntryForm().getHtmlCode(), healthWorkers, null, null, i18n, format );
+            trackedEntityForm = trackedEntityFormService.getFormsWithoutProgram();
+
+            if ( trackedEntityForm != null && trackedEntityForm.getDataEntryForm() != null )
+            {
+                customRegistrationForm = trackedEntityFormService.prepareDataEntryFormForAdd( trackedEntityForm
+                    .getDataEntryForm().getHtmlCode(), trackedEntityForm.getProgram(), healthWorkers, null, null, i18n,
+                    format );
+            }
         }
+        else
+        {
+            program = programService.getProgram( programId );
+            trackedEntityForm = trackedEntityFormService.getFormsWithProgram( program );
+
+            if ( trackedEntityForm != null && trackedEntityForm.getDataEntryForm() != null )
+            {
+                customRegistrationForm = trackedEntityFormService.prepareDataEntryFormForAdd( trackedEntityForm
+                    .getDataEntryForm().getHtmlCode(), trackedEntityForm.getProgram(), healthWorkers, null, null, i18n,
+                    format );
+            }
+        }
+
+        List<TrackedEntityAttribute> attributes = new ArrayList<TrackedEntityAttribute>();
 
         if ( customRegistrationForm == null )
         {
-            identifierTypes = patientIdentifierTypeService.getAllPatientIdentifierTypes();
+            attributeGroups = new ArrayList<TrackedEntityAttributeGroup>(
+                attributeGroupService.getAllTrackedEntityAttributeGroups() );
+            Collections.sort( attributeGroups, new TrackedEntityAttributeGroupSortOrderComparator() );
 
-            Collection<PatientAttribute> patientAttributesInProgram = new HashSet<PatientAttribute>();
-            Collection<Program> programs = programService.getAllPrograms();
-            programs.remove( program );
-            for ( Program p : programs )
+            if ( program == null )
             {
-                identifierTypes.removeAll( p.getPatientIdentifierTypes() );
-                patientAttributesInProgram.addAll( p.getPatientAttributes() );
-            }
+                attributes = new ArrayList<TrackedEntityAttribute>(
+                    attributeService.getTrackedEntityAttributesDisplayInList() );
+                Collection<Program> programs = programService.getAllPrograms();
 
-            attributeGroups = new ArrayList<PatientAttributeGroup>(
-                attributeGroupService.getAllPatientAttributeGroups() );
-            Collections.sort( attributeGroups, new PatientAttributeGroupSortOrderComparator() );
-            for ( PatientAttributeGroup attributeGroup : attributeGroups )
-            {
-                List<PatientAttribute> attributes = attributeGroupService.getPatientAttributes( attributeGroup );
-                attributes.removeAll( patientAttributesInProgram );
-
-                if ( attributes.size() > 0 )
+                for ( Program p : programs )
                 {
-                    attributeGroupsMap.put( attributeGroup.getId(), attributes );
+                    attributes.removeAll( p.getAttributes() );
+                }
+
+                for ( TrackedEntityAttribute attribute : attributes )
+                {
+                    mandatoryMap.put( attribute.getId(), false );
+                }
+            }
+            else
+            {
+                attributes = program.getTrackedEntityAttributes();
+                for ( ProgramTrackedEntityAttribute programAttribute : program.getAttributes() )
+                {
+                    mandatoryMap.put( programAttribute.getAttribute().getId(), programAttribute.isMandatory() );
                 }
             }
 
-            noGroupAttributes = attributeService.getPatientAttributesWithoutGroup();
-            noGroupAttributes.removeAll( patientAttributesInProgram );
+            for ( TrackedEntityAttribute attribute : attributes )
+            {
+                TrackedEntityAttributeGroup attributeGroup = attribute.getAttributeGroup();
+                String groupName = (attributeGroup == null) ? "" : attributeGroup.getDisplayName();
+                if ( attributesMap.containsKey( groupName ) )
+                {
+                    List<TrackedEntityAttribute> attrs = attributesMap.get( groupName );
+                    attrs.add( attribute );
+                }
+                else
+                {
+                    List<TrackedEntityAttribute> attrs = new ArrayList<TrackedEntityAttribute>();
+                    attrs.add( attribute );
+                    attributesMap.put( groupName, attrs );
+                }
+            }
+
         }
 
+        // ---------------------------------------------------------------------
         // Get data entry form
+        // ---------------------------------------------------------------------
+
         programStage = program.getProgramStages().iterator().next();
         if ( programStage.getDataEntryForm() != null )
         {
@@ -227,6 +302,11 @@ public class ShowEventWithRegistrationFormAction
     // Getter/Setter
     // -------------------------------------------------------------------------
 
+    public Program getProgram()
+    {
+        return program;
+    }
+
     public Collection<User> getHealthWorkers()
     {
         return healthWorkers;
@@ -237,12 +317,7 @@ public class ShowEventWithRegistrationFormAction
         return customRegistrationForm;
     }
 
-    public Collection<PatientIdentifierType> getIdentifierTypes()
-    {
-        return identifierTypes;
-    }
-
-    public void setProgramId( Integer programId )
+    public void setProgramId( String programId )
     {
         this.programId = programId;
     }
@@ -252,7 +327,7 @@ public class ShowEventWithRegistrationFormAction
         return programStage;
     }
 
-    public Collection<PatientAttribute> getNoGroupAttributes()
+    public Collection<TrackedEntityAttribute> getNoGroupAttributes()
     {
         return noGroupAttributes;
     }
@@ -272,13 +347,9 @@ public class ShowEventWithRegistrationFormAction
         return programStageDataElements;
     }
 
-    public List<PatientAttributeGroup> getAttributeGroups()
+    public List<TrackedEntityAttributeGroup> getAttributeGroups()
     {
         return attributeGroups;
     }
 
-    public Map<Integer, Collection<PatientAttribute>> getAttributeGroupsMap()
-    {
-        return attributeGroupsMap;
-    }
 }

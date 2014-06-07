@@ -1,19 +1,20 @@
 package org.hisp.dhis.mobile.api.model;
 
 /*
- * Copyright (c) 2004-2012, University of Oslo
+ * Copyright (c) 2004-2014, University of Oslo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * * Neither the name of the HISP project nor the names of its contributors may
- *   be used to endorse or promote products derived from this software without
- *   specific prior written permission.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * Neither the name of the HISP project nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -57,6 +58,7 @@ public class OrgUnitsTest
         units.setOrgUnits( Arrays.asList( new MobileOrgUnitLinks[] { unit } ) );
         units.serializeVersion2_10( dos );
         dos.flush();
+
         OrgUnits units2 = new OrgUnits();
         units2.deSerialize( new DataInputStream( new ByteArrayInputStream( baos.toByteArray() ) ) );
         List<MobileOrgUnitLinks> unitList = units2.getOrgUnits();
@@ -70,28 +72,42 @@ public class OrgUnitsTest
 
     private MobileOrgUnitLinks createOrgUnit()
     {
-        MobileOrgUnitLinks unit = new MobileOrgUnitLinks();
+        MobileOrgUnitLinks orgUnit = new MobileOrgUnitLinks();
 
-        unit.setId( 1 );
-        unit.setName( "name" );
-        unit.setDownloadAllUrl( "downloadAllUrl" );
-        unit.setUpdateActivityPlanUrl( "updateActivityPlanUrl" );
-        unit.setUploadFacilityReportUrl( "uploadFacilityReportUrl" );
-        unit.setUploadActivityReportUrl( "uploadActivityReportUrl" );
-        unit.setUpdateDataSetUrl( "updateDataSetUrl" );
-        unit.setChangeUpdateDataSetLangUrl( "changeUpdateDataSetLangUrl" );
-        unit.setSearchUrl( "search" );
-        unit.setUpdateNewVersionUrl( "" );
-        unit.setUpdateContactUrl( "updateContactUrl" );
-        unit.setFindPatientUrl( "findPatientUrl" );
-        unit.setUploadProgramStageUrl( "uploadProgramStageUrl" );
-        unit.setEnrollProgramUrl( "enrollProgramUrl" );
-        unit.setRegisterPersonUrl( "registerPersonUrl" );
-        unit.setGetVariesInfoUrl( "getVariesInfoUrl" );
-        unit.setAddRelationshipUrl( "addRelationshipUrl" );
-        unit.setDownloadAnonymousProgramUrl( "downloadAnonymousProgramUrl" );
-        unit.setFindProgramUrl( "findProgramUrl" );
-        unit.setFindLatestPersonUrl( "findLatestPersonUrl" );
-        return unit;
+        orgUnit.setId( 1 );
+        orgUnit.setName( "name" );
+        orgUnit.setDownloadAllUrl( "all" );
+        orgUnit.setUpdateActivityPlanUrl( "activitiyplan" );
+        orgUnit.setUploadFacilityReportUrl( "dataSets" );
+        orgUnit.setDownloadFacilityReportUrl( "dataSetValue" );
+        orgUnit.setUploadActivityReportUrl( "activities" );
+        orgUnit.setUpdateDataSetUrl( "updateDataSets" );
+        orgUnit.setChangeUpdateDataSetLangUrl( "changeLanguageDataSet" );
+        orgUnit.setSearchUrl( "search" );
+        orgUnit.setUpdateNewVersionUrl( "updateNewVersionUrl" );
+        orgUnit.setSendFeedbackUrl( "sendFeedback" );
+        orgUnit.setFindUserUrl( "findUser" );
+        orgUnit.setSendMessageUrl( "sendMessage" );
+        orgUnit.setDownloadMessageConversationUrl( "downloadMessageConversation" );
+        orgUnit.setGetMessageUrl( "getMessage" );
+        orgUnit.setReplyMessageUrl( "replyMessage" );
+        orgUnit.setUpdateContactUrl( "updateContactForMobile" );
+        orgUnit.setFindPatientUrl( "findPatient" );
+        orgUnit.setRegisterPersonUrl( "registerPerson" );
+        orgUnit.setUploadProgramStageUrl( "uploadProgramStage" );
+        orgUnit.setEnrollProgramUrl( "enrollProgram" );
+        orgUnit.setGetVariesInfoUrl( "getVariesInfo" );
+        orgUnit.setAddRelationshipUrl( "addRelationship" );
+        orgUnit.setDownloadAnonymousProgramUrl( "downloadAnonymousProgram" );
+        orgUnit.setFindProgramUrl( "findProgram" );
+        orgUnit.setFindPatientInAdvancedUrl( "findPatientInAdvanced" );
+        orgUnit.setFindPatientsUrl( "findPatients" );
+        orgUnit.setFindVisitScheduleUrl( "findVisitSchedule" );
+        orgUnit.setFindLostToFollowUpUrl( "findLostToFollowUp" );
+        orgUnit.setHandleLostToFollowUpUrl( "handleLostToFollowUp" );
+        orgUnit.setGenerateRepeatableEventUrl( "generateRepeatableEvent" );
+        orgUnit.setUploadSingleEventWithoutRegistration( "uploadSingleEventWithoutRegistration" );
+
+        return orgUnit;
     }
 }
