@@ -153,6 +153,7 @@ public class TableAlteror
         executeSql( "ALTER TABLE indicator DROP COLUMN alternativename" );
         executeSql( "ALTER TABLE orgunitgroup DROP COLUMN image" );
         executeSql( "ALTER TABLE report DROP COLUMN usingorgunitgroupsets" );
+        executeSql( "ALTER TABLE eventchart DROP COLUMN datatype" );
 
         executeSql( "DROP INDEX datamart_crosstab" );
 
@@ -251,9 +252,6 @@ public class TableAlteror
 
         // update periodType field to ValidationRule
         executeSql( "UPDATE validationrule SET periodtypeid = (SELECT periodtypeid FROM periodtype WHERE name='Monthly') WHERE periodtypeid is null" );
-
-        // update dataelement.domainTypes of which values is null
-        executeSql( "UPDATE dataelement SET domaintype='aggregate' WHERE domaintype is null" );
 
         // set varchar to text
         executeSql( "ALTER TABLE dataelement ALTER description TYPE text" );
@@ -427,6 +425,10 @@ public class TableAlteror
         executeSql( "update organisationunit set haspatients = false where haspatients is null" );
         executeSql( "update dataset set expirydays = 0 where expirydays is null" );
         executeSql( "update expression set nullifblank = true where nullifblank is null" );
+        executeSql( "update eventchart set hidelegend = false where hidelegend is null" );
+        executeSql( "update eventchart set regression = false where regression is null" );
+        executeSql( "update eventchart set hidetitle = false where hidetitle is null" );
+        executeSql( "update eventchart set hidesubtitle = false where hidesubtitle is null" );
 
         // move timelydays from system setting => dataset property
         executeSql( "update dataset set timelydays = 15 where timelydays is null" );
@@ -657,7 +659,6 @@ public class TableAlteror
         executeSql( "UPDATE chart SET publicaccess='--------' WHERE user IS NULL AND publicaccess IS NULL;" );
         executeSql( "UPDATE map SET publicaccess='-------' WHERE user IS NULL AND publicaccess IS NULL;" );
 
-        executeSql( "ALTER TABLE dataelement ALTER COLUMN domaintype SET NOT NULL" );
         executeSql( "update dataelementcategory set datadimension = false where datadimension is null" );
 
         executeSql( "UPDATE dataset SET dataelementdecoration=false WHERE dataelementdecoration is null" );
@@ -724,7 +725,7 @@ public class TableAlteror
         upgradeDataValuesWithAttributeOptionCombo();
         upgradeMapViewsToAnalyticalObject();
         upgradeTranslations();
-
+        
         log.info( "Tables updated" );
     }
 

@@ -23,16 +23,32 @@ h4 {
     font-weight: bold;
 }
 
-div#orgUnitTree 
-{
+div#leftBar {
+	width: 236px;
+}
+
+div#orgUnitTree {
     height: 75%;
 }
+
+.top-bar {
+    font-size: 16pt;
+    font-weight: normal;
+    color: #585D61;
+}
+
+.dashboard-top-bar {
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
 /*----------------------------------------------------------------------------*/
 /* Form
 /*----------------------------------------------------------------------------*/
 
-input[type="button"], input[type="submit"] 
-{
+input[type="button"], input[type="submit"] {
     width: 130px;
 }
 
@@ -40,18 +56,15 @@ input[type="button"], input[type="submit"]
     width: 260px;
 }
 
-input.option
-{
+input.option {
     width: 240px;
 }
 
-.fixed-select-width 
-{
+.fixed-select-width {
     width: 260px;
 }
 
-textarea 
-{
+textarea {
     width: 264px;
 }
 
@@ -59,8 +72,7 @@ textarea
 /* Table
 /*----------------------------------------------------------------------------*/
 
-table 
-{
+table {
     font-size: 13px;
     line-height: 18px;
     margin-bottom: 10px;
@@ -85,27 +97,21 @@ div.actions
 }
 
 /*----------------------------------------------------------------------------*/
-/* Data entry form                                                        */
+/* Data entry form
 /*----------------------------------------------------------------------------*/
 
-.entryScreen
-{
+.entryScreen {
     margin-bottom: 20px;
     width: 100%;
     font-size: 13px; 
     line-height: 18px;
 }
 
-/* --------------------------------------------------------------
-// Dashboard
-// -------------------------------------------------------------- */
+/*----------------------------------------------------------------------------*/
+/* Program-stage-instances
+/*----------------------------------------------------------------------------*/
 
-
-/* --------------------------------------------------------------
-// program-stage-instances
-// -------------------------------------------------------------- */
-
-.data-entry{
+.data-entry {
     overflow: scroll;
 }
 
@@ -114,33 +120,28 @@ div.actions
     width: 10px;
 }
 
-.stage-container
-{
+.stage-container {
     width:100%;
     height:100px;
 }
 
-.stage-flow
-{
+.stage-flow {
     height:100px;
     overflow: scroll;
 }
 
-.table-flow
-{
+.table-flow {
     height:100px;
     overflow-x:hidden;
     overflow-y:hidden;
 }
 
-div.orgunit-object
-{
+div.orgunit-object {
     margin-left: 5px;
     width: 120px;
 }
 
-.align-center
-{
+.align-center {
     text-align: center;
 }
 
@@ -151,12 +152,12 @@ div.orgunit-object
 .clear {
     clear: both;
 }
+
 .inline-block {
     display: inline-block;
 }
 
-.stage-container
-{
+.stage-container {
     display: inline-block;
     width: 135px;
     height: 60px;
@@ -168,8 +169,7 @@ div.orgunit-object
     text-align: center;
 }
 
-.stage-container:hover
-{
+.stage-container:hover {
     border: 2px solid;
 }
 
@@ -189,11 +189,11 @@ div.orgunit-object
     background-color: #ff8a8a;
 }
 
-.current-stage{
+.current-stage {
     border: 2px solid;
 }
 
-.current-stage-color{
+.current-stage-color {
     color: #b94a48;
 }
 
@@ -201,8 +201,7 @@ div.orgunit-object
     display: block;
 }
 
-input.stage-object[type="button"]
-{
+input.stage-object[type="button"] {
     width: 135px;
     height: 60px;
     cursor: pointer;
@@ -212,23 +211,19 @@ input.stage-object[type="button"]
     white-space: normal;
 }
 
-input.stage-object[type="button"]:hover
-{
+input.stage-object[type="button"]:hover {
     border: 5px solid;
 }
 
-input.stage-object-selected[type="button"]
-{
+input.stage-object-selected[type="button"] {
     border: 5px solid;
 }
 
-input.stage-scheduled[type="button"]
-{
+input.stage-scheduled[type="button"] {
     border: 5px solid;
 }
 
-input.entity-instance-object[type="button"]
-{
+input.entity-instance-object[type="button"] {
     width: 130px;
     height: 60px;
     border-color: #bbbbbb;
@@ -239,8 +234,7 @@ input.entity-instance-object[type="button"]
     border-radius: 2px;
 }
 
-input.patient-object[type="button"]
-{
+input.patient-object[type="button"] {
     width: 130px;
     height: 60px;
     border-color: #bbbbbb;
@@ -251,8 +245,7 @@ input.patient-object[type="button"]
     border-radius: 2px;
 }
 
-div.dashboard-history
-{
+div.dashboard-history {
     z-index:100; 
     width:300px; 
     height:200px; 
@@ -271,8 +264,7 @@ div.dashboard-history
 /* Program tracking
 /*----------------------------------------------------------------------------*/
 
-div.link-area-tracking
-{
+div.link-area-tracking {
     display:inline-block;
     border:1px solid #d0d0d0;
     padding-top:1px;
@@ -296,32 +288,30 @@ div.link-area-tracking
     border-color: #aaa;
 }
 
+/*----------------------------------------------------------------------------*/
+/* Capture Coordinates
+/*----------------------------------------------------------------------------*/
 
-/* --------------------------------------------------------------
-// Capture Coordinates
-// -------------------------------------------------------------- */
-
-.coordinates1{
+.coordinates1 {
     width: 110px;
     white-space: normal;
 }
 
-.coordinates2{
+.coordinates2 {
     width: 150px;
 }
 
 
-.commentHeader
-{
+.commentHeader {
     color: #606060;
     font-size: 17px;
     padding: 5px 0;
 }
 
 
-/* --------------------------------------------------------------
-// App - specific
-// -------------------------------------------------------------- */
+/*----------------------------------------------------------------------------*/
+/* App - specific
+/*----------------------------------------------------------------------------*/
 
 .container-heading {
     color: white;
@@ -372,8 +362,7 @@ div.paging a.active
     float: left;
 }
 
-.bordered-div
-{
+.bordered-div {
     border: 1px solid #c2c2c2;
     border-radius: 5px;
     padding: 5px 10px;
@@ -434,13 +423,13 @@ input[type=date]::-webkit-inner-spin-button, input[type=date]::-webkit-outer-spi
     border-top: none;
     background-color: #ebf0f6;
 }
+
 .dhis2-table-striped-border {
     width: 100%;
     border-collapse: collapse;
     cursor: pointer;
     table-layout: fixed;
 }
-
 
 .dhis2-table-striped-border tr th {
     border: 1px solid #cad5e5;
@@ -517,6 +506,10 @@ input[type=date]::-webkit-inner-spin-button, input[type=date]::-webkit-outer-spi
     background-color: #e5e5e5
 }
 
+.radio-label {
+	margin-left: 5px;
+}
+
 /*----------------------------------------------------------------------------*/
 /* Tracked entity
 /*----------------------------------------------------------------------------*/
@@ -557,9 +550,9 @@ input[type=date]::-webkit-inner-spin-button, input[type=date]::-webkit-outer-spi
     margin-bottom: 10px;
 }
 
-.dashboard-element-container {
-    max-height: 250px !important;
-    height: 250px !important;
+.dashboard-widget-container {
+    max-height: 400px !important;
+    height: auto;
     overflow-x:auto;
     overflow-y:auto;
 }
@@ -573,17 +566,21 @@ input[type=date]::-webkit-inner-spin-button, input[type=date]::-webkit-outer-spi
     margin-right: 10px;    
 }
 
+.row-with-margin {
+    padding-left: 30px;
+    padding-right: 30px;
+}
 .vertical-spacing{
     margin-top: 10px;   
     margin-bottom: 10px;
 }
 
 .small-horizonal-spacing{
-    margin-left: 5px;    
+    margin-left: 2px;    
 }
 
 .small-vertical-spacing{
-    margin-top: 5px;    
+    margin-top: 2px;    
 }
 
 .search-container{
@@ -604,6 +601,7 @@ input[type=date]::-webkit-inner-spin-button, input[type=date]::-webkit-outer-spi
     margin-bottom: 5px; 
     margin-top: 5px;
 }
+
 /*----------------------------------------------------------------------------*/
 /* Bootstrap modal style
 /*----------------------------------------------------------------------------*/
@@ -727,12 +725,12 @@ input[type=date]::-webkit-inner-spin-button, input[type=date]::-webkit-outer-spi
     }
 }
 
-input[type=number] {
+.expanded{
     border: 1px solid #aaa;
-    padding: 4px 1px;
+    padding: 6px 12px;
+    font-size: 14px;
 }
-
-input[type=text], input[type=password], textarea {
+input[type=number], input[type=text], input[type=password], textarea {
     border: 1px solid #aaa;
     padding: 6px 12px;
     font-size: 14px;
@@ -811,6 +809,7 @@ input[type=text], input[type=password], textarea {
 .alert {
     padding: 5px;
 }
+
 .input-field {
     border: 1px solid #aaa;
     padding: 4px 1px;
@@ -850,6 +849,26 @@ input[type=text], input[type=password], textarea {
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s
 }
 
+.form-control-program {    
+    width: 40%;
+    height: 34px;
+    padding: 6px 6px;
+    font-size: 14px;
+    line-height: 1.0;
+    color: #555;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    vertical-align: middle;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+    -webkit-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s
+}
+
 .form-control-select2 {
     display: block;
     width: 100%;
@@ -870,7 +889,7 @@ input[type=text], input[type=password], textarea {
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s
 }
 
-.underline{
+.underline {
     text-decoration: underline;
 }
 

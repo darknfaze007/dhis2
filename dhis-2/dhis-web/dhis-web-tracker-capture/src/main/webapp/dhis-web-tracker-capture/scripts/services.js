@@ -15,6 +15,7 @@ var trackerCaptureServices = angular.module('trackerCaptureServices', ['ngResour
         currentStore: store
     };
 })
+
 /* factory for loading logged in user profiles from DHIS2 */
 .factory('CurrentUserProfile', function($http) { 
            
@@ -177,12 +178,30 @@ var trackerCaptureServices = angular.module('trackerCaptureServices', ['ngResour
             });
             return promise;
         },
+        getByEntity: function( entity ){
+            var promise = $http.get(  '../api/enrollments?trackedEntityInstance=' + entity ).then(function(response){
+                return response.data;
+            });
+            return promise;
+        },
+        getByEntityAndProgram: function( entity, program ){
+            var promise = $http.get(  '../api/enrollments?trackedEntityInstance=' + entity + '&program=' + program ).then(function(response){
+                return response.data;
+            });
+            return promise;
+        },
         enroll: function( enrollment ){
             var promise = $http.post(  '../api/enrollments', enrollment ).then(function(response){
                 return response.data;
             });
             return promise;
-        }        
+        },
+        update: function( enrollment){
+            var promise = $http.put( '../api/enrollments/' + enrollment.enrollment , enrollment).then(function(response){
+                return response.data;
+            });
+            return promise;
+        }
     };   
 })
 
@@ -202,6 +221,18 @@ var trackerCaptureServices = angular.module('trackerCaptureServices', ['ngResour
                 });
             });            
             return def.promise;
+        },
+        get: function(uid){            
+            var def = $q.defer();
+            
+            StorageService.currentStore.open().done(function(){
+                StorageService.currentStore.get('trackedEntities', uid).done(function(te){                    
+                    $rootScope.$apply(function(){
+                        def.resolve(te);
+                    });
+                });
+            });                        
+            return def.promise;            
         }
     };
 })
@@ -324,9 +355,13 @@ var trackerCaptureServices = angular.module('trackerCaptureServices', ['ngResour
                 });
 
                 angular.forEach(program.programTrackedEntityAttributes, function(pAttribute){
-                    programAttributes.push(attributes[pAttribute.trackedEntityAttribute.id]);                
+                    var att = attributes[pAttribute.trackedEntityAttribute.id];
+                    att.mandatory = pAttribute.mandatory;
+                    if(pAttribute.displayInList){
+                        att.displayInListNoProgram = true;
+                    }                    
+                    programAttributes.push(att);                
                 });
-                
                 def.resolve(programAttributes);                                  
             });
             return def.promise;    
@@ -380,6 +415,30 @@ var trackerCaptureServices = angular.module('trackerCaptureServices', ['ngResour
             var promise = $http.get( '../api/events.json?' + 'trackedEntityInstance=' + entity + '&orgUnit=' + orgUnit + '&program=' + program + '&paging=false').then(function(response){
                 return response.data.events;
             });            
+            return promise;
+        },
+        get: function(eventUid){            
+            var promise = $http.get('../api/events/' + eventUid + '.json').then(function(response){               
+                return response.data;
+            });            
+            return promise;
+        },        
+        create: function(dhis2Event){    
+            var promise = $http.post('../api/events.json', dhis2Event).then(function(response){
+                return response.data;           
+            });
+            return promise;            
+        },
+        update: function(dhis2Event){   
+            var promise = $http.put('../api/events/' + dhis2Event.event, dhis2Event).then(function(response){
+                return response.data;         
+            });
+            return promise;
+        },        
+        updateForSingleValue: function(singleValue){   
+            var promise = $http.put('../api/events/' + singleValue.event + '/' + singleValue.dataValues[0].dataElement, singleValue ).then(function(response){
+                return response.data;
+            });
             return promise;
         }
     };    

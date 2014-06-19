@@ -220,38 +220,29 @@ function getSearchParams(page) {
 	return params;
 }
 
-// ----------------------------------------------------------------------------
-// Show death field in person re form
-// ----------------------------------------------------------------------------
-
-function isDeathOnChange() {
-	var isDeath = byId('isDead').checked;
-	setFieldValue('deathDate', '');
-	if (isDeath) {
-		showById('deathDateTR');
-	} else {
-		hideById('deathDateTR');
-	}
-}
-
 // ----------------------------------------------------------------
 // Get Params form Div
 // ----------------------------------------------------------------
 
+var phoneNumberAreaCode = "";
 function getParamsForDiv(entityInstanceDiv) {
 	var params = '';
 	var dateOperator = '';
 	$("#" + entityInstanceDiv + " :input").each(function() {
-		var elementId = $(this).attr('id');
-		if ($(this).attr('type') == 'checkbox') {
-			var checked = jQuery(this).attr('checked') ? true : false;
+		var item = jQuery(this);
+		var elementId = item.attr('id');
+		if (item.attr('type') == 'checkbox') {
+			var checked = item.attr('checked') ? true : false;
 			params += elementId + "=" + checked + "&";
 		} else if (elementId == 'dateOperator') {
-			dateOperator = jQuery(this).val();
+			dateOperator = item.val();
 		} else if ($(this).attr('type') != 'button') {
 			var value = "";
-			if (jQuery(this).val() != null && jQuery(this).val() != '') {
-				value = htmlEncode(jQuery(this).val());
+			if (item.val() != null && item.val() != '') {
+				if( (item.attr('phoneNumber')==undefined) 
+						|| ( item.attr('phoneNumber')!=undefined && item.val()!= phoneNumberAreaCode) ){
+					value = htmlEncode(item.val());
+				}
 			}
 			if (dateOperator != '') {
 				value = dateOperator + "'" + value + "'";
@@ -514,10 +505,6 @@ function setSuggestedDueDate(programInstanceId) {
 	$('#dueDateNewEncounter_' + programInstanceId).val(sdate);
 }
 
-function closeDueDateDiv(programInstanceId) {
-	$('#createNewEncounterDiv_' + programInstanceId).dialog('close');
-}
-
 // ------------------------------------------------------
 // Register Irregular-encounter
 // ------------------------------------------------------
@@ -659,7 +646,7 @@ function registerIrregularEncounter(programInstanceId, programStageId,
 						disable('newEncounterBtn_' + programInstanceId);
 					}
 
-					closeDueDateDiv(programInstanceId);
+					$('#createNewEncounterDiv_' + programInstanceId).dialog('close');
 					showSuccessMessage(i18n_create_event_success);
 				});
 	}
@@ -766,7 +753,7 @@ function DateDueSaver(programStageInstanceId_, dueDate_, resultColor_) {
 // Cosmetic UI
 // -----------------------------------------------------------------------------
 function resize() {
-	var width = 400;
+	var width = 500;
 	var w = $(window).width();
 	if ($(".entity-instance-object").length > 1) {
 		width += 150;
@@ -775,7 +762,7 @@ function resize() {
 		width += 150;
 	}
 	$('.stage-flow').each(
-	function() {
+	  function() {
 		var programInstanceId = this.id.split('_')[1];
 		if ($(this).find(".table-flow").outerWidth() > $(this)
 				.width()) {
@@ -994,23 +981,25 @@ function removeDisabledIdentifier() {
 // -----------------------------------------------------------------------------
 // Show representative form
 // -----------------------------------------------------------------------------
+
 function toggleUnderAge(this_) {
 	if ($(this_).is(":checked")) {
 		$('#representativeDiv').dialog('destroy').remove();
 		$('<div id="representativeDiv">').load('showAddRepresentative.action',
-				{}, function() {
-				}).dialog({
-			title : i18n_tracker_associate,
-			maximize : true,
-			closable : true,
-			modal : true,
-			overlay : {
-				background : '#000000',
-				opacity : 0.1
-			},
-			width : 800,
-			height : 450
-		});
+			{
+				related:true
+			}, function() {}).dialog({
+				title : i18n_tracker_associate,
+				maximize : true,
+				closable : true,
+				modal : true,
+				overlay : {
+					background : '#000000',
+					opacity : 0.1
+				},
+				width : 800,
+				height : 450
+			});
 	} else {
 		$("#representativeDiv :input.idfield").each(function() {
 			if ($(this).is(":disabled")) {
@@ -1223,112 +1212,66 @@ function saveEnrollment() {
 		showSuccessMessage(i18n_enrol_success);
 	});
 }
+
 function unenrollmentForm(programInstanceId, status) {
 	var comfirmMessage = i18n_complete_program_confirm_message;
 	if (status == 2)
 		comfirmMessage = i18n_quit_confirm_message;
 	if ( confirm(comfirmMessage) ) {
-	$.ajax({
-								type : "POST",
-					url : 'setProgramInstanceStatus.action',
-					data : "programInstanceId=" + programInstanceId
-							+ "&status=" + status,
-					success : function(json) {
-						var type = $("#tr1_" + programInstanceId).attr('type');
-						var programStageInstanceId = $(
-								"#tr1_" + programInstanceId).attr(
-								'programStageInstanceId');
-						var completed = "<tr id='tr1_"
-								+ programInstanceId
-								+ "' type='"
-								+ type
-								+ "' programStageInstanceId='"
-								+ programStageInstanceId
-								+ "' onclick='javascript:loadActiveProgramStageRecords("
-								+ programInstanceId + ");' >";
-						completed += $('#td_' + programInstanceId).parent()
-								.html()
-								+ "</tr>";
-						var activeEvent2 = $("#tr2_" + programInstanceId);
-						if (activeEvent2.length > 0) {
-							completed += "<tr class='hidden'>"
-									+ activeEvent2.parent().html() + "</tr>";
-						}
-						$('#completedTB').prepend(completed);
-						$('#activeTB [id=tr1_' + programInstanceId + ']')
-								.remove();
-						$('#activeTB [id=tr2_' + programInstanceId + ']')
-								.remove();
-						$("[id=tab-2] :input").prop('disabled', true);
-						$("[id=tab-3] :input").prop('disabled', true);
-						$("[id=tab-4] :input").prop('disabled', true);
-						$("[id=tab-5] :input").prop('disabled', true);
-						$("[id=tab-3] :input").datepicker("destroy");
-						$("#completeProgram").attr('disabled', true);
-						$("#incompleteProgram").attr('disabled', false);
-						// disable remove event icons
-						$('[id=tab-3]').find('img').parent().removeAttr("href");
-						if (status == 1) {
-							showSuccessMessage(i18n_complete_success);
-						} else if (status == 2) {
-							showSuccessMessage(i18n_program_cancelled_success);
-						} else {
-							showSuccessMessage(i18n_program_active_success);
-						}
-					}
-				});
+		$.ajax({
+			type : "POST",
+			url : 'setProgramInstanceStatus.action',
+			data : "programInstanceId=" + programInstanceId + "&status=" + status,
+			success : function(json) {
+				moveToCompleteDiv( programInstanceId, programStageInstanceId );
+				
+				$("[id=tab-2] :input").prop('disabled', true);
+				$("[id=tab-3] :input").prop('disabled', true);
+				$("[id=tab-4] :input").prop('disabled', true);
+				$("[id=tab-5] :input").prop('disabled', true);
+				$("[id=tab-3] :input").datepicker("destroy");
+				$("#completeProgram").attr('disabled', true);
+				$("#incompleteProgram").attr('disabled', false);
+				// disable remove event icons
+				$('[id=tab-3]').find('img').parent().removeAttr("href");
+				if (status == 1) {
+					showSuccessMessage(i18n_complete_success);
+				} else if (status == 2) {
+					showSuccessMessage(i18n_program_cancelled_success);
+				} else {
+					showSuccessMessage(i18n_program_active_success);
+				}
+			}
+		});
 	}
 }
+
 function reenrollmentForm(programInstanceId) {
 	if ( confirm(i18n_reenrollment_confirm_message) ) {
-$.ajax({
-								type : "POST",
-					url : 'setProgramInstanceStatus.action',
-					data : "programInstanceId=" + programInstanceId
-							+ "&completed=false",
-					success : function(json) {
-						var type = jQuery("#tr1_" + programInstanceId).attr(
-								'type');
-						var programStageInstanceId = jQuery(
-								"#tr1_" + programInstanceId).attr(
-								'programStageInstanceId');
-						var completed = "<tr type='"
-								+ type
-								+ "' programStageInstanceId='"
-								+ programStageInstanceId
-								+ "' onclick='javascript:loadActiveProgramStageRecords("
-								+ programInstanceId + ");' >";
-						completed += $('#td_' + programInstanceId).parent()
-								.html()
-								+ "</tr>";
-						var activeEvent = $("#tr2_" + programInstanceId);
-						if (activeEvent.length > 0) {
-							completed += "<tr>" + activeEvent.parent().html()
-									+ "</tr>";
-						}
-						$('#activeTB').prepend(completed);
-						$('#completedTB [id=tr1_' + programInstanceId + ']')
-								.remove();
-						$('#completedTB [id=tr2_' + programInstanceId + ']')
-								.remove();
-						$("[id=tab-1] :input").prop('disabled', false);
-						// Disable skipped events
-						$("[id=tab-1] [status=5]").prop('disabled', true);
-						$("[id=tab-2] :input").prop('disabled', false);
-						$("[id=tab-3] :input").prop('disabled', false);
-						$("[id=tab-4] :input").prop('disabled', false);
-						$("[id=tab-5] :input").prop('disabled', false);
-						$("#completeProgram").attr('disabled', false);
-						$("#incompleteProgram").attr('disabled', true);
-						$("[id=tab-3] :input").datepicker("destroy");
-						// enable remove event icons
-						$('[id=tab-3]').find('img').parent().each(function() {
-							var e = $(this);
-							e.attr('href', e.attr("link"));
-						});
-						showSuccessMessage(i18n_reenrol_success);
-					}
+		$.ajax({
+			type : "POST",
+			url : 'setProgramInstanceStatus.action',
+			data : "programInstanceId=" + programInstanceId + "&completed=false",
+			success : function(json) {
+				moveToActiveDiv( programInstanceId, programStageInstanceId );
+				$("[id=tab-1] :input").prop('disabled', false);
+				// Disable skipped events
+				$("[id=tab-1] [status=5]").prop('disabled', true);
+				$("[id=tab-2] :input").prop('disabled', false);
+				$("[id=tab-3] :input").prop('disabled', false);
+				$("[id=tab-4] :input").prop('disabled', false);
+				$("[id=tab-5] :input").prop('disabled', false);
+				$("#completeProgram").attr('disabled', false);
+				$("#incompleteProgram").attr('disabled', true);
+				$("[id=tab-3] :input").datepicker("destroy");
+				// enable remove event icons
+				$('[id=tab-3]').find('img').parent().each(function() {
+					var e = $(this);
+					e.attr('href', e.attr("link"));
 				});
+				showSuccessMessage(i18n_reenrol_success);
+			}
+		});
 	}
 }
 function removeProgramInstance(programInstanceId) {
@@ -1565,7 +1508,7 @@ function getEventMessages(programInstanceId) {
 function dashboardHistoryToggle(evt) {
 	$('#dashboardHistoryDiv').toggle();
 }
-function viewPersonProgram(displayedDiv, hidedDiv) {
+function viewTEIProgram(displayedDiv, hidedDiv) {
 	showById(displayedDiv);
 	hideById(hidedDiv);
 }
@@ -1902,7 +1845,7 @@ function saveComment(programInstanceId) {
 }
 
 // --------------------------------------------------------------------------
-// Advanced-search person
+// Advanced-search TEI
 // --------------------------------------------------------------------------
 
 function advancedSearchOnclick() {
@@ -1935,5 +1878,47 @@ function hideSearchCriteria() {
 function showSearchCriteria() {
 	showById('advanced-search');
 	hideById('showSearchCriteriaDiv');
+}
+
+// ----------------------------------------------------------------------------
+// Program boxes in Dashboard
+// ----------------------------------------------------------------------------
+
+function moveToCompleteDiv( programInstanceId, programStageInstanceId )
+{
+	var type = $("#tr1_" + programInstanceId).attr('type');
+	var programStageInstanceId = $( "#tr1_" + programInstanceId).attr('programStageInstanceId');
+	
+	var completed = "<tr id='tr1_"
+			+ programInstanceId
+			+ "' type='" + type
+			+ "' programStageInstanceId='" + programStageInstanceId
+			+ "' onclick='javascript:loadActiveProgramStageRecords(" + programInstanceId + ");' >";
+	completed += $('#td_' + programInstanceId).parent().html() + "</tr>";
+	
+	var activeEvent2 = $("#tr2_" + programInstanceId);
+	if (activeEvent2.length > 0) {
+		completed += "<tr class='hidden'>" + activeEvent2.parent().html() + "</tr>";
+	}
+	$('#completedTB').prepend(completed);
+	$('#activeTB [id=tr1_' + programInstanceId + ']').remove();
+	$('#activeTB [id=tr2_' + programInstanceId + ']').remove();
+}
+
+function moveToActiveDiv( programInstanceId, programStageInstanceId )
+{
+	var type = jQuery("#tr1_" + programInstanceId).attr( 'type');
+	var programStageInstanceId = jQuery( "#tr1_" + programInstanceId).attr('programStageInstanceId');
+	var completed = "<tr type='" + type
+			+ "' programStageInstanceId='" + programStageInstanceId
+			+ "' onclick='javascript:loadActiveProgramStageRecords(" + programInstanceId + ");' >";
+	completed += $('#td_' + programInstanceId).parent().html() + "</tr>";
+	var activeEvent = $("#tr2_" + programInstanceId);
+	if (activeEvent.length > 0) {
+		completed += "<tr>" + activeEvent.parent().html() + "</tr>";
+	}
+	$('#activeTB').prepend(completed);
+	$('#completedTB [id=tr1_' + programInstanceId + ']').remove();
+	$('#completedTB [id=tr2_' + programInstanceId + ']').remove();
 }
 

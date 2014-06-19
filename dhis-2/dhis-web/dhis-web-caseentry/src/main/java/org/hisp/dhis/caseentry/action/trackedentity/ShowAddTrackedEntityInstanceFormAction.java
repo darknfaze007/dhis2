@@ -55,6 +55,7 @@ import org.hisp.dhis.trackedentity.TrackedEntityInstance;
 import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
 import org.hisp.dhis.trackedentity.TrackedEntityService;
 import org.hisp.dhis.trackedentity.comparator.TrackedEntityAttributeGroupSortOrderComparator;
+import org.hisp.dhis.trackedentity.comparator.TrackedEntityAttributeSortOrderInListNoProgramComparator;
 import org.hisp.dhis.trackedentityattributevalue.TrackedEntityAttributeValue;
 import org.hisp.dhis.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -276,6 +277,20 @@ public class ShowAddTrackedEntityInstanceFormAction
         return mandatoryMap;
     }
 
+    private Map<Integer, Boolean> allowDateInFutureMap = new HashMap<Integer, Boolean>();
+
+    public Map<Integer, Boolean> getAllowDateInFutureMap()
+    {
+        return allowDateInFutureMap;
+    }
+
+    private List<TrackedEntityAttribute> attributes = new ArrayList<TrackedEntityAttribute>();
+
+    public List<TrackedEntityAttribute> getAttributes()
+    {
+        return attributes;
+    }
+
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
@@ -333,8 +348,6 @@ public class ShowAddTrackedEntityInstanceFormAction
             }
         }
 
-        List<TrackedEntityAttribute> attributes = new ArrayList<TrackedEntityAttribute>();
-
         if ( customRegistrationForm == null )
         {
             attributeGroups = new ArrayList<TrackedEntityAttributeGroup>(
@@ -345,16 +358,12 @@ public class ShowAddTrackedEntityInstanceFormAction
             {
                 attributes = new ArrayList<TrackedEntityAttribute>(
                     attributeService.getTrackedEntityAttributesDisplayInList() );
-                Collection<Program> programs = programService.getAllPrograms();
-
-                for ( Program p : programs )
-                {
-                    attributes.removeAll( p.getAttributes() );
-                }
+                Collections.sort( attributes, new TrackedEntityAttributeSortOrderInListNoProgramComparator() );
 
                 for ( TrackedEntityAttribute attribute : attributes )
                 {
                     mandatoryMap.put( attribute.getId(), false );
+                    allowDateInFutureMap.put(  attribute.getId(), false );
                 }
             }
             else
@@ -363,6 +372,7 @@ public class ShowAddTrackedEntityInstanceFormAction
                 for ( ProgramTrackedEntityAttribute programAttribute : program.getAttributes() )
                 {
                     mandatoryMap.put( programAttribute.getAttribute().getId(), programAttribute.isMandatory() );
+                    allowDateInFutureMap.put( programAttribute.getAttribute().getId(), programAttribute.getAllowDateInFuture() );
                 }
             }
 

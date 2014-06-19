@@ -218,7 +218,43 @@ Ext.onReady( function() {
                     ok: 'ok.png'
                 }
             };
-
+            
+            conf.url = {
+                analysisFields: [
+                    '*',
+                    'program[id,name]',
+                    'programStage[id,name]',
+                    'columns[dimension,filter,items[id,name]]',
+                    'rows[dimension,filter,items[id,name]]',
+                    'filters[dimension,filter,items[id,name]]',
+                    '!lastUpdated',
+                    '!href',
+                    '!created',
+                    '!publicAccess',
+                    '!rewindRelativePeriods',
+                    '!userOrganisationUnit',
+                    '!userOrganisationUnitChildren',
+                    '!userOrganisationUnitGrandChildren',
+                    '!externalAccess',
+                    '!access',
+                    '!relativePeriods',
+                    '!columnDimensions',
+                    '!rowDimensions',
+                    '!filterDimensions',
+                    '!user',
+                    '!organisationUnitGroups',
+                    '!itemOrganisationUnitGroups',
+                    '!userGroupAccesses',
+                    '!indicators',
+                    '!dataElements',
+                    '!dataElementOperands',
+                    '!dataElementGroups',
+                    '!dataSets',
+                    '!periods',
+                    '!organisationUnitLevels',
+                    '!organisationUnits'
+                ]
+            };
         }());
 
         // api
@@ -573,6 +609,8 @@ Ext.onReady( function() {
                     layout.title = Ext.isString(config.title) &&  !Ext.isEmpty(config.title) ? config.title : null;
 
                     layout.parentGraphMap = Ext.isObject(config.parentGraphMap) ? config.parentGraphMap : null;
+
+                    layout.legend = Ext.isObject(config.legend) ? config.legend : null;
 
 					if (!validateSpecialCases()) {
 						return;
@@ -1260,6 +1298,10 @@ Ext.onReady( function() {
 					}
 				}
 
+				if (!layout.hideEmptyRows) {
+					delete layout.hideEmptyRows;
+				}
+
 				if (!layout.showTrendLine) {
 					delete layout.showTrendLine;
 				}
@@ -1278,10 +1320,6 @@ Ext.onReady( function() {
 
 				if (!layout.baseLineTitle) {
 					delete layout.baseLineTitle;
-				}
-
-				if (layout.showValues) {
-					delete layout.showValues;
 				}
 
 				if (!layout.hideLegend) {
@@ -1304,8 +1342,34 @@ Ext.onReady( function() {
 					delete layout.rangeAxisTitle;
 				}
 
+				if (!layout.rangeAxisMaxValue) {
+					delete layout.rangeAxisMaxValue;
+				}
+
+				if (!layout.rangeAxisMinValue) {
+					delete layout.rangeAxisMinValue;
+				}
+
+				if (!layout.rangeAxisSteps) {
+					delete layout.rangeAxisSteps;
+				}
+
+				if (!layout.rangeAxisDecimals) {
+					delete layout.rangeAxisDecimals;
+				}
+
 				if (!layout.sorting) {
 					delete layout.sorting;
+				}
+
+				if (!layout.legend) {
+					delete layout.legend;
+				}
+
+                // default true
+
+				if (layout.showValues) {
+					delete layout.showValues;
 				}
 
 				delete layout.parentGraphMap;
@@ -1772,8 +1836,9 @@ Ext.onReady( function() {
                             regression = new SimpleRegression();
                             key = conf.finals.data.trendLine + columnIds[i];
 
-                            for (var j = 0; j < data.length; j++) {
-                                regression.addData(j, data[j][columnIds[i]]);
+                            for (var j = 0, value; j < data.length; j++) {
+                                value = data[j][replacedColumnIds[i]];
+                                regression.addData(j, parseFloat(value));
                             }
 
                             for (var j = 0; j < data.length; j++) {
@@ -2005,13 +2070,28 @@ Ext.onReady( function() {
                 getDefaultSeriesTitle = function(store) {
                     var a = [];
 
-                    for (var i = 0, id, ids; i < store.rangeFields.length; i++) {
-                        id = store.rangeFields[i];
-                        a.push(xResponse.metaData.names[id]);
+                    if (Ext.isObject(xLayout.legend) && Ext.isArray(xLayout.legend.seriesNames)) {
+                        return xLayout.legend.seriesNames;
+                    }
+                    else {
+                        for (var i = 0, id, name, mxl, ids; i < store.rangeFields.length; i++) {
+                            id = store.rangeFields[i];
+                            name = xResponse.metaData.names[id];
+
+                            if (Ext.isObject(xLayout.legend) && xLayout.legend.maxLength) {
+                                var mxl = parseInt(xLayout.legend.maxLength);
+
+                                if (Ext.isNumber(mxl)) {
+                                    name = name.substr(0, mxl) + '..';
+                                }
+                            }
+                            
+                            a.push(name);
+                        }
                     }
 
                     return a;
-                };
+				};
 
                 getDefaultSeries = function(store) {
                     var main = {
@@ -2038,7 +2118,7 @@ Ext.onReady( function() {
                             field: store.rangeFields,
                             font: conf.chart.style.fontFamily,
                             renderer: function(n) {
-                                return n === '0.0' ? '-' : n;                                    
+                                return n === '0.0' ? '' : n;                                    
                             }
                         };
                     }
@@ -2150,7 +2230,9 @@ Ext.onReady( function() {
                         width,
                         isVertical = false,
                         position = 'top',
-                        padding = 0;
+                        fontSize = 12,
+                        padding = 0,
+                        positions = ['top', 'right', 'bottom', 'left'];
 
                     if (xLayout.type === conf.finals.chart.pie) {
                         numberOfItems = store.getCount();
@@ -2187,10 +2269,20 @@ Ext.onReady( function() {
                         padding = 5;
                     }
 
+                    // legend
+                    if (xLayout.legend) {
+                        if (Ext.Array.contains(positions, xLayout.legend.position)) {
+                            position = xLayout.legend.position;
+                        }
+
+                        fontSize = parseInt(xLayout.legend.fontSize) || fontSize;
+                        fontSize = fontSize + 'px';
+                    }
+
                     return Ext.create('Ext.chart.Legend', {
                         position: position,
                         isVertical: isVertical,
-                        labelFont: '13px ' + conf.chart.style.fontFamily,
+                        labelFont: fontSize + ' ' + conf.chart.style.fontFamily,
                         boxStroke: '#ffffff',
                         boxStrokeWidth: 0,
                         padding: padding

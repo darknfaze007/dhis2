@@ -29,7 +29,6 @@ package org.hisp.dhis.dxf2.filter;
  */
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
@@ -45,10 +44,11 @@ public interface ParserService
     Filters parseObjectFilter( List<String> filters );
 
     /**
-     * Parses and writes out map with included/excluded properties.
+     * Parses and writes out fieldMap with included/excluded properties.
      *
      * @param filter String to parse, can be used for both inclusion/exclusion
-     * @return Map with property name as key, and another map as value (recursive)
+     * @return FieldMap with property name as key, and another FieldMap as value (recursive)
+     * @see org.hisp.dhis.dxf2.filter.FieldMap
      */
-    Map<String, Map> parsePropertyFilter( String filter );
+    FieldMap parseFieldFilter( String filter );
 }

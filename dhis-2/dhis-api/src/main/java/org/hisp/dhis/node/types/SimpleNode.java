@@ -28,21 +28,25 @@ package org.hisp.dhis.node.types;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
  */
 
-import com.google.common.collect.Lists;
+import com.google.common.base.Objects;
 import org.hisp.dhis.node.AbstractNode;
 import org.hisp.dhis.node.Node;
 import org.hisp.dhis.node.NodeType;
 import org.hisp.dhis.node.exception.InvalidTypeException;
-
-import java.util.List;
 
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
 public class SimpleNode extends AbstractNode
 {
+    /**
+     * Value of this node.
+     */
     private final Object value;
 
+    /**
+     * Is this node considered a attribute.
+     */
     private boolean attribute;
 
     public SimpleNode( String name, Object value )
@@ -83,5 +87,32 @@ public class SimpleNode extends AbstractNode
     public <T extends Node> void addChildren( Iterable<T> children )
     {
         throw new InvalidTypeException();
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return 31 * super.hashCode() + Objects.hashCode( value, attribute );
+    }
+
+    @Override
+    public boolean equals( Object obj )
+    {
+        if ( this == obj )
+        {
+            return true;
+        }
+        if ( obj == null || getClass() != obj.getClass() )
+        {
+            return false;
+        }
+        if ( !super.equals( obj ) )
+        {
+            return false;
+        }
+
+        final SimpleNode other = (SimpleNode) obj;
+
+        return Objects.equal( this.value, other.value ) && Objects.equal( this.attribute, other.attribute );
     }
 }
