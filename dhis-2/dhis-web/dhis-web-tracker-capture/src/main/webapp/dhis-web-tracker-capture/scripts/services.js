@@ -238,7 +238,7 @@ var trackerCaptureServices = angular.module('trackerCaptureServices', ['ngResour
 })
 
 /* Service for getting tracked entity instances */
-.factory('TEIService', function($http, $filter, EntityService) {
+.factory('TEIService', function($http, $filter, DateUtils, EntityService) {
     
     var promise;
     return {
@@ -250,9 +250,7 @@ var trackerCaptureServices = angular.module('trackerCaptureServices', ['ngResour
                 angular.forEach(tei.attributes, function(attribute){                   
                    if(attribute.type && attribute.value){                       
                        if(attribute.type === 'date'){                           
-                           attribute.value = moment(attribute.value, 'YYYY-MM-DD')._d;
-                           attribute.value = Date.parse(attribute.value);
-                           attribute.value = $filter('date')(attribute.value, 'yyyy-MM-dd');                           
+                           attribute.value = DateUtils.format(attribute.value);
                        }
                    } 
                 });
@@ -712,7 +710,7 @@ var trackerCaptureServices = angular.module('trackerCaptureServices', ['ngResour
             
 })
 
-.service('EntityService', function(OrgUnitService, $filter){
+.service('EntityService', function(OrgUnitService, DateUtils, $filter){
     
     return {
         formatter: function(grid){
@@ -737,9 +735,7 @@ var trackerCaptureServices = angular.module('trackerCaptureServices', ['ngResour
 
                     entity.id = row[0];
                     var rDate = row[1];
-                    rDate = moment(rDate, 'YYYY-MM-DD')._d;
-                    rDate = Date.parse(rDate);
-                    rDate = $filter('date')(rDate, 'yyyy-MM-dd');                           
+                    rDate = DateUtils.format(rDate);
                     entity.created = rDate;
                     entity.orgUnit = row[3];                              
                     entity.type = row[4];  
@@ -765,4 +761,47 @@ var trackerCaptureServices = angular.module('trackerCaptureServices', ['ngResour
             return {headers: attributes, rows: entityList};                                    
         }        
     };
+})
+
+.service('DateUtils', function($filter){
+    
+    return {
+        format: function(dateValue) {            
+            dateValue = moment(dateValue, 'YYYY-MM-DD')._d;
+            dateValue = Date.parse(dateValue);
+            dateValue = $filter('date')(dateValue, 'yyyy-MM-dd');
+            return dateValue;
+        },
+        getDueDate: function(programStage, enrollment){
+            var dueDate = moment(moment(enrollment.dateOfIncident).add('d', programStage.minDaysFromStart), 'YYYY-MM-DD')._d;
+            dueDate = Date.parse(dueDate);
+            dueDate = $filter('date')(dueDate, 'yyyy-MM-dd');
+            return dueDate;
+        }
+    };            
+})
+
+.service('EventUtils', function(DateUtils, $filter){
+    return {
+        createDummyEvent: function(programStage, orgUnit, enrollment){
+            
+            var today = moment();
+            today = Date.parse(today);
+            today = $filter('date')(today, 'yyyy-MM-dd');
+    
+            var dueDate = DateUtils.getDueDate(programStage, enrollment);
+            var dummyEvent = {programStage: programStage.id, 
+                              orgUnit: orgUnit.id,
+                              orgUnitName: orgUnit.name,
+                              dueDate: dueDate,
+                              name: programStage.name,
+                              reportDateDescription: programStage.reportDateDescription,
+                              status: 'ACTIVE'};
+            dummyEvent.statusColor = 'stage-on-time';
+            if(moment(today).isAfter(dummyEvent.dueDate)){
+                dummyEvent.statusColor = 'stage-overdue';
+            }
+            return dummyEvent;        
+        }
+    }; 
 });
