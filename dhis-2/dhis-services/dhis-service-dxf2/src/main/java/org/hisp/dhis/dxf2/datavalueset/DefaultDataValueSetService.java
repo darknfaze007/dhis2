@@ -103,6 +103,7 @@ public class DefaultDataValueSetService
     private static final String ERROR_INVALID_DATA_SET = "Invalid data set: ";
     private static final String ERROR_INVALID_PERIOD = "Invalid period: ";
     private static final String ERROR_INVALID_ORG_UNIT = "Invalid org unit: ";
+    private static final String ERROR_INVALID_START_END_DATE = "Invalid start and/or end date: ";
     private static final String ERROR_OBJECT_NEEDED_TO_COMPLETE = "Must be provided to complete data set";
 
     @Autowired
@@ -139,6 +140,7 @@ public class DefaultDataValueSetService
     // DataValueSet implementation
     //--------------------------------------------------------------------------
 
+    @Override
     public void writeDataValueSet( String dataSet, String period, String orgUnit, OutputStream out )
     {
         DataSet dataSet_ = dataSetService.getDataSet( dataSet );
@@ -160,25 +162,15 @@ public class DefaultDataValueSetService
             throw new IllegalArgumentException( ERROR_INVALID_ORG_UNIT + orgUnit );
         }
 
-        CompleteDataSetRegistration registration = registrationService.getCompleteDataSetRegistration( dataSet_, period_, orgUnit_ );
+        DataElementCategoryOptionCombo optionCombo = categoryService.getDefaultDataElementCategoryOptionCombo(); //TODO
+        
+        CompleteDataSetRegistration registration = registrationService.getCompleteDataSetRegistration( dataSet_, period_, orgUnit_, optionCombo );
 
         Date completeDate = registration != null ? registration.getDate() : null;
 
         period_ = periodService.reloadPeriod( period_ );
 
         dataValueSetStore.writeDataValueSetXml( dataSet_, completeDate, period_, orgUnit_, dataSet_.getDataElements(), wrap( period_ ), wrap( orgUnit_ ), out );
-    }
-
-    public void writeDataValueSet( Set<String> dataSets, Date startDate, Date endDate, Set<String> orgUnits, OutputStream out )
-    {
-        Set<Period> periods = new HashSet<Period>( periodService.getPeriodsBetweenDates( startDate, endDate ) );
-
-        if ( periods.isEmpty() )
-        {
-            throw new IllegalArgumentException( "At least one period must be specified" );
-        }
-
-        dataValueSetStore.writeDataValueSetXml( null, null, null, null, getDataElements( dataSets ), periods, getOrgUnits( orgUnits ), out );
     }
 
     @Override
@@ -203,7 +195,9 @@ public class DefaultDataValueSetService
             throw new IllegalArgumentException( ERROR_INVALID_ORG_UNIT + orgUnit );
         }
 
-        CompleteDataSetRegistration registration = registrationService.getCompleteDataSetRegistration( dataSet_, period_, orgUnit_ );
+        DataElementCategoryOptionCombo optionCombo = categoryService.getDefaultDataElementCategoryOptionCombo(); //TODO
+        
+        CompleteDataSetRegistration registration = registrationService.getCompleteDataSetRegistration( dataSet_, period_, orgUnit_, optionCombo );
 
         Date completeDate = registration != null ? registration.getDate() : null;
 
@@ -213,31 +207,23 @@ public class DefaultDataValueSetService
     }
 
     @Override
+    public void writeDataValueSet( Set<String> dataSets, Date startDate, Date endDate, Set<String> orgUnits, OutputStream out )
+    {
+        dataValueSetStore.writeDataValueSetXml( null, null, null, null, getDataElements( dataSets ), getPeriods( startDate, endDate ), getOrgUnits( orgUnits ), out );
+    }
+
+    @Override
     public void writeDataValueSetJson( Set<String> dataSets, Date startDate, Date endDate, Set<String> orgUnits, OutputStream outputStream )
     {
-        Set<Period> periods = new HashSet<Period>( periodService.getPeriodsBetweenDates( startDate, endDate ) );
-
-        if ( periods.isEmpty() )
-        {
-            throw new IllegalArgumentException( "At least one period must be specified" );
-        }
-
-        dataValueSetStore.writeDataValueSetJson( null, null, null, null, getDataElements( dataSets ), periods, getOrgUnits( orgUnits ), outputStream );
+        dataValueSetStore.writeDataValueSetJson( null, null, null, null, getDataElements( dataSets ), getPeriods( startDate, endDate ), getOrgUnits( orgUnits ), outputStream );
     }
 
+    @Override
     public void writeDataValueSetCsv( Set<String> dataSets, Date startDate, Date endDate, Set<String> orgUnits, Writer writer )
     {
-        Set<Period> periods = new HashSet<Period>( periodService.getPeriodsBetweenDates( startDate, endDate ) );
-
-        if ( periods.isEmpty() )
-        {
-            throw new IllegalArgumentException( "At least one period must be specified" );
-        }
-
-        dataValueSetStore.writeDataValueSetCsv( getDataElements( dataSets ), periods, getOrgUnits( orgUnits ), writer );
+        dataValueSetStore.writeDataValueSetCsv( getDataElements( dataSets ), getPeriods( startDate, endDate ), getOrgUnits( orgUnits ), writer );
     }
-
-
+    
     @Override
     public RootNode getDataValueSetTemplate( DataSet dataSet, Period period, List<String> orgUnits,
         boolean writeComments, String ouScheme, String deScheme )
@@ -445,6 +431,8 @@ public class DefaultDataValueSetService
 
         OrganisationUnit outerOrgUnit;
 
+        DataElementCategoryOptionCombo fallbackCategoryOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
+
         if ( orgUnitIdScheme.equals( IdentifiableProperty.UUID ) )
         {
             outerOrgUnit = dataValueSet.getOrgUnit() == null ? null : organisationUnitService.getOrganisationUnitByUuid( dataValueSet.getOrgUnit() );
@@ -457,14 +445,12 @@ public class DefaultDataValueSetService
         if ( dataSet != null && completeDate != null )
         {
             notifier.notify( id, "Completing data set" );
-            handleComplete( dataSet, completeDate, outerOrgUnit, outerPeriod, summary );
+            handleComplete( dataSet, completeDate, outerPeriod, outerOrgUnit, fallbackCategoryOptionCombo, summary ); //TODO
         }
         else
         {
             summary.setDataSetComplete( Boolean.FALSE.toString() );
         }
-
-        DataElementCategoryOptionCombo fallbackCategoryOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
 
         String currentUser = currentUserService.getCurrentUsername();
 
@@ -609,7 +595,8 @@ public class DefaultDataValueSetService
     // Supportive methods
     //--------------------------------------------------------------------------
 
-    private void handleComplete( DataSet dataSet, Date completeDate, OrganisationUnit orgUnit, Period period, ImportSummary summary )
+    private void handleComplete( DataSet dataSet, Date completeDate, Period period, OrganisationUnit orgUnit, 
+        DataElementCategoryOptionCombo attributeOptionCombo, ImportSummary summary )
     {
         if ( orgUnit == null )
         {
@@ -625,7 +612,7 @@ public class DefaultDataValueSetService
 
         period = periodService.reloadPeriod( period );
 
-        CompleteDataSetRegistration completeAlready = registrationService.getCompleteDataSetRegistration( dataSet, period, orgUnit );
+        CompleteDataSetRegistration completeAlready = registrationService.getCompleteDataSetRegistration( dataSet, period, orgUnit, attributeOptionCombo );
 
         String username = currentUserService.getCurrentUsername();
 
@@ -638,7 +625,7 @@ public class DefaultDataValueSetService
         }
         else
         {
-            CompleteDataSetRegistration registration = new CompleteDataSetRegistration( dataSet, period, orgUnit, completeDate, username );
+            CompleteDataSetRegistration registration = new CompleteDataSetRegistration( dataSet, period, orgUnit, attributeOptionCombo, completeDate, username );
 
             registrationService.saveCompleteDataSetRegistration( registration );
         }
@@ -663,6 +650,23 @@ public class DefaultDataValueSetService
         }
 
         return dataElements;
+    }
+
+    private Set<Period> getPeriods( Date startDate, Date endDate )
+    {
+        if ( startDate == null || endDate == null || endDate.before( startDate ) )
+        {
+            throw new IllegalArgumentException( ERROR_INVALID_START_END_DATE + startDate + ", " + endDate );
+        }
+        
+        Set<Period> periods = new HashSet<Period>( periodService.getPeriodsBetweenDates( startDate, endDate ) );
+
+        if ( periods.isEmpty() )
+        {
+            throw new IllegalArgumentException( "No periods exist for start/end date: " + startDate + ", " + endDate );
+        }
+        
+        return periods;
     }
 
     private Set<OrganisationUnit> getOrgUnits( Set<String> orgUnits )

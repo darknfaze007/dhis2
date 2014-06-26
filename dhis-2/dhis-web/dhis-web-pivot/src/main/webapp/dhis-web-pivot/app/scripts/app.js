@@ -46,11 +46,15 @@ Ext.onReady( function() {
 			filterStore,
 			value,
 
-			getData,
 			getStore,
 			getStoreKeys,
-			getCmpHeight,
-			getSetup,
+            addDimension,
+            removeDimension,
+            hasDimension,
+            saveState,
+            resetData,
+            reset,
+            dimensionStoreMap = {},
 
 			dimensionPanel,
 			selectPanel,
@@ -58,25 +62,7 @@ Ext.onReady( function() {
 
 			margin = 1,
 			defaultWidth = 160,
-			defaultHeight = 158,
-			maxHeight = (ns.app.viewport.getHeight() - 100) / 2;
-
-		getData = function(all) {
-			var data = [];
-
-			if (all) {
-				data.push({id: dimConf.data.dimensionName, name: dimConf.data.name});
-			}
-
-			data.push({id: dimConf.category.dimensionName, name: dimConf.category.name});
-
-			if (all) {
-				data.push({id: dimConf.period.dimensionName, name: dimConf.period.name});
-				data.push({id: dimConf.organisationUnit.dimensionName, name: dimConf.organisationUnit.name});
-			}
-
-			return data.concat(Ext.clone(ns.core.init.dimensions));
-		};
+			defaultHeight = 200;
 
 		getStore = function(data) {
 			var config = {};
@@ -113,45 +99,22 @@ Ext.onReady( function() {
 			return keys;
 		};
 
-		dimensionStore = getStore(getData());
-		dimensionStore.reset = function(all) {
-			dimensionStore.removeAll();
-			dimensionStore.add(getData(all));
-		};
-		ns.app.stores.dimension = dimensionStore;
-
-		rowStore = getStore();
-		ns.app.stores.row = rowStore;
-		rowStore.add({id: dimConf.period.dimensionName, name: dimConf.period.name});
+		dimensionStore = getStore();
+        ns.app.stores.dimension = dimensionStore;
 
 		colStore = getStore();
-		ns.app.stores.col = colStore;
-		colStore.add({id: dimConf.data.dimensionName, name: dimConf.data.name});
+        ns.app.stores.col = colStore;
 
-		filterStore = getStore();
-		ns.app.stores.filter = filterStore;
-		filterStore.add({id: dimConf.organisationUnit.dimensionName, name: dimConf.organisationUnit.name});
+		rowStore = getStore();
+        ns.app.stores.row = rowStore;
 
-		getCmpHeight = function() {
-			var size = dimensionStore.totalCount,
-				expansion = 10,
-				height = defaultHeight,
-				diff;
-
-			if (size > 10) {
-				diff = size - 10;
-				height += (diff * expansion);
-			}
-
-			height = height > maxHeight ? maxHeight : height;
-
-			return height;
-		};
+        filterStore = getStore();
+        ns.app.stores.filter = filterStore;
 
 		dimension = Ext.create('Ext.ux.form.MultiSelect', {
 			cls: 'ns-toolbar-multiselect-leftright',
 			width: defaultWidth,
-			height: (getCmpHeight() * 2) + margin,
+			height: (defaultHeight * 2) + margin,
 			style: 'margin-right:' + margin + 'px; margin-bottom:0px',
 			valueField: 'id',
 			displayField: 'name',
@@ -178,44 +141,10 @@ Ext.onReady( function() {
 			}
 		});
 
-		row = Ext.create('Ext.ux.form.MultiSelect', {
-			cls: 'ns-toolbar-multiselect-leftright',
-			width: defaultWidth,
-			height: getCmpHeight(),
-			style: 'margin-bottom:0px',
-			valueField: 'id',
-			displayField: 'name',
-			dragGroup: 'layoutDD',
-			dropGroup: 'layoutDD',
-			store: rowStore,
-			tbar: {
-				height: 25,
-				items: {
-					xtype: 'label',
-					text: NS.i18n.row,
-					cls: 'ns-toolbar-multiselect-leftright-label'
-				}
-			},
-			listeners: {
-				afterrender: function(ms) {
-					ms.boundList.on('itemdblclick', function(view, record) {
-						ms.store.remove(record);
-						dimensionStore.add(record);
-					});
-
-					ms.store.on('add', function() {
-						Ext.defer( function() {
-							ms.boundList.getSelectionModel().deselectAll();
-						}, 10);
-					});
-				}
-			}
-		});
-
 		col = Ext.create('Ext.ux.form.MultiSelect', {
 			cls: 'ns-toolbar-multiselect-leftright',
 			width: defaultWidth,
-			height: getCmpHeight(),
+			height: defaultHeight,
 			style: 'margin-bottom:' + margin + 'px',
 			valueField: 'id',
 			displayField: 'name',
@@ -246,10 +175,44 @@ Ext.onReady( function() {
 			}
 		});
 
+		row = Ext.create('Ext.ux.form.MultiSelect', {
+			cls: 'ns-toolbar-multiselect-leftright',
+			width: defaultWidth,
+			height: defaultHeight,
+			style: 'margin-bottom:0px',
+			valueField: 'id',
+			displayField: 'name',
+			dragGroup: 'layoutDD',
+			dropGroup: 'layoutDD',
+			store: rowStore,
+			tbar: {
+				height: 25,
+				items: {
+					xtype: 'label',
+					text: NS.i18n.row,
+					cls: 'ns-toolbar-multiselect-leftright-label'
+				}
+			},
+			listeners: {
+				afterrender: function(ms) {
+					ms.boundList.on('itemdblclick', function(view, record) {
+						ms.store.remove(record);
+						dimensionStore.add(record);
+					});
+
+					ms.store.on('add', function() {
+						Ext.defer( function() {
+							ms.boundList.getSelectionModel().deselectAll();
+						}, 10);
+					});
+				}
+			}
+		});
+
 		filter = Ext.create('Ext.ux.form.MultiSelect', {
 			cls: 'ns-toolbar-multiselect-leftright',
 			width: defaultWidth,
-			height: getCmpHeight(),
+			height: defaultHeight,
 			style: 'margin-right:' + margin + 'px; margin-bottom:' + margin + 'px',
 			valueField: 'id',
 			displayField: 'name',
@@ -301,6 +264,84 @@ Ext.onReady( function() {
 			]
 		});
 
+        addDimension = function(record, store) {
+            var store = dimensionStoreMap[record.id] || store || colStore;
+
+            if (!hasDimension(record.id)) {
+                store.add(record);
+            }
+        };
+
+        removeDimension = function(dataElementId) {
+            var stores = [colStore, rowStore, filterStore];
+
+            for (var i = 0, store, index; i < stores.length; i++) {
+                store = stores[i];
+                index = store.findExact('id', dataElementId);
+
+                if (index != -1) {
+                    store.remove(store.getAt(index));
+                    dimensionStoreMap[dataElementId] = store;
+                }
+            }
+        };
+
+        hasDimension = function(id) {
+            var stores = [colStore, rowStore, filterStore];
+
+            for (var i = 0, store, index; i < stores.length; i++) {
+                store = stores[i];
+                index = store.findExact('id', id);
+
+                if (index != -1) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        saveState = function(map) {
+			map = map || dimensionStoreMap;
+
+            colStore.each(function(record) {
+                map[record.data.id] = colStore;
+            });
+
+            rowStore.each(function(record) {
+                map[record.data.id] = rowStore;
+            });
+
+            filterStore.each(function(record) {
+                map[record.data.id] = filterStore;
+            });
+
+            return map;
+        };
+
+		resetData = function() {
+			var map = saveState({}),
+				keys = ['dx', 'ou', 'pe', 'dates'];
+
+			for (var key in map) {
+				if (map.hasOwnProperty(key) && !Ext.Array.contains(keys, key)) {
+					removeDimension(key);
+				}
+			}
+		};
+
+		reset = function(isAll) {
+			colStore.removeAll();
+			rowStore.removeAll();
+			filterStore.removeAll();
+
+			if (!isAll) {
+				colStore.add({id: dimConf.data.dimensionName, name: dimConf.data.name});
+				rowStore.add({id: dimConf.period.dimensionName, name: dimConf.period.name});
+				filterStore.add({id: dimConf.organisationUnit.dimensionName, name: dimConf.organisationUnit.name});
+			}
+		};
+
 		getSetup = function() {
 			return {
 				col: getStoreKeys(colStore),
@@ -321,6 +362,9 @@ Ext.onReady( function() {
 			rowStore: rowStore,
 			colStore: colStore,
 			filterStore: filterStore,
+            addDimension: addDimension,
+            removeDimension: removeDimension,
+            hasDimension: hasDimension,
 			hideOnBlur: true,
 			items: {
 				layout: 'column',
@@ -371,7 +415,10 @@ Ext.onReady( function() {
 							ns.core.web.window.addHideOnBlurHandler(w);
 						}
 					}
-				}
+				},
+                render: function() {
+					reset();
+                }
 			}
 		});
 
@@ -1063,7 +1110,7 @@ Ext.onReady( function() {
 			text: NS.i18n.prev,
 			handler: function() {
 				var value = searchTextfield.getValue(),
-					url = value ? ns.core.init.contextPath + '/api/reportTables.json?fields=id,name,access' + (value ? '&filter=name:like:' + value : '') : null;
+					url = value ? ns.core.init.contextPath + '/api/reportTables.json?fields=id,name,access' + (value ? '&filter=name:like:' + value : '') : null,
 					store = ns.app.stores.reportTable;
 
 				store.page = store.page <= 1 ? 1 : store.page - 1;
@@ -1075,7 +1122,7 @@ Ext.onReady( function() {
 			text: NS.i18n.next,
 			handler: function() {
 				var value = searchTextfield.getValue(),
-					url = value ? ns.core.init.contextPath + '/api/reportTables.json?fields=id,name,access' + (value ? '&filter=name:like:' + value : '') : null;
+					url = value ? ns.core.init.contextPath + '/api/reportTables.json?fields=id,name,access' + (value ? '&filter=name:like:' + value : '') : null,
 					store = ns.app.stores.reportTable;
 
 				store.page = store.page + 1;
@@ -1994,6 +2041,38 @@ Ext.onReady( function() {
 					}
 				}
 			};
+
+            // document
+            web.document = web.document || {};
+
+            web.document.printResponseCSV = function(response) {
+                var headers = response.headers,
+                    names = response.metaData.names,
+                    rows = response.rows,
+                    csv = '',
+                    alink;
+
+                // headers
+                for (var i = 0; i < headers.length; i++) {
+                    csv += headers[i].column + (i < headers.length - 1 ? ',' : '\n');
+                }
+
+                // rows
+                for (var i = 0; i < rows.length; i++) {
+                    for (var j = 0, id, isMeta; j < rows[i].length; j++) {
+                        val = rows[i][j];
+                        isMeta = headers[j].meta;
+
+                        csv += isMeta && names[val] ? names[val] : val;
+                        csv += j < rows[i].length - 1 ? ',' : '\n';
+                    }
+                }
+
+                alink = document.createElement('a');
+                alink.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
+                alink.setAttribute('download', 'data.csv');
+                alink.click();
+            };
 
 			// mouse events
 			web.events = web.events || {};
@@ -4352,13 +4431,13 @@ Ext.onReady( function() {
 				}
 			},
 			store: Ext.create('Ext.data.TreeStore', {
-				fields: ['id', 'name'],
+				fields: ['id', 'name', 'hasChildren'],
 				proxy: {
 					type: 'rest',
 					format: 'json',
 					noCache: false,
 					extraParams: {
-						fields: 'children[id,name,level]'
+						fields: 'children[id,name,children::isNotEmpty|rename(hasChildren)&paging=false'
 					},
 					url: ns.core.init.contextPath + '/api/organisationUnits',
 					reader: {
@@ -4378,15 +4457,9 @@ Ext.onReady( function() {
 				},
 				listeners: {
 					load: function(store, node, records) {
-                        var numberOfLevels = ns.core.init.organisationUnitLevels.length;
-
 						Ext.Array.each(records, function(record) {
-                            //if (Ext.isBoolean(record.data.hasChildren)) {
-                                //record.set('leaf', !record.data.hasChildren);
-                            //}
-
-                            if (Ext.isNumber(numberOfLevels)) {
-                                record.set('leaf', parseInt(record.raw.level) === numberOfLevels);
+                            if (Ext.isBoolean(record.data.hasChildren)) {
+                                record.set('leaf', !record.data.hasChildren);
                             }
                         });
 					}
@@ -4728,7 +4801,8 @@ Ext.onReady( function() {
 		// dimensions
 
 		getDimensionPanel = function(dimension, iconCls) {
-			var	availableStore,
+			var	onSelect,
+                availableStore,
 				selectedStore,
 				available,
 				selected,
@@ -4736,6 +4810,17 @@ Ext.onReady( function() {
 
 				createPanel,
 				getPanels;
+
+            onSelect = function() {
+                var win = ns.app.layoutWindow;
+
+                if (selectedStore.getRange().length) {
+                    win.addDimension({id: dimension.id, name: dimension.name});
+                }
+                else if (!selectedStore.getRange().length && win.hasDimension(dimension.id)) {
+                    win.removeDimension(dimension.id);
+                }
+            };
 
 			availableStore = Ext.create('Ext.data.Store', {
 				fields: ['id', 'name'],
@@ -4806,7 +4891,15 @@ Ext.onReady( function() {
 
 			selectedStore = Ext.create('Ext.data.Store', {
 				fields: ['id', 'name'],
-				data: []
+				data: [],
+                listeners: {
+                    add: function() {
+                        onSelect();
+                    },
+                    remove: function() {
+                        onSelect();
+                    }
+                }
 			});
 
 			available = Ext.create('Ext.ux.form.MultiSelect', {
@@ -5158,124 +5251,118 @@ Ext.onReady( function() {
 		downloadButton = Ext.create('Ext.button.Button', {
 			text: 'Download',
 			disabled: true,
-			menu: {
-				cls: 'ns-menu',
-				shadow: false,
-				showSeparator: false,
-				items: [
-					{
-						xtype: 'label',
-						text: NS.i18n.table_layout,
-						style: 'padding:7px 5px 5px 7px; font-weight:bold; border:0 none'
-					},
-					{
-						text: 'Microsoft Excel (.xls)',
-						iconCls: 'ns-menu-item-tablelayout',
-						handler: function() {
-							openTableLayoutTab('xls');
-						}
-					},
-					{
-						text: 'CSV (.csv)',
-						iconCls: 'ns-menu-item-tablelayout',
-						handler: function() {
-							openTableLayoutTab('csv');
-						}
-					},
-					{
-						text: 'HTML (.html)',
-						iconCls: 'ns-menu-item-tablelayout',
-						handler: function() {
-							openTableLayoutTab('html', true);
-						}
-					},
-					{
-						xtype: 'label',
-						text: NS.i18n.plain_data_sources,
-						style: 'padding:7px 5px 5px 7px; font-weight:bold'
-					},
-					{
-						text: 'JSON',
-						iconCls: 'ns-menu-item-datasource',
-						handler: function() {
-							if (ns.core.init.contextPath && ns.app.paramString) {
-								window.open(ns.core.init.contextPath + '/api/analytics.json' + getParamString(), '_blank');
-							}
-						}
-					},
-					{
-						text: 'XML',
-						iconCls: 'ns-menu-item-datasource',
-						handler: function() {
-							if (ns.core.init.contextPath && ns.app.paramString) {
-								window.open(ns.core.init.contextPath + '/api/analytics.xml' + getParamString(), '_blank');
-							}
-						}
-					},
-					{
-						text: 'Microsoft Excel',
-						iconCls: 'ns-menu-item-datasource',
-						handler: function() {
-							if (ns.core.init.contextPath && ns.app.paramString) {
-								window.location.href = ns.core.init.contextPath + '/api/analytics.xls' + getParamString();
-							}
-						}
-					},
-					{
-						text: 'CSV',
-						iconCls: 'ns-menu-item-datasource',
-						handler: function() {
-							if (ns.core.init.contextPath && ns.app.paramString) {
-								window.location.href = ns.core.init.contextPath + '/api/analytics.csv' + getParamString();
-							}
-						}
-					},
-					{
-						text: 'JRXML',
-						iconCls: 'ns-menu-item-datasource',
-						handler: function() {
-							if (ns.core.init.contextPath && ns.app.paramString) {
-								window.open(ns.core.init.contextPath + '/api/analytics.jrxml' + getParamString(), '_blank');
-							}
-						}
-					}
-                    //{
-                        //text: 'export',
-                        //handler: function() {
-                            //var myWin = window.open(),
-                                //tableId = 'datatable',
-                                //text = '';
+			menu: {},
+            handler: function(b) {
+                b.menu = Ext.create('Ext.menu.Menu', {
+                    closeAction: 'destroy',
+                    //cls: 'ns-menu',
+                    shadow: false,
+                    showSeparator: false,
+                    items: [
+                        {
+                            xtype: 'label',
+                            text: NS.i18n.table_layout,
+                            style: 'padding:7px 5px 5px 7px; font-weight:bold; border:0 none'
+                        },
+                        {
+                            text: 'Microsoft Excel (.xls)',
+                            iconCls: 'ns-menu-item-tablelayout',
+                            handler: function() {
+                                openTableLayoutTab('xls');
+                            }
+                        },
+                        {
+                            text: 'CSV (.csv)',
+                            iconCls: 'ns-menu-item-tablelayout',
+                            handler: function() {
+                                openTableLayoutTab('csv');
+                            }
+                        },
+                        {
+                            text: 'HTML (.html)',
+                            iconCls: 'ns-menu-item-tablelayout',
+                            handler: function() {
+                                openTableLayoutTab('html', true);
+                            }
+                        },
+                        {
+                            xtype: 'label',
+                            text: NS.i18n.plain_data_sources,
+                            style: 'padding:7px 5px 5px 7px; font-weight:bold'
+                        },
+                        {
+                            text: 'JSON',
+                            iconCls: 'ns-menu-item-datasource',
+                            handler: function() {
+                                if (ns.core.init.contextPath && ns.app.paramString) {
+                                    window.open(ns.core.init.contextPath + '/api/analytics.json' + getParamString(), '_blank');
+                                }
+                            }
+                        },
+                        {
+                            text: 'XML',
+                            iconCls: 'ns-menu-item-datasource',
+                            handler: function() {
+                                if (ns.core.init.contextPath && ns.app.paramString) {
+                                    window.open(ns.core.init.contextPath + '/api/analytics.xml' + getParamString(), '_blank');
+                                }
+                            }
+                        },
+                        {
+                            text: 'Microsoft Excel',
+                            iconCls: 'ns-menu-item-datasource',
+                            handler: function() {
+                                if (ns.core.init.contextPath && ns.app.paramString) {
+                                    window.location.href = ns.core.init.contextPath + '/api/analytics.xls' + getParamString();
+                                }
+                            }
+                        },
+                        {
+                            text: 'CSV',
+                            iconCls: 'ns-menu-item-datasource',
+                            handler: function() {
+                                if (ns.core.init.contextPath && ns.app.paramString) {
+                                    window.location.href = ns.core.init.contextPath + '/api/analytics.csv' + getParamString();
+                                }
+                            }
+                        },
+                        {
+                            text: 'CSV w/ hierarchy',
+                            iconCls: 'ns-menu-item-datasource',
+                            hidden: !(ns.app.layout && !!ns.app.layout.showHierarchy && ns.app.xResponse.nameHeaderMap.hasOwnProperty('ou')),
+                            handler: function() {
+                                var response = ns.core.service.response.addOuHierarchyDimensions(Ext.clone(ns.app.response));
 
-                            ////text += '<a id="csvlink" href="" download="datatable.csv" onclick="javascript:this.download()">Download CSV</a><br/><br/>';
-                            //text += '<a href="" download="data.csv">download</a>';
+                                ns.core.web.document.printResponseCSV(response);
+                            }
+                        },
+                        {
+                            text: 'JRXML',
+                            iconCls: 'ns-menu-item-datasource',
+                            handler: function() {
+                                if (ns.core.init.contextPath && ns.app.paramString) {
+                                    window.open(ns.core.init.contextPath + '/api/analytics.jrxml' + getParamString(), '_blank');
+                                }
+                            }
+                        }
+                    ],
+                    listeners: {
+                        added: function() {
+                            ns.app.downloadButton = this;
+                        },
+                        show: function() {
+                            ns.core.web.window.setAnchorPosition(b.menu, b);
+                        },
+                        hide: function() {
+                            b.menu.destroy();
+                        },
+                        destroy: function(m) {
+                            b.menu = null;
+                        }
+                    }
+                });
 
-                            //text += '<table id="datatable">';
-
-                            //text += '<tr><th>indicator</th><th>period</th><th>orgunit</th><th>value</th></tr>';
-
-                            //text += '<tr><td>anc1</td><td>jan</td><td>telemark</td><td>8</td></tr>';
-                            //text += '<tr><td>anc1</td><td>jan</td><td>oslo</td><td>2</td></tr>';
-                            //text += '<tr><td>anc1</td><td>feb</td><td>telemark</td><td>11</td></tr>';
-                            //text += '<tr><td>anc1</td><td>feb</td><td>oslo</td><td>12</td></tr>';
-
-                            //text += '</table>';
-
-                            //myWin.document.write(text);
-
-                            //myWin.document.getElementById('csvlink').download = function() {
-                                //return ExcellentExport.csv(window, 'datatable');
-                            //};
-                        //}
-                    //}
-				],
-				listeners: {
-					added: function() {
-						ns.app.downloadButton = this;
-					},
-					afterrender: function() {
-						this.getEl().addCls('ns-toolbar-btn-menu');
-					}
-				}
+                this.menu.show();
 			}
 		});
 
@@ -5700,7 +5787,7 @@ Ext.onReady( function() {
 			}
 
 			// Layout
-			ns.app.stores.dimension.reset(true);
+			ns.app.stores.dimension.removeAll();
 			ns.app.stores.col.removeAll();
 			ns.app.stores.row.removeAll();
 			ns.app.stores.filter.removeAll();
@@ -5829,10 +5916,11 @@ Ext.onReady( function() {
 				render: function() {
 					ns.app.viewport = this;
 
-					ns.app.layoutWindow = LayoutWindow();
-					ns.app.layoutWindow.hide();
-					ns.app.optionsWindow = OptionsWindow();
-					ns.app.optionsWindow.hide();
+                    ns.app.layoutWindow = LayoutWindow();
+                    ns.app.layoutWindow.hide();
+
+                    ns.app.optionsWindow = OptionsWindow();
+                    ns.app.optionsWindow.hide();
 				},
 				afterrender: function() {
 

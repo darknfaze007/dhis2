@@ -58,6 +58,9 @@ dhis2.de.currentCategories = null;
 // Current offset, next or previous corresponding to increasing or decreasing value
 dhis2.de.currentPeriodOffset = 0;
 
+// Current existing data value, prior to entry or modification
+dhis2.de.currentExistingValue = null;
+
 // Associative array with currently-displayed period choices, keyed by iso
 dhis2.de.periodChoices = [];
 
@@ -1016,7 +1019,7 @@ function displayPeriods()
 
     if ( allowFuturePeriods == false )
     {
-      periods = dhis2.period.generator.filterFuturePeriods(periods);
+        periods = dhis2.period.generator.filterFuturePeriods( periods );
     }
 
     clearListById( 'selectedPeriodId' );
@@ -1138,14 +1141,15 @@ dhis2.de.updateOptionsStatus = function()
     if ( dhis2.de.currentCategories && dhis2.de.currentCategories.length != 0 )
     {
         var prefix = '(';
-        $.safeEach(dhis2.de.currentCategories, function (idx, category) {
+        $.safeEach( dhis2.de.currentCategories, function ( idx, category ) {
             var option = $('#category-' + category.id).val();
 
-            if (option && option != -1) {
+            if ( option && option != -1) {
                 var options = dhis2.de.categories[ category.id ].options;
                 var matching = $.grep(options, function (e) {
                     return e.id == option;
                 });
+                
                 html += prefix + matching[0].name;
                 prefix = ', ';
             }
@@ -1153,7 +1157,7 @@ dhis2.de.updateOptionsStatus = function()
         html += html.length == 0 ? '' : ')';
     }
 
-    $( '#currentOptionsSelection').html( html );
+    $( '#currentOptionsSelection' ).html( html );
 };
 
 /**
@@ -1200,8 +1204,7 @@ dhis2.de.getAttributesMarkup = function()
 
     var options = dhis2.de.getCurrentCategoryOptions();
 
-	if ( !dhis2.de.currentCategories || dhis2.de.currentCategories.length == 0
-		|| period.iso == "" ) {
+	if ( !dhis2.de.currentCategories || dhis2.de.currentCategories.length == 0 || period.iso == "" ) {
 		return html;
 	}
 	
@@ -1510,11 +1513,13 @@ function displayEntryFormCompleted()
 function valueFocus( e )
 {
     var id = e.target.id;
+    var value = e.target.value;
 
     var split = splitFieldId( id );
     var dataElementId = split.dataElementId;
     var optionComboId = split.optionComboId;
     dhis2.de.currentOrganisationUnitId = split.organisationUnitId;
+    dhis2.de.currentExistingValue = value;
 
     var dataElementName = getDataElementName( dataElementId );
     var optionComboName = getOptionComboName( optionComboId );
