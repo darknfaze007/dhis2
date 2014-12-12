@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=
-  "http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+  "http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+
+  <bean id="org.hisp.dhis.dxf2.gml.GmlImportService" class="org.hisp.dhis.dxf2.gml.DefaultGmlImportService" />
+
+  <bean id="org.hisp.dhis.dxf2.events.event.csv.CsvEventService" class="org.hisp.dhis.dxf2.events.event.csv.DefaultCsvEventService" />
+
+  <bean id="org.hisp.dhis.dxf2.csv.CsvImportService" class="org.hisp.dhis.dxf2.csv.DefaultCsvImportService" />
 
   <bean id="org.hisp.dhis.dxf2.render.RenderService" class="org.hisp.dhis.dxf2.render.DefaultRenderService" />
 
@@ -27,6 +33,8 @@
 
   <bean id="org.hisp.dhis.dxf2.events.event.EventService" class="org.hisp.dhis.dxf2.events.event.JacksonEventService" />
 
+  <bean id="org.hisp.dhis.dxf2.events.report.EventRowService" class="org.hisp.dhis.dxf2.events.report.AbstractEventRowService" />
+
   <bean id="org.hisp.dhis.dxf2.events.person.PersonService"
     class="org.hisp.dhis.dxf2.events.trackedentity.JacksonTrackedEntityInstanceService" />
 
@@ -37,6 +45,10 @@
   <bean id="org.hisp.dhis.dxf2.metadata.MetaDataDependencyService" class="org.hisp.dhis.dxf2.metadata.DefaultMetaDataDependencyService"
     scope="prototype" />
 
+  <bean id="org.hisp.dhis.dxf2.synch.SynchronizationManager" class="org.hisp.dhis.dxf2.synch.DefaultSynchronizationManager" />
+
+  <bean id="dataSynchTask" class="org.hisp.dhis.dxf2.synch.DataSynchronizationTask" />
+
   <!-- register idObject handlers -->
 
   <bean id="organisationUnitObjectHandler"
@@ -46,6 +58,10 @@
 
   <bean id="attributeTypeImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter" scope="prototype">
     <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.attribute.Attribute" />
+  </bean>
+
+  <bean id="optionImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter" scope="prototype">
+    <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.option.Option" />
   </bean>
 
   <bean id="optionSetImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter" scope="prototype">
@@ -92,10 +108,6 @@
 
   <bean id="chartImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter" scope="prototype">
     <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.chart.Chart" />
-  </bean>
-
-  <bean id="conceptImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter" scope="prototype">
-    <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.concept.Concept" />
   </bean>
 
   <bean id="constantImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter" scope="prototype">
@@ -209,14 +221,14 @@
     <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.validation.ValidationRuleGroup" />
   </bean>
 
-  <bean id="dataDictionaryImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter" scope="prototype">
-    <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.datadictionary.DataDictionary" />
-  </bean>
-
   <!-- register tracker importers -->
 
   <bean id="eventReportImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter" scope="prototype">
     <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.eventreport.EventReport" />
+  </bean>
+
+  <bean id="eventChartImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter" scope="prototype">
+    <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.eventchart.EventChart" />
   </bean>
 
   <bean id="programImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter" scope="prototype">
@@ -256,6 +268,16 @@
   <bean id="trackedEntityAttributeGroupImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter"
     scope="prototype">
     <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.trackedentity.TrackedEntityAttributeGroup" />
+  </bean>
+
+  <bean id="dashboardImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter"
+    scope="prototype">
+    <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.dashboard.Dashboard" />
+  </bean>
+
+  <bean id="dashboardItemImporter" class="org.hisp.dhis.dxf2.metadata.importers.DefaultIdentifiableObjectImporter"
+    scope="prototype">
+    <constructor-arg name="importerClass" type="java.lang.Class" value="org.hisp.dhis.dashboard.DashboardItem" />
   </bean>
 
 </beans>

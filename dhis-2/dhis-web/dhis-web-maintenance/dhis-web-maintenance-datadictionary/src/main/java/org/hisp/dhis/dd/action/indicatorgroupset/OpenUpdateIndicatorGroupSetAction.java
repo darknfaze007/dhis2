@@ -73,24 +73,25 @@ public class OpenUpdateIndicatorGroupSetAction
         return indicatorGroupSet;
     }
 
-    private List<IndicatorGroup> selectedGroups;
+    private List<IndicatorGroup> indicatorGroups;
 
-    public List<IndicatorGroup> getSelectedGroups()
+    public List<IndicatorGroup> getIndicatorGroups()
     {
-        return selectedGroups;
+        return indicatorGroups;
     }
 
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         indicatorGroupSet = indicatorService.getIndicatorGroupSet( id, true );
 
-        selectedGroups = indicatorGroupSet.getMembers();
+        indicatorGroups = indicatorGroupSet.getMembers();
         
-        Collections.sort( selectedGroups, IdentifiableObjectNameComparator.INSTANCE );
+        Collections.sort( indicatorGroups, IdentifiableObjectNameComparator.INSTANCE );
         
         return SUCCESS;
     }

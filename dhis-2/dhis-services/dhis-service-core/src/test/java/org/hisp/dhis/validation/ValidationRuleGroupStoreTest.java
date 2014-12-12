@@ -38,6 +38,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.Resource;
+
 import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.common.GenericIdentifiableObjectStore;
 import org.hisp.dhis.dataelement.DataElement;
@@ -48,19 +50,28 @@ import org.hisp.dhis.expression.Expression;
 import org.hisp.dhis.expression.ExpressionService;
 import org.hisp.dhis.period.PeriodType;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
  */
-@SuppressWarnings( "unchecked" )
 public class ValidationRuleGroupStoreTest
     extends DhisSpringTest
 {
+    @Resource(name="org.hisp.dhis.validation.ValidationRuleStore")
     private GenericIdentifiableObjectStore<ValidationRule> validationRuleStore;
 
+    @Resource(name="org.hisp.dhis.validation.ValidationRuleGroupStore")
     private GenericIdentifiableObjectStore<ValidationRuleGroup> validationRuleGroupStore;
 
+    @Autowired
     private ExpressionService expressionService;
+    
+    @Autowired
+    private DataElementService dataElementService;
+
+    @Autowired
+    private DataElementCategoryService categoryService;
 
     private DataElement dataElementA;
 
@@ -88,16 +99,6 @@ public class ValidationRuleGroupStoreTest
     public void setUpTest()
         throws Exception
     {
-        validationRuleStore = (GenericIdentifiableObjectStore<ValidationRule>) getBean( "org.hisp.dhis.validation.ValidationRuleStore" );
-
-        validationRuleGroupStore = (GenericIdentifiableObjectStore<ValidationRuleGroup>) getBean( "org.hisp.dhis.validation.ValidationRuleGroupStore" );
-
-        dataElementService = (DataElementService) getBean( DataElementService.ID );
-
-        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
-
-        expressionService = (ExpressionService) getBean( ExpressionService.ID );
-
         dataElementA = createDataElement( 'A' );
         dataElementB = createDataElement( 'B' );
         dataElementC = createDataElement( 'C' );
@@ -108,7 +109,7 @@ public class ValidationRuleGroupStoreTest
         dataElementService.addDataElement( dataElementC );
         dataElementService.addDataElement( dataElementD );
 
-        dataElements = new HashSet<DataElement>();
+        dataElements = new HashSet<>();
 
         dataElements.add( dataElementA );
         dataElements.add( dataElementB );
@@ -117,11 +118,11 @@ public class ValidationRuleGroupStoreTest
 
         DataElementCategoryOptionCombo categoryOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
 
-        optionCombos = new HashSet<DataElementCategoryOptionCombo>();
+        optionCombos = new HashSet<>();
         optionCombos.add( categoryOptionCombo );
 
-        expressionA = new Expression( "expressionA", "descriptionA", dataElements, optionCombos );
-        expressionB = new Expression( "expressionB", "descriptionB", dataElements, optionCombos );
+        expressionA = new Expression( "expressionA", "descriptionA", dataElements );
+        expressionB = new Expression( "expressionB", "descriptionB", dataElements );
 
         expressionService.addExpression( expressionB );
         expressionService.addExpression( expressionA );
@@ -142,7 +143,7 @@ public class ValidationRuleGroupStoreTest
         validationRuleStore.save( ruleA );
         validationRuleStore.save( ruleB );
 
-        Set<ValidationRule> rules = new HashSet<ValidationRule>();
+        Set<ValidationRule> rules = new HashSet<>();
 
         rules.add( ruleA );
         rules.add( ruleB );
@@ -169,7 +170,7 @@ public class ValidationRuleGroupStoreTest
         validationRuleStore.save( ruleA );
         validationRuleStore.save( ruleB );
 
-        Set<ValidationRule> rules = new HashSet<ValidationRule>();
+        Set<ValidationRule> rules = new HashSet<>();
 
         rules.add( ruleA );
         rules.add( ruleB );
@@ -205,7 +206,7 @@ public class ValidationRuleGroupStoreTest
         validationRuleStore.save( ruleA );
         validationRuleStore.save( ruleB );
 
-        Set<ValidationRule> rules = new HashSet<ValidationRule>();
+        Set<ValidationRule> rules = new HashSet<>();
 
         rules.add( ruleA );
         rules.add( ruleB );
@@ -242,7 +243,7 @@ public class ValidationRuleGroupStoreTest
         validationRuleStore.save( ruleA );
         validationRuleStore.save( ruleB );
 
-        Set<ValidationRule> rules = new HashSet<ValidationRule>();
+        Set<ValidationRule> rules = new HashSet<>();
 
         rules.add( ruleA );
         rules.add( ruleB );
@@ -272,7 +273,7 @@ public class ValidationRuleGroupStoreTest
         validationRuleStore.save( ruleA );
         validationRuleStore.save( ruleB );
 
-        Set<ValidationRule> rules = new HashSet<ValidationRule>();
+        Set<ValidationRule> rules = new HashSet<>();
 
         rules.add( ruleA );
         rules.add( ruleB );

@@ -30,7 +30,11 @@ package org.hisp.dhis.trackedentity.action.programstage;
 
 import org.hisp.dhis.common.DeleteNotAllowedException;
 import org.hisp.dhis.i18n.I18n;
+import org.hisp.dhis.program.Program;
+import org.hisp.dhis.program.ProgramService;
+import org.hisp.dhis.program.ProgramStage;
 import org.hisp.dhis.program.ProgramStageService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.opensymphony.xwork2.Action;
 
@@ -52,6 +56,9 @@ public class RemoveProgramStageAction
     {
         this.programStageService = programStageService;
     }
+    
+    @Autowired
+    private ProgramService programService;
 
     // -------------------------------------------------------------------------
     // Input/Output
@@ -86,12 +93,16 @@ public class RemoveProgramStageAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         try
         {
-            programStageService.deleteProgramStage( programStageService.getProgramStage( id ) );
+            ProgramStage programStage = programStageService.getProgramStage( id );
+            Program program = programStage.getProgram(); 
+            program.getProgramStages().remove( programStage );
+            programStageService.deleteProgramStage( programStage );
         }
         catch ( DeleteNotAllowedException ex )
         {

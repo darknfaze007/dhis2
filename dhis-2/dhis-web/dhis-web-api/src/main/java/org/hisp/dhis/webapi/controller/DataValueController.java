@@ -29,8 +29,6 @@ package org.hisp.dhis.webapi.controller;
  */
 
 import org.apache.commons.lang.StringUtils;
-import org.hisp.dhis.webapi.utils.ContextUtils;
-import org.hisp.dhis.webapi.utils.InputUtils;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
@@ -44,6 +42,8 @@ import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.system.util.ValidationUtils;
 import org.hisp.dhis.user.CurrentUserService;
+import org.hisp.dhis.webapi.utils.ContextUtils;
+import org.hisp.dhis.webapi.utils.InputUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -164,7 +164,7 @@ public class DataValueController
 
         if ( valid != null )
         {
-            ContextUtils.conflictResponse( response, "Invalid value: " + value + ", must match data element type: " + dataElement.getType() );
+            ContextUtils.conflictResponse( response, "Invalid value: " + value + ", must match data element type: " + dataElement.getDetailedType() );
             return;
         }
 
@@ -199,17 +199,7 @@ public class DataValueController
         if ( dataValue == null )
         {
             dataValue = new DataValue( dataElement, period, organisationUnit, categoryOptionCombo, attributeOptionCombo,
-                null, storedBy, now, null );
-
-            if ( value != null )
-            {
-                dataValue.setValue( StringUtils.trimToNull( value ) );
-            }
-
-            if ( comment != null )
-            {
-                dataValue.setComment( StringUtils.trimToNull( comment ) );
-            }
+                StringUtils.trimToNull( value ), storedBy, now, StringUtils.trimToNull( comment ) );
 
             dataValueService.addDataValue( dataValue );
         }
@@ -243,7 +233,7 @@ public class DataValueController
                 dataValue.toggleFollowUp();
             }
 
-            dataValue.setTimestamp( now );
+            dataValue.setLastUpdated( now );
             dataValue.setStoredBy( storedBy );
 
             dataValueService.updateDataValue( dataValue );
@@ -437,7 +427,7 @@ public class DataValueController
             return null;
         }
 
-        List<String> value = new ArrayList<String>();
+        List<String> value = new ArrayList<>();
         value.add( dataValue.getValue() );
 
         model.addAttribute( "model", value );

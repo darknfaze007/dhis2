@@ -84,19 +84,20 @@ public class GetIndicatorGroupListAction
     // Action implemantation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         if ( isNotBlank( key ) ) // Filter on key only if set
         {
             this.paging = createPaging( indicatorService.getIndicatorGroupCountByName( key ) );
             
-            indicatorGroups = new ArrayList<IndicatorGroup>( indicatorService.getIndicatorGroupsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
+            indicatorGroups = new ArrayList<>( indicatorService.getIndicatorGroupsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( indicatorService.getIndicatorGroupCount() );
             
-            indicatorGroups = new ArrayList<IndicatorGroup>( indicatorService.getIndicatorGroupsBetween( paging.getStartPos(), paging.getPageSize() ) );
+            indicatorGroups = new ArrayList<>( indicatorService.getIndicatorGroupsBetween( paging.getStartPos(), paging.getPageSize() ) );
         }
 
         Collections.sort( indicatorGroups, IdentifiableObjectNameComparator.INSTANCE );

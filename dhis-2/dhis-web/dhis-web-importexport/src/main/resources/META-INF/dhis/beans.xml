@@ -1,29 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
 
   <!-- Data value import -->
 
   <bean id="org.hisp.dhis.importexport.action.datavalue.ImportDataValueAction"
-    class="org.hisp.dhis.importexport.action.datavalue.ImportDataValueAction" />
+    class="org.hisp.dhis.importexport.action.datavalue.ImportDataValueAction"
+    scope="prototype" />
 
   <bean id="org.hisp.dhis.importexport.action.GetImportSummaryAction"
-    class="org.hisp.dhis.importexport.action.GetImportSummaryAction">
+    class="org.hisp.dhis.importexport.action.GetImportSummaryAction"
+    scope="prototype">
     <property name="category" value="DATAVALUE_IMPORT" />
   </bean>
 
   <!-- Data value export -->
 
   <bean id="org.hisp.dhis.importexport.action.datavalue.ExportDataValueAction"
-    class="org.hisp.dhis.importexport.action.datavalue.ExportDataValueAction" />
+    class="org.hisp.dhis.importexport.action.datavalue.ExportDataValueAction"
+    scope="prototype" />
 
   <!-- Events -->
 
   <bean id="org.hisp.dhis.importexport.action.event.ImportEventAction"
-    class="org.hisp.dhis.importexport.action.event.ImportEventAction" />
+    class="org.hisp.dhis.importexport.action.event.ImportEventAction"
+    scope="prototype" />
 
   <bean id="org.hisp.dhis.importexport.action.event.ExportEventAction"
-    class="org.hisp.dhis.importexport.action.event.ExportEventAction" />
+    class="org.hisp.dhis.importexport.action.event.ExportEventAction"
+    scope="prototype" />
 
   <!-- Import -->
 
@@ -32,13 +37,11 @@
     scope="prototype">
     <property name="processCoordinator" ref="processCoordinator" />
     <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-    <property name="configurationManager" ref="org.hisp.dhis.importexport.IbatisConfigurationManager" />
   </bean>
 
   <bean id="org.hisp.dhis.importexport.action.imp.GetImportOptionsAction"
     class="org.hisp.dhis.importexport.action.imp.GetImportOptionsAction"
     scope="prototype">
-    <property name="configurationManager" ref="org.hisp.dhis.importexport.IbatisConfigurationManager" />
   </bean>
 
   <bean id="org.hisp.dhis.importexport.action.imp.GetImportStatusAction"
@@ -50,7 +53,6 @@
   <bean id="org.hisp.dhis.importexport.action.imp.SetImportTypeAction"
     class="org.hisp.dhis.importexport.action.imp.SetImportTypeAction"
     scope="prototype">
-    <property name="configurationManager" ref="org.hisp.dhis.importexport.IbatisConfigurationManager" />
   </bean>
 
   <bean id="org.hisp.dhis.importexport.action.imp.GetImportAnalysisAction"
@@ -65,14 +67,12 @@
     class="org.hisp.dhis.importexport.action.object.MatchObjectAction"
     scope="prototype">
     <property name="importObjectService" ref="org.hisp.dhis.importexport.ImportObjectService" />
-    <property name="configurationManager" ref="org.hisp.dhis.importexport.IbatisConfigurationManager" />
   </bean>
 
   <bean id="org.hisp.dhis.importexport.action.object.DiscardObjectAction"
     class="org.hisp.dhis.importexport.action.object.DiscardObjectAction"
     scope="prototype">
     <property name="importObjectService" ref="org.hisp.dhis.importexport.ImportObjectService" />
-    <property name="configurationManager" ref="org.hisp.dhis.importexport.IbatisConfigurationManager" />
   </bean>
 
   <bean id="org.hisp.dhis.importexport.action.object.DiscardObjectsOfTypeAction"
@@ -110,7 +110,6 @@
     <property name="constantService" ref="org.hisp.dhis.constant.ConstantService" />
     <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
     <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
     <property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="organisationUnitGroupService" ref="org.hisp.dhis.organisationunit.OrganisationUnitGroupService" />
@@ -128,14 +127,11 @@
 
   <!-- Export -->
 
-    <bean id="org.hisp.dhis.importexport.action.exp.MetaDataExportAction"
+  <bean id="org.hisp.dhis.importexport.action.exp.MetaDataExportAction"
     class="org.hisp.dhis.importexport.action.exp.MetaDataExportAction"
     scope="prototype">
     <property name="serviceProvider" ref="exportServiceProvider" />
     <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-    <!-- New services -->
-    <!-- <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
-    <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" /> -->
   </bean>
   
   <bean id="org.hisp.dhis.importexport.action.exp.DataExportAction"
@@ -143,11 +139,9 @@
     scope="prototype">
     <property name="serviceProvider" ref="exportServiceProvider" />
     <property name="currentUserService" ref="org.hisp.dhis.user.CurrentUserService" />
-    <!-- New services -->
     <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
   </bean>
-
 
   <bean id="org.hisp.dhis.importexport.action.exp.DetailedMetaDataExportAction"
     class="org.hisp.dhis.importexport.action.exp.DetailedMetaDataExportAction"
@@ -169,14 +163,12 @@
     class="org.hisp.dhis.importexport.action.exp.GetDataElementListAction"
     scope="prototype">
     <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
   </bean>
 
   <bean id="org.hisp.dhis.importexport.action.exp.GetIndicatorListAction"
     class="org.hisp.dhis.importexport.action.exp.GetIndicatorListAction"
     scope="prototype">
     <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
   </bean>
 
   <bean id="org.hisp.dhis.importexport.action.exp.ValidateAggregatedExportAction"
@@ -189,9 +181,7 @@
 
   <bean id="org.hisp.dhis.importexport.action.dhis14.GetDhis14ConfigurationAction"
     class="org.hisp.dhis.importexport.action.dhis14.GetDhis14ConfigurationAction"
-    scope="prototype">
-    <property name="configurationManager" ref="org.hisp.dhis.importexport.IbatisConfigurationManager" />
-  </bean>
+    scope="prototype"/>
 
   <bean id="org.hisp.dhis.importexport.action.dhis14.SetDhis14ConfigurationAction"
     class="org.hisp.dhis.importexport.action.dhis14.SetDhis14ConfigurationAction"
@@ -208,7 +198,7 @@
   <!-- DXF2 MetaData import/export -->
 
   <bean id="org.hisp.dhis.importexport.action.dxf2.MetaDataExportFormAction"
-    class="org.hisp.dhis.importexport.action.dxf2.MetaDataExportFormAction" />
+    class="org.hisp.dhis.importexport.action.dxf2.MetaDataExportFormAction" scope="prototype"/>
 
   <bean id="org.hisp.dhis.importexport.action.dxf2.MetaDataImportAction"
     class="org.hisp.dhis.importexport.action.dxf2.MetaDataImportAction" />

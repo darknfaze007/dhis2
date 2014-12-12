@@ -32,19 +32,21 @@ import static org.hisp.dhis.system.util.CodecUtils.filenameEncode;
 import static org.hisp.dhis.system.util.DateUtils.getMediumDate;
 import static org.hisp.dhis.util.ContextUtils.CONTENT_TYPE_CSV;
 import static org.hisp.dhis.util.ContextUtils.CONTENT_TYPE_XML;
+import static org.hisp.dhis.util.ContextUtils.CONTENT_TYPE_JSON;
 import static org.hisp.dhis.util.ContextUtils.getZipOut;
 
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.struts2.ServletActionContext;
+import org.hisp.dhis.common.IdentifiableProperty;
+import org.hisp.dhis.common.IdentifiableObjectUtils;
 import org.hisp.dhis.dxf2.datavalueset.DataValueSetService;
-import org.hisp.dhis.organisationunit.OrganisationUnit;
+import org.hisp.dhis.dxf2.metadata.ExportOptions;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.oust.manager.SelectionTreeManager;
 import org.hisp.dhis.util.ContextUtils;
@@ -61,10 +63,13 @@ public class ExportDataValueAction
     private final static String FILE_PREFIX = "Export";
     private final static String FILE_SEPARATOR = "_";
     private final static String EXTENSION_XML_ZIP = ".xml.zip";
+    private final static String EXTENSION_JSON_ZIP = ".json.zip";
     private final static String EXTENSION_CSV_ZIP = ".csv.zip";
     private final static String EXTENSION_XML = ".xml";
+    private final static String EXTENSION_JSON = ".json";
     private final static String EXTENSION_CSV = ".csv";
     private final static String FORMAT_CSV = "csv";
+    private final static String FORMAT_JSON = "json";
 
     @Autowired
     private SelectionTreeManager selectionTreeManager;
@@ -107,27 +112,41 @@ public class ExportDataValueAction
         this.exportFormat = exportFormat;
     }
 
+    private IdentifiableProperty dataElementIdScheme;
+
+    public void setDataElementIdScheme( IdentifiableProperty dataElementIdScheme )
+    {
+        this.dataElementIdScheme = dataElementIdScheme;
+    }
+
+    private IdentifiableProperty orgUnitIdScheme;
+
+    public void setOrgUnitIdScheme( IdentifiableProperty orgUnitIdScheme )
+    {
+        this.orgUnitIdScheme = orgUnitIdScheme;
+    }
+
+    private IdentifiableProperty categoryOptionComboIdScheme;
+
+    public void setCategoryOptionComboIdScheme( IdentifiableProperty categoryOptionComboIdScheme )
+    {
+        this.categoryOptionComboIdScheme = categoryOptionComboIdScheme;
+    }
+
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         //TODO reimplement to use web api
         
-        Set<String> orgUnits = new HashSet<String>();
+        ExportOptions exportOptions = new ExportOptions( dataElementIdScheme, orgUnitIdScheme, categoryOptionComboIdScheme );
         
-        for ( OrganisationUnit unit : selectionTreeManager.getReloadedSelectedOrganisationUnits() )
-        {
-            Collection<OrganisationUnit> children = organisationUnitService.getOrganisationUnitWithChildren( unit.getId() );
-            
-            for ( OrganisationUnit child : children )
-            {
-                orgUnits.add( child.getUid() );
-            }
-        }
-        
+        Set<String> orgUnits = new HashSet<>( IdentifiableObjectUtils.getUids( selectionTreeManager.getSelectedOrganisationUnits() ) );
+                
         HttpServletResponse response = ServletActionContext.getResponse();
         
         if ( FORMAT_CSV.equals( exportFormat ) )
@@ -136,15 +155,24 @@ public class ExportDataValueAction
             
             Writer writer = new OutputStreamWriter( getZipOut( response, getFileName( EXTENSION_CSV ) ) );
             
-            dataValueSetService.writeDataValueSetCsv( selectedDataSets, getMediumDate( startDate ), getMediumDate( endDate ), orgUnits, writer );
+            dataValueSetService.writeDataValueSetCsv( selectedDataSets, getMediumDate( startDate ), 
+                getMediumDate( endDate ), orgUnits, true, writer, exportOptions );
+        }
+        else if ( FORMAT_JSON.equals( exportFormat ) )
+        {
+            ContextUtils.configureResponse( response, CONTENT_TYPE_JSON, true, getFileName( EXTENSION_JSON_ZIP ), true );
+            
+            dataValueSetService.writeDataValueSetJson( selectedDataSets, getMediumDate( startDate ), 
+                getMediumDate( endDate ), orgUnits, true, getZipOut( response, getFileName( EXTENSION_JSON ) ), exportOptions );
         }
         else
         {
             ContextUtils.configureResponse( response, CONTENT_TYPE_XML, true, getFileName( EXTENSION_XML_ZIP ), true );
             
-            dataValueSetService.writeDataValueSet( selectedDataSets, getMediumDate( startDate ), getMediumDate( endDate ), orgUnits, getZipOut( response, getFileName( EXTENSION_XML ) ) );
+            dataValueSetService.writeDataValueSetXml( selectedDataSets, getMediumDate( startDate ), 
+                getMediumDate( endDate ), orgUnits, true, getZipOut( response, getFileName( EXTENSION_XML ) ), exportOptions );
         }
-                
+        
         return SUCCESS;
     }
 

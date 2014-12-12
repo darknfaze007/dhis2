@@ -47,7 +47,7 @@ public class SpringScheduler
 {
     private static final Log log = LogFactory.getLog( SpringScheduler.class );
     
-    private Map<String, ScheduledFuture<?>> futures = new HashMap<String, ScheduledFuture<?>>();
+    private Map<String, ScheduledFuture<?>> futures = new HashMap<>();
 
     // -------------------------------------------------------------------------
     // Dependencies
@@ -71,11 +71,13 @@ public class SpringScheduler
     // Scheduler implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void executeTask( Runnable task )
     {
         taskExecutor.execute( task );
     }
     
+    @Override
     public boolean scheduleTask( String key, Runnable task, String cronExpr )
     {        
         if ( key != null && !futures.containsKey( key ) )
@@ -92,6 +94,7 @@ public class SpringScheduler
         return false;
     }
     
+    @Override
     public boolean stopTask( String key )
     {        
         if ( key != null )
@@ -110,6 +113,7 @@ public class SpringScheduler
         return false;
     }
     
+    @Override
     public void stopAllTasks()
     {
         Iterator<String> keys = futures.keySet().iterator();
@@ -128,6 +132,7 @@ public class SpringScheduler
         }
     }
 
+    @Override
     public String getTaskStatus( String key )
     {        
         ScheduledFuture<?> future = futures.get( key );

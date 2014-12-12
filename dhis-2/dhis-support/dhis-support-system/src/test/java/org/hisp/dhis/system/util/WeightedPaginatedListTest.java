@@ -54,7 +54,7 @@ public class WeightedPaginatedListTest
     @Test
     public void testNextPageA()
     {
-        WeightedPaginatedList<Weighted> list = new WeightedPaginatedList<Weighted>( 
+        WeightedPaginatedList<Weighted> list = new WeightedPaginatedList<>(
             Arrays.asList( one, one, three, three, three, one, one, one ), 3 );
         
         List<Weighted> page = list.nextPage();
@@ -80,7 +80,7 @@ public class WeightedPaginatedListTest
     @Test
     public void testNextPageB()
     {
-        WeightedPaginatedList<Weighted> list = new WeightedPaginatedList<Weighted>( 
+        WeightedPaginatedList<Weighted> list = new WeightedPaginatedList<>(
             Arrays.asList( one, two, three, two, three, one, one, two, three, one ), 4 );
         
         List<Weighted> page = list.nextPage();
@@ -116,7 +116,7 @@ public class WeightedPaginatedListTest
     @Test
     public void testGetPages()
     {
-        WeightedPaginatedList<Weighted> list = new WeightedPaginatedList<Weighted>( 
+        WeightedPaginatedList<Weighted> list = new WeightedPaginatedList<>(
             Arrays.asList( three, three, one, one, one, one, two, two ), 3 );
         
         List<List<Weighted>> pages = list.getPages();
@@ -147,6 +147,7 @@ public class WeightedPaginatedListTest
 
     class One implements Weighted
     {
+        @Override
         public int getWeight()
         {
             return 1;
@@ -155,6 +156,7 @@ public class WeightedPaginatedListTest
 
     class Two implements Weighted
     {
+        @Override
         public int getWeight()
         {
             return 2;
@@ -163,6 +165,7 @@ public class WeightedPaginatedListTest
     
     class Three implements Weighted
     {
+        @Override
         public int getWeight()
         {
             return 3;

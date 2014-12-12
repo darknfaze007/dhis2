@@ -1,29 +1,25 @@
-jQuery(document).ready(	function(){
-		
-		jQuery('name').focus();
-		
-		jQuery("#availableAttributes").dhisAjaxSelect({
-			source: 'getAttributeWithoutGroup.action',
-			iterator: 'attributes',
-			connectedTo: 'selectedAttributes',
-			handler: function(item){
-				var option = jQuery( "<option/>" );
-				option.attr( "value", item.id );
-				option.text( item.name );
-				
-				return option;
-			}
-		});
-		
-		
-		validation( 'addAttributeGroupForm', function(form){
-			form.submit();
-		}, function(){
-			selectAllById('selectedAttributes');
-			if(jQuery("#selectedAttributes option").length > 0 ){
-				setFieldValue('hasAttributes', 'true');
-			}
-		});
-		
-		checkValueIsExist( "name", "validateAttributeGroup.action" );
-	});		
+jQuery(document).ready(function() {
+
+    jQuery('name').focus();
+
+    validation2('addAttributeGroupForm', function( form ) {
+        form.submit();
+    }, {
+        'beforeValidateHandler': function() {
+            $("#teaSelected").find("option").attr("selected", "selected");
+            if( jQuery("#teaSelected option").length > 0 ) {
+                setFieldValue('attributeList', 'true');
+            }
+        },
+        'rules': getValidationRules("trackedEntityAttributeGroup")
+    });
+
+    $('#teaAvailable').selected({
+        url: '../api/trackedEntityAttributes.json?filter=trackedEntityAttributeGroup:null',
+        target: $('#teaSelected'),
+        search: $('#teaAvailableSearch'),
+        iterator: 'trackedEntityAttributes'
+    });
+
+    checkValueIsExist("name", "validateAttributeGroup.action");
+});

@@ -63,12 +63,21 @@ public class UserAuthorityGroup
      */
     private String description;
 
-    private Set<String> authorities = new HashSet<String>();
+    private Set<String> authorities = new HashSet<>();
 
-    private Set<UserCredentials> members = new HashSet<UserCredentials>();
+    private Set<UserCredentials> members = new HashSet<>();
 
     @Scanned
-    private Set<DataSet> dataSets = new HashSet<DataSet>();
+    private Set<DataSet> dataSets = new HashSet<>();
+
+    // -------------------------------------------------------------------------
+    // Constructors
+    // -------------------------------------------------------------------------
+
+    public UserAuthorityGroup()
+    {
+        setAutoFields();
+    }
 
     // -------------------------------------------------------------------------
     // Logic
@@ -85,12 +94,12 @@ public class UserAuthorityGroup
         members.remove( userCredentials );
         userCredentials.getUserAuthorityGroups().remove( this );
     }
-    
+
     public boolean isSuper()
     {
         return authorities != null && authorities.contains( AUTHORITY_ALL );
     }
-    
+
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------

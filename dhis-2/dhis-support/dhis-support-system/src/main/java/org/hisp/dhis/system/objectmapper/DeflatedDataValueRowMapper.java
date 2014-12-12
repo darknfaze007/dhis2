@@ -41,19 +41,21 @@ import org.hisp.dhis.datavalue.DeflatedDataValue;
 public class DeflatedDataValueRowMapper
     implements RowMapper<DeflatedDataValue>, org.springframework.jdbc.core.RowMapper<DeflatedDataValue>
 {
+    @Override
     public DeflatedDataValue mapRow( ResultSet resultSet )
         throws SQLException
     {
         final DeflatedDataValue value = new DeflatedDataValue();
         
-        value.setDataElementId( resultSet.getInt( 1 ) );
-        value.setPeriodId( resultSet.getInt( 2 ) );
-        value.setSourceId( resultSet.getInt( 3 ) );
-        value.setCategoryOptionComboId( resultSet.getInt( 4 ) );
-        value.setValue( resultSet.getString( 5 ) );
-        value.setStoredBy( resultSet.getString( 6 ) );
-        value.setTimestamp( resultSet.getTimestamp( 7 ) );
-        value.setComment( resultSet.getString( 8 ) );
+        value.setDataElementId( resultSet.getInt( "dataelementid" ) );
+        value.setPeriodId( resultSet.getInt( "periodid" ) );
+        value.setSourceId( resultSet.getInt( "sourceid" ) );
+        value.setCategoryOptionComboId( resultSet.getInt( "categoryoptioncomboid" ) );
+        value.setValue( resultSet.getString( "value" ) );
+        value.setStoredBy( resultSet.getString( "storedby" ) );
+        value.setCreated( resultSet.getTimestamp( "created" ) );
+        value.setLastUpdated( resultSet.getTimestamp( "lastupdated" ) );
+        value.setComment( resultSet.getString( "comment" ) );
         
         return value;
     }

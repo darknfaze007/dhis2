@@ -30,12 +30,13 @@ package org.hisp.dhis.dd.action.category;
 
 import org.apache.commons.lang.StringUtils;
 import org.hisp.dhis.calendar.CalendarService;
-import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.calendar.DateTimeUnit;
 import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
 
 import com.opensymphony.xwork2.Action;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
@@ -82,6 +83,13 @@ public class UpdateDataElementCategoryOptionAction
         this.name = name;
     }
 
+    private String shortName;
+
+    public void setShortName( String shortName )
+    {
+        this.shortName = shortName;
+    }
+
     private String code;
 
     public void setCode( String code )
@@ -118,6 +126,7 @@ public class UpdateDataElementCategoryOptionAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         code = StringUtils.trimToNull( code );
@@ -127,18 +136,19 @@ public class UpdateDataElementCategoryOptionAction
 
         if ( startDate != null && startDate.trim().length() != 0 )
         {
-            DateUnit isoStartDate = calendarService.getSystemCalendar().toIso( startDate );
+            DateTimeUnit isoStartDate = calendarService.getSystemCalendar().toIso( startDate );
             sDate = isoStartDate.toJdkCalendar().getTime();
         }
 
         if ( endDate != null && endDate.trim().length() != 0 )
         {
-            DateUnit isoEndDate = calendarService.getSystemCalendar().toIso( endDate );
+            DateTimeUnit isoEndDate = calendarService.getSystemCalendar().toIso( endDate );
             eDate = isoEndDate.toJdkCalendar().getTime();
         }
 
         DataElementCategoryOption categoryOption = dataElementCategoryService.getDataElementCategoryOption( id );
         categoryOption.setName( name );
+        categoryOption.setShortName( shortName );
         categoryOption.setCode( code );
         categoryOption.setStartDate( sDate );
         categoryOption.setEndDate( eDate );

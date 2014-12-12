@@ -28,14 +28,18 @@ package org.hisp.dhis.indicator;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.DhisSpringTest;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import org.hisp.dhis.DhisSpringTest;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
@@ -44,18 +48,8 @@ import static org.junit.Assert.*;
 public class IndicatorServiceTest
     extends DhisSpringTest
 {
+    @Autowired
     private IndicatorService indicatorService;
-
-    // -------------------------------------------------------------------------
-    // Set up/tear down
-    // -------------------------------------------------------------------------
-
-    @Override
-    public void setUpTest()
-        throws Exception
-    {
-        indicatorService = (IndicatorService) getBean( IndicatorService.ID );
-    }
 
     // -------------------------------------------------------------------------
     // Support methods
@@ -291,8 +285,8 @@ public class IndicatorServiceTest
         IndicatorGroup indicatorGroup3 = new IndicatorGroup( "indicatorGroupName3" );
         IndicatorGroup indicatorGroup4 = new IndicatorGroup( "indicatorGroupName4" );
 
-        Set<Indicator> members1 = new HashSet<Indicator>();
-        Set<Indicator> members2 = new HashSet<Indicator>();
+        Set<Indicator> members1 = new HashSet<>();
+        Set<Indicator> members2 = new HashSet<>();
 
         members1.add( indicator1 );
         members1.add( indicator2 );

@@ -112,6 +112,7 @@ public class RemoveSelectedOrganisationUnitAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -140,7 +141,7 @@ public class RemoveSelectedOrganisationUnitAction
 
         if ( children != null && children == true )
         {
-            Set<OrganisationUnit> selectedOrganisationUnits = new HashSet<OrganisationUnit>( selectedUnits );
+            Set<OrganisationUnit> selectedOrganisationUnits = new HashSet<>( selectedUnits );
 
             for ( OrganisationUnit selected : selectedOrganisationUnits )
             {

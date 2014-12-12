@@ -92,12 +92,14 @@ public class ProgramIndicatorStoreTest
         programService.addProgram( programA );
 
         ProgramStage stageA = new ProgramStage( "StageA", programA );
+        stageA.setSortOrder( 1 );
         programStageService.saveProgramStage( stageA );
 
         ProgramStage stageB = new ProgramStage( "StageB", programA );
+        stageB.setSortOrder( 2 );
         programStageService.saveProgramStage( stageB );
 
-        Set<ProgramStage> programStages = new HashSet<ProgramStage>();
+        Set<ProgramStage> programStages = new HashSet<>();
         programStages.add( stageA );
         programStages.add( stageB );
         programA.setProgramStages( programStages );

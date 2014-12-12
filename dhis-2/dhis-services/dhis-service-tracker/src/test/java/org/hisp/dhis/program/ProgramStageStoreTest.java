@@ -86,7 +86,7 @@ public class ProgramStageStoreTest
         programStageStore.save( stageA );
         programStageStore.save( stageB );
         
-        Set<ProgramStage> programStages = new HashSet<ProgramStage>();
+        Set<ProgramStage> programStages = new HashSet<>();
         programStages.add( stageA );
         programStages.add( stageB );
         program.setProgramStages( programStages );

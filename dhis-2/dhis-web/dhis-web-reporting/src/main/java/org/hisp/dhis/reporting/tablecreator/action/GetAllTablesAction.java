@@ -84,19 +84,20 @@ public class GetAllTablesAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         if ( isNotBlank( key ) )
         {
             this.paging = createPaging( reportTableService.getReportTableCountByName( key ) );
             
-            tables = new ArrayList<ReportTable>( reportTableService.getReportTablesBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
+            tables = new ArrayList<>( reportTableService.getReportTablesBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( reportTableService.getReportTableCount() );
 
-            tables = new ArrayList<ReportTable>( reportTableService.getReportTablesBetween( paging.getStartPos(), paging.getPageSize() ) );
+            tables = new ArrayList<>( reportTableService.getReportTablesBetween( paging.getStartPos(), paging.getPageSize() ) );
         }
         
         Collections.sort( tables, IdentifiableObjectNameComparator.INSTANCE );

@@ -74,10 +74,12 @@ public class TableAlteror
     // Execute
     // -------------------------------------------------------------------------
 
+    @Override
     @Transactional
     public void execute()
     {
         int defaultCategoryComboId = getDefaultCategoryCombo();
+        int defaultOptionComboId =  getDefaultOptionCombo();
 
         // ---------------------------------------------------------------------
         // Drop outdated tables
@@ -88,7 +90,6 @@ public class TableAlteror
         executeSql( "DROP TABLE orgunitstructure" );
         executeSql( "DROP TABLE orgunithierarchystructure" );
         executeSql( "DROP TABLE orgunithierarchy" );
-        executeSql( "DROP TABLE datavalueaudit" );
         executeSql( "DROP TABLE columnorder" );
         executeSql( "DROP TABLE roworder" );
         executeSql( "DROP TABLE sectionmembers" );
@@ -128,6 +129,9 @@ public class TableAlteror
         executeSql( "DROP TABLE dashboarditem_trackedentitytabularreports" );
         executeSql( "DROP TABLE categoryoptioncombousergroupaccesses" );
         executeSql( "DROP TABLE validationrulegroupuserrolestoalert" );
+        executeSql( "DROP TABLE expressionoptioncombo" );
+        executeSql( "DROP TABLE orgunitgroupdatasets" );
+        executeSql( "DROP TABLE datavalue_audit" );
         executeSql( "ALTER TABLE categoryoptioncombo drop column userid" );
         executeSql( "ALTER TABLE categoryoptioncombo drop column publicaccess" );
         executeSql( "ALTER TABLE dataelementcategoryoption drop column categoryid" );
@@ -139,7 +143,6 @@ public class TableAlteror
         executeSql( "ALTER TABLE reporttable DROP column docategoryoptioncombos" );
         executeSql( "ALTER TABLE reporttable DROP column mode" );
         executeSql( "ALTER TABLE categoryoptioncombo DROP COLUMN displayorder" );
-        executeSql( "ALTER TABLE dataelementcategoryoption DROP COLUMN shortname" );
         executeSql( "ALTER TABLE section DROP COLUMN label" );
         executeSql( "ALTER TABLE section DROP COLUMN title" );
         executeSql( "ALTER TABLE organisationunit DROP COLUMN polygoncoordinates" );
@@ -154,6 +157,7 @@ public class TableAlteror
         executeSql( "ALTER TABLE orgunitgroup DROP COLUMN image" );
         executeSql( "ALTER TABLE report DROP COLUMN usingorgunitgroupsets" );
         executeSql( "ALTER TABLE eventchart DROP COLUMN datatype" );
+        executeSql( "ALTER TABLE validationrule DROP COLUMN type" );
 
         executeSql( "DROP INDEX datamart_crosstab" );
 
@@ -161,10 +165,6 @@ public class TableAlteror
         executeSql( "DELETE FROM period WHERE periodtypeid=(select periodtypeid from periodtype where name in ( 'Survey', 'OnChange', 'Relative' ))" );
         executeSql( "DELETE FROM periodtype WHERE name in ( 'Survey', 'OnChange', 'Relative' )" );
 
-        // upgrade report table totals
-        executeSql( "UPDATE reporttable SET rowtotals = totals, coltotals = totals" );
-        executeSql( "ALTER TABLE reporttable DROP COLUMN totals" );
-        
         // mapping
         executeSql( "DROP TABLE maporganisationunitrelation" );
         executeSql( "ALTER TABLE mapview DROP COLUMN mapid" );
@@ -256,7 +256,6 @@ public class TableAlteror
         // set varchar to text
         executeSql( "ALTER TABLE dataelement ALTER description TYPE text" );
         executeSql( "ALTER TABLE indicator ALTER description TYPE text" );
-        executeSql( "ALTER TABLE datadictionary ALTER description TYPE text" );
         executeSql( "ALTER TABLE validationrule ALTER description TYPE text" );
         executeSql( "ALTER TABLE expression ALTER expression TYPE text" );
         executeSql( "ALTER TABLE translation ALTER value TYPE text" );
@@ -387,7 +386,6 @@ public class TableAlteror
         executeSql( "ALTER TABLE chart DROP COLUMN uuid" );
         executeSql( "ALTER TABLE concept DROP COLUMN uuid" );
         executeSql( "ALTER TABLE constant DROP COLUMN uuid" );
-        executeSql( "ALTER TABLE datadictionary DROP COLUMN uuid" );
         executeSql( "ALTER TABLE dataelement DROP COLUMN uuid" );
         executeSql( "ALTER TABLE dataelementcategory DROP COLUMN uuid" );
         executeSql( "ALTER TABLE dataelementcategoryoption DROP COLUMN uuid" );
@@ -424,11 +422,12 @@ public class TableAlteror
         executeSql( "update dataelement set zeroissignificant = false where zeroissignificant is null" );
         executeSql( "update organisationunit set haspatients = false where haspatients is null" );
         executeSql( "update dataset set expirydays = 0 where expirydays is null" );
-        executeSql( "update expression set nullifblank = true where nullifblank is null" );
         executeSql( "update eventchart set hidelegend = false where hidelegend is null" );
         executeSql( "update eventchart set regression = false where regression is null" );
         executeSql( "update eventchart set hidetitle = false where hidetitle is null" );
         executeSql( "update eventchart set hidesubtitle = false where hidesubtitle is null" );
+        executeSql( "update reporttable set showdimensionlabels = false where showdimensionlabels is null" );
+        executeSql( "update eventreport set showdimensionlabels = false where showdimensionlabels is null" );
 
         // move timelydays from system setting => dataset property
         executeSql( "update dataset set timelydays = 15 where timelydays is null" );
@@ -458,7 +457,6 @@ public class TableAlteror
         executeSql( "update reporttable set userorganisationunit = false where userorganisationunit is null" );
         executeSql( "update reporttable set userorganisationunitchildren = false where userorganisationunitchildren is null" );
         executeSql( "update reporttable set userorganisationunitgrandchildren = false where userorganisationunitgrandchildren is null" );
-        executeSql( "update reporttable set totals = true where totals is null" );
         executeSql( "update reporttable set subtotals = true where subtotals is null" );
         executeSql( "update reporttable set hideemptyrows = false where hideemptyrows is null" );
         executeSql( "update reporttable set displaydensity = 'normal' where displaydensity is null" );
@@ -468,6 +466,18 @@ public class TableAlteror
         executeSql( "update reporttable set toplimit = 0 where toplimit is null" );
         executeSql( "update reporttable set showhierarchy = false where showhierarchy is null" );
         executeSql( "update reporttable set aggregationtype = 'default' where aggregationtype is null" );
+
+        // reporttable col/row totals = keep existing || copy from totals || true
+        executeSql( "update reporttable set totals = true where totals is null" );
+        executeSql( "update reporttable set coltotals = totals where coltotals is null" );
+        executeSql( "update reporttable set coltotals = true where coltotals is null" );
+        executeSql( "update reporttable set rowtotals = totals where rowtotals is null" );
+        executeSql( "update reporttable set rowtotals = true where rowtotals is null" );        
+        executeSql( "alter table reporttable drop column totals" );
+
+        // reporttable col/row subtotals
+        executeSql( "update reporttable set colsubtotals = subtotals where colsubtotals is null" );
+        executeSql( "update reporttable set rowsubtotals = subtotals where rowsubtotals is null" );
 
         executeSql( "update chart set reportingmonth = false where reportingmonth is null" );
         executeSql( "update chart set reportingbimonth = false where reportingbimonth is null" );
@@ -491,9 +501,24 @@ public class TableAlteror
         executeSql( "update chart set userorganisationunitchildren = false where userorganisationunitchildren is null" );
         executeSql( "update chart set userorganisationunitgrandchildren = false where userorganisationunitgrandchildren is null" );
         executeSql( "update chart set hidetitle = false where hidetitle is null" );
+        executeSql( "update chart set sortorder = 0 where sortorder is null" );
         
         executeSql( "update eventreport set showhierarchy = false where showhierarchy is null" );
         executeSql( "update eventreport set counttype = 'events' where counttype is null" );
+
+        // eventreport col/rowtotals = keep existing || copy from totals || true
+        executeSql( "update eventreport set totals = true where totals is null" );
+        executeSql( "update eventreport set coltotals = totals where coltotals is null" );
+        executeSql( "update eventreport set coltotals = true where coltotals is null" );
+        executeSql( "update eventreport set rowtotals = totals where rowtotals is null" );
+        executeSql( "update eventreport set rowtotals = true where rowtotals is null" );        
+        executeSql( "alter table eventreport drop column totals" );
+
+        // eventreport col/row subtotals
+        executeSql( "update eventreport set colsubtotals = subtotals where colsubtotals is null" );
+        executeSql( "update eventreport set rowsubtotals = subtotals where rowsubtotals is null" );        
+
+        executeSql( "update eventchart set sortorder = 0 where sortorder is null" );
 
         // Move chart filters to chart_filters table
 
@@ -555,7 +580,6 @@ public class TableAlteror
         executeSql( "UPDATE userroleauthorities SET authority='F_REPORT_PUBLIC_ADD' WHERE authority='F_REPORT_ADD'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_REPORTTABLE_PUBLIC_ADD' WHERE authority='F_REPORTTABLE_ADD'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_DATASET_PUBLIC_ADD' WHERE authority='F_DATASET_ADD'" );
-        executeSql( "UPDATE userroleauthorities SET authority='F_DATADICTIONARY_PUBLIC_ADD' WHERE authority='F_DATADICTIONARY_ADD'" );
 
         executeSql( "UPDATE userroleauthorities SET authority='F_DATAELEMENT_PUBLIC_ADD' WHERE authority='F_DATAELEMENT_ADD'" );
         executeSql( "UPDATE userroleauthorities SET authority='F_DATAELEMENTGROUP_PUBLIC_ADD' WHERE authority='F_DATAELEMENTGROUP_ADD'" );
@@ -585,7 +609,6 @@ public class TableAlteror
         executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATAELEMENT_UPDATE'" );
         executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATAELEMENTGROUP_UPDATE'" );
         executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATAELEMENTGROUPSET_UPDATE'" );
-        executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATADICTIONARY_UPDATE'" );
         executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATAELEMENT_MINMAX_UPDATE'" );
         executeSql( "DELETE FROM userroleauthorities WHERE authority='F_DATASET_UPDATE'" );
         executeSql( "DELETE FROM userroleauthorities WHERE authority='F_SECTION_UPDATE'" );
@@ -633,11 +656,11 @@ public class TableAlteror
         executeSql( "ALTER TABLE reporttable DROP CONSTRAINT reporttable_name_key" );
         executeSql( "ALTER TABLE report DROP CONSTRAINT report_name_key" );
         executeSql( "ALTER TABLE usergroup DROP CONSTRAINT usergroup_name_key" );
-        executeSql( "ALTER TABLE datadictionary DROP CONSTRAINT datadictionary_name_key" );
 
         executeSql( "update relativeperiods set lastweek = false where lastweek is null" );
         executeSql( "update relativeperiods set last4weeks = false where last4weeks is null" );
         executeSql( "update relativeperiods set last12weeks = false where last12weeks is null" );
+        executeSql( "update relativeperiods set last6months = false where last6months is null" );
 
         upgradeChartRelativePeriods();
         upgradeReportTableRelativePeriods();
@@ -709,26 +732,56 @@ public class TableAlteror
         executeSql( "UPDATE attribute SET userattribute=false WHERE userattribute IS NULL" );
         executeSql( "UPDATE attribute SET usergroupattribute=false WHERE usergroupattribute IS NULL" );
         executeSql( "UPDATE attribute SET datasetattribute=false WHERE datasetattribute IS NULL" );
-        
+
         executeSql( "ALTER TABLE trackedentityattributedimension DROP COLUMN operator" );
         executeSql( "ALTER TABLE trackedentitydataelementdimension DROP COLUMN operator" );
 
         // update attribute.code, set to null if code=''
         executeSql( "UPDATE attribute SET code=NULL WHERE code=''" );
 
-        // data approval, new column accepted
+        // data approval
         executeSql( "UPDATE dataapproval SET accepted=false WHERE accepted IS NULL" );
+        executeSql( "ALTER TABLE dataapproval ALTER COLUMN accepted SET NOT NULL" );
+        executeSql( "DELETE FROM dataapproval WHERE categoryoptiongroupid IS NOT NULL" );
+        executeSql( "ALTER TABLE dataapproval DROP COLUMN categoryoptiongroupid" );
+        executeSql( "UPDATE dataapproval SET attributeoptioncomboid=categoryoptioncomboid WHERE categoryoptioncomboid IS NOT NULL" );
+        executeSql( "ALTER TABLE dataapproval DROP COLUMN categoryoptioncomboid" );
+        executeSql( "UPDATE dataapproval SET attributeoptioncomboid=" + defaultCategoryComboId + " WHERE attributeoptioncomboid IS NULL" );
+        executeSql( "ALTER TABLE dataapproval ALTER COLUMN attributeoptioncomboid SET NOT NULL" );
 
         // validation rule group, new column alertbyorgunits
         executeSql( "UPDATE validationrulegroup SET alertbyorgunits=false WHERE alertbyorgunits IS NULL" );
+        
+        executeSql( "update expression set missingvaluestrategy = 'SKIP_IF_ANY_VALUE_MISSING' where missingvaluestrategy is null and (nullifblank is true or nullifblank is null)" );
+        executeSql( "update expression set missingvaluestrategy = 'NEVER_SKIP' where missingvaluestrategy is null nullifblank is false" );
+        executeSql( "alter table expression alter column missingvaluestrategy set not null" );
+        executeSql( "alter table expression drop column nullifblank" );
 
+        executeSql( "alter table dataelementcategoryoption alter column startdate type date" );
+        executeSql( "alter table dataelementcategoryoption alter column enddate type date" );
+        
+        executeSql( "alter table dataelement drop column sortorder" );
+        executeSql( "alter table indicator drop column sortorder" );
+        executeSql( "alter table dataset drop column sortorder" );
+        
+        executeSql( "alter table dataelement drop column active" );
+
+        executeSql( "alter table datavalue alter column value type varchar(50000)" );
+        executeSql( "alter table datavalue alter column comment type varchar(50000)" );
+        executeSql( "alter table datavalueaudit alter column value type varchar(50000)" );
+
+        executeSql( "update datavalueaudit set attributeoptioncomboid = " + defaultOptionComboId + " where attributeoptioncomboid is null" );
+        executeSql( "alter table datavalueaudit alter column attributeoptioncomboid set not null;" );
+        
+        executeSql( "update dataelementcategoryoption set shortname = substring(name,0,50) where shortname is null" );
+        
         upgradeDataValuesWithAttributeOptionCombo();
         upgradeCompleteDataSetRegistrationsWithAttributeOptionCombo();
         upgradeMapViewsToAnalyticalObject();
         upgradeTranslations();
 
-        executeSql( "ALTER TABLE dataelement DROP COLUMN active" );
-        
+        updateOptions();
+
         log.info( "Tables updated" );
     }
 
@@ -745,8 +798,6 @@ public class TableAlteror
 
         int optionComboId = getDefaultOptionCombo();
 
-        executeSql( "alter table datavalue_audit drop constraint fk_datavalueaudit_datavalue;" );
-
         executeSql( "alter table datavalue drop constraint datavalue_pkey;" );
 
         executeSql( "alter table datavalue add column attributeoptioncomboid integer;" );
@@ -754,9 +805,6 @@ public class TableAlteror
         executeSql( "alter table datavalue alter column attributeoptioncomboid set not null;" );
         executeSql( "alter table datavalue add constraint fk_datavalue_attributeoptioncomboid foreign key (attributeoptioncomboid) references categoryoptioncombo (categoryoptioncomboid) match simple;" );
         executeSql( "alter table datavalue add constraint datavalue_pkey primary key(dataelementid, periodid, sourceid, categoryoptioncomboid, attributeoptioncomboid);" );
-
-        executeSql( "alter table datavalue_audit add constraint fk_datavalueaudit_datavalue foreign key (dataelementid, periodid, sourceid, categoryoptioncomboid, attributeoptioncomboid) "
-            + "references datavalue (dataelementid, periodid, sourceid, categoryoptioncomboid, attributeoptioncomboid) match simple;" );
 
         log.info( "Data value table upgraded with attributeoptioncomboid column" );
     }
@@ -773,17 +821,18 @@ public class TableAlteror
         }
 
         int optionComboId = getDefaultOptionCombo();
-        
+
         executeSql( "alter table completedatasetregistration drop constraint completedatasetregistration_pkey" );
         executeSql( "alter table completedatasetregistration add column attributeoptioncomboid integer;" );
-        executeSql( "update completedatasetregistration set attributeoptioncomboid = " + optionComboId + " where attributeoptioncomboid is null;" );
+        executeSql( "update completedatasetregistration set attributeoptioncomboid = " + optionComboId
+            + " where attributeoptioncomboid is null;" );
         executeSql( "alter table completedatasetregistration alter column attributeoptioncomboid set not null;" );
         executeSql( "alter table completedatasetregistration add constraint fk_completedatasetregistration_attributeoptioncomboid foreign key (attributeoptioncomboid) references categoryoptioncombo (categoryoptioncomboid) match simple;" );
         executeSql( "alter table completedatasetregistration add constraint completedatasetregistration_pkey primary key(datasetid, periodid, sourceid, attributeoptioncomboid);" );
-        
+
         log.info( "Complete data set registration table upgraded with attributeoptioncomboid column" );
     }
-    
+
     private void upgradeMapViewsToAnalyticalObject()
     {
         executeSql( "insert into mapview_dataelements ( mapviewid, sort_order, dataelementid ) select mapviewid, 0, dataelementid from mapview where dataelementid is not null" );
@@ -830,7 +879,7 @@ public class TableAlteror
                     rs.getBoolean( "reportingquarter" ), rs.getBoolean( "lastsixmonth" ),
                     rs.getBoolean( "monthsthisyear" ), rs.getBoolean( "quartersthisyear" ),
                     rs.getBoolean( "thisyear" ), false, false, rs.getBoolean( "lastyear" ),
-                    rs.getBoolean( "last5years" ), rs.getBoolean( "last12months" ), rs.getBoolean( "last3months" ),
+                    rs.getBoolean( "last5years" ), rs.getBoolean( "last12months" ), false, rs.getBoolean( "last3months" ),
                     false, rs.getBoolean( "last4quarters" ), rs.getBoolean( "last2sixmonths" ), false, false, false,
                     false, false, false, false );
 
@@ -890,7 +939,7 @@ public class TableAlteror
                     rs.getBoolean( "lastsixmonth" ), rs.getBoolean( "monthsthisyear" ),
                     rs.getBoolean( "quartersthisyear" ), rs.getBoolean( "thisyear" ),
                     rs.getBoolean( "monthslastyear" ), rs.getBoolean( "quarterslastyear" ),
-                    rs.getBoolean( "lastyear" ), rs.getBoolean( "last5years" ), rs.getBoolean( "last12months" ),
+                    rs.getBoolean( "lastyear" ), rs.getBoolean( "last5years" ), rs.getBoolean( "last12months" ), false,
                     rs.getBoolean( "last3months" ), false, rs.getBoolean( "last4quarters" ),
                     rs.getBoolean( "last2sixmonths" ), rs.getBoolean( "thisfinancialyear" ),
                     rs.getBoolean( "lastfinancialyear" ), rs.getBoolean( "last5financialyears" ), false, false, false,
@@ -1017,7 +1066,7 @@ public class TableAlteror
             log.debug( ex );
         }
     }
-    
+
     private void upgradeTranslations()
     {
         final String sql = statementBuilder.getNumberOfColumnsInPrimaryKey( "translation" );
@@ -1028,7 +1077,7 @@ public class TableAlteror
         {
             return; // translationid already set as single pkey
         }
-        
+
         executeSql( statementBuilder.getDropPrimaryKey( "translation" ) );
         executeSql( statementBuilder.getAddPrimaryKeyToExistingTable( "translation", "translationid" ) );
         executeSql( statementBuilder.getDropNotNullConstraint( "translation", "objectid", "integer" ) );
@@ -1038,7 +1087,7 @@ public class TableAlteror
     {
         StatementHolder holder = statementManager.getHolder();
 
-        List<Integer> distinctIds = new ArrayList<Integer>();
+        List<Integer> distinctIds = new ArrayList<>();
 
         try
         {
@@ -1067,7 +1116,7 @@ public class TableAlteror
     {
         StatementHolder holder = statementManager.getHolder();
 
-        Map<Integer, List<Integer>> idMap = new HashMap<Integer, List<Integer>>();
+        Map<Integer, List<Integer>> idMap = new HashMap<>();
 
         try
         {
@@ -1075,7 +1124,7 @@ public class TableAlteror
 
             for ( Integer distinctId : distinctIds )
             {
-                List<Integer> foreignIds = new ArrayList<Integer>();
+                List<Integer> foreignIds = new ArrayList<>();
 
                 ResultSet resultSet = statement.executeQuery( "SELECT " + col2 + " FROM " + table + " WHERE " + col1
                     + "=" + distinctId );
@@ -1158,4 +1207,17 @@ public class TableAlteror
         return statementManager.getHolder().queryForInteger( sql );
     }
 
+    private void updateOptions()
+    {
+        String sql = "insert into optionvalue(optionvalueid, code, name, optionsetid, sort_order) "
+            + "select " + statementBuilder.getAutoIncrementValue() + ", optionvalue, optionvalue, optionsetid, ( sort_order + 1 ) "
+            + "from optionsetmembers";
+        
+        int result = executeSql( sql );
+        
+        if ( result != -1 )
+        {
+            executeSql( "drop table optionsetmembers" );
+        }
+    }
 }

@@ -56,7 +56,6 @@ import org.hisp.dhis.api.mobile.model.DataValue;
 import org.hisp.dhis.api.mobile.model.Section;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementOperand;
-import org.hisp.dhis.dataelement.comparator.DataElementSortOrderComparator;
 import org.hisp.dhis.dataset.CompleteDataSetRegistration;
 import org.hisp.dhis.dataset.CompleteDataSetRegistrationService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
@@ -79,8 +78,6 @@ public class FacilityReportingServiceImpl
     private static Log log = LogFactory.getLog( FacilityReportingServiceImpl.class );
 
     private static boolean DEBUG = log.isDebugEnabled();
-
-    private DataElementSortOrderComparator dataElementComparator = new DataElementSortOrderComparator();
 
     // -------------------------------------------------------------------------
     // Dependencies
@@ -122,7 +119,7 @@ public class FacilityReportingServiceImpl
     public List<DataSet> getMobileDataSetsForUnit( OrganisationUnit unit, String localeString )
     {
 
-        List<DataSet> datasets = new ArrayList<DataSet>();
+        List<DataSet> datasets = new ArrayList<>();
         Locale locale = LocaleUtil.getLocale( localeString );
 
         if ( DEBUG )
@@ -254,17 +251,15 @@ public class FacilityReportingServiceImpl
 
         ds.setPeriodType( dataSet.getPeriodType().getName() );
 
-        List<Section> sectionList = new ArrayList<Section>();
+        List<Section> sectionList = new ArrayList<>();
         ds.setSections( sectionList );
 
         Set<org.hisp.dhis.dataset.Section> sections = dataSet.getSections();
 
         if ( sections == null || sections.size() == 0 )
         {
-            List<org.hisp.dhis.dataelement.DataElement> dataElements = new ArrayList<org.hisp.dhis.dataelement.DataElement>(
+            List<org.hisp.dhis.dataelement.DataElement> dataElements = new ArrayList<>(
                 dataSet.getDataElements() );
-
-            Collections.sort( dataElements, dataElementComparator );
 
             // Fake section to store data elements
 
@@ -282,14 +277,14 @@ public class FacilityReportingServiceImpl
                 section.setId( sec.getId() );
                 section.setName( sec.getName() );
 
-                List<org.hisp.dhis.dataelement.DataElement> des = new ArrayList<org.hisp.dhis.dataelement.DataElement>(
+                List<org.hisp.dhis.dataelement.DataElement> des = new ArrayList<>(
                     sec.getDataElements() );
 
                 // Remove grey fields in order to not display them on mobile
 
                 List<DataElement> dataElementList = getDataElements( locale, des );
 
-                List<DataElement> dataElementListFinal = new ArrayList<DataElement>( dataElementList );
+                List<DataElement> dataElementListFinal = new ArrayList<>( dataElementList );
 
                 int tempI = 0;
 
@@ -312,7 +307,7 @@ public class FacilityReportingServiceImpl
 
     private List<DataElement> getDataElements( Locale locale, List<org.hisp.dhis.dataelement.DataElement> dataElements )
     {
-        List<DataElement> dataElementList = new ArrayList<DataElement>();
+        List<DataElement> dataElementList = new ArrayList<>();
 
         for ( org.hisp.dhis.dataelement.DataElement dataElement : dataElements )
         {
@@ -461,7 +456,7 @@ public class FacilityReportingServiceImpl
     private Map<Integer, org.hisp.dhis.dataelement.DataElement> getDataElementIdMapping(
         org.hisp.dhis.dataset.DataSet dataSet )
     {
-        Map<Integer, org.hisp.dhis.dataelement.DataElement> dataElementMap = new HashMap<Integer, org.hisp.dhis.dataelement.DataElement>();
+        Map<Integer, org.hisp.dhis.dataelement.DataElement> dataElementMap = new HashMap<>();
 
         for ( org.hisp.dhis.dataelement.DataElement dataElement : dataSet.getDataElements() )
         {
@@ -496,7 +491,7 @@ public class FacilityReportingServiceImpl
         else
         {
             dataValue.setValue( value );
-            dataValue.setTimestamp( new Date() );
+            dataValue.setLastUpdated( new Date() );
             dataValueService.updateDataValue( dataValue );
         }
     }
@@ -595,7 +590,7 @@ public class FacilityReportingServiceImpl
     {
         Contact contact = new Contact();
 
-        List<String> listOfContacts = new ArrayList<String>();
+        List<String> listOfContacts = new ArrayList<>();
 
         List<OrganisationUnit> listOfOrgUnit = (List<OrganisationUnit>) oUnitService.getAllOrganisationUnits();
 

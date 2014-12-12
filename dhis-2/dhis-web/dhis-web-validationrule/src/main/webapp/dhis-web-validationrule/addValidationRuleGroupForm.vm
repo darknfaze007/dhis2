@@ -12,6 +12,7 @@
 				return option;
 			}
 		});
+
 		jQuery("#availableUserGroupsToAlert").dhisAjaxSelect({
 			source: "../dhis-web-commons-ajax-json/getUserGroups.action",
 			iterator: "userGroups",
@@ -115,7 +116,7 @@
 
     <p>
 	<input type="submit" value="$i18n.getString( "add" )" style="width:10em" />
-	<input type="button" value="$i18n.getString( "cancel" )" onclick="window.location.href='showValidationRuleGroupForm.action'" style="width:10em" />
+	<input type="button" value="$i18n.getString( "cancel" )" onclick="window.location.href='validationRuleGroup.action'" style="width:10em" />
 </p>
 
 </form>

@@ -54,7 +54,7 @@ public class CategoryOptionComboController
     // name (clashes with getAllOrderedName)
     // FIXME add paging also for this?
     @Override
-    protected List<DataElementCategoryOptionCombo> getEntityList( WebMetaData metaData, WebOptions options )
+    protected List<DataElementCategoryOptionCombo> getEntityList( WebMetaData metaData, WebOptions options, List<String> filters )
     {
         List<DataElementCategoryOptionCombo> entityList;
 
@@ -62,11 +62,11 @@ public class CategoryOptionComboController
 
         if ( lastUpdated != null )
         {
-            entityList = new ArrayList<DataElementCategoryOptionCombo>( manager.getByLastUpdated( getEntityClass(), lastUpdated ) );
+            entityList = new ArrayList<>( manager.getByLastUpdated( getEntityClass(), lastUpdated ) );
         }
         else
         {
-            entityList = new ArrayList<DataElementCategoryOptionCombo>( manager.getAll( getEntityClass() ) );
+            entityList = new ArrayList<>( manager.getAll( getEntityClass() ) );
             Collections.sort( entityList, new IdentifiableObjectNameComparator() );
         }
 

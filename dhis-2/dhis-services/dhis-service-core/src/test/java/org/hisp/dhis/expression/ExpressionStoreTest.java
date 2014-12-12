@@ -37,6 +37,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.Resource;
+
 import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.common.GenericStore;
 import org.hisp.dhis.dataelement.DataElement;
@@ -45,16 +47,23 @@ import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
  * @version $Id$
  */
-@SuppressWarnings( "unchecked" )
 public class ExpressionStoreTest
     extends DhisSpringTest
 {
+    @Resource( name = "org.hisp.dhis.expression.ExpressionStore" )
     private GenericStore<Expression> expressionStore;
+
+    @Autowired
+    private DataElementService dataElementService;
+
+    @Autowired
+    private DataElementCategoryService categoryService;
 
     private int dataElementIdA;
 
@@ -72,7 +81,7 @@ public class ExpressionStoreTest
 
     private String descriptionB;
 
-    private Set<DataElement> dataElements = new HashSet<DataElement>();
+    private Set<DataElement> dataElements = new HashSet<>();
 
     private Set<DataElementCategoryOptionCombo> optionCombos;
 
@@ -84,10 +93,6 @@ public class ExpressionStoreTest
     public void setUpTest()
         throws Exception
     {
-        expressionStore = (GenericStore<Expression>) getBean( "org.hisp.dhis.expression.ExpressionStore" );
-        dataElementService = (DataElementService) getBean( DataElementService.ID );
-        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
-
         DataElement dataElementA = createDataElement( 'A' );
         DataElement dataElementB = createDataElement( 'B' );
         DataElement dataElementC = createDataElement( 'C' );
@@ -102,7 +107,7 @@ public class ExpressionStoreTest
             .getDataElementCategoryComboByName( DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
         DataElementCategoryOptionCombo categoryOptionCombo = categoryCombo.getOptionCombos().iterator().next();
 
-        optionCombos = new HashSet<DataElementCategoryOptionCombo>();
+        optionCombos = new HashSet<>();
         optionCombos.add( categoryOptionCombo );
 
         expressionA = "[" + dataElementIdA + "] + [" + dataElementIdB + "]";
@@ -124,7 +129,7 @@ public class ExpressionStoreTest
     @Test
     public void testAddGetExpression()
     {
-        Expression expr = new Expression( expressionA, descriptionA, dataElements, optionCombos );
+        Expression expr = new Expression( expressionA, descriptionA, dataElements );
 
         int id = expressionStore.save( expr );
 
@@ -138,7 +143,7 @@ public class ExpressionStoreTest
     @Test
     public void testUpdateExpression()
     {
-        Expression expr = new Expression( expressionA, descriptionA, dataElements, optionCombos );
+        Expression expr = new Expression( expressionA, descriptionA, dataElements );
 
         int id = expressionStore.save( expr );
 
@@ -161,8 +166,8 @@ public class ExpressionStoreTest
     @Test
     public void testDeleteExpression()
     {
-        Expression exprA = new Expression( expressionA, descriptionA, dataElements, optionCombos );
-        Expression exprB = new Expression( expressionB, descriptionB, dataElements, optionCombos );
+        Expression exprA = new Expression( expressionA, descriptionA, dataElements );
+        Expression exprB = new Expression( expressionB, descriptionB, dataElements );
 
         int idA = expressionStore.save( exprA );
         int idB = expressionStore.save( exprB );
@@ -184,8 +189,8 @@ public class ExpressionStoreTest
     @Test
     public void testGetAllExpressions()
     {
-        Expression exprA = new Expression( expressionA, descriptionA, dataElements, optionCombos );
-        Expression exprB = new Expression( expressionB, descriptionB, dataElements, optionCombos );
+        Expression exprA = new Expression( expressionA, descriptionA, dataElements );
+        Expression exprB = new Expression( expressionB, descriptionB, dataElements );
 
         expressionStore.save( exprA );
         expressionStore.save( exprB );

@@ -33,9 +33,12 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
 import org.hisp.dhis.common.BaseAnalyticalObject;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
+import org.hisp.dhis.common.EventAnalyticalObject;
 import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.DimensionalView;
@@ -53,8 +56,10 @@ import java.util.List;
 /**
  * @author Lars Helge Overland
  */
+@JacksonXmlRootElement( localName = "eventReport", namespace = DxfNamespaces.DXF_2_0 )
 public class EventReport
     extends BaseAnalyticalObject
+    implements EventAnalyticalObject
 {
     public static final String DATA_TYPE_AGGREGATED_VALUES = "aggregated_values";
 
@@ -92,27 +97,37 @@ public class EventReport
     /**
      * Dimensions to crosstabulate / use as columns.
      */
-    private List<String> columnDimensions = new ArrayList<String>();
+    private List<String> columnDimensions = new ArrayList<>();
 
     /**
      * Dimensions to use as rows.
      */
-    private List<String> rowDimensions = new ArrayList<String>();
+    private List<String> rowDimensions = new ArrayList<>();
 
     /**
      * Dimensions to use as filter.
      */
-    private List<String> filterDimensions = new ArrayList<String>();
+    private List<String> filterDimensions = new ArrayList<>();
 
     /**
      * Indicates rendering of sub-totals for the table.
      */
-    private boolean totals;
+    private boolean rowTotals;
 
     /**
      * Indicates rendering of sub-totals for the table.
      */
-    private boolean subtotals;
+    private boolean colTotals;
+
+    /**
+     * Indicates rendering of row sub-totals for the table.
+     */
+    private boolean rowSubTotals;
+
+    /**
+     * Indicates rendering of column sub-totals for the table.
+     */
+    private boolean colSubTotals;
 
     /**
      * Indicates count type.
@@ -138,6 +153,11 @@ public class EventReport
      * The font size of the text in the table.
      */
     private String fontSize;
+
+    /**
+     * The font size of the text in the table.
+     */
+    private boolean showDimensionLabels;
 
     // -------------------------------------------------------------------------
     // Constructors
@@ -186,6 +206,7 @@ public class EventReport
     // Getters and setters
     // -------------------------------------------------------------------------
 
+    @Override
     @JsonProperty
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class, DimensionalView.class } )
@@ -200,6 +221,7 @@ public class EventReport
         this.program = program;
     }
 
+    @Override
     @JsonProperty
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class, DimensionalView.class } )
@@ -214,6 +236,7 @@ public class EventReport
         this.programStage = programStage;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class, DimensionalView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -227,6 +250,7 @@ public class EventReport
         this.startDate = startDate;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class, DimensionalView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -256,7 +280,7 @@ public class EventReport
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlElementWrapper( localName = "columnDimensions", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "column", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "columnDimension", namespace = DxfNamespaces.DXF_2_0 )
     public List<String> getColumnDimensions()
     {
         return columnDimensions;
@@ -270,7 +294,7 @@ public class EventReport
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlElementWrapper( localName = "rowDimensions", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "row", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "rowDimension", namespace = DxfNamespaces.DXF_2_0 )
     public List<String> getRowDimensions()
     {
         return rowDimensions;
@@ -284,7 +308,7 @@ public class EventReport
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlElementWrapper( localName = "filterDimensions", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "filter", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "filterDimension", namespace = DxfNamespaces.DXF_2_0 )
     public List<String> getFilterDimensions()
     {
         return filterDimensions;
@@ -296,29 +320,55 @@ public class EventReport
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class, DimensionalView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
-    public boolean isTotals()
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    public boolean isRowTotals()
     {
-        return totals;
+        return rowTotals;
     }
 
-    public void setTotals( boolean totals )
+    public void setRowTotals( boolean rowTotals )
     {
-        this.totals = totals;
+        this.rowTotals = rowTotals;
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class, DimensionalView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
-    public boolean isSubtotals()
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    public boolean isColTotals()
     {
-        return subtotals;
+        return colTotals;
     }
 
-    public void setSubtotals( boolean subtotals )
+    public void setColTotals( boolean colTotals )
     {
-        this.subtotals = subtotals;
+        this.colTotals = colTotals;
+    }
+
+    @JsonProperty
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    public boolean isRowSubTotals()
+    {
+        return rowSubTotals;
+    }
+
+    public void setRowSubTotals( boolean rowSubTotals )
+    {
+        this.rowSubTotals = rowSubTotals;
+    }    
+
+    @JsonProperty
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    public boolean isColSubTotals()
+    {
+        return colSubTotals;
+    }
+
+    public void setColSubTotals( boolean colSubTotals )
+    {
+        this.colSubTotals = colSubTotals;
     }
 
     @JsonProperty
@@ -385,6 +435,19 @@ public class EventReport
     {
         this.fontSize = fontSize;
     }
+    
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class, DimensionalView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isShowDimensionLabels()
+    {
+        return showDimensionLabels;
+    }
+
+    public void setShowDimensionLabels( boolean showDimensionLabels )
+    {
+        this.showDimensionLabels = showDimensionLabels;
+    }    
 
     @Override
     public void mergeWith( IdentifiableObject other )
@@ -400,11 +463,14 @@ public class EventReport
             programStage = eventReport.getProgramStage();
             startDate = eventReport.getStartDate();
             endDate = eventReport.getEndDate();
-            totals = eventReport.isTotals();
-            subtotals = eventReport.isSubtotals();
+            rowTotals = eventReport.isRowTotals();
+            colTotals = eventReport.isColTotals();
+            rowSubTotals = eventReport.isRowSubTotals();
+            colSubTotals = eventReport.isColSubTotals();
             hideEmptyRows = eventReport.isHideEmptyRows();
             countType = eventReport.getCountType();
             showHierarchy = eventReport.isShowHierarchy();
+            showDimensionLabels = eventReport.isShowDimensionLabels();
             displayDensity = eventReport.getDisplayDensity();
             fontSize = eventReport.getFontSize();
 

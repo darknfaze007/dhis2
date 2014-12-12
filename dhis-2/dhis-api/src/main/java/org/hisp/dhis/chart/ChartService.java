@@ -40,7 +40,6 @@ import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.period.Period;
-import org.hisp.dhis.user.User;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.plot.PlotOrientation;
@@ -58,7 +57,7 @@ public interface ChartService
 
     JFreeChart getJFreeChart( int id, I18nFormat format );
 
-    JFreeChart getJFreeChart( Chart chart, I18nFormat format );
+    JFreeChart getJFreeChart( BaseChart chart, I18nFormat format );
 
     /**
      * Generates a JFreeChart.
@@ -70,7 +69,7 @@ public interface ChartService
      * @param format the i18n format.
      * @return a JFreeChart object.
      */
-    JFreeChart getJFreeChart( Chart chart, Date date, OrganisationUnit organisationUnit, I18nFormat format );
+    JFreeChart getJFreeChart( BaseChart chart, Date date, OrganisationUnit organisationUnit, I18nFormat format );
     
     JFreeChart getJFreePeriodChart( Indicator indicator, OrganisationUnit organisationUnit, boolean title, I18nFormat format );
 
@@ -112,8 +111,6 @@ public interface ChartService
 
     int getChartCountByName( String name );
     
-    Collection<Chart> getChartsByUser( User user );
-
     int countDataSetCharts( DataSet dataSet );
 
     int countIndicatorCharts( Indicator indicator );

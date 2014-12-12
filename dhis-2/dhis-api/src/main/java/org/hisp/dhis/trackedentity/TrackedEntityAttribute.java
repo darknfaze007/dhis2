@@ -33,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
 import org.hisp.dhis.common.BaseDimensionalObject;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
@@ -40,6 +41,7 @@ import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.common.view.WithoutOrganisationUnitsView;
+import org.hisp.dhis.option.Option;
 import org.hisp.dhis.option.OptionSet;
 
 /**
@@ -73,6 +75,8 @@ public class TrackedEntityAttribute
     public static final String TYPE_TRACKER_ASSOCIATE = "trackerAssociate";
 
     public static final String TYPE_USERS = "users";
+    
+    public static final String TYPE_EMAIL = "email";
 
     private String description;
 
@@ -94,6 +98,8 @@ public class TrackedEntityAttribute
 
     private Integer sortOrderInListNoProgram;
 
+    private Boolean confidential = false;
+
     private Boolean unique = false;
 
     // For Local ID type
@@ -111,8 +117,8 @@ public class TrackedEntityAttribute
         setAutoFields();
     }
 
-    public TrackedEntityAttribute( String name, String description, String valueType,
-        Boolean inherit, Boolean displayOnVisitSchedule )
+    public TrackedEntityAttribute( String name, String description, String valueType, Boolean inherit,
+        Boolean displayOnVisitSchedule )
     {
         this.name = name;
         this.description = description;
@@ -135,6 +141,14 @@ public class TrackedEntityAttribute
         return TYPE_NUMBER.equals( valueType );
     }
 
+    /**
+     * Indicates whether this attribute has an option set.
+     */
+    public boolean hasOptionSet()
+    {
+        return optionSet != null;
+    }    
+    
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
@@ -152,6 +166,7 @@ public class TrackedEntityAttribute
         this.inherit = inherit;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -160,6 +175,7 @@ public class TrackedEntityAttribute
         return description;
     }
 
+    @Override
     public void setDescription( String description )
     {
         this.description = description;
@@ -179,7 +195,7 @@ public class TrackedEntityAttribute
     }
 
     @JsonProperty( "trackedEntityAttributeGroup" )
-    @JsonView( { DetailedView.class  } )
+    @JsonView( { DetailedView.class } )
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JacksonXmlProperty( localName = "trackedEntityAttributeGroup", namespace = DxfNamespaces.DXF_2_0 )
     public TrackedEntityAttributeGroup getAttributeGroup()
@@ -310,6 +326,19 @@ public class TrackedEntityAttribute
         this.optionSet = optionSet;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Boolean getConfidential()
+    {
+        return confidential;
+    }
+
+    public void setConfidential( Boolean confidential )
+    {
+        this.confidential = confidential;
+    }
+
     // -------------------------------------------------------------------------
     // Static methods
     // -------------------------------------------------------------------------
@@ -336,6 +365,20 @@ public class TrackedEntityAttribute
             unique = trackedEntityAttribute.isUnique();
             orgunitScope = trackedEntityAttribute.getOrgunitScope();
             programScope = trackedEntityAttribute.getProgramScope();
+            confidential = trackedEntityAttribute.getConfidential();
         }
+    }
+
+    public Boolean isValidOptionValue( String value )
+    {
+        for ( Option option : this.getOptionSet().getOptions() )
+        {
+            if ( option.getCode().equals( value ) )
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

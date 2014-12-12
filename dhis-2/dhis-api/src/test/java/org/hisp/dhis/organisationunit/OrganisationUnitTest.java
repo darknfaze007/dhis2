@@ -31,6 +31,7 @@ package org.hisp.dhis.organisationunit;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
@@ -41,8 +42,8 @@ import org.junit.Test;
  */
 public class OrganisationUnitTest
 {
-    private List<CoordinatesTuple> multiPolygonCoordinatesList = new ArrayList<CoordinatesTuple>();
-    private List<CoordinatesTuple> pointCoordinatesList = new ArrayList<CoordinatesTuple>();
+    private List<CoordinatesTuple> multiPolygonCoordinatesList = new ArrayList<>();
+    private List<CoordinatesTuple> pointCoordinatesList = new ArrayList<>();
     
     private String multiPolygonCoordinates = "[[[[11.11,22.22],[33.33,44.44],[55.55,66.66]]],[[[77.77,88.88],[99.99,11.11],[22.22,33.33]]],[[[44.44,55.55],[66.66,77.77],[88.88,99.99]]]]";
     private String pointCoordinates = "[11.11,22.22]";
@@ -51,6 +52,11 @@ public class OrganisationUnitTest
     private CoordinatesTuple tupleB;
     private CoordinatesTuple tupleC;
     private CoordinatesTuple tupleD;
+    
+    private OrganisationUnit unitA;
+    private OrganisationUnit unitB;
+    private OrganisationUnit unitC;
+    private OrganisationUnit unitD;    
     
     @Before
     public void before()
@@ -77,8 +83,80 @@ public class OrganisationUnitTest
         multiPolygonCoordinatesList.add( tupleB );
         multiPolygonCoordinatesList.add( tupleC );
         pointCoordinatesList.add( tupleD );
+        
+        unitA = new OrganisationUnit( "OrgUnitA" );
+        unitB = new OrganisationUnit( "OrgUnitB" );
+        unitC = new OrganisationUnit( "OrgUnitC" );
+        unitD = new OrganisationUnit( "OrgUnitD" );
+        
+        unitA.setUid( "uidA" );
+        unitB.setUid( "uidB" );
+        unitC.setUid( "uidC" );
+        unitD.setUid( "uidD" );
     }
 
+    @Test
+    public void testGetAncestors()
+    {
+        unitD.setParent( unitC );
+        unitC.setParent( unitB );
+        unitB.setParent( unitA );
+        
+        List<OrganisationUnit> expected = new ArrayList<>( Arrays.asList( unitA, unitB, unitC ) );
+        
+        assertEquals( expected, unitD.getAncestors() );
+    }
+
+    @Test
+    public void testGetAncestorsWithRoots()
+    {
+        unitD.setParent( unitC );
+        unitC.setParent( unitB );
+        unitB.setParent( unitA );
+        
+        List<OrganisationUnit> roots = new ArrayList<>( Arrays.asList( unitB ) );
+        
+        List<OrganisationUnit> expected = new ArrayList<>( Arrays.asList( unitB, unitC ) );
+        
+        assertEquals( expected, unitD.getAncestors( roots ) );
+    }
+    
+    @Test
+    public void testGetParentGraph()
+    {
+        unitD.setParent( unitC );
+        unitC.setParent( unitB );
+        unitB.setParent( unitA );
+        
+        List<OrganisationUnit> roots = new ArrayList<>( Arrays.asList( unitB ) );
+        
+        String expected = "/uidB/uidC";
+        
+        assertEquals( expected, unitD.getParentGraph( roots ) );
+        
+        expected = "/uidA/uidB/uidC";
+
+        assertEquals( expected, unitD.getParentGraph( null ) );        
+    }
+
+    @Test
+    public void testGetParentNameGraph()
+    {
+        unitD.setParent( unitC );
+        unitC.setParent( unitB );
+        unitB.setParent( unitA );
+        
+        List<OrganisationUnit> roots = new ArrayList<>( Arrays.asList( unitB ) );
+        
+        String expected = "/OrgUnitB/OrgUnitC";
+        
+        assertEquals( expected, unitD.getParentNameGraph( roots, false ) );
+        
+        expected = "/OrgUnitA/OrgUnitB/OrgUnitC";
+
+        assertEquals( expected, unitD.getParentNameGraph( null, false ) );        
+    }
+    
     @Test
     public void testSetMultiPolygonCoordinatesFromCollection()
     {
@@ -102,6 +180,7 @@ public class OrganisationUnitTest
     {   
         OrganisationUnit unit = new OrganisationUnit();
         unit.setCoordinates( multiPolygonCoordinates );
+        unit.setFeatureType( "MultiPolygon" );
         
         assertEquals( 3, unit.getCoordinatesAsList().size() );
         

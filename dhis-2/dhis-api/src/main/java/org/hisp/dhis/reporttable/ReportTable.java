@@ -133,17 +133,17 @@ public class ReportTable
     /**
      * Dimensions to crosstabulate / use as columns.
      */
-    private List<String> columnDimensions = new ArrayList<String>();
+    private List<String> columnDimensions = new ArrayList<>();
     
     /**
      * Dimensions to use as rows.
      */
-    private List<String> rowDimensions = new ArrayList<String>();
+    private List<String> rowDimensions = new ArrayList<>();
     
     /**
      * Dimensions to use as filter.
      */
-    private List<String> filterDimensions = new ArrayList<String>();
+    private List<String> filterDimensions = new ArrayList<>();
     
     /**
      * The ReportParams of the ReportTable.
@@ -151,19 +151,24 @@ public class ReportTable
     private ReportParams reportParams;
 
     /**
-     * Indicates rendering of sub-totals for the table.
+     * Indicates rendering of row totals for the table.
      */
     private boolean rowTotals;
 
     /**
-     * Indicates rendering of sub-totals for the table.
+     * Indicates rendering of column totals for the table.
      */
     private boolean colTotals;
 
     /**
-     * Indicates rendering of sub-totals for the table.
+     * Indicates rendering of row sub-totals for the table.
      */
-    private boolean subtotals;
+    private boolean rowSubTotals;
+
+    /**
+     * Indicates rendering of column sub-totals for the table.
+     */
+    private boolean colSubTotals;
 
     /**
      * Indicates rendering of empty rows for the table.
@@ -195,6 +200,11 @@ public class ReportTable
      */
     private String aggregationType;
     
+    /**
+     * Indicates showing organisation unit hierarchy names.
+     */
+    private boolean showDimensionLabels;
+    
     // -------------------------------------------------------------------------
     // Transient properties
     // -------------------------------------------------------------------------
@@ -202,12 +212,12 @@ public class ReportTable
     /**
      * All crosstabulated columns.
      */
-    private transient List<List<NameableObject>> gridColumns = new ArrayList<List<NameableObject>>();
+    private transient List<List<NameableObject>> gridColumns = new ArrayList<>();
 
     /**
      * All rows.
      */
-    private transient List<List<NameableObject>> gridRows = new ArrayList<List<NameableObject>>();
+    private transient List<List<NameableObject>> gridRows = new ArrayList<>();
 
     /**
      * The name of the reporting month based on the report param.
@@ -345,9 +355,9 @@ public class ReportTable
     public void populateGridColumnsAndRows( Date date, User user, 
         List<OrganisationUnit> organisationUnitsAtLevel, List<OrganisationUnit> organisationUnitsInGroups, I18nFormat format )
     {
-        List<NameableObject[]> tableColumns = new ArrayList<NameableObject[]>();
-        List<NameableObject[]> tableRows = new ArrayList<NameableObject[]>();
-        List<NameableObject> filterItems = new ArrayList<NameableObject>();
+        List<NameableObject[]> tableColumns = new ArrayList<>();
+        List<NameableObject[]> tableRows = new ArrayList<>();
+        List<NameableObject> filterItems = new ArrayList<>();
         
         for ( String dimension : columnDimensions )
         {
@@ -364,8 +374,8 @@ public class ReportTable
             filterItems.addAll( getDimensionalObject( filter, date, user, true, organisationUnitsAtLevel, organisationUnitsInGroups, format ).getItems() );
         }
 
-        gridColumns = new CombinationGenerator<NameableObject>( tableColumns.toArray( IRT2D ) ).getCombinations();
-        gridRows = new CombinationGenerator<NameableObject>( tableRows.toArray( IRT2D ) ).getCombinations();
+        gridColumns = new CombinationGenerator<>( tableColumns.toArray( IRT2D ) ).getCombinations();
+        gridRows = new CombinationGenerator<>( tableRows.toArray( IRT2D ) ).getCombinations();
 
         addIfEmpty( gridColumns ); 
         addIfEmpty( gridRows );
@@ -565,9 +575,9 @@ public class ReportTable
      * @return a grid.
      */
     @SuppressWarnings("unchecked")
-    public Grid getGrid( Grid grid, Map<String, Double> valueMap, boolean paramColumns )
+    public Grid getGrid( Grid grid, Map<String, Object> valueMap, boolean paramColumns )
     {
-        valueMap = new HashMap<String, Double>( valueMap );
+        valueMap = new HashMap<>( valueMap );
         
         sortKeys( valueMap );
 
@@ -659,7 +669,7 @@ public class ReportTable
             {
                 String key = getIdentifier( column, row );
                 
-                Double value = valueMap.get( key );
+                Object value = valueMap.get( key );
                 
                 grid.addValue( value );
                 
@@ -847,6 +857,7 @@ public class ReportTable
         this.reportParams = reportParams;
     }
 
+    @Override
     @JsonProperty
     @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
@@ -855,11 +866,13 @@ public class ReportTable
         return sortOrder;
     }
 
+    @Override
     public void setSortOrder( int sortOrder )
     {
         this.sortOrder = sortOrder;
     }
 
+    @Override
     @JsonProperty
     @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
@@ -868,6 +881,7 @@ public class ReportTable
         return topLimit;
     }
 
+    @Override
     public void setTopLimit( int topLimit )
     {
         this.topLimit = topLimit;
@@ -902,14 +916,27 @@ public class ReportTable
     @JsonProperty
     @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
-    public boolean isSubtotals()
+    public boolean isRowSubTotals()
     {
-        return subtotals;
+        return rowSubTotals;
     }
 
-    public void setSubtotals( boolean subtotals )
+    public void setRowSubTotals( boolean rowSubTotals )
     {
-        this.subtotals = subtotals;
+        this.rowSubTotals = rowSubTotals;
+    }    
+
+    @JsonProperty
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    public boolean isColSubTotals()
+    {
+        return colSubTotals;
+    }
+
+    public void setColSubTotals( boolean colSubTotals )
+    {
+        this.colSubTotals = colSubTotals;
     }
 
     @JsonProperty
@@ -919,6 +946,7 @@ public class ReportTable
     {
         return hideEmptyRows;
     }
+
 
     public void setHideEmptyRows( boolean hideEmptyRows )
     {
@@ -990,6 +1018,20 @@ public class ReportTable
         this.showHierarchy = showHierarchy;
     }
 
+
+    @JsonProperty
+    @JsonView( {DetailedView.class, ExportView.class, DimensionalView.class} )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    public boolean isShowDimensionLabels()
+    {
+        return showDimensionLabels;
+    }
+
+    public void setShowDimensionLabels( boolean showDimensionLabels )
+    {
+        this.showDimensionLabels = showDimensionLabels;
+    }
+
     // -------------------------------------------------------------------------
     // Get- and set-methods for transient properties
     // -------------------------------------------------------------------------
@@ -1055,13 +1097,16 @@ public class ReportTable
             topLimit = reportTable.getTopLimit();
             rowTotals = reportTable.isRowTotals();
             colTotals = reportTable.isColTotals();
-            subtotals = reportTable.isSubtotals();
+            rowSubTotals = reportTable.isRowSubTotals();
+            colSubTotals = reportTable.isColSubTotals();
             hideEmptyRows = reportTable.isHideEmptyRows();
             showHierarchy = reportTable.isShowHierarchy();
             aggregationType = reportTable.getAggregationType();
             displayDensity = reportTable.getDisplayDensity();
             fontSize = reportTable.getFontSize();
             legendSet = reportTable.getLegendSet();
+            showDimensionLabels = reportTable.isShowDimensionLabels();
+            hideEmptyRows = reportTable.isHideEmptyRows();
             
             columnDimensions.clear();
             columnDimensions.addAll( reportTable.getColumnDimensions() );

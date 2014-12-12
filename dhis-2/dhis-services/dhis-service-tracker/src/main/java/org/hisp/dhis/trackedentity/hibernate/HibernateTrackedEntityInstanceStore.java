@@ -65,7 +65,7 @@ import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramInstance;
 import org.hisp.dhis.program.ProgramStatus;
 import org.hisp.dhis.system.util.SqlHelper;
-import org.hisp.dhis.system.util.Timer;
+import org.hisp.dhis.util.Timer;
 import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
 import org.hisp.dhis.trackedentity.TrackedEntityInstance;
 import org.hisp.dhis.trackedentity.TrackedEntityInstanceQueryParams;
@@ -153,11 +153,11 @@ public class HibernateTrackedEntityInstanceStore
 
         t.getTime( "Tracked entity instance query SQL: " + sql );
 
-        List<Map<String, String>> list = new ArrayList<Map<String, String>>();
+        List<Map<String, String>> list = new ArrayList<>();
 
         while ( rowSet.next() )
         {
-            final Map<String, String> map = new HashMap<String, String>();
+            final Map<String, String> map = new HashMap<>();
 
             map.put( TRACKED_ENTITY_INSTANCE_ID, rowSet.getString( TRACKED_ENTITY_INSTANCE_ID ) );
             map.put( CREATED_ID, rowSet.getString( CREATED_ID ) );
@@ -234,7 +234,7 @@ public class HibernateTrackedEntityInstanceStore
             if ( !params.isOrQuery() && item.hasFilter() )
             {
                 for ( QueryFilter filter : item.getFilters() )
-                {
+                {                    
                     final String encodedFilter = statementBuilder.encode( filter.getFilter(), false );
 
                     final String queryCol = item.isNumeric() ? (col + ".value") : "lower(" + col + ".value)";

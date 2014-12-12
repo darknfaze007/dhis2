@@ -107,6 +107,7 @@ public class CategoryComboCategoryAssociationConverter
     // XMLConverter implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void write( XMLWriter writer, ExportParams params )
     {
         Collection<DataElementCategoryCombo> categoryCombos = categoryService.getDataElementCategoryCombos( params.getCategoryCombos() );
@@ -143,9 +144,10 @@ public class CategoryComboCategoryAssociationConverter
         }
     }
 
+    @Override
     public void read( XMLReader reader, ImportParams params )
     {
-        Counter<Integer> counter = new Counter<Integer>(); // Used for backwards compatibility
+        Counter<Integer> counter = new Counter<>(); // Used for backwards compatibility
         
         while ( reader.moveToStartElement( ELEMENT_NAME, COLLECTION_NAME ) )
         {
@@ -162,6 +164,7 @@ public class CategoryComboCategoryAssociationConverter
         }
     }
 
+    @Override
     public void importObject( GroupMemberAssociation object, ImportParams params )
     {
         read( object, GroupMemberType.CATEGORYCOMBO_CATEGORY, params );        

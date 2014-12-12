@@ -71,7 +71,7 @@ public class GetOrganisationUnitListAction
     // Input & Output
     // -------------------------------------------------------------------------
 
-    private List<OrganisationUnit> organisationUnits = new ArrayList<OrganisationUnit>();
+    private List<OrganisationUnit> organisationUnits = new ArrayList<>();
 
     public List<OrganisationUnit> getOrganisationUnits()
     {
@@ -94,6 +94,7 @@ public class GetOrganisationUnitListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {

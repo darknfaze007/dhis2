@@ -44,7 +44,6 @@ import org.junit.Test;
 
 public class OrgUnitsTest
 {
-
     @Test
     public void testSerialization()
         throws IOException
@@ -67,7 +66,6 @@ public class OrgUnitsTest
         MobileOrgUnitLinks unit2 = unitList.get( 0 );
         assertEquals( unit.getName(), unit2.getName() );
         assertEquals( unit.getId(), unit2.getId() );
-
     }
 
     private MobileOrgUnitLinks createOrgUnit()
@@ -91,6 +89,9 @@ public class OrgUnitsTest
         orgUnit.setDownloadMessageConversationUrl( "downloadMessageConversation" );
         orgUnit.setGetMessageUrl( "getMessage" );
         orgUnit.setReplyMessageUrl( "replyMessage" );
+        orgUnit.setDownloadInterpretationUrl( "downloadInterpretation" );
+        orgUnit.setPostInterpretationUrl( "postInterpretation" );
+        orgUnit.setPostCommentUrl( "postComment" );
         orgUnit.setUpdateContactUrl( "updateContactForMobile" );
         orgUnit.setFindPatientUrl( "findPatient" );
         orgUnit.setRegisterPersonUrl( "registerPerson" );

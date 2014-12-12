@@ -33,8 +33,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -58,13 +60,13 @@ public class DefaultModuleManager
 
     private boolean modulesDetected = false;
 
-    private Map<String, Module> modulesByName = new HashMap<String, Module>();
+    private Map<String, Module> modulesByName = new HashMap<>();
 
-    private Map<String, Module> modulesByNamespace = new HashMap<String, Module>();
+    private Map<String, Module> modulesByNamespace = new HashMap<>();
 
-    private List<Module> menuModules = new ArrayList<Module>();
+    private List<Module> menuModules = new ArrayList<>();
     
-    private ThreadLocal<Module> currentModule = new ThreadLocal<Module>();
+    private ThreadLocal<Module> currentModule = new ThreadLocal<>();
 
     // -------------------------------------------------------------------------
     // Dependencies
@@ -94,10 +96,18 @@ public class DefaultModuleManager
         this.defaultActionName = defaultActionName;
     }
     
+    private Set<String> menuModuleExclusions = new HashSet<>();
+    
+    public void setMenuModuleExclusions( Set<String> menuModuleExclusions )
+    {
+        this.menuModuleExclusions = menuModuleExclusions;
+    }
+    
     // -------------------------------------------------------------------------
     // ModuleManager
     // -------------------------------------------------------------------------
 
+    @Override
     public Module getModuleByName( String name )
     {
         detectModules();
@@ -105,6 +115,7 @@ public class DefaultModuleManager
         return modulesByName.get( name );
     }
 
+    @Override
     public Module getModuleByNamespace( String namespace )
     {
         detectModules();
@@ -112,11 +123,13 @@ public class DefaultModuleManager
         return modulesByNamespace.get( namespace );
     }
     
+    @Override
     public boolean moduleExists( String name )
     {
         return getModuleByName( name ) != null;
     }
 
+    @Override
     public List<Module> getMenuModules()
     {
         detectModules();
@@ -124,6 +137,7 @@ public class DefaultModuleManager
         return new ArrayList<>( menuModules );
     }
 
+    @Override
     public List<Module> getAccessibleMenuModules()
     {
         detectModules();
@@ -131,6 +145,7 @@ public class DefaultModuleManager
         return getAccessibleModules( menuModules );
     }
     
+    @Override
     public List<Module> getAccessibleMenuModulesAndApps()
     {
         List<Module> modules = getAccessibleMenuModules();
@@ -145,6 +160,7 @@ public class DefaultModuleManager
         return modules;
     }
 
+    @Override
     public Collection<Module> getAllModules()
     {
         detectModules();
@@ -152,11 +168,13 @@ public class DefaultModuleManager
         return new ArrayList<>( modulesByName.values() );
     }
     
+    @Override
     public Module getCurrentModule()
     {
         return currentModule.get();
     }
 
+    @Override
     public void setCurrentModule( Module module )
     {
         currentModule.set( module );
@@ -182,7 +200,7 @@ public class DefaultModuleManager
             
             if ( packageConfig.getAllActionConfigs().size() == 0 )
             {
-                log.warn( "Ignoring action package with no actions: " + name );
+                log.debug( "Ignoring action package with no actions: " + name );
 
                 continue;
             }
@@ -208,8 +226,10 @@ public class DefaultModuleManager
             Module module = new Module( name, namespace );
             modulesByName.put( name, module );
             modulesByNamespace.put( namespace, module );
+            
+            boolean include = !menuModuleExclusions.contains( name );
 
-            if ( packageConfig.getActionConfigs().containsKey( defaultActionName ) )
+            if ( packageConfig.getActionConfigs().containsKey( defaultActionName ) && include )
             {
                 module.setDefaultAction( ".." + namespace + "/" + defaultActionName + ".action" );
 
@@ -225,7 +245,7 @@ public class DefaultModuleManager
 
         Collections.sort( menuModules, moduleComparator );
 
-        log.info( "Menu modules detected: " + menuModules );
+        log.debug( "Menu modules detected: " + menuModules );
         
         modulesDetected = true;
     }
@@ -245,7 +265,7 @@ public class DefaultModuleManager
     
     private List<Module> getAccessibleModules( List<Module> modules )
     {
-        List<Module> allowed = new ArrayList<Module>();
+        List<Module> allowed = new ArrayList<>();
         
         for ( Module module : modules )
         {
@@ -257,7 +277,7 @@ public class DefaultModuleManager
         
         if ( modules.size() > allowed.size() )
         {
-            List<Module> denied = new ArrayList<Module>( modules );
+            List<Module> denied = new ArrayList<>( modules );
             denied.removeAll( allowed );
             
             log.debug( "User denied access to modules: " + denied );

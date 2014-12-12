@@ -106,22 +106,23 @@ public class GetDataSetsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         if ( id != null )
         {
-            dataSets = new ArrayList<DataSet>(
+            dataSets = new ArrayList<>(
                 dataSetService.getDataSetsByPeriodType( periodService.getPeriodType( id ) ) );
         }
         else if ( name != null )
         {
-            dataSets = new ArrayList<DataSet>( dataSetService.getDataSetsByPeriodType( periodService
+            dataSets = new ArrayList<>( dataSetService.getDataSetsByPeriodType( periodService
                 .getPeriodTypeByName( name ) ) );
         }
         else
         {
-            dataSets = new ArrayList<DataSet>( dataSetService.getAllDataSets() );
+            dataSets = new ArrayList<>( dataSetService.getAllDataSets() );
             
             ContextUtils.clearIfNotModified( ServletActionContext.getRequest(), ServletActionContext.getResponse(), dataSets );
         }

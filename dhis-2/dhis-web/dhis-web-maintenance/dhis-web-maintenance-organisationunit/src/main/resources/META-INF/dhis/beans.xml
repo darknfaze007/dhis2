@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
 
   <bean id="org.hisp.dhis.oum.action.NoAction" class="org.hisp.dhis.oum.action.NoAction" scope="prototype" />
 
@@ -91,7 +91,6 @@
     <property name="selectionTreeManager" ref="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     <property name="organisationUnitGroupService" ref="org.hisp.dhis.organisationunit.OrganisationUnitGroupService" />
     <property name="attributeService" ref="org.hisp.dhis.attribute.AttributeService" />
-    <property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
   </bean>
 
   <bean id="org.hisp.dhis.oum.action.organisationunitgroup.UpdateOrganisationUnitGroupAction" class="org.hisp.dhis.oum.action.organisationunitgroup.UpdateOrganisationUnitGroupAction"
@@ -99,7 +98,6 @@
     <property name="selectionTreeManager" ref="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     <property name="organisationUnitGroupService" ref="org.hisp.dhis.organisationunit.OrganisationUnitGroupService" />
     <property name="attributeService" ref="org.hisp.dhis.attribute.AttributeService" />
-    <property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
   </bean>
 
   <bean id="org.hisp.dhis.oum.action.organisationunitgroup.RemoveOrganisationUnitGroupAction" class="org.hisp.dhis.oum.action.organisationunitgroup.RemoveOrganisationUnitGroupAction"

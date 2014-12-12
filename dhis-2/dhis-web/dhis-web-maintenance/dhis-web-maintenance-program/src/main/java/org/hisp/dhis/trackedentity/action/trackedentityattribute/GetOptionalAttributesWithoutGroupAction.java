@@ -58,7 +58,7 @@ public class GetOptionalAttributesWithoutGroupAction
     // Output
     // -------------------------------------------------------------------------
 
-    private Collection<TrackedEntityAttribute> patientAttributes = new ArrayList<TrackedEntityAttribute>();
+    private Collection<TrackedEntityAttribute> patientAttributes = new ArrayList<>();
 
     public Collection<TrackedEntityAttribute> getPatientAttributes()
     {
@@ -69,6 +69,7 @@ public class GetOptionalAttributesWithoutGroupAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {

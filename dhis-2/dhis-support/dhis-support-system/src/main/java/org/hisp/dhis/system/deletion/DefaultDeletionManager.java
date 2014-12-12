@@ -51,22 +51,25 @@ public class DefaultDeletionManager
     private static final String DELETE_METHOD_PREFIX = "delete";
     private static final String ALLOW_METHOD_PREFIX = "allowDelete";
 
-    private List<DeletionHandler> handlers = new ArrayList<DeletionHandler>();
+    private List<DeletionHandler> handlers = new ArrayList<>();
 
     // -------------------------------------------------------------------------
     // DeletionManager implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void addDeletionHandler( DeletionHandler handler )
     {
         this.handlers.add( handler );
     }
 
+    @Override
     public void addDeletionHandlers( Collection<DeletionHandler> deletionHandlers )
     {
         this.handlers.addAll( deletionHandlers );
     }
 
+    @Override
     public void execute( Object object )
     {
         Class<?> clazz = getClazz( object );

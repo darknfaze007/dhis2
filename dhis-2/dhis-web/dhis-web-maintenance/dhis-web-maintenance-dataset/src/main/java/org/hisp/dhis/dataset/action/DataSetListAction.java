@@ -88,6 +88,7 @@ public class DataSetListAction
     // Execute
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -95,14 +96,14 @@ public class DataSetListAction
         {
             this.paging = createPaging( dataSetService.getDataSetCountByName( key ) );
 
-            dataSets = new ArrayList<DataSet>( dataSetService.getDataSetsBetweenByName( key, paging.getStartPos(),
+            dataSets = new ArrayList<>( dataSetService.getDataSetsBetweenByName( key, paging.getStartPos(),
                 paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( dataSetService.getDataSetCount() );
 
-            dataSets = new ArrayList<DataSet>( dataSetService.getDataSetsBetween( paging.getStartPos(), paging
+            dataSets = new ArrayList<>( dataSetService.getDataSetsBetween( paging.getStartPos(), paging
                 .getPageSize() ) );
         }
 

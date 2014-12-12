@@ -71,9 +71,10 @@ public class GetDataElementCategoryListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
-        dataElementCategories = new ArrayList<DataElementCategory>( dataElementCategoryService
+        dataElementCategories = new ArrayList<>( dataElementCategoryService
             .getAllDataElementCategories() );
 
         Collections.sort( dataElementCategories, IdentifiableObjectNameComparator.INSTANCE );

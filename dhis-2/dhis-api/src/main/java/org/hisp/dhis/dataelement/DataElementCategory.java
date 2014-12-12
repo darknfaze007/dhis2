@@ -69,7 +69,7 @@ public class DataElementCategory
     private String dataDimensionType;
 
     @Scanned
-    private List<DataElementCategoryOption> categoryOptions = new ArrayList<DataElementCategoryOption>();
+    private List<DataElementCategoryOption> categoryOptions = new ArrayList<>();
 
     private boolean dataDimension;
 
@@ -170,7 +170,7 @@ public class DataElementCategory
     @Override
     public String getShortName()
     {
-        if ( getName().length() <= 50 )
+        if ( getName() == null || getName().length() <= 50 )
         {
             return getName();
         }

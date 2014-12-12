@@ -92,7 +92,7 @@ public class SaveAggregateDataValueAction
     // Input
     // -------------------------------------------------------------------------
 
-    private Set<String> aggregateValues = new HashSet<String>();
+    private Set<String> aggregateValues = new HashSet<>();
 
     public void setAggregateValues( Set<String> aggregateValues )
     {
@@ -103,6 +103,7 @@ public class SaveAggregateDataValueAction
     // Action Implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -151,7 +152,7 @@ public class SaveAggregateDataValueAction
                 else
                 {
                     dataValue.setValue( resultValue );
-                    dataValue.setTimestamp( new Date() );
+                    dataValue.setLastUpdated( new Date() );
                     dataValue.setStoredBy(  CaseAggregationCondition.AUTO_STORED_BY );
 
                     dataValueService.updateDataValue( dataValue );

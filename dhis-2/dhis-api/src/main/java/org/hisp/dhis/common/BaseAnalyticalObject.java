@@ -37,21 +37,16 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.apache.commons.lang.StringUtils;
-import org.hisp.dhis.common.adapter.JacksonPeriodDeserializer;
-import org.hisp.dhis.common.adapter.JacksonPeriodSerializer;
 import org.hisp.dhis.common.annotation.Scanned;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.DimensionalView;
 import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.dataelement.CategoryOptionGroup;
-import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryDimension;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataelement.DataElementOperand;
-import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.i18n.I18nFormat;
-import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.period.ConfigurablePeriod;
@@ -87,7 +82,8 @@ import static org.hisp.dhis.organisationunit.OrganisationUnit.*;
  */
 @JacksonXmlRootElement( localName = "analyticalObject", namespace = DxfNamespaces.DXF_2_0 )
 public abstract class BaseAnalyticalObject
-    extends BaseIdentifiableObject
+    extends BaseMetaDataCollectionObject
+    implements AnalyticalObject
 {
     public static final String NUMBER_FORMATTING_COMMA = "comma";
     public static final String NUMBER_FORMATTING_SPACE = "space";
@@ -101,43 +97,16 @@ public abstract class BaseAnalyticalObject
     // Persisted properties
     // -------------------------------------------------------------------------
 
-    @Scanned
-    protected List<Indicator> indicators = new ArrayList<Indicator>();
+    protected List<DataElementCategoryDimension> categoryDimensions = new ArrayList<>();
 
     @Scanned
-    protected List<DataElement> dataElements = new ArrayList<DataElement>();
+    protected List<CategoryOptionGroup> categoryOptionGroups = new ArrayList<>();
 
     @Scanned
-    protected List<DataElementOperand> dataElementOperands = new ArrayList<DataElementOperand>();
+    protected List<TrackedEntityAttributeDimension> attributeDimensions = new ArrayList<>();
 
     @Scanned
-    protected List<DataSet> dataSets = new ArrayList<DataSet>();
-
-    @Scanned
-    protected List<OrganisationUnit> organisationUnits = new ArrayList<OrganisationUnit>();
-
-    @Scanned
-    protected List<Period> periods = new ArrayList<Period>();
-
-    protected RelativePeriods relatives;
-
-    @Scanned
-    protected List<DataElementCategoryDimension> categoryDimensions = new ArrayList<DataElementCategoryDimension>();
-
-    @Scanned
-    protected List<DataElementGroup> dataElementGroups = new ArrayList<DataElementGroup>();
-
-    @Scanned
-    protected List<OrganisationUnitGroup> organisationUnitGroups = new ArrayList<OrganisationUnitGroup>();
-
-    @Scanned
-    protected List<CategoryOptionGroup> categoryOptionGroups = new ArrayList<CategoryOptionGroup>();
-
-    @Scanned
-    protected List<TrackedEntityAttributeDimension> attributeDimensions = new ArrayList<TrackedEntityAttributeDimension>();
-
-    @Scanned
-    protected List<TrackedEntityDataElementDimension> dataElementDimensions = new ArrayList<TrackedEntityDataElementDimension>();
+    protected List<TrackedEntityDataElementDimension> dataElementDimensions = new ArrayList<>();
 
     protected boolean userOrganisationUnit;
 
@@ -146,10 +115,7 @@ public abstract class BaseAnalyticalObject
     protected boolean userOrganisationUnitGrandChildren;
 
     @Scanned
-    protected List<Integer> organisationUnitLevels = new ArrayList<Integer>();
-
-    @Scanned
-    protected List<OrganisationUnitGroup> itemOrganisationUnitGroups = new ArrayList<OrganisationUnitGroup>();
+    protected List<OrganisationUnitGroup> itemOrganisationUnitGroups = new ArrayList<>();
 
     protected boolean rewindRelativePeriods;
 
@@ -163,21 +129,21 @@ public abstract class BaseAnalyticalObject
     // Analytical properties
     // -------------------------------------------------------------------------
 
-    protected transient List<DimensionalObject> columns = new ArrayList<DimensionalObject>();
+    protected transient List<DimensionalObject> columns = new ArrayList<>();
 
-    protected transient List<DimensionalObject> rows = new ArrayList<DimensionalObject>();
+    protected transient List<DimensionalObject> rows = new ArrayList<>();
 
-    protected transient List<DimensionalObject> filters = new ArrayList<DimensionalObject>();
+    protected transient List<DimensionalObject> filters = new ArrayList<>();
 
-    protected transient Map<String, String> parentGraphMap = new HashMap<String, String>();
+    protected transient Map<String, String> parentGraphMap = new HashMap<>();
 
     // -------------------------------------------------------------------------
     // Transient properties
     // -------------------------------------------------------------------------
 
-    protected transient List<OrganisationUnit> transientOrganisationUnits = new ArrayList<OrganisationUnit>();
+    protected transient List<OrganisationUnit> transientOrganisationUnits = new ArrayList<>();
 
-    protected transient List<DataElementCategoryOptionCombo> transientCategoryOptionCombos = new ArrayList<DataElementCategoryOptionCombo>();
+    protected transient List<DataElementCategoryOptionCombo> transientCategoryOptionCombos = new ArrayList<>();
 
     protected transient Date relativePeriodDate;
 
@@ -190,6 +156,7 @@ public abstract class BaseAnalyticalObject
     public abstract void init( User user, Date date, OrganisationUnit organisationUnit,
         List<OrganisationUnit> organisationUnitsAtLevel, List<OrganisationUnit> organisationUnitsInGroups, I18nFormat format );
 
+    @Override
     public abstract void populateAnalyticalProperties();
 
     public boolean hasUserOrgUnit()
@@ -210,6 +177,11 @@ public abstract class BaseAnalyticalObject
     public boolean hasItemOrganisationUnitGroups()
     {
         return itemOrganisationUnitGroups != null && !itemOrganisationUnitGroups.isEmpty();
+    }
+
+    public boolean hasSortOrder()
+    {
+        return sortOrder != 0;
     }
 
     protected void addTransientOrganisationUnits( Collection<OrganisationUnit> organisationUnits )
@@ -246,7 +218,7 @@ public abstract class BaseAnalyticalObject
     protected DimensionalObject getDimensionalObject( String dimension, Date date, User user, boolean dynamicNames,
         List<OrganisationUnit> organisationUnitsAtLevel, List<OrganisationUnit> organisationUnitsInGroups, I18nFormat format )
     {
-        List<NameableObject> items = new ArrayList<NameableObject>();
+        List<NameableObject> items = new ArrayList<>();
 
         DimensionType type = null;
 
@@ -335,7 +307,7 @@ public abstract class BaseAnalyticalObject
         {
             // Data element group set
 
-            ListMap<String, NameableObject> deGroupMap = new ListMap<String, NameableObject>();
+            ListMap<String, NameableObject> deGroupMap = new ListMap<>();
 
             for ( DataElementGroup group : dataElementGroups )
             {
@@ -354,7 +326,7 @@ public abstract class BaseAnalyticalObject
 
             // Organisation unit group set
 
-            ListMap<String, NameableObject> ouGroupMap = new ListMap<String, NameableObject>();
+            ListMap<String, NameableObject> ouGroupMap = new ListMap<>();
 
             for ( OrganisationUnitGroup group : organisationUnitGroups )
             {
@@ -373,7 +345,7 @@ public abstract class BaseAnalyticalObject
 
             // Category option group set
 
-            ListMap<String, NameableObject> coGroupMap = new ListMap<String, NameableObject>();
+            ListMap<String, NameableObject> coGroupMap = new ListMap<>();
 
             for ( CategoryOptionGroup group : categoryOptionGroups )
             {
@@ -392,7 +364,7 @@ public abstract class BaseAnalyticalObject
 
             // Tracked entity attribute
 
-            Map<String, TrackedEntityAttributeDimension> attributes = new HashMap<String, TrackedEntityAttributeDimension>();
+            Map<String, TrackedEntityAttributeDimension> attributes = new HashMap<>();
 
             for ( TrackedEntityAttributeDimension attribute : attributeDimensions )
             {
@@ -408,7 +380,7 @@ public abstract class BaseAnalyticalObject
 
             // Tracked entity data element
 
-            Map<String, TrackedEntityDataElementDimension> dataElements = new HashMap<String, TrackedEntityDataElementDimension>();
+            Map<String, TrackedEntityDataElementDimension> dataElements = new HashMap<>();
 
             for ( TrackedEntityDataElementDimension dataElement : dataElementDimensions )
             {
@@ -445,7 +417,7 @@ public abstract class BaseAnalyticalObject
      */
     protected List<DimensionalObject> getDimensionalObjectList( String dimension )
     {
-        List<DimensionalObject> objects = new ArrayList<DimensionalObject>();
+        List<DimensionalObject> objects = new ArrayList<>();
 
         List<String> categoryDims = getCategoryDims();
 
@@ -473,7 +445,7 @@ public abstract class BaseAnalyticalObject
         }
         else if ( PERIOD_DIM_ID.equals( dimension ) && (!periods.isEmpty() || hasRelativePeriods()) )
         {
-            List<Period> periodList = new ArrayList<Period>( periods );
+            List<Period> periodList = new ArrayList<>( periods );
 
             if ( hasRelativePeriods() )
             {
@@ -491,7 +463,7 @@ public abstract class BaseAnalyticalObject
         }
         else if ( ORGUNIT_DIM_ID.equals( dimension ) && (!organisationUnits.isEmpty() || !transientOrganisationUnits.isEmpty() || hasUserOrgUnit()) )
         {
-            List<NameableObject> ouList = new ArrayList<NameableObject>();
+            List<NameableObject> ouList = new ArrayList<>();
             ouList.addAll( organisationUnits );
             ouList.addAll( transientOrganisationUnits );
 
@@ -550,7 +522,7 @@ public abstract class BaseAnalyticalObject
         {
             // Data element group set
 
-            ListMap<String, NameableObject> deGroupMap = new ListMap<String, NameableObject>();
+            ListMap<String, NameableObject> deGroupMap = new ListMap<>();
 
             for ( DataElementGroup group : dataElementGroups )
             {
@@ -567,7 +539,7 @@ public abstract class BaseAnalyticalObject
 
             // Organisation unit group set
 
-            ListMap<String, NameableObject> ouGroupMap = new ListMap<String, NameableObject>();
+            ListMap<String, NameableObject> ouGroupMap = new ListMap<>();
 
             for ( OrganisationUnitGroup group : organisationUnitGroups )
             {
@@ -584,7 +556,7 @@ public abstract class BaseAnalyticalObject
 
             // Category option group set
 
-            ListMap<String, NameableObject> coGroupMap = new ListMap<String, NameableObject>();
+            ListMap<String, NameableObject> coGroupMap = new ListMap<>();
 
             for ( CategoryOptionGroup group : categoryOptionGroups )
             {
@@ -601,7 +573,7 @@ public abstract class BaseAnalyticalObject
 
             // Tracked entity attribute
 
-            Map<String, TrackedEntityAttributeDimension> attributes = new HashMap<String, TrackedEntityAttributeDimension>();
+            Map<String, TrackedEntityAttributeDimension> attributes = new HashMap<>();
 
             for ( TrackedEntityAttributeDimension attribute : attributeDimensions )
             {
@@ -617,7 +589,7 @@ public abstract class BaseAnalyticalObject
 
             // Tracked entity data element
 
-            Map<String, TrackedEntityDataElementDimension> dataElements = new HashMap<String, TrackedEntityDataElementDimension>();
+            Map<String, TrackedEntityDataElementDimension> dataElements = new HashMap<>();
 
             for ( TrackedEntityDataElementDimension dataElement : dataElementDimensions )
             {
@@ -637,7 +609,7 @@ public abstract class BaseAnalyticalObject
 
     private List<String> getCategoryDims()
     {
-        List<String> categoryDims = new ArrayList<String>();
+        List<String> categoryDims = new ArrayList<>();
 
         for ( DataElementCategoryDimension dim : categoryDimensions )
         {
@@ -656,25 +628,22 @@ public abstract class BaseAnalyticalObject
     }
 
     /**
-     * Splits the keys of the given map on the dimension identifier separator,
-     * sorts the identifiers, writes them out as a key and puts the key back into
-     * the map.
+     * Sorts the keys in the given map by splitting on the '-' character and
+     * sorting the components alphabetically.
+     *
+     * @param valueMap the mapping of keys and values.
      */
-    public static void sortKeys( Map<String, Double> valueMap )
+    public static void sortKeys( Map<String, Object> valueMap )
     {
-        Map<String, Double> map = new HashMap<String, Double>();
+        Map<String, Object> map = new HashMap<>();
 
         for ( String key : valueMap.keySet() )
         {
-            if ( key != null )
+            String sortKey = sortKey( key );
+
+            if ( sortKey != null )
             {
-                String[] ids = key.split( DIMENSION_SEP );
-
-                Collections.sort( Arrays.asList( ids ) );
-
-                String sortedKey = StringUtils.join( ids, DIMENSION_SEP );
-
-                map.put( sortedKey, valueMap.get( key ) );
+                map.put( sortKey, valueMap.get( key ) );
             }
         }
 
@@ -683,20 +652,40 @@ public abstract class BaseAnalyticalObject
     }
 
     /**
+     * Sorts the given key by splitting on the '-' character and sorting the
+     * components alphabetically.
+     *
+     * @param valueMap the mapping of keys and values.
+     */
+    public static String sortKey( String key )
+    {
+        if ( key != null )
+        {
+            String[] ids = key.split( DIMENSION_SEP );
+
+            Collections.sort( Arrays.asList( ids ) );
+
+            key = StringUtils.join( ids, DIMENSION_SEP );
+        }
+
+        return key;
+    }
+
+    /**
      * Generates an identifier based on the given lists of NameableObjects. Uses
      * the UIDs for each NameableObject, sorts them and writes them out as a key.
      */
     public static String getIdentifier( List<NameableObject> column, List<NameableObject> row )
     {
-        List<String> ids = new ArrayList<String>();
+        List<String> ids = new ArrayList<>();
 
-        List<NameableObject> dimensions = new ArrayList<NameableObject>();
+        List<NameableObject> dimensions = new ArrayList<>();
         dimensions.addAll( column != null ? column : new ArrayList<NameableObject>() );
         dimensions.addAll( row != null ? row : new ArrayList<NameableObject>() );
 
         for ( NameableObject item : dimensions )
         {
-            if ( item.getClass().isAssignableFrom( DataElementOperand.class ) )
+            if ( item.getClass().equals( DataElementOperand.class ) )
             {
                 ids.add( ((DataElementOperand) item).getDataElement().getUid() );
                 ids.add( ((DataElementOperand) item).getCategoryOptionCombo().getUid() );
@@ -718,7 +707,7 @@ public abstract class BaseAnalyticalObject
      */
     public Map<String, String> getMetaData()
     {
-        Map<String, String> meta = new HashMap<String, String>();
+        Map<String, String> meta = new HashMap<>();
 
         for ( DataElementGroup group : dataElementGroups )
         {
@@ -750,14 +739,16 @@ public abstract class BaseAnalyticalObject
         periods.clear();
         relatives = null;
         organisationUnits.clear();
-        categoryDimensions.clear();
         dataElementGroups.clear();
         organisationUnitGroups.clear();
+        organisationUnitLevels.clear();
+        categoryDimensions.clear();
         categoryOptionGroups.clear();
+        attributeDimensions.clear();
+        dataElementDimensions.clear();
         userOrganisationUnit = false;
         userOrganisationUnitChildren = false;
         userOrganisationUnitGrandChildren = false;
-        organisationUnitLevels.clear();
         itemOrganisationUnitGroups.clear();
     }
 
@@ -779,16 +770,16 @@ public abstract class BaseAnalyticalObject
             periods.addAll( object.getPeriods() );
             relatives = object.getRelatives() == null ? relatives : object.getRelatives();
             organisationUnits.addAll( object.getOrganisationUnits() );
-            categoryDimensions.addAll( object.getCategoryDimensions() );
             dataElementGroups.addAll( object.getDataElementGroups() );
             organisationUnitGroups.addAll( object.getOrganisationUnitGroups() );
+            organisationUnitLevels.addAll( object.getOrganisationUnitLevels() );
+            categoryDimensions.addAll( object.getCategoryDimensions() );
             categoryOptionGroups.addAll( object.getCategoryOptionGroups() );
             attributeDimensions.addAll( object.getAttributeDimensions() );
             dataElementDimensions.addAll( object.getDataElementDimensions() );
             userOrganisationUnit = object.isUserOrganisationUnit();
             userOrganisationUnitChildren = object.isUserOrganisationUnitChildren();
             userOrganisationUnitGrandChildren = object.isUserOrganisationUnitGrandChildren();
-            organisationUnitLevels.addAll( object.getOrganisationUnitLevels() );
             itemOrganisationUnitGroups = object.getItemOrganisationUnitGroups();
             rewindRelativePeriods = object.isRewindRelativePeriods();
             digitGroupSeparator = object.getDigitGroupSeparator();
@@ -802,109 +793,9 @@ public abstract class BaseAnalyticalObject
     // -------------------------------------------------------------------------
 
     @JsonProperty
-    @JsonSerialize( contentAs = BaseNameableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "indicators", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "indicator", namespace = DxfNamespaces.DXF_2_0 )
-    public List<Indicator> getIndicators()
-    {
-        return indicators;
-    }
-
-    public void setIndicators( List<Indicator> indicators )
-    {
-        this.indicators = indicators;
-    }
-
-    @JsonProperty
-    @JsonSerialize( contentAs = BaseNameableObject.class )
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "dataElements", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "dataElement", namespace = DxfNamespaces.DXF_2_0 )
-    public List<DataElement> getDataElements()
-    {
-        return dataElements;
-    }
-
-    public void setDataElements( List<DataElement> dataElements )
-    {
-        this.dataElements = dataElements;
-    }
-
-    @JsonProperty
-    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
-    @JsonView( DetailedView.class )
-    @JacksonXmlElementWrapper( localName = "dataElementOperands", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "dataElementOperand", namespace = DxfNamespaces.DXF_2_0 )
-    public List<DataElementOperand> getDataElementOperands()
-    {
-        return dataElementOperands;
-    }
-
-    public void setDataElementOperands( List<DataElementOperand> dataElementOperands )
-    {
-        this.dataElementOperands = dataElementOperands;
-    }
-
-    @JsonProperty
-    @JsonSerialize( contentAs = BaseNameableObject.class )
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "dataSets", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "dataSet", namespace = DxfNamespaces.DXF_2_0 )
-    public List<DataSet> getDataSets()
-    {
-        return dataSets;
-    }
-
-    public void setDataSets( List<DataSet> dataSets )
-    {
-        this.dataSets = dataSets;
-    }
-
-    @JsonProperty
-    @JsonSerialize( contentAs = BaseNameableObject.class )
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "organisationUnits", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "organisationUnit", namespace = DxfNamespaces.DXF_2_0 )
-    public List<OrganisationUnit> getOrganisationUnits()
-    {
-        return organisationUnits;
-    }
-
-    public void setOrganisationUnits( List<OrganisationUnit> organisationUnits )
-    {
-        this.organisationUnits = organisationUnits;
-    }
-
-    @JsonProperty
-    @JsonSerialize( contentUsing = JacksonPeriodSerializer.class )
-    @JsonDeserialize( contentUsing = JacksonPeriodDeserializer.class )
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "periods", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "period", namespace = DxfNamespaces.DXF_2_0 )
-    public List<Period> getPeriods()
-    {
-        return periods;
-    }
-
-    public void setPeriods( List<Period> periods )
-    {
-        this.periods = periods;
-    }
-
-    @JsonProperty( value = "relativePeriods" )
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
-    public RelativePeriods getRelatives()
-    {
-        return relatives;
-    }
-
-    public void setRelatives( RelativePeriods relatives )
-    {
-        this.relatives = relatives;
-    }
-
+    @JacksonXmlElementWrapper( localName = "categoryDimensions", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "categoryDimension", namespace = DxfNamespaces.DXF_2_0 )
     public List<DataElementCategoryDimension> getCategoryDimensions()
     {
         return categoryDimensions;
@@ -917,33 +808,8 @@ public abstract class BaseAnalyticalObject
 
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "dataElementGroups", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "dataElementGroup", namespace = DxfNamespaces.DXF_2_0 )
-    public List<DataElementGroup> getDataElementGroups()
-    {
-        return dataElementGroups;
-    }
-
-    public void setDataElementGroups( List<DataElementGroup> dataElementGroups )
-    {
-        this.dataElementGroups = dataElementGroups;
-    }
-
-    @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "organisationUnitGroups", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "organisationUnitGroup", namespace = DxfNamespaces.DXF_2_0 )
-    public List<OrganisationUnitGroup> getOrganisationUnitGroups()
-    {
-        return organisationUnitGroups;
-    }
-
-    public void setOrganisationUnitGroups( List<OrganisationUnitGroup> organisationUnitGroups )
-    {
-        this.organisationUnitGroups = organisationUnitGroups;
-    }
-
-    //TODO json annotations
+    @JacksonXmlElementWrapper( localName = "categoryOptionGroups", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "categoryOptionGroup", namespace = DxfNamespaces.DXF_2_0 )
     public List<CategoryOptionGroup> getCategoryOptionGroups()
     {
         return categoryOptionGroups;
@@ -954,6 +820,10 @@ public abstract class BaseAnalyticalObject
         this.categoryOptionGroups = categoryOptionGroups;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "attributeDimensions", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "attributeDimension", namespace = DxfNamespaces.DXF_2_0 )
     public List<TrackedEntityAttributeDimension> getAttributeDimensions()
     {
         return attributeDimensions;
@@ -964,6 +834,10 @@ public abstract class BaseAnalyticalObject
         this.attributeDimensions = attributeDimensions;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "dataElementDimensions", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "dataElementDimension", namespace = DxfNamespaces.DXF_2_0 )
     public List<TrackedEntityDataElementDimension> getDataElementDimensions()
     {
         return dataElementDimensions;
@@ -1011,20 +885,6 @@ public abstract class BaseAnalyticalObject
     public void setUserOrganisationUnitGrandChildren( boolean userOrganisationUnitGrandChildren )
     {
         this.userOrganisationUnitGrandChildren = userOrganisationUnitGrandChildren;
-    }
-
-    @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "organisationUnitLevels", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "organisationUnitLevel", namespace = DxfNamespaces.DXF_2_0 )
-    public List<Integer> getOrganisationUnitLevels()
-    {
-        return organisationUnitLevels;
-    }
-
-    public void setOrganisationUnitLevels( List<Integer> organisationUnitLevels )
-    {
-        this.organisationUnitLevels = organisationUnitLevels;
     }
 
     @JsonProperty
@@ -1103,12 +963,14 @@ public abstract class BaseAnalyticalObject
         return transientOrganisationUnits;
     }
 
+    @Override
     @JsonIgnore
     public Date getRelativePeriodDate()
     {
         return relativePeriodDate;
     }
 
+    @Override
     @JsonIgnore
     public OrganisationUnit getRelativeOrganisationUnit()
     {
@@ -1119,6 +981,7 @@ public abstract class BaseAnalyticalObject
     // Web domain properties
     // -------------------------------------------------------------------------
 
+    @Override
     @JsonProperty
     @JsonDeserialize( contentAs = BaseDimensionalObject.class )
     @JsonSerialize( contentAs = BaseDimensionalObject.class )
@@ -1135,6 +998,7 @@ public abstract class BaseAnalyticalObject
         this.columns = columns;
     }
 
+    @Override
     @JsonProperty
     @JsonDeserialize( contentAs = BaseDimensionalObject.class )
     @JsonSerialize( contentAs = BaseDimensionalObject.class )
@@ -1151,6 +1015,7 @@ public abstract class BaseAnalyticalObject
         this.rows = rows;
     }
 
+    @Override
     @JsonProperty
     @JsonDeserialize( contentAs = BaseDimensionalObject.class )
     @JsonSerialize( contentAs = BaseDimensionalObject.class )
@@ -1167,6 +1032,7 @@ public abstract class BaseAnalyticalObject
         this.filters = filters;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DimensionalView.class } )
     public Map<String, String> getParentGraphMap()

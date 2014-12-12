@@ -336,34 +336,95 @@ public class SaveValueAction
             	else if( valueType.equals("2") )
             	{
             	    pbfDataValue.setQuantityValidated( Integer.parseInt( value ) );
+            	    try
+            	    {
+            	        pbfDataValue.setTariffAmount( Double.parseDouble( tariffAmt ) );
+            	    }
+            	    catch( Exception e )
+            	    {
+            	    }
             	}
             	
             	else if( valueType.equals("3") )
                 {
                     pbfDataValue.setQuantityExternalVerification( Integer.parseInt( value ) );
+                    try
+                    {
+                        pbfDataValue.setTariffAmount( Double.parseDouble( tariffAmt ) );
+                    }
+                    catch( Exception e )
+                    {
+                    }
                 }
                 
             	pbfDataValue.setStoredBy(storedBy);
             	pbfDataValue.setTimestamp(now);
                 pbfDataValueService.addPBFDataValue(pbfDataValue);
                 
-                System.out.println("Value Added");
+                System.out.println(" PBF Value Added");
             }
         }
         else
         {
             if( valueType.equals("1") )
             {
-        	pbfDataValue.setQuantityReported( Integer.parseInt( value ) );
+                Integer intVal = null;
+                if( value != null && !value.trim().equals( "" ) )
+                {
+                    intVal = Integer.parseInt( value );
+                }
+        	pbfDataValue.setQuantityReported( intVal );
+        	
+        	try
+                {
+                    pbfDataValue.setTariffAmount( Double.parseDouble( tariffAmt ) );
+                }
+                catch( Exception e )
+                {
+                }
+        	
+        	System.out.println(" PBF Value 1 " + intVal );
             }
             else if( valueType.equals("2") )
             {
-        	pbfDataValue.setQuantityValidated( Integer.parseInt( value ) );
+                Integer intVal = null;
+                if( value != null && !value.trim().equals( "" ) )
+                {
+                    intVal = Integer.parseInt( value );
+                }
+                
+                System.out.println(" PBF Value 2 " + intVal );
+                
+        	pbfDataValue.setQuantityValidated( intVal );
+        	
+        	try
+                {
+                    pbfDataValue.setTariffAmount( Double.parseDouble( tariffAmt ) );
+                }
+                catch( Exception e )
+                {
+                }
+        	
             }
             
             else if( valueType.equals("3") )
             {
-                pbfDataValue.setQuantityExternalVerification( Integer.parseInt( value ) );
+                Integer intVal = null;
+                if( value != null && !value.trim().equals( "" ) )
+                {
+                    intVal = Integer.parseInt( value );
+                }
+                System.out.println(" PBF Value 3 " + intVal );
+                
+                pbfDataValue.setQuantityExternalVerification( intVal );
+                
+                try
+                {
+                    pbfDataValue.setTariffAmount( Double.parseDouble( tariffAmt ) );
+                }
+                catch( Exception e )
+                {
+                }
             }
             
             pbfDataValue.setStoredBy(storedBy);
@@ -372,7 +433,7 @@ public class SaveValueAction
 
             pbfDataValueService.updatePBFDataValue( pbfDataValue );
         	
-            System.out.println("Value Updated");
+            System.out.println(" PBF Value Updated");
         }
 
         return SUCCESS;

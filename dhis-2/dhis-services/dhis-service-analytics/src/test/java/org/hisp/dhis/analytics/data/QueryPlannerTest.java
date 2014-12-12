@@ -34,9 +34,11 @@ import static org.hisp.dhis.common.DimensionalObject.DIMENSION_SEP;
 import static org.hisp.dhis.common.DimensionalObject.ORGUNIT_DIM_ID;
 import static org.hisp.dhis.common.DimensionalObject.PERIOD_DIM_ID;
 import static org.hisp.dhis.common.NameableObjectUtils.getList;
-import static org.hisp.dhis.dataelement.DataElement.AGGREGATION_OPERATOR_AVERAGE;
+import static org.hisp.dhis.dataelement.DataElement.AGGREGATION_OPERATOR_AVERAGE_SUM;
+import static org.hisp.dhis.dataelement.DataElement.AGGREGATION_OPERATOR_NONE;
 import static org.hisp.dhis.dataelement.DataElement.AGGREGATION_OPERATOR_SUM;
 import static org.hisp.dhis.dataelement.DataElement.VALUE_TYPE_INT;
+import static org.hisp.dhis.dataelement.DataElement.VALUE_TYPE_STRING;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -68,12 +70,12 @@ import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
-import org.hisp.dhis.period.Cal;
 import org.hisp.dhis.period.MonthlyPeriodType;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.period.QuarterlyPeriodType;
 import org.hisp.dhis.period.YearlyPeriodType;
+import org.joda.time.DateTime;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -111,6 +113,8 @@ public class QueryPlannerTest
     private DataElement deB;
     private DataElement deC;
     private DataElement deD;
+    private DataElement deE;
+    private DataElement deF;
     
     private DataSet dsA;
     private DataSet dsB;
@@ -138,13 +142,16 @@ public class QueryPlannerTest
         
         deA = createDataElement( 'A', VALUE_TYPE_INT, AGGREGATION_OPERATOR_SUM );
         deB = createDataElement( 'B', VALUE_TYPE_INT, AGGREGATION_OPERATOR_SUM );
-        deC = createDataElement( 'C', VALUE_TYPE_INT, AGGREGATION_OPERATOR_AVERAGE );
-        deD = createDataElement( 'D', VALUE_TYPE_INT, AGGREGATION_OPERATOR_AVERAGE );
+        deC = createDataElement( 'C', VALUE_TYPE_INT, AGGREGATION_OPERATOR_AVERAGE_SUM );
+        deD = createDataElement( 'D', VALUE_TYPE_INT, AGGREGATION_OPERATOR_AVERAGE_SUM );
+        deE = createDataElement( 'E', VALUE_TYPE_STRING, AGGREGATION_OPERATOR_NONE );
+        deF = createDataElement( 'F', VALUE_TYPE_STRING, AGGREGATION_OPERATOR_NONE );
         
         dataElementService.addDataElement( deA );
         dataElementService.addDataElement( deB );
         dataElementService.addDataElement( deC );
         dataElementService.addDataElement( deD );
+        dataElementService.addDataElement( deE );
         
         dsA = createDataSet( 'A', pt );
         dsB = createDataSet( 'B', pt );
@@ -178,7 +185,7 @@ public class QueryPlannerTest
     @Test
     public void testGetHeaderDimensions()
     {
-        List<DimensionalObject> expected = new ArrayList<DimensionalObject>();
+        List<DimensionalObject> expected = new ArrayList<>();
         expected.add( new BaseDimensionalObject( DATA_X_DIM_ID ) );
         expected.add( new BaseDimensionalObject( ORGUNIT_DIM_ID ) );
         expected.add( new BaseDimensionalObject( PERIOD_DIM_ID ) );
@@ -198,7 +205,7 @@ public class QueryPlannerTest
 
         assertEquals( expected, params.getHeaderDimensions() );
         
-        expected = new ArrayList<DimensionalObject>();
+        expected = new ArrayList<>();
         expected.add( new BaseDimensionalObject( ORGUNIT_DIM_ID ) );
         expected.add( new BaseDimensionalObject( PERIOD_DIM_ID ) );
 
@@ -245,7 +252,7 @@ public class QueryPlannerTest
         params.setPeriods( getList( createPeriod( "2000Q1" ), createPeriod( "2000Q2" ) ) );
         params.enableCategoryOptionCombos();
         
-        Map<String, Double> aggregatedDataMap = new HashMap<String, Double>();
+        Map<String, Double> aggregatedDataMap = new HashMap<>();
         aggregatedDataMap.put( deA.getUid() + DIMENSION_SEP + ouA.getUid() + DIMENSION_SEP + "2000Q1" + DIMENSION_SEP + coc.getUid(), 1d );
         aggregatedDataMap.put( deA.getUid() + DIMENSION_SEP + ouA.getUid() + DIMENSION_SEP + "2000Q2" + DIMENSION_SEP + coc.getUid(), 2d );
         aggregatedDataMap.put( deA.getUid() + DIMENSION_SEP + ouB.getUid() + DIMENSION_SEP + "2000Q1" + DIMENSION_SEP + coc.getUid(), 3d );
@@ -277,19 +284,19 @@ public class QueryPlannerTest
         DataElementOperand deACoc = new DataElementOperand( deA.getUid(), coc.getUid() );
         DataElementOperand deBCoc = new DataElementOperand( deB.getUid(), coc.getUid() );
         
-        Map<DataElementOperand, Double> ouAQ1Expected = new HashMap<DataElementOperand, Double>();
+        Map<DataElementOperand, Double> ouAQ1Expected = new HashMap<>();
         ouAQ1Expected.put( deACoc, 1d );
         ouAQ1Expected.put( deBCoc, 5d );
 
-        Map<DataElementOperand, Double> ouAQ2Expected = new HashMap<DataElementOperand, Double>();
+        Map<DataElementOperand, Double> ouAQ2Expected = new HashMap<>();
         ouAQ2Expected.put( deACoc, 2d );
         ouAQ2Expected.put( deBCoc, 6d );
 
-        Map<DataElementOperand, Double> ouBQ1Expected = new HashMap<DataElementOperand, Double>();
+        Map<DataElementOperand, Double> ouBQ1Expected = new HashMap<>();
         ouBQ1Expected.put( deACoc, 3d );
         ouBQ1Expected.put( deBCoc, 7d );
 
-        Map<DataElementOperand, Double> ouBQ2Expected = new HashMap<DataElementOperand, Double>();
+        Map<DataElementOperand, Double> ouBQ2Expected = new HashMap<>();
         ouBQ2Expected.put( deACoc, 4d );
         ouBQ2Expected.put( deBCoc, 8d );
                 
@@ -592,7 +599,7 @@ public class QueryPlannerTest
     /**
      * Query spans 3 period types. Splits in 3 queries for each period type, then
      * splits in 4 queries on data elements units to satisfy optimal for a total 
-     * of 12 queries, because query has 2 different  aggregation types.
+     * of 12 queries, because query has 2 different aggregation types.
      */
     @Test
     public void planQueryI()
@@ -653,14 +660,40 @@ public class QueryPlannerTest
             assertDimensionNameNotNull( query );
         }
     }
-    
+
+    /**
+     * Splits in 2 queries for each aggregation type, then 2 queries for each
+     * data type, then 2 queries for each organisation unit to satisfy optimal
+     * for a total of 4 queries across 2 sequential queries.
+     */
+    @Test
+    public void planQueryL()
+    {
+        DataQueryParams params = new DataQueryParams();
+        params.setDataElements( getList( deA, deB, deE, deF ) );
+        params.setOrganisationUnits( getList( ouA, ouB, ouC, ouD ) );
+        params.setFilterPeriods( getList( createPeriod( "2000Q1" ) ) );
+        
+        DataQueryGroups queryGroups = queryPlanner.planQuery( params, 4, ANALYTICS_TABLE_NAME );
+        
+        assertEquals( 8, queryGroups.getAllQueries().size() );
+        assertEquals( 2, queryGroups.getSequentialQueries().size() );
+        assertEquals( 4, queryGroups.getLargestGroupSize() );
+
+        for ( DataQueryParams query : queryGroups.getAllQueries() )
+        {
+            assertDimensionNameNotNull( query );
+            assertNotNull( query.getDataType() );
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Supportive methods
     // -------------------------------------------------------------------------
 
     private static boolean samePeriodType( List<NameableObject> isoPeriods )
     {
-        Iterator<NameableObject> periods = new ArrayList<NameableObject>( isoPeriods ).iterator();
+        Iterator<NameableObject> periods = new ArrayList<>( isoPeriods ).iterator();
         
         PeriodType first = ((Period) periods.next()).getPeriodType();
         
@@ -679,13 +712,13 @@ public class QueryPlannerTest
     
     private static boolean samePartition( List<NameableObject> isoPeriods )
     {
-        Iterator<NameableObject> periods = new ArrayList<NameableObject>( isoPeriods ).iterator();
+        Iterator<NameableObject> periods = new ArrayList<>( isoPeriods ).iterator();
         
-        int year = new Cal().set( ((Period) periods.next()).getStartDate() ).getYear();
+        int year = new DateTime( ((Period) periods.next()).getStartDate() ).getYear();
         
         while ( periods.hasNext() )
         {
-            int next = new Cal().set( ((Period) periods.next()).getStartDate() ).getYear();
+            int next = new DateTime( ((Period) periods.next()).getStartDate() ).getYear();
             
             if ( year != next )
             {   

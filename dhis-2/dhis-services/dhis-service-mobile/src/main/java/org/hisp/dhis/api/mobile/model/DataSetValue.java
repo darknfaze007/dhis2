@@ -48,7 +48,7 @@ public class DataSetValue
 
     private boolean completed;
 
-    private List<DataValue> dataValues = new ArrayList<DataValue>();
+    private List<DataValue> dataValues = new ArrayList<>();
 
     @XmlAttribute
     public boolean isCompleted()
@@ -83,11 +83,13 @@ public class DataSetValue
         return dataValues;
     }
 
+    @Override
     public String getClientVersion()
     {
         return clientVersion;
     }
 
+    @Override
     public void setClientVersion( String clientVersion )
     {
         this.clientVersion = clientVersion;

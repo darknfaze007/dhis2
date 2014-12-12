@@ -28,12 +28,12 @@ package org.hisp.dhis.program;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.IdentifiableObject;
@@ -50,11 +50,12 @@ import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminder;
 import org.hisp.dhis.user.UserAuthorityGroup;
 import org.hisp.dhis.validation.ValidationCriteria;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
 /**
  * @author Abyot Asalefew
@@ -65,37 +66,27 @@ public class Program
 {
     public static final List<String> TYPE_LOOKUP = Arrays.asList( "", "MULTIPLE_EVENTS_WITH_REGISTRATION",
         "SINGLE_EVENT_WITH_REGISTRATION", "SINGLE_EVENT_WITHOUT_REGISTRATION" );
+
     public static final int MULTIPLE_EVENTS_WITH_REGISTRATION = 1;
     public static final int SINGLE_EVENT_WITH_REGISTRATION = 2;
     public static final int SINGLE_EVENT_WITHOUT_REGISTRATION = 3;
-    /**
-     * Determines if a de-serialized file is compatible with this class.
-     */
-    private static final long serialVersionUID = -2581751965520009382L;
+
     private String description;
 
     private Integer version;
 
-    /**
-     * Description of Date of Enrollment This description is differ from each
-     * program
-     */
     private String dateOfEnrollmentDescription;
 
-    /**
-     * Description of Date of Incident This description is differ from each
-     * program
-     */
     private String dateOfIncidentDescription;
 
     @Scanned
-    private Set<OrganisationUnit> organisationUnits = new HashSet<OrganisationUnit>();
-    
-    @Scanned
-    private Set<ProgramStage> programStages = new HashSet<ProgramStage>();
+    private Set<OrganisationUnit> organisationUnits = new HashSet<>();
 
     @Scanned
-    private Set<ValidationCriteria> validationCriteria = new HashSet<ValidationCriteria>();
+    private Set<ProgramStage> programStages = new HashSet<>();
+
+    @Scanned
+    private Set<ValidationCriteria> validationCriteria = new HashSet<>();
 
     private Integer type;
 
@@ -103,21 +94,15 @@ public class Program
 
     private Boolean ignoreOverdueEvents = false;
 
-    private Set<ProgramTrackedEntityAttribute> attributes = new HashSet<ProgramTrackedEntityAttribute>();
+    private List<ProgramTrackedEntityAttribute> programAttributes = new ArrayList<>();
 
     @Scanned
-    private Set<UserAuthorityGroup> userRoles = new HashSet<UserAuthorityGroup>();
+    private Set<UserAuthorityGroup> userRoles = new HashSet<>();
 
     private Boolean onlyEnrollOnce = false;
 
     @Scanned
-    private Set<TrackedEntityInstanceReminder> instanceReminders = new HashSet<TrackedEntityInstanceReminder>();
-
-    /**
-     * Allow enrolling trackedEntity to all orgunit no matter what the program
-     * is assigned for the orgunit or not
-     */
-    private Boolean displayOnAllOrgunit = true;
+    private Set<TrackedEntityInstanceReminder> instanceReminders = new HashSet<>();
 
     private Boolean selectEnrollmentDatesInFuture = false;
 
@@ -146,7 +131,7 @@ public class Program
 
     public Program( String name, String description )
     {
-        this();
+        setAutoFields();
         this.name = name;
         this.description = description;
     }
@@ -161,7 +146,7 @@ public class Program
      */
     public ProgramTrackedEntityAttribute getAttribute( TrackedEntityAttribute attribute )
     {
-        for ( ProgramTrackedEntityAttribute programAttribute : attributes )
+        for ( ProgramTrackedEntityAttribute programAttribute : programAttributes )
         {
             if ( programAttribute != null && programAttribute.getAttribute().equals( attribute ) )
             {
@@ -177,7 +162,7 @@ public class Program
      */
     public Set<DataElement> getAllDataElements()
     {
-        Set<DataElement> elements = new HashSet<DataElement>();
+        Set<DataElement> elements = new HashSet<>();
 
         for ( ProgramStage stage : programStages )
         {
@@ -191,15 +176,15 @@ public class Program
     }
 
     /**
-     * Returns TrackedEntityAttributes from ProgramTrackedEntityAttributes.
+     * Returns TrackedEntityAttributes from ProgramTrackedEntityAttributes. Use
+     * getAttributes() to access the persisted attribute list.
      */
     public List<TrackedEntityAttribute> getTrackedEntityAttributes()
     {
-        List<TrackedEntityAttribute> entityAttributes = new ArrayList<TrackedEntityAttribute>();
-
-        for ( ProgramTrackedEntityAttribute entityAttribute : attributes )
+        List<TrackedEntityAttribute> entityAttributes = new ArrayList<>();
+        for ( ProgramTrackedEntityAttribute programAttribute : programAttributes )
         {
-            entityAttributes.add( entityAttribute.getAttribute() );
+            entityAttributes.add( programAttribute.getAttribute() );
         }
 
         return entityAttributes;
@@ -220,6 +205,12 @@ public class Program
         }
 
         return null;
+    }
+
+    public Program increaseVersion()
+    {
+        version = version != null ? version + 1 : 1;
+        return this;
     }
 
     // -------------------------------------------------------------------------
@@ -428,19 +419,6 @@ public class Program
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
-    public Boolean getDisplayOnAllOrgunit()
-    {
-        return displayOnAllOrgunit;
-    }
-
-    public void setDisplayOnAllOrgunit( Boolean displayOnAllOrgunit )
-    {
-        this.displayOnAllOrgunit = displayOnAllOrgunit;
-    }
-
-    @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Boolean getSelectEnrollmentDatesInFuture()
     {
         return selectEnrollmentDatesInFuture;
@@ -533,14 +511,15 @@ public class Program
     @JsonView( { DetailedView.class, ExportView.class, WithoutOrganisationUnitsView.class } )
     @JacksonXmlElementWrapper( localName = "programTrackedEntityAttributes", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "programTrackedEntityAttribute", namespace = DxfNamespaces.DXF_2_0 )
-    public Set<ProgramTrackedEntityAttribute> getAttributes()
+    public List<ProgramTrackedEntityAttribute> getProgramAttributes()
     {
-        return attributes;
+        return programAttributes;
     }
 
-    public void setAttributes( Set<ProgramTrackedEntityAttribute> attributes )
+    public void setProgramAttributes(
+        List<ProgramTrackedEntityAttribute> programAttributes )
     {
-        this.attributes = attributes;
+        this.programAttributes = programAttributes;
     }
 
     @JsonProperty
@@ -574,7 +553,6 @@ public class Program
             displayIncidentDate = program.getDisplayIncidentDate();
             ignoreOverdueEvents = program.getIgnoreOverdueEvents();
             onlyEnrollOnce = program.getOnlyEnrollOnce();
-            displayOnAllOrgunit = program.getDisplayOnAllOrgunit();
             selectEnrollmentDatesInFuture = program.getSelectEnrollmentDatesInFuture();
             selectIncidentDatesInFuture = program.getSelectIncidentDatesInFuture();
             relationshipText = program.getRelationshipText();
@@ -593,8 +571,8 @@ public class Program
             validationCriteria.clear();
             validationCriteria.addAll( program.getValidationCriteria() );
 
-            attributes.clear();
-            attributes.addAll( program.getAttributes() );
+            programAttributes.clear();
+            programAttributes.addAll( program.getProgramAttributes() );
 
             userRoles.clear();
             userRoles.addAll( program.getUserRoles() );

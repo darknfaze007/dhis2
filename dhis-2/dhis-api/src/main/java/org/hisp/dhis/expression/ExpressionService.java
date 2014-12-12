@@ -39,6 +39,7 @@ import org.hisp.dhis.dataelement.DataElementOperand;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.period.Period;
+import org.hisp.dhis.validation.ValidationRule;
 
 /**
  * Expressions are mathematical formulas and can contain references to various
@@ -205,7 +206,8 @@ public interface ExpressionService
     
     /**
      * Returns all operands included in an expression string. The operand is on
-     * the form <data element id>.<category option combo id>.
+     * the form #{data-element-id.category-option combo-id}. Requires that the
+     * expression has been exploded in order to handle data element totals.
      * 
      * @param expression The expression string.
      * @return A Set of Operands.
@@ -277,6 +279,9 @@ public interface ExpressionService
      * Populates the explodedNumerator and explodedDenominator property on all
      * indicators in the given collection. This method uses
      * explodeExpression( String ) internally to generate the exploded expressions.
+     * Replaces references to data element totals with references to all
+     * category option combos in the category combo for that data element.
+     * 
      * This method will perform better compared to calling explodeExpression( String )
      * multiple times outside a transactional context as the transactional
      * overhead is avoided.
@@ -287,13 +292,32 @@ public interface ExpressionService
     void explodeAndSubstituteExpressions( Collection<Indicator> indicators, Integer days );
 
     /**
+     * Substitutes potential constant and days in the numerator and denominator
+     * on all indicators in the given collection.
+     */
+    void substituteExpressions( Collection<Indicator> indicators, Integer days );
+    
+    /**
      * Populates the explodedNumerator and explodedDenominator property on all
      * indicators in the given collection. This method uses
      * explodeExpression( String ) internally to generate the exploded expressions.
+     * Replaces references to data element totals with references to all
+     * category option combos in the category combo for that data element.
      * 
      * @param indicators the collection of indicators.
      */    
     void explodeExpressions( Collection<Indicator> indicators );
+    
+    /**
+     * Populates the explodedExpression property on the Expression object of all
+     * validation rules in the given collection. This method uses
+     * explodeExpression( String ) internally to generate the exploded expressions.
+     * Replaces references to data element totals with references to all
+     * category option combos in the category combo for that data element.
+     * 
+     * @param validationRules the collection of validation rules.
+     */
+    void explodeValidationRuleExpressions( Collection<ValidationRule> validationRules );
     
     /**
      * Replaces references to data element totals with references to all
@@ -326,15 +350,18 @@ public interface ExpressionService
      * @param constantMap the mapping between the constant uid and value to use
      *        in the calculation.
      * @param orgUnitCountMap the mapping between organisation unit group uid and
-     *        count of org units to use in the calculation.
+     *        count of organisation units to use in the calculation.
      * @param days the number of days to use in the calculation.
+     * @param missingValueStrategy the strategy to use when data values are missing
+     *        when calculating the expression. Strategy defaults to NEVER_SKIP if null.
      */
-    String generateExpression( String expression, Map<DataElementOperand, Double> valueMap, Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, boolean nullIfNoValues );
+    String generateExpression( String expression, Map<DataElementOperand, Double> valueMap, 
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, MissingValueStrategy missingValueStrategy );
     
     /**
      * Returns all Operands included in the formulas for the given collection of
      * Indicators. Requires that the explodedNumerator and explodedDenominator
-     * properties have been populated.
+     * properties have been populated in order to handle totals.
      * 
      * @param indicators the collection of Indicators.
      */

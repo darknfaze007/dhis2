@@ -29,10 +29,12 @@ package org.hisp.dhis.system.util;
  */
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,8 +79,8 @@ public class CollectionUtils
     
     public static <T> Collection<T> intersection( Collection<T> c1, Collection<T> c2 )
     {
-        Set<T> set1 = new HashSet<T>( c1 );
-        set1.retainAll( new HashSet<T>( c2 ) );
+        Set<T> set1 = new HashSet<>( c1 );
+        set1.retainAll( new HashSet<>( c2 ) );
         return set1;
     }
     
@@ -86,16 +88,30 @@ public class CollectionUtils
     {
         return collection != null ? collection : new HashSet<T>();
     }
-    
-    public static <T> Set<T> asSet( T... items )
+
+    @SafeVarargs
+    public static <T> List<T> asList( final T... items )
     {
-        Set<T> set = new HashSet<T>();
-        
+        List<T> list = new ArrayList<>();
+
+        for ( T item : items )
+        {
+            list.add( item );
+        }
+
+        return list;
+    }
+
+    @SafeVarargs
+    public static final <T> Set<T> asSet( final T... items )
+    {
+        Set<T> set = new HashSet<>();
+
         for ( T item : items )
         {
             set.add( item );
         }
-        
+
         return set;
     }
 
@@ -108,7 +124,7 @@ public class CollectionUtils
      */
     public static <K, V> AbstractMap.SimpleEntry<K, V> asEntry( K key, V value )
     {
-        return new AbstractMap.SimpleEntry<K, V>( key, value );
+        return new AbstractMap.SimpleEntry<>( key, value );
     }
 
     /**
@@ -117,9 +133,10 @@ public class CollectionUtils
      * @param entries any number of (key, value) pairs
      * @return Map of the entries
      */
-    public static <K, V> Map<K, V> asMap( AbstractMap.SimpleEntry<K, V>... entries )
+    @SafeVarargs
+    public static final <K, V> Map<K, V> asMap( final AbstractMap.SimpleEntry<K, V>... entries )
     {
-        Map<K, V> map = new HashMap<K, V>();
+        Map<K, V> map = new HashMap<>();
 
         for ( AbstractMap.SimpleEntry<K, V> entry : entries )
         {

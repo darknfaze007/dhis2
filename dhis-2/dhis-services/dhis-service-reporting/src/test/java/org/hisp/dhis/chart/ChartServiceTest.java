@@ -28,6 +28,14 @@ package org.hisp.dhis.chart;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.indicator.IndicatorService;
@@ -41,11 +49,7 @@ import org.hisp.dhis.period.PeriodService;
 import org.hisp.dhis.period.PeriodType;
 import org.jfree.chart.JFreeChart;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
@@ -54,6 +58,16 @@ import static org.junit.Assert.*;
 public class ChartServiceTest
     extends DhisSpringTest
 {
+    @Autowired
+    private IndicatorService indicatorService;
+
+    @Autowired
+    private PeriodService periodService;
+
+    @Autowired
+    private OrganisationUnitService organisationUnitService;
+    
+    @Autowired
     private ChartService chartService;
 
     private Indicator indicatorA;
@@ -79,14 +93,6 @@ public class ChartServiceTest
     public void setUpTest()
         throws Exception
     {
-        chartService = (ChartService) getBean( ChartService.ID );
-
-        indicatorService = (IndicatorService) getBean( IndicatorService.ID );
-
-        periodService = (PeriodService) getBean( PeriodService.ID );
-
-        organisationUnitService = (OrganisationUnitService) getBean( OrganisationUnitService.ID );
-
         // ---------------------------------------------------------------------
         // Indicator
         // ---------------------------------------------------------------------
@@ -102,7 +108,7 @@ public class ChartServiceTest
         indicatorService.addIndicator( indicatorB );
         indicatorService.addIndicator( indicatorC );
 
-        List<Indicator> indicators = new ArrayList<Indicator>();
+        List<Indicator> indicators = new ArrayList<>();
         indicators.add( indicatorA );
         indicators.add( indicatorB );
         indicators.add( indicatorC );
@@ -121,7 +127,7 @@ public class ChartServiceTest
         periodService.addPeriod( periodB );
         periodService.addPeriod( periodC );
 
-        List<Period> periods = new ArrayList<Period>();
+        List<Period> periods = new ArrayList<>();
         periods.add( periodA );
         periods.add( periodB );
         periods.add( periodC );
@@ -136,7 +142,7 @@ public class ChartServiceTest
         organisationUnitService.addOrganisationUnit( unitA );
         organisationUnitService.addOrganisationUnit( unitB );
 
-        List<OrganisationUnit> units = new ArrayList<OrganisationUnit>();
+        List<OrganisationUnit> units = new ArrayList<>();
         units.add( unitA );
         units.add( unitB );
 

@@ -109,6 +109,7 @@ public class GetUserListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -116,7 +117,7 @@ public class GetUserListAction
         {
             this.paging = createPaging( userService.getUserCountByName( key ) );
 
-            userCredentialsList = new ArrayList<UserCredentials>( userService.searchUsersByName( key, paging.getStartPos(),
+            userCredentialsList = new ArrayList<>( userService.searchUsersByName( key, paging.getStartPos(),
                 paging.getPageSize() ) );
 
             Collections.sort( userCredentialsList, new UsernameComparator() );
@@ -125,21 +126,21 @@ public class GetUserListAction
         {
             this.paging = createPaging( userService.getInactiveUsersCount( months ) );
 
-            userCredentialsList = new ArrayList<UserCredentials>( userService.getInactiveUsers( months, paging
+            userCredentialsList = new ArrayList<>( userService.getInactiveUsers( months, paging
                 .getStartPos(), paging.getPageSize() ) );
         }
         else if ( Boolean.TRUE.equals( selfRegistered ) )
         {
             this.paging = createPaging( userService.getSelfRegisteredUserCredentialsCount() );
 
-            userCredentialsList = new ArrayList<UserCredentials>( userService.getSelfRegisteredUserCredentials( paging.
+            userCredentialsList = new ArrayList<>( userService.getSelfRegisteredUserCredentials( paging.
                 getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( userService.getUserCount() );
 
-            userCredentialsList = new ArrayList<UserCredentials>( userService.getUsersBetween( paging.getStartPos(),
+            userCredentialsList = new ArrayList<>( userService.getUsersBetween( paging.getStartPos(),
                 paging.getPageSize() ) );
 
             Collections.sort( userCredentialsList, new UsernameComparator() );

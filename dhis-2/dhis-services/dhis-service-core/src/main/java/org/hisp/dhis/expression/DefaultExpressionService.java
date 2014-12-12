@@ -35,6 +35,7 @@ import static org.hisp.dhis.expression.Expression.PAR_OPEN;
 import static org.hisp.dhis.expression.Expression.SEPARATOR;
 import static org.hisp.dhis.system.util.MathUtils.calculateExpression;
 import static org.hisp.dhis.system.util.MathUtils.isEqual;
+import static org.hisp.dhis.expression.MissingValueStrategy.*;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -63,6 +64,7 @@ import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.system.util.DateUtils;
 import org.hisp.dhis.system.util.MathUtils;
+import org.hisp.dhis.validation.ValidationRule;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -121,30 +123,35 @@ public class DefaultExpressionService
     // Expression CRUD operations
     // -------------------------------------------------------------------------
 
+    @Override
     @Transactional
     public int addExpression( Expression expression )
     {
         return expressionStore.save( expression );
     }
 
+    @Override
     @Transactional
     public void deleteExpression( Expression expression )
     {
         expressionStore.delete( expression );
     }
 
+    @Override
     @Transactional
     public Expression getExpression( int id )
     {
         return expressionStore.get( id );
     }
 
+    @Override
     @Transactional
     public void updateExpression( Expression expression )
     {
         expressionStore.update( expression );
     }
 
+    @Override
     @Transactional
     public Collection<Expression> getAllExpressions()
     {
@@ -155,7 +162,8 @@ public class DefaultExpressionService
     // Business logic
     // -------------------------------------------------------------------------
     
-    public Double getIndicatorValue( Indicator indicator, Period period, Map<DataElementOperand, Double> valueMap, 
+    @Override
+    public Double getIndicatorValue( Indicator indicator, Period period, Map<DataElementOperand, Double> valueMap,
         Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days )
     {
         if ( indicator == null || indicator.getExplodedNumeratorFallback() == null || indicator.getExplodedDenominatorFallback() == null )
@@ -163,7 +171,8 @@ public class DefaultExpressionService
             return null;
         }
         
-        final String denominatorExpression = generateExpression( indicator.getExplodedDenominatorFallback(), valueMap, constantMap, orgUnitCountMap, days, false );
+        final String denominatorExpression = generateExpression( indicator.getExplodedDenominatorFallback(), 
+            valueMap, constantMap, orgUnitCountMap, days, NEVER_SKIP );
         
         if ( denominatorExpression == null )
         {
@@ -174,7 +183,8 @@ public class DefaultExpressionService
         
         if ( !isEqual( denominatorValue, 0d ) )
         {
-            final String numeratorExpression = generateExpression( indicator.getExplodedNumeratorFallback(), valueMap, constantMap, orgUnitCountMap, days, false );
+            final String numeratorExpression = generateExpression( indicator.getExplodedNumeratorFallback(), 
+                valueMap, constantMap, orgUnitCountMap, days, NEVER_SKIP );
             
             if ( numeratorExpression == null )
             {
@@ -193,24 +203,28 @@ public class DefaultExpressionService
         return null;
     }
 
+    @Override
     public Double getExpressionValue( Expression expression, Map<DataElementOperand, Double> valueMap,
         Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days )
     {
-        final String expressionString = generateExpression( expression.getExpression(), valueMap, constantMap, 
-            orgUnitCountMap, days, expression.isNullIfBlank() );
-
-        return expressionString != null ? calculateExpression( expressionString ) : null;
+        return getExpressionValue( expression, valueMap, constantMap, orgUnitCountMap, days, null );
     }
 
+    @Override
     public Double getExpressionValue( Expression expression, Map<DataElementOperand, Double> valueMap,
         Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, Set<DataElementOperand> incompleteValues )
     {
-        final String expressionString = generateExpression( expression.getExpression(), valueMap, constantMap, orgUnitCountMap, days,
-            expression.isNullIfBlank(), incompleteValues );
+        String expressionString = generateExpression( expression.getExplodedExpressionFallback(), valueMap, constantMap, 
+            orgUnitCountMap, days, expression.getMissingValueStrategy(), incompleteValues );
 
-        return expressionString != null ? calculateExpression( expressionString ) : null;
+        Double result = expressionString != null ? calculateExpression( expressionString ) : null;
+        
+        log.debug( "Expression: " + expression.getExplodedExpressionFallback() + ", generated: " + expressionString + ", result: " + result );
+        
+        return result;
     }
 
+    @Override
     @Transactional
     public Set<DataElement> getDataElementsInExpression( String expression )
     {
@@ -218,7 +232,7 @@ public class DefaultExpressionService
 
         if ( expression != null )
         {
-            dataElementsInExpression = new HashSet<DataElement>();
+            dataElementsInExpression = new HashSet<>();
 
             final Matcher matcher = OPERAND_PATTERN.matcher( expression );
 
@@ -236,13 +250,14 @@ public class DefaultExpressionService
         return dataElementsInExpression;
     }
     
+    @Override
     public Set<OrganisationUnitGroup> getOrganisationUnitGroupsInIndicators( Collection<Indicator> indicators )
     {
         Set<OrganisationUnitGroup> groups = null;
         
         if ( indicators != null )
         {
-            groups = new HashSet<OrganisationUnitGroup>();
+            groups = new HashSet<>();
             
             for ( Indicator indicator : indicators )
             {
@@ -254,13 +269,14 @@ public class DefaultExpressionService
         return groups;
     }
     
+    @Override
     public Set<OrganisationUnitGroup> getOrganisationUnitGroupsInExpression( String expression )
     {
         Set<OrganisationUnitGroup> groupsInExpression = null;
         
         if ( expression != null )
         {
-            groupsInExpression = new HashSet<OrganisationUnitGroup>();
+            groupsInExpression = new HashSet<>();
             
             final Matcher matcher = OU_GROUP_PATTERN.matcher( expression );
             
@@ -278,9 +294,10 @@ public class DefaultExpressionService
         return groupsInExpression;
     }
     
+    @Override
     public Set<String> getDataElementTotalUids( String expression )
     {
-        Set<String> uids = new HashSet<String>();
+        Set<String> uids = new HashSet<>();
         
         if ( expression != null )
         {
@@ -295,6 +312,7 @@ public class DefaultExpressionService
         return uids;
     }
     
+    @Override
     @Transactional
     public Set<DataElementCategoryOptionCombo> getOptionCombosInExpression( String expression )
     {
@@ -302,7 +320,7 @@ public class DefaultExpressionService
 
         if ( expression != null )
         {
-            optionCombosInExpression = new HashSet<DataElementCategoryOptionCombo>();
+            optionCombosInExpression = new HashSet<>();
 
             final Matcher matcher = OPERAND_PATTERN.matcher( expression );
 
@@ -321,6 +339,7 @@ public class DefaultExpressionService
         return optionCombosInExpression;
     }
 
+    @Override
     @Transactional
     public Set<DataElementOperand> getOperandsInExpression( String expression )
     {
@@ -328,23 +347,29 @@ public class DefaultExpressionService
 
         if ( expression != null )
         {
-            operandsInExpression = new HashSet<DataElementOperand>();
+            operandsInExpression = new HashSet<>();
 
             final Matcher matcher = OPERAND_PATTERN.matcher( expression );
 
             while ( matcher.find() )
             {
-                operandsInExpression.add( DataElementOperand.getOperand( matcher.group() ) );
+                DataElementOperand operand = DataElementOperand.getOperand( matcher.group() );
+                
+                if ( operand.getOptionComboId() != null )
+                {
+                    operandsInExpression.add( operand );
+                }
             }
         }
 
         return operandsInExpression;
     }
 
+    @Override
     @Transactional
     public Set<DataElement> getDataElementsInIndicators( Collection<Indicator> indicators )
     {
-        Set<DataElement> dataElements = new HashSet<DataElement>();
+        Set<DataElement> dataElements = new HashSet<>();
         
         for ( Indicator indicator : indicators )
         {
@@ -365,6 +390,7 @@ public class DefaultExpressionService
         return dataElements;
     }
 
+    @Override
     @Transactional
     public void filterInvalidIndicators( Collection<Indicator> indicators )
     {
@@ -386,12 +412,14 @@ public class DefaultExpressionService
         }
     }
 
+    @Override
     @Transactional
     public String expressionIsValid( String formula )
     {
         return expressionIsValid( formula, null, null, null, null );
     }
 
+    @Override
     @Transactional
     public String expressionIsValid( String expression, Set<String> dataElements, Set<String> categoryOptionCombos, Set<String> orgUnitGroups, Set<String> constants )
     {
@@ -488,6 +516,7 @@ public class DefaultExpressionService
         return VALID;
     }
 
+    @Override
     @Transactional
     public String getExpressionDescription( String expression )
     {
@@ -589,8 +618,21 @@ public class DefaultExpressionService
         return expression;
     }
 
+    @Override
     @Transactional
     public void explodeAndSubstituteExpressions( Collection<Indicator> indicators, Integer days )
+    {
+        if ( indicators != null && !indicators.isEmpty() )
+        {
+            substituteExpressions( indicators, days );
+
+            explodeExpressions( indicators );
+        }
+    }
+
+    @Override
+    @Transactional
+    public void substituteExpressions( Collection<Indicator> indicators, Integer days )
     {
         if ( indicators != null && !indicators.isEmpty() )
         {
@@ -599,17 +641,16 @@ public class DefaultExpressionService
                 indicator.setExplodedNumerator( substituteExpression( indicator.getNumerator(), days ) );
                 indicator.setExplodedDenominator( substituteExpression( indicator.getDenominator(), days ) );
             }
-
-            explodeExpressions( indicators );
-        }
+        }                
     }
-
+    
+    @Override
     @Transactional
     public void explodeExpressions( Collection<Indicator> indicators )
     {
         if ( indicators != null && !indicators.isEmpty() )
         {
-            Set<String> dataElementTotals = new HashSet<String>();
+            Set<String> dataElementTotals = new HashSet<>();
             
             for ( Indicator indicator : indicators )
             {
@@ -632,7 +673,37 @@ public class DefaultExpressionService
             }
         }
     }
-    
+
+    @Override
+    @Transactional
+    public void explodeValidationRuleExpressions( Collection<ValidationRule> validationRules )
+    {
+        if ( validationRules != null && !validationRules.isEmpty() )
+        {
+            Set<String> dataElementTotals = new HashSet<>();
+            
+            for ( ValidationRule rule : validationRules )
+            {
+                dataElementTotals.addAll( getDataElementTotalUids( rule.getLeftSide().getExpression() ) );
+                dataElementTotals.addAll( getDataElementTotalUids( rule.getRightSide().getExpression() ) );
+            }
+
+            if ( !dataElementTotals.isEmpty() )
+            {
+                final ListMap<String, String> dataElementMap = dataElementService.getDataElementCategoryOptionComboMap( dataElementTotals );
+                
+                if ( !dataElementMap.isEmpty() )
+                {
+                    for ( ValidationRule rule : validationRules )
+                    {
+                        rule.getLeftSide().setExplodedExpression( explodeExpression( rule.getLeftSide().getExplodedExpressionFallback(), dataElementMap ) );
+                        rule.getRightSide().setExplodedExpression( explodeExpression( rule.getRightSide().getExplodedExpressionFallback(), dataElementMap ) );
+                    }
+                }
+            }            
+        }
+    }
+
     private String explodeExpression( String expression, ListMap<String, String> dataElementOptionComboMap )
     {
         if ( expression == null || expression.isEmpty() )
@@ -655,7 +726,7 @@ public class DefaultExpressionService
                 
                 for ( String coc : cocs )
                 {
-                    replace.append( EXP_OPEN ).append( matcher.group( 1 ) ).append( SEPARATOR ).append(
+                    replace.append( EXP_OPEN ).append( de ).append( SEPARATOR ).append(
                         coc ).append( EXP_CLOSE ).append( "+" );
                 }
 
@@ -667,6 +738,7 @@ public class DefaultExpressionService
         return appendTail( matcher, sb );
     }
 
+    @Override
     @Transactional
     public String explodeExpression( String expression )
     {
@@ -702,6 +774,7 @@ public class DefaultExpressionService
         return appendTail( matcher, sb );
     }
 
+    @Override
     @Transactional
     public String substituteExpression( String expression, Integer days )
     {
@@ -769,20 +842,23 @@ public class DefaultExpressionService
         return appendTail( matcher, sb );
     }
 
+    @Override
     @Transactional
     public String generateExpression( String expression, Map<DataElementOperand, Double> valueMap, 
-        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, boolean nullIfNoValues )
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, MissingValueStrategy missingValueStrategy )
     {
-    	return generateExpression( expression, valueMap, constantMap, orgUnitCountMap, days, nullIfNoValues, null );
+    	return generateExpression( expression, valueMap, constantMap, orgUnitCountMap, days, missingValueStrategy, null );
     }
 
     private String generateExpression( String expression, Map<DataElementOperand, Double> valueMap, 
-        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, boolean nullIfNoValues, Set<DataElementOperand> incompleteValues )
+        Map<String, Double> constantMap, Map<String, Integer> orgUnitCountMap, Integer days, MissingValueStrategy missingValueStrategy, Set<DataElementOperand> incompleteValues )
     {
         if ( expression == null || expression.isEmpty() )
         {
             return null;
         }
+        
+        missingValueStrategy = missingValueStrategy == null ? NEVER_SKIP : missingValueStrategy;
         
         // ---------------------------------------------------------------------
         // Operands
@@ -791,20 +867,37 @@ public class DefaultExpressionService
         StringBuffer sb = new StringBuffer();
         Matcher matcher = OPERAND_PATTERN.matcher( expression );
         
+        int matchCount = 0;
+        int valueCount = 0;
+                
         while ( matcher.find() )
         {
+            matchCount++;
+            
             DataElementOperand operand = DataElementOperand.getOperand( matcher.group() );
 
             final Double value = valueMap.get( operand );
             
-            if ( nullIfNoValues && ( value == null || ( incompleteValues != null && incompleteValues.contains( operand ) ) ) )
+            boolean missingValue = value == null || ( incompleteValues != null && incompleteValues.contains( operand ) );
+            
+            if ( missingValue && SKIP_IF_ANY_VALUE_MISSING.equals( missingValueStrategy ) )
             {
                 return null;
+            }
+            
+            if ( !missingValue )
+            {
+                valueCount++;
             }
 
             String replacement = value != null ? String.valueOf( value ) : NULL_REPLACEMENT;
             
             matcher.appendReplacement( sb, replacement );
+        }
+        
+        if ( SKIP_IF_ALL_VALUES_MISSING.equals( missingValueStrategy ) && matchCount > 0 && valueCount == 0 )
+        {
+            return null;
         }
         
         expression = appendTail( matcher, sb );
@@ -862,10 +955,11 @@ public class DefaultExpressionService
         return appendTail( matcher, sb );
     }
 
+    @Override
     @Transactional
     public Set<DataElementOperand> getOperandsInIndicators( Collection<Indicator> indicators )
     {
-        final Set<DataElementOperand> operands = new HashSet<DataElementOperand>();
+        final Set<DataElementOperand> operands = new HashSet<>();
         
         for ( Indicator indicator : indicators )
         {

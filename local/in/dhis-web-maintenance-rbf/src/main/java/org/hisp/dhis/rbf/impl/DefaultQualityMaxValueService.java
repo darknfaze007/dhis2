@@ -2,7 +2,9 @@ package org.hisp.dhis.rbf.impl;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataset.DataSet;
@@ -82,6 +84,11 @@ public class DefaultQualityMaxValueService
         return qualityMaxValueStore.getQuanlityMaxValues( organisationUnit, dataElement );
     }
 
+    public Collection<QualityMaxValue> getDistinctQualityMaxScore( OrganisationUnitGroup orgUnitGroup , OrganisationUnit organisationUnit, DataSet dataSet )
+    {
+        return qualityMaxValueStore.getDistinctQualityMaxScore( orgUnitGroup, organisationUnit, dataSet );
+    }    
+    
     public Collection<QualityMaxValue> getQuanlityMaxValues( OrganisationUnitGroup orgUnitGroup, OrganisationUnit organisationUnit, DataElement dataElement)
     {
     	return qualityMaxValueStore.getQuanlityMaxValues( orgUnitGroup, organisationUnit, dataElement);
@@ -101,4 +108,21 @@ public class DefaultQualityMaxValueService
     {
     	return qualityMaxValueStore.getQualityMaxValues( orgUnitGroup, orgUnitBranchIds, dataSet, period );
     }
+    
+    public List<String>  getDistinctStartDateEndDateFromQualityMaxScore( OrganisationUnitGroup orgUnitGroup , OrganisationUnit organisationUnit, DataSet dataSet )
+    {
+        return qualityMaxValueStore.getDistinctStartDateEndDateFromQualityMaxScore( orgUnitGroup, organisationUnit, dataSet );
+    }    
+    
+    public Set<Integer> getOrgUnitGroupsByDataset( Integer dataSetId, String orgUnitIds )
+    {
+        return qualityMaxValueStore.getOrgUnitGroupsByDataset( dataSetId, orgUnitIds );
+    }
+    
+    public String getQuanlityMaxValueStartDateEndDate( Integer orgunitgroupId, Integer organisationUnitId, Integer dataSetId, String date )
+    {
+        return qualityMaxValueStore.getQuanlityMaxValueStartDateEndDate( orgunitgroupId, organisationUnitId, dataSetId, date );
+    }   
+    
+    
 }

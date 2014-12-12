@@ -17,9 +17,11 @@
 
     <property name="name" column="name" not-null="true" unique="true" length="230" />
 
-    <property name="startDate" type="timestamp" />
+    <property name="shortName" column="shortname" unique="true" length="50" />
 
-    <property name="endDate" type="timestamp" />
+    <property name="startDate" type="date" />
+
+    <property name="endDate" type="date" />
 
     <set name="organisationUnits" table="categoryoption_organisationunits">
       <cache usage="read-write" />

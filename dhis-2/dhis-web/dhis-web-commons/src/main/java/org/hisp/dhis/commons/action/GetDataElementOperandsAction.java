@@ -104,18 +104,19 @@ public class GetDataElementOperandsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         if ( dataSetId != null )
         {
             dataSet = dataSetService.getDataSet( dataSetId );
 
-            operands = new ArrayList<DataElementOperand>( dataElementCategoryService.getFullOperands( dataSet
+            operands = new ArrayList<>( dataElementCategoryService.getFullOperands( dataSet
                 .getDataElements() ) );
         }
         else
         {
-            operands = new ArrayList<DataElementOperand>();
+            operands = new ArrayList<>();
         }
 
         if ( key != null )

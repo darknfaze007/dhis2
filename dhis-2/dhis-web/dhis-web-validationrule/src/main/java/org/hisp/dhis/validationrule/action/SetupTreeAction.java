@@ -97,6 +97,7 @@ public class SetupTreeAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -117,7 +118,7 @@ public class SetupTreeAction
             selectionTreeManager.setSelectedOrganisationUnits( selectionManager.getSelectedOrganisationUnits() );
         }
 
-        validationRuleGroups = new ArrayList<ValidationRuleGroup>( validationRuleService.getAllValidationRuleGroups() );
+        validationRuleGroups = new ArrayList<>( validationRuleService.getAllValidationRuleGroups() );
 
         Collections.sort( validationRuleGroups, IdentifiableObjectNameComparator.INSTANCE );
 

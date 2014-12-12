@@ -171,6 +171,7 @@ public class ViewDataEntryFormAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -195,14 +196,14 @@ public class ViewDataEntryFormAction
         // Get existing Data Entry Forms
         // ---------------------------------------------------------------------
 
-        List<Integer> listAssociationIds = new ArrayList<Integer>();
+        List<Integer> listAssociationIds = new ArrayList<>();
 
         for ( ProgramStage ps : programStage.getProgram().getProgramStages() )
         {
             listAssociationIds.add( ps.getId() );
         }
 
-        existingDataEntryForms = new ArrayList<DataEntryForm>(
+        existingDataEntryForms = new ArrayList<>(
             dataEntryFormService.listDistinctDataEntryFormByProgramStageIds( listAssociationIds ) );
 
         existingDataEntryForms.remove( dataEntryForm );
@@ -211,7 +212,7 @@ public class ViewDataEntryFormAction
         // Get other program-stages into the program
         // ---------------------------------------------------------------------
 
-        programStages = new ArrayList<ProgramStage>( programStage.getProgram().getProgramStages() );
+        programStages = new ArrayList<>( programStage.getProgram().getProgramStages() );
 
         programStages.remove( programStage );
 
@@ -221,7 +222,7 @@ public class ViewDataEntryFormAction
         // Get selected program-stage
         // ---------------------------------------------------------------------
 
-        dataElements = new ArrayList<DataElement>( programStageDataElementService.getListDataElement( programStage ) );
+        dataElements = new ArrayList<>( programStageDataElementService.getListDataElement( programStage ) );
 
         Collections.sort( dataElements, new IdentifiableObjectNameComparator() );
 

@@ -67,6 +67,7 @@ public class DefaultUserDetailsService
     // UserDetailsService implementation
     // -------------------------------------------------------------------------
 
+    @Override
     @Transactional
     public final UserDetails loadUserByUsername( String username )
         throws UsernameNotFoundException, DataAccessException
@@ -96,7 +97,7 @@ public class DefaultUserDetailsService
 
     private Collection<GrantedAuthority> getGrantedAuthorities( UserCredentials credentials )
     {
-        Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
+        Set<GrantedAuthority> authorities = new HashSet<>();
 
         for ( UserAuthorityGroup group : credentials.getUserAuthorityGroups() )
         {

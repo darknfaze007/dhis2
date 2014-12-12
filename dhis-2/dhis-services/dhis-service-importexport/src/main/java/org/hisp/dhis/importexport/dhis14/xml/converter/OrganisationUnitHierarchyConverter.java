@@ -95,13 +95,14 @@ public class OrganisationUnitHierarchyConverter
     {
         this.importObjectService = importObjectService;
         this.organisationUnitService = organisationUnitService;
-        this.organisationUnitMapping = new MimicingHashMap<Object, Integer>();
+        this.organisationUnitMapping = new MimicingHashMap<>();
     }
     
     // -------------------------------------------------------------------------
     // XMLConverter implementation
     // -------------------------------------------------------------------------
     
+    @Override
     public void write( XMLWriter writer, ExportParams params )
     {
         Collection<OrganisationUnit> units = organisationUnitService.getOrganisationUnits( params.getOrganisationUnits() );
@@ -132,6 +133,7 @@ public class OrganisationUnitHierarchyConverter
         }
     }
     
+    @Override
     public void read( XMLReader reader, ImportParams params )
     {
         GroupMemberAssociation association = new GroupMemberAssociation( AssociationType.SET );

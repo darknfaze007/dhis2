@@ -28,7 +28,6 @@ package org.hisp.dhis.user.hibernate;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.criterion.Order;
@@ -41,7 +40,6 @@ import org.hisp.dhis.user.UserStore;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-
 
 /**
  * @author Nguyen Hong Duc
@@ -67,7 +65,7 @@ public class HibernateUserStore
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<User> getAllLikeNameOrderedName( String name, int first, int max )
+    public List<User> getAllLikeName( String name, int first, int max )
     {
         Criteria criteria = getCriteria();
         criteria.add( Restrictions.or( Restrictions.ilike( "surname", "%" + name + "%" ),
@@ -78,6 +76,7 @@ public class HibernateUserStore
         return criteria.list();
     }
 
+    @Override
     public List<User> getUsersWithoutOrganisationUnit()
     {
         List<User> users = getAll();
@@ -95,6 +94,7 @@ public class HibernateUserStore
         return users;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<User> getUsersByPhoneNumber( String phoneNumber )
     {
@@ -106,6 +106,7 @@ public class HibernateUserStore
         return query.list();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<User> getUsersByOrganisationUnits( Collection<OrganisationUnit> orgunits )
     {
@@ -114,6 +115,7 @@ public class HibernateUserStore
         return sessionFactory.getCurrentSession().createQuery( hql ).setParameterList( "ids", orgunits ).list();
     }
 
+    @Override
     public void removeUserSettings( User user )
     {
         String hql = "delete from UserSetting us where us.user = :user";

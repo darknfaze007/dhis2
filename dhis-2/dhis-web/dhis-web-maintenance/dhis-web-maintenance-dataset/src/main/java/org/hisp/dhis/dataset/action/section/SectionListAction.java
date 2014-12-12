@@ -71,11 +71,11 @@ public class SectionListAction
     // Input & output
     // -------------------------------------------------------------------------
 
-    private List<Section> sections = new ArrayList<Section>();
+    private List<Section> sections = new ArrayList<>();
 
-    private List<DataSet> datasets = new ArrayList<DataSet>();
+    private List<DataSet> datasets = new ArrayList<>();
 
-    private Set<DataElementCategoryCombo> categoryCombos = new HashSet<DataElementCategoryCombo>();
+    private Set<DataElementCategoryCombo> categoryCombos = new HashSet<>();
 
     private Integer dataSetId;
 
@@ -128,10 +128,11 @@ public class SectionListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        datasets = new ArrayList<DataSet>( dataSetService.getAllDataSets() );
+        datasets = new ArrayList<>( dataSetService.getAllDataSets() );
 
         Collections.sort( datasets, IdentifiableObjectNameComparator.INSTANCE );
 
@@ -139,7 +140,7 @@ public class SectionListAction
         {
             DataSet dataSet = dataSetService.getDataSet( dataSetId );
             
-            sections = new ArrayList<Section>( dataSet.getSections() );
+            sections = new ArrayList<>( dataSet.getSections() );
 
             for ( DataElement de : dataSet.getDataElements() )
             {
@@ -148,7 +149,7 @@ public class SectionListAction
         }
         else
         {
-            sections = new ArrayList<Section>( sectionService.getAllSections() );
+            sections = new ArrayList<>( sectionService.getAllSections() );
         }
         
         Collections.sort( sections, new SectionOrderComparator() );

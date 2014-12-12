@@ -106,36 +106,43 @@ public class DefaultDataEntryFormService
     // Implemented Methods
     // ------------------------------------------------------------------------
 
+    @Override
     public int addDataEntryForm( DataEntryForm dataEntryForm )
     {
         return dataEntryFormStore.addDataEntryForm( dataEntryForm );
     }
 
+    @Override
     public void updateDataEntryForm( DataEntryForm dataEntryForm )
     {
         dataEntryFormStore.updateDataEntryForm( dataEntryForm );
     }
 
+    @Override
     public void deleteDataEntryForm( DataEntryForm dataEntryForm )
     {
         dataEntryFormStore.deleteDataEntryForm( dataEntryForm );
     }
 
+    @Override
     public DataEntryForm getDataEntryForm( int id )
     {
         return dataEntryFormStore.getDataEntryForm( id );
     }
 
+    @Override
     public DataEntryForm getDataEntryFormByName( String name )
     {
         return dataEntryFormStore.getDataEntryFormByName( name );
     }
 
+    @Override
     public Collection<DataEntryForm> getAllDataEntryForms()
     {
         return dataEntryFormStore.getAllDataEntryForms();
     }
 
+    @Override
     public String prepareDataEntryFormForSave( String htmlCode )
     {
         if ( htmlCode == null )
@@ -176,6 +183,7 @@ public class DefaultDataEntryFormService
         return sb.toString();
     }
 
+    @Override
     public String prepareDataEntryFormForEdit( String htmlCode, I18n i18n )
     {
         //TODO HTML encode names
@@ -244,8 +252,8 @@ public class DefaultDataEntryFormService
                 continue;
             }
 
-            inputHtml = inputHtml.contains( EMPTY_VALUE_TAG ) ? inputHtml.replace( EMPTY_VALUE_TAG, displayValue ) : inputHtml + " " + displayValue;
-            inputHtml = inputHtml.contains( EMPTY_TITLE_TAG ) ? inputHtml.replace( EMPTY_TITLE_TAG, displayTitle ) : inputHtml + " " + displayTitle;
+            inputHtml = inputHtml.contains( EMPTY_VALUE_TAG ) ? inputHtml.replace( EMPTY_VALUE_TAG, displayValue ) : inputHtml.replace( TAG_CLOSE, ( displayValue + TAG_CLOSE ) );
+            inputHtml = inputHtml.contains( EMPTY_TITLE_TAG ) ? inputHtml.replace( EMPTY_TITLE_TAG, displayTitle ) : inputHtml.replace( TAG_CLOSE, ( displayTitle + TAG_CLOSE ) );
 
             inputMatcher.appendReplacement( sb, inputHtml );
         }
@@ -255,6 +263,7 @@ public class DefaultDataEntryFormService
         return sb.toString();
     }
 
+    @Override
     public String prepareDataEntryFormForEntry( String htmlCode, I18n i18n, DataSet dataSet )
     {
         //TODO HTML encode names
@@ -344,7 +353,7 @@ public class DefaultDataEntryFormService
                 }
                 else
                 {
-                    appendCode += " name=\"entryfield\" class=\"entryfield\" tabindex=\"" + i++ + "\"" + TAG_CLOSE;
+                    appendCode += " type=\"text\" name=\"entryfield\" class=\"entryfield\" tabindex=\"" + i++ + "\"" + TAG_CLOSE;
                 }
                 
                 inputHtml = inputHtml.replace( TAG_CLOSE, appendCode );
@@ -354,11 +363,11 @@ public class DefaultDataEntryFormService
             }
             else if ( dataElementTotalMatcher.find() && dataElementTotalMatcher.groupCount() > 0 )
             {
-                inputHtml = inputHtml.replace( TAG_CLOSE, " class=\"dataelementtotal\"" + TAG_CLOSE );
+                inputHtml = inputHtml.replace( TAG_CLOSE, " type=\"text\" class=\"dataelementtotal\"" + TAG_CLOSE );
             }
             else if ( indicatorMatcher.find() && indicatorMatcher.groupCount() > 0 )
             {
-                inputHtml = inputHtml.replace( TAG_CLOSE, " class=\"indicator\"" + TAG_CLOSE );
+                inputHtml = inputHtml.replace( TAG_CLOSE, " type=\"text\" class=\"indicator\"" + TAG_CLOSE );
             }
 
             inputMatcher.appendReplacement( sb, inputHtml );            
@@ -369,16 +378,17 @@ public class DefaultDataEntryFormService
         return sb.toString();
     }
 
+    @Override
     public Set<DataElement> getDataElementsInDataEntryForm( DataSet dataSet )
     {
-        if ( dataSet == null || dataSet.getDataEntryForm() == null )
+        if ( dataSet == null || !dataSet.hasDataEntryForm() )
         {
             return null;
         }
 
         Map<String, DataElement> dataElementMap = getDataElementMap( dataSet );
 
-        Set<DataElement> dataElements = new HashSet<DataElement>();
+        Set<DataElement> dataElements = new HashSet<>();
 
         Matcher inputMatcher = INPUT_PATTERN.matcher( dataSet.getDataEntryForm().getHtmlCode() );
 
@@ -411,14 +421,15 @@ public class DefaultDataEntryFormService
         return dataElements;
     }
 
+    @Override
     public Set<DataElementOperand> getOperandsInDataEntryForm( DataSet dataSet )
     {
-        if ( dataSet == null || dataSet.getDataEntryForm() == null )
+        if ( dataSet == null || !dataSet.hasDataEntryForm() )
         {
             return null;
         }
 
-        Set<DataElementOperand> operands = new HashSet<DataElementOperand>();
+        Set<DataElementOperand> operands = new HashSet<>();
 
         Matcher inputMatcher = INPUT_PATTERN.matcher( dataSet.getDataEntryForm().getHtmlCode() );
 
@@ -442,6 +453,7 @@ public class DefaultDataEntryFormService
         return operands;
     }
 
+    @Override
     public Collection<DataEntryForm> listDistinctDataEntryFormByProgramStageIds( List<Integer> programStageIds )
     {
         if ( programStageIds == null || programStageIds.isEmpty() )
@@ -452,6 +464,7 @@ public class DefaultDataEntryFormService
         return dataEntryFormStore.listDistinctDataEntryFormByProgramStageIds( programStageIds );
     }
 
+    @Override
     public Collection<DataEntryForm> listDistinctDataEntryFormByDataSetIds( List<Integer> dataSetIds )
     {
         if ( dataSetIds == null || dataSetIds.size() == 0 )
@@ -462,12 +475,14 @@ public class DefaultDataEntryFormService
         return dataEntryFormStore.listDistinctDataEntryFormByDataSetIds( dataSetIds );
     }
 
+    @Override
     public Collection<DataEntryForm> getDataEntryForms( final Collection<Integer> identifiers )
     {
         Collection<DataEntryForm> dataEntryForms = getAllDataEntryForms();
 
         return identifiers == null ? dataEntryForms : FilterUtils.filter( dataEntryForms, new Filter<DataEntryForm>()
         {
+            @Override
             public boolean retain( DataEntryForm object )
             {
                 return identifiers.contains( object.getId() );
@@ -485,7 +500,7 @@ public class DefaultDataEntryFormService
      */
     private Map<String, DataElement> getDataElementMap( DataSet dataSet )
     {
-        Map<String, DataElement> map = new HashMap<String, DataElement>();
+        Map<String, DataElement> map = new HashMap<>();
 
         for ( DataElement element : dataSet.getDataElements() )
         {

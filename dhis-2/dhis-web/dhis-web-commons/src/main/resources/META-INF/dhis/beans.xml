@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="
-		http://www.springframework.org/schema/beans	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+		http://www.springframework.org/schema/beans	http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
 
   <!-- Web Portal -->
 
@@ -9,6 +9,11 @@
     <property name="actionAccessResolver" ref="org.hisp.dhis.security.ActionAccessResolver" />
     <property name="moduleComparator" ref="org.hisp.dhis.webportal.module.ConfigurableModuleComparator" />
     <property name="defaultActionName" value="index" />
+    <property name="menuModuleExclusions">
+      <set>
+        <value>dhis-web-apps</value>
+      </set>
+    </property>
   </bean>
 
   <bean id="org.hisp.dhis.webportal.module.ConfigurableModuleComparator"
@@ -43,7 +48,7 @@
 
   <bean id="org.hisp.dhis.webportal.module.CurrentModuleDetectorFilter" class="org.hisp.dhis.webportal.module.CurrentModuleDetectorFilter">
     <property name="moduleManager">
-      <ref local="org.hisp.dhis.webportal.module.ModuleManager" />
+      <ref bean="org.hisp.dhis.webportal.module.ModuleManager" />
     </property>
   </bean>
 
@@ -68,7 +73,7 @@
   <bean id="org.hisp.dhis.webportal.interceptor.XWorkPortalModuleInterceptor"
     class="org.hisp.dhis.webportal.interceptor.XWorkPortalModuleInterceptor">
     <property name="moduleManager">
-      <ref local="org.hisp.dhis.webportal.module.ModuleManager" />
+      <ref bean="org.hisp.dhis.webportal.module.ModuleManager" />
     </property>
   </bean>
 
@@ -81,7 +86,7 @@
   <bean id="org.hisp.dhis.webportal.interceptor.XWorkPortalMenuInterceptor"
     class="org.hisp.dhis.webportal.interceptor.XWorkPortalMenuInterceptor">
     <property name="menuStateManager">
-      <ref local="org.hisp.dhis.webportal.menu.MenuStateManager" />
+      <ref bean="org.hisp.dhis.webportal.menu.MenuStateManager" />
     </property>
   </bean>
 
@@ -111,10 +116,10 @@
   <bean id="org.hisp.dhis.ouwt.interceptor.OrganisationUnitTreeInterceptor"
     class="org.hisp.dhis.ouwt.interceptor.OrganisationUnitTreeInterceptor">
     <property name="selectionManager">
-      <ref local="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
+      <ref bean="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
     </property>
     <property name="treeStateManager">
-      <ref local="org.hisp.dhis.ouwt.manager.TreeStateManager" />
+      <ref bean="org.hisp.dhis.ouwt.manager.TreeStateManager" />
     </property>
   </bean>
 
@@ -122,7 +127,7 @@
     scope="prototype">
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="treeStateManager">
-      <ref local="org.hisp.dhis.ouwt.manager.TreeStateManager" />
+      <ref bean="org.hisp.dhis.ouwt.manager.TreeStateManager" />
     </property>
   </bean>
 
@@ -130,17 +135,17 @@
     scope="prototype">
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="treeStateManager">
-      <ref local="org.hisp.dhis.ouwt.manager.TreeStateManager" />
+      <ref bean="org.hisp.dhis.ouwt.manager.TreeStateManager" />
     </property>
   </bean>
 
   <bean id="org.hisp.dhis.ouwt.action.GetExpandedTreeAction" class="org.hisp.dhis.ouwt.action.GetExpandedTreeAction"
     scope="prototype">
     <property name="selectionManager">
-      <ref local="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
+      <ref bean="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
     </property>
     <property name="treeStateManager">
-      <ref local="org.hisp.dhis.ouwt.manager.TreeStateManager" />
+      <ref bean="org.hisp.dhis.ouwt.manager.TreeStateManager" />
     </property>
   </bean>
 
@@ -154,7 +159,7 @@
     scope="prototype">
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="selectionManager">
-      <ref local="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
+      <ref bean="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
     </property>
   </bean>
 
@@ -168,7 +173,7 @@
     scope="prototype">
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="selectionManager">
-      <ref local="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
+      <ref bean="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
     </property>
   </bean>
 
@@ -177,7 +182,7 @@
     scope="prototype">
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="selectionManager">
-      <ref local="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
+      <ref bean="org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager" />
     </property>
   </bean>
 
@@ -200,7 +205,7 @@
   <bean id="org.hisp.dhis.oust.action.GetExpandedTreeAction" class="org.hisp.dhis.oust.action.GetExpandedTreeAction"
     scope="prototype">
     <property name="selectionTreeManager">
-      <ref local="org.hisp.dhis.oust.manager.SelectionTreeManager" />
+      <ref bean="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     </property>
   </bean>
 
@@ -208,7 +213,7 @@
     scope="prototype">
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="selectionTreeManager">
-      <ref local="org.hisp.dhis.oust.manager.SelectionTreeManager" />
+      <ref bean="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     </property>
   </bean>
 
@@ -217,7 +222,7 @@
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="organisationUnitGroupService" ref="org.hisp.dhis.organisationunit.OrganisationUnitGroupService" />
     <property name="selectionTreeManager">
-      <ref local="org.hisp.dhis.oust.manager.SelectionTreeManager" />
+      <ref bean="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     </property>
   </bean>
 
@@ -227,7 +232,7 @@
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="organisationUnitGroupService" ref="org.hisp.dhis.organisationunit.OrganisationUnitGroupService" />
     <property name="selectionTreeManager">
-      <ref local="org.hisp.dhis.oust.manager.SelectionTreeManager" />
+      <ref bean="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     </property>
   </bean>
 
@@ -235,7 +240,7 @@
     scope="prototype">
     <property name="organisationUnitService" ref="org.hisp.dhis.organisationunit.OrganisationUnitService" />
     <property name="selectionTreeManager">
-      <ref local="org.hisp.dhis.oust.manager.SelectionTreeManager" />
+      <ref bean="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     </property>
   </bean>
 
@@ -243,7 +248,7 @@
     class="org.hisp.dhis.oust.action.ClearSelectedOrganisationUnitsAction"
     scope="prototype">
     <property name="selectionTreeManager">
-      <ref local="org.hisp.dhis.oust.manager.SelectionTreeManager" />
+      <ref bean="org.hisp.dhis.oust.manager.SelectionTreeManager" />
     </property>
   </bean>
 
@@ -304,7 +309,6 @@
 
   <bean id="org.hisp.dhis.commons.action.GetUsersAction" class="org.hisp.dhis.commons.action.GetUsersAction" scope="prototype">
     <property name="userService" ref="org.hisp.dhis.user.UserService" />
-    <property name="systemSettingManager" ref="org.hisp.dhis.setting.SystemSettingManager" />
   </bean>
 
   <bean id="org.hisp.dhis.commons.action.GetUserGroupsAction" class="org.hisp.dhis.commons.action.GetUserGroupsAction"
@@ -379,6 +383,11 @@
     scope="prototype">
     <property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
     <property name="categoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
+  </bean>
+  
+  <bean id="org.hisp.dhis.commons.action.GetSectionIndicatorsAction" class="org.hisp.dhis.commons.action.GetSectionIndicatorsAction"
+    scope="prototype">
+    <property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
   </bean>
 
   <bean id="org.hisp.dhis.commons.action.GetDataElementCategoriesAction" class="org.hisp.dhis.commons.action.GetDataElementCategoriesAction"

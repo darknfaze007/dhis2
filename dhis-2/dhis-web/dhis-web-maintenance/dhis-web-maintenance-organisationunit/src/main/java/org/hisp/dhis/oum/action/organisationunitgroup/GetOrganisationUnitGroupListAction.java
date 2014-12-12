@@ -61,7 +61,7 @@ public class GetOrganisationUnitGroupListAction
     // Input & Output
     // -------------------------------------------------------------------------
 
-    private List<OrganisationUnitGroup> organisationUnitGroups = new ArrayList<OrganisationUnitGroup>();
+    private List<OrganisationUnitGroup> organisationUnitGroups = new ArrayList<>();
 
     public List<OrganisationUnitGroup> getOrganisationUnitGroups()
     {
@@ -84,6 +84,7 @@ public class GetOrganisationUnitGroupListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -91,13 +92,13 @@ public class GetOrganisationUnitGroupListAction
         {
             this.paging = createPaging( organisationUnitGroupService.getOrganisationUnitGroupCountByName( key ) );
             
-            organisationUnitGroups = new ArrayList<OrganisationUnitGroup>( organisationUnitGroupService.getOrganisationUnitGroupsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
+            organisationUnitGroups = new ArrayList<>( organisationUnitGroupService.getOrganisationUnitGroupsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( organisationUnitGroupService.getOrganisationUnitGroupCount() );
             
-            organisationUnitGroups = new ArrayList<OrganisationUnitGroup>( organisationUnitGroupService.getOrganisationUnitGroupsBetween( paging.getStartPos(), paging.getPageSize() ) );
+            organisationUnitGroups = new ArrayList<>( organisationUnitGroupService.getOrganisationUnitGroupsBetween( paging.getStartPos(), paging.getPageSize() ) );
         }
 
         Collections.sort( organisationUnitGroups, IdentifiableObjectNameComparator.INSTANCE );

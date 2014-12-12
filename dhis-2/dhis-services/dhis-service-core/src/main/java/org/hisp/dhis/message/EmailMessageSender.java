@@ -28,6 +28,7 @@ package org.hisp.dhis.message;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.apache.commons.lang.StringUtils.defaultIfEmpty;
 import static org.hisp.dhis.user.UserSettingService.KEY_MESSAGE_EMAIL_NOTIFICATION;
 
 import java.util.Set;
@@ -39,12 +40,12 @@ import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.SimpleEmail;
+import org.hisp.dhis.configuration.ConfigurationService;
 import org.hisp.dhis.setting.SystemSettingManager;
+import org.hisp.dhis.system.util.DebugUtils;
 import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserService;
 import org.springframework.scheduling.annotation.Async;
-
-import static org.apache.commons.lang.StringUtils.defaultIfEmpty;
 
 /**
  * @author Lars Helge Overland
@@ -54,8 +55,9 @@ public class EmailMessageSender
 {
     private static final Log log = LogFactory.getLog( EmailMessageSender.class );
     private static final String FROM_ADDRESS = "noreply@dhis2.org";
-    private static final String FROM_NAME = "DHIS 2 Message [No reply]";
-    private static final String SUBJECT_PREFIX = "[DHIS2] ";
+    private static final String DEFAULT_APPLICATION_TITLE = "DHIS 2";
+    private static final String DEFAULT_FROM_NAME = DEFAULT_APPLICATION_TITLE + " Message [No reply]";
+    private static final String DEFAULT_SUBJECT_PREFIX = "[" + DEFAULT_APPLICATION_TITLE + "] ";
     private static final String LB = System.getProperty( "line.separator" );
 
     // -------------------------------------------------------------------------
@@ -67,6 +69,13 @@ public class EmailMessageSender
     public void setSystemSettingManager( SystemSettingManager systemSettingManager )
     {
         this.systemSettingManager = systemSettingManager;
+    }
+    
+    private ConfigurationService configurationService;
+    
+    public void setConfigurationService( ConfigurationService configurationService )
+    {
+        this.configurationService = configurationService;
     }
     
     private UserService userService;
@@ -90,7 +99,7 @@ public class EmailMessageSender
         String hostName = systemSettingManager.getEmailHostName();
         int port = systemSettingManager.getEmailPort();
         String username = systemSettingManager.getEmailUsername();
-        String password = systemSettingManager.getEmailPassword();
+        String password = configurationService.getConfiguration().getSmtpPassword();
         boolean tls = systemSettingManager.getEmailTls();
         String from = systemSettingManager.getEmailSender();
 
@@ -101,29 +110,27 @@ public class EmailMessageSender
 
         text = sender == null ? text : ( text + LB + LB + 
             sender.getName() + LB + 
-            sender.getOrganisationUnitsName() + LB +
+            ( sender.getOrganisationUnitsName() != null ? ( sender.getOrganisationUnitsName() + LB ) : StringUtils.EMPTY ) +
             ( sender.getEmail() != null ? ( sender.getEmail() + LB ) : StringUtils.EMPTY ) +
             ( sender.getPhoneNumber() != null ? ( sender.getPhoneNumber() + LB ) : StringUtils.EMPTY ) );
         
         try
         {
             Email email = getEmail( hostName, port, username, password, tls, from );
-            email.setSubject( SUBJECT_PREFIX + subject );
+            email.setSubject( customizeTitle( DEFAULT_SUBJECT_PREFIX ) + subject );
             email.setMsg( text );
-            
+                        
             boolean hasRecipients = false;
             
             for ( User user : users )
             {
-                boolean emailNotification = (Boolean) userService.getUserSettingValue( user, KEY_MESSAGE_EMAIL_NOTIFICATION, false );
+                boolean doSend = forceSend || (Boolean) userService.getUserSettingValue( user, KEY_MESSAGE_EMAIL_NOTIFICATION, false );
                 
-                boolean doSend = forceSend || emailNotification;
-    
                 if ( doSend && user.getEmail() != null && !user.getEmail().trim().isEmpty() )
                 {
                     email.addBcc( user.getEmail() );
                     
-                    log.info( "Sending email to user: " + user.getUsername() + " with email address: " + user.getEmail() );
+                    log.info( "Sending email to user: " + user.getUsername() + " with email address: " + user.getEmail() + " to host: " + hostName + ":" + port );
                     
                     hasRecipients = true;
                 }
@@ -132,12 +139,16 @@ public class EmailMessageSender
             if ( hasRecipients )
             {
                 email.send();
-                log.info( "Email sent using host: " + hostName + " with TLS: " + tls );
+                log.info( "Email sent using host: " + hostName + ":" + port + " with TLS: " + tls );
             }
         }
         catch ( EmailException ex )
         {
-            log.warn( "Could not send email: " + ex.getMessage() );
+            log.warn( "Could not send email: " + ex.getMessage() + ", " + DebugUtils.getStackTrace( ex ) );
+        }
+        catch ( RuntimeException ex )
+        {
+            log.warn( "Error while sending email: " + ex.getMessage() + ", " + DebugUtils.getStackTrace( ex ) );
         }
 
         return null;
@@ -148,9 +159,9 @@ public class EmailMessageSender
     {
         Email email = new SimpleEmail();
         email.setHostName( hostName );
-        email.setFrom( defaultIfEmpty( sender, FROM_ADDRESS ), FROM_NAME );
+        email.setFrom( defaultIfEmpty( sender, FROM_ADDRESS ), customizeTitle( DEFAULT_FROM_NAME ) );
         email.setSmtpPort( port );
-        email.setTLS( tls );
+        email.setStartTLSEnabled( tls );
         
         if ( username != null && password != null )
         {
@@ -158,5 +169,17 @@ public class EmailMessageSender
         }
         
         return email;
+    }
+
+    private String customizeTitle( String s )
+    {
+        String applicationTitle = (String) systemSettingManager.getSystemSetting( SystemSettingManager.KEY_APPLICATION_TITLE );
+
+        if ( applicationTitle != null && !applicationTitle.isEmpty() )
+        {
+            s = s.replace( DEFAULT_APPLICATION_TITLE, applicationTitle );
+        }
+
+        return s;
     }
 }

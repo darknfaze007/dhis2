@@ -28,11 +28,14 @@ package org.hisp.dhis.webapi.controller.dataelement;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import com.google.common.collect.Lists;
 import org.hisp.dhis.common.Pager;
 import org.hisp.dhis.common.PagerUtils;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
+import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataelement.DataElementOperand;
+import org.hisp.dhis.dataelement.DataElementOperandService;
 import org.hisp.dhis.schema.descriptors.DataElementOperandSchemaDescriptor;
 import org.hisp.dhis.webapi.controller.AbstractCrudController;
 import org.hisp.dhis.webapi.webdomain.WebMetaData;
@@ -42,6 +45,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -52,20 +56,53 @@ import java.util.List;
 public class DataElementOperandController extends AbstractCrudController<DataElementOperand>
 {
     @Autowired
-    private DataElementCategoryService categoryService;
+    private DataElementCategoryService dataElementCategoryService;
 
-    protected List<DataElementOperand> getEntityList( WebMetaData metaData, WebOptions options )
+    @Override
+    protected List<DataElementOperand> getEntityList( WebMetaData metaData, WebOptions options, List<String> filters )
     {
-        List<DataElement> dataElements = new ArrayList<>( manager.getAllSorted( DataElement.class ) );
-        List<DataElementOperand> entityList = new ArrayList<>( categoryService.getOperands( dataElements ) );
+        List<DataElementOperand> dataElementOperands;
+
+        if ( options.isTrue( "persisted" ) )
+        {
+            dataElementOperands = Lists.newArrayList( manager.getAll( DataElementOperand.class ) );
+        }
+        else
+        {
+            Iterator<String> iterator = filters.iterator();
+            String deGroup = null;
+
+            while ( iterator.hasNext() )
+            {
+                String filter = iterator.next();
+
+                if ( filter.startsWith( "dataElement.dataElementGroups.id:eq:" ) )
+                {
+                    deGroup = filter.substring( "dataElement.dataElementGroups.id:eq:".length() );
+                    iterator.remove();
+                    break;
+                }
+            }
+
+            if ( deGroup != null )
+            {
+                DataElementGroup dataElementGroup = manager.get( DataElementGroup.class, deGroup );
+                dataElementOperands = new ArrayList<>( dataElementCategoryService.getFullOperands( dataElementGroup.getMembers() ) );
+            }
+            else
+            {
+                List<DataElement> dataElements = new ArrayList<>( manager.getAllSorted( DataElement.class ) );
+                dataElementOperands = new ArrayList<>( dataElementCategoryService.getFullOperands( dataElements ) );
+            }
+        }
 
         if ( options.hasPaging() )
         {
-            Pager pager = new Pager( options.getPage(), entityList.size(), options.getPageSize() );
+            Pager pager = new Pager( options.getPage(), dataElementOperands.size(), options.getPageSize() );
             metaData.setPager( pager );
-            entityList = PagerUtils.pageCollection( entityList, pager );
+            dataElementOperands = PagerUtils.pageCollection( dataElementOperands, pager );
         }
 
-        return entityList;
+        return dataElementOperands;
     }
 }

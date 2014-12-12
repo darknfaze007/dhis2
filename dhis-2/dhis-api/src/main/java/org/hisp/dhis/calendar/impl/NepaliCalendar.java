@@ -32,12 +32,14 @@ import org.hisp.dhis.calendar.AbstractCalendar;
 import org.hisp.dhis.calendar.Calendar;
 import org.hisp.dhis.calendar.DateInterval;
 import org.hisp.dhis.calendar.DateIntervalType;
-import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.calendar.DateTimeUnit;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
 import org.joda.time.chrono.ISOChronology;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,9 +49,9 @@ import java.util.Map;
 @Component
 public class NepaliCalendar extends AbstractCalendar
 {
-    private static final DateUnit startNepal = new DateUnit( 2000, 1, 1, java.util.Calendar.WEDNESDAY );
+    private static final DateTimeUnit startNepal = new DateTimeUnit( 2000, 1, 1, java.util.Calendar.WEDNESDAY );
 
-    private static final DateUnit startIso = new DateUnit( 1943, 4, 14, java.util.Calendar.WEDNESDAY, true );
+    private static final DateTimeUnit startIso = new DateTimeUnit( 1943, 4, 14, java.util.Calendar.WEDNESDAY, true );
 
     private static final Calendar self = new NepaliCalendar();
 
@@ -65,59 +67,70 @@ public class NepaliCalendar extends AbstractCalendar
     }
 
     @Override
-    public DateUnit toIso( DateUnit dateUnit )
+    public DateTimeUnit toIso( DateTimeUnit dateTimeUnit )
     {
-        DateTime dateTime = startIso.toDateTime();
+        if ( dateTimeUnit.isIso8601() )
+        {
+            return dateTimeUnit;
+        }
+
+        DateTime dateTime = startIso.toJodaDateTime();
 
         int totalDays = 0;
 
-        for ( int year = startNepal.getYear(); year < dateUnit.getYear(); year++ )
+        for ( int year = startNepal.getYear(); year < dateTimeUnit.getYear(); year++ )
         {
             totalDays += getYearTotal( year );
         }
 
-        for ( int month = startNepal.getMonth(); month < dateUnit.getMonth(); month++ )
+        for ( int month = startNepal.getMonth(); month < dateTimeUnit.getMonth(); month++ )
         {
-            totalDays += conversionMap.get( dateUnit.getYear() )[month];
+            totalDays += conversionMap.get( dateTimeUnit.getYear() )[month];
         }
 
-        totalDays += dateUnit.getDay() - startNepal.getDay();
+        totalDays += dateTimeUnit.getDay() - startNepal.getDay();
 
         dateTime = dateTime.plusDays( totalDays );
 
-        return new DateUnit( DateUnit.fromDateTime( dateTime ), true );
+        return new DateTimeUnit( DateTimeUnit.fromJodaDateTime( dateTime ), true );
     }
 
     @Override
-    public DateUnit fromIso( DateUnit dateUnit )
+    public DateTimeUnit fromIso( Date date )
     {
-        DateTime start = startIso.toDateTime();
-        DateTime end = dateUnit.toDateTime();
+        return fromIso( DateTimeUnit.fromJdkDate( date ) );
+    }
+
+    @Override
+    public DateTimeUnit fromIso( DateTimeUnit dateTimeUnit )
+    {
+        DateTime start = startIso.toJodaDateTime();
+        DateTime end = dateTimeUnit.toJodaDateTime();
 
         return plusDays( startNepal, Days.daysBetween( start, end ).getDays() );
     }
 
     @Override
-    public DateInterval toInterval( DateUnit dateUnit, DateIntervalType type, int offset, int length )
+    public DateInterval toInterval( DateTimeUnit dateTimeUnit, DateIntervalType type, int offset, int length )
     {
         switch ( type )
         {
             case ISO8601_YEAR:
-                return toYearIsoInterval( dateUnit, offset, length );
+                return toYearIsoInterval( dateTimeUnit, offset, length );
             case ISO8601_MONTH:
-                return toMonthIsoInterval( dateUnit, offset, length );
+                return toMonthIsoInterval( dateTimeUnit, offset, length );
             case ISO8601_WEEK:
-                return toWeekIsoInterval( dateUnit, offset, length );
+                return toWeekIsoInterval( dateTimeUnit, offset, length );
             case ISO8601_DAY:
-                return toDayIsoInterval( dateUnit, offset, length );
+                return toDayIsoInterval( dateTimeUnit, offset, length );
         }
 
         return null;
     }
 
-    private DateInterval toYearIsoInterval( DateUnit dateUnit, int offset, int length )
+    private DateInterval toYearIsoInterval( DateTimeUnit dateTimeUnit, int offset, int length )
     {
-        DateUnit from = new DateUnit( dateUnit );
+        DateTimeUnit from = new DateTimeUnit( dateTimeUnit );
 
         if ( offset > 0 )
         {
@@ -128,7 +141,7 @@ public class NepaliCalendar extends AbstractCalendar
             from = minusYears( from, -offset );
         }
 
-        DateUnit to = new DateUnit( from );
+        DateTimeUnit to = new DateTimeUnit( from );
         to = plusYears( to, length );
         to = minusDays( to, length );
 
@@ -138,9 +151,9 @@ public class NepaliCalendar extends AbstractCalendar
         return new DateInterval( from, to, DateIntervalType.ISO8601_YEAR );
     }
 
-    private DateInterval toMonthIsoInterval( DateUnit dateUnit, int offset, int length )
+    private DateInterval toMonthIsoInterval( DateTimeUnit dateTimeUnit, int offset, int length )
     {
-        DateUnit from = new DateUnit( dateUnit );
+        DateTimeUnit from = new DateTimeUnit( dateTimeUnit );
 
         if ( offset > 0 )
         {
@@ -151,7 +164,7 @@ public class NepaliCalendar extends AbstractCalendar
             from = minusMonths( from, -offset );
         }
 
-        DateUnit to = new DateUnit( from );
+        DateTimeUnit to = new DateTimeUnit( from );
         to = plusMonths( to, length );
         to = minusDays( to, 1 );
 
@@ -161,9 +174,9 @@ public class NepaliCalendar extends AbstractCalendar
         return new DateInterval( from, to, DateIntervalType.ISO8601_MONTH );
     }
 
-    private DateInterval toWeekIsoInterval( DateUnit dateUnit, int offset, int length )
+    private DateInterval toWeekIsoInterval( DateTimeUnit dateTimeUnit, int offset, int length )
     {
-        DateUnit from = new DateUnit( dateUnit );
+        DateTimeUnit from = new DateTimeUnit( dateTimeUnit );
 
         if ( offset > 0 )
         {
@@ -174,7 +187,7 @@ public class NepaliCalendar extends AbstractCalendar
             from = minusWeeks( from, -offset );
         }
 
-        DateUnit to = new DateUnit( from );
+        DateTimeUnit to = new DateTimeUnit( from );
         to = plusWeeks( to, length );
         to = minusDays( to, 1 );
 
@@ -184,9 +197,9 @@ public class NepaliCalendar extends AbstractCalendar
         return new DateInterval( from, to, DateIntervalType.ISO8601_WEEK );
     }
 
-    private DateInterval toDayIsoInterval( DateUnit dateUnit, int offset, int length )
+    private DateInterval toDayIsoInterval( DateTimeUnit dateTimeUnit, int offset, int length )
     {
-        DateUnit from = new DateUnit( dateUnit );
+        DateTimeUnit from = new DateTimeUnit( dateTimeUnit );
 
         if ( offset > 0 )
         {
@@ -197,7 +210,7 @@ public class NepaliCalendar extends AbstractCalendar
             from = minusDays( from, -offset );
         }
 
-        DateUnit to = new DateUnit( from );
+        DateTimeUnit to = new DateTimeUnit( from );
         to = plusDays( to, length );
 
         from = toIso( from );
@@ -221,34 +234,34 @@ public class NepaliCalendar extends AbstractCalendar
     @Override
     public int weeksInYear( int year )
     {
-        DateTime dateTime = new DateTime( year, 1, 1, 0, 0, ISOChronology.getInstance() );
+        DateTime dateTime = new DateTime( year, 1, 1, 0, 0, ISOChronology.getInstance( DateTimeZone.getDefault() ) );
         return dateTime.weekOfWeekyear().getMaximumValue();
     }
 
     @Override
-    public int isoWeek( DateUnit dateUnit )
+    public int isoWeek( DateTimeUnit dateTimeUnit )
     {
-        DateTime dateTime = toIso( dateUnit ).toDateTime( ISOChronology.getInstance() );
+        DateTime dateTime = toIso( dateTimeUnit ).toJodaDateTime( ISOChronology.getInstance( DateTimeZone.getDefault() ) );
         return dateTime.getWeekyear();
     }
 
     @Override
-    public int week( DateUnit dateUnit )
+    public int week( DateTimeUnit dateTimeUnit )
     {
-        return isoWeek( dateUnit );
+        return isoWeek( dateTimeUnit );
     }
 
     @Override
-    public int isoWeekday( DateUnit dateUnit )
+    public int isoWeekday( DateTimeUnit dateTimeUnit )
     {
-        DateTime dateTime = toIso( dateUnit ).toDateTime( ISOChronology.getInstance() );
+        DateTime dateTime = toIso( dateTimeUnit ).toJodaDateTime( ISOChronology.getInstance( DateTimeZone.getDefault() ) );
         return dateTime.getDayOfWeek();
     }
 
     @Override
-    public int weekday( DateUnit dateUnit )
+    public int weekday( DateTimeUnit dateTimeUnit )
     {
-        int dayOfWeek = (isoWeekday( dateUnit ) + 1);
+        int dayOfWeek = (isoWeekday( dateTimeUnit ) + 1);
 
         if ( dayOfWeek > 7 )
         {
@@ -317,18 +330,18 @@ public class NepaliCalendar extends AbstractCalendar
     }
 
     @Override
-    public DateUnit minusYears( DateUnit dateUnit, int years )
+    public DateTimeUnit minusYears( DateTimeUnit dateTimeUnit, int years )
     {
-        DateUnit result = new DateUnit( dateUnit.getYear() - years, dateUnit.getMonth(), dateUnit.getDay(), dateUnit.getDayOfWeek() );
+        DateTimeUnit result = new DateTimeUnit( dateTimeUnit.getYear() - years, dateTimeUnit.getMonth(), dateTimeUnit.getDay(), dateTimeUnit.getDayOfWeek() );
         updateDateUnit( result );
 
         return result;
     }
 
     @Override
-    public DateUnit minusMonths( DateUnit dateUnit, int months )
+    public DateTimeUnit minusMonths( DateTimeUnit dateTimeUnit, int months )
     {
-        DateUnit result = new DateUnit( dateUnit );
+        DateTimeUnit result = new DateTimeUnit( dateTimeUnit );
 
         while ( months != 0 )
         {
@@ -349,18 +362,18 @@ public class NepaliCalendar extends AbstractCalendar
     }
 
     @Override
-    public DateUnit minusWeeks( DateUnit dateUnit, int weeks )
+    public DateTimeUnit minusWeeks( DateTimeUnit dateTimeUnit, int weeks )
     {
-        return minusDays( dateUnit, weeks * daysInWeek() );
+        return minusDays( dateTimeUnit, weeks * daysInWeek() );
     }
 
     @Override
-    public DateUnit minusDays( DateUnit dateUnit, int days )
+    public DateTimeUnit minusDays( DateTimeUnit dateTimeUnit, int days )
     {
-        int curYear = dateUnit.getYear();
-        int curMonth = dateUnit.getMonth();
-        int curDay = dateUnit.getDay();
-        int dayOfWeek = dateUnit.getDayOfWeek();
+        int curYear = dateTimeUnit.getYear();
+        int curMonth = dateTimeUnit.getMonth();
+        int curDay = dateTimeUnit.getDay();
+        int dayOfWeek = dateTimeUnit.getDayOfWeek();
 
         while ( days != 0 )
         {
@@ -389,22 +402,22 @@ public class NepaliCalendar extends AbstractCalendar
             days--;
         }
 
-        return new DateUnit( curYear, curMonth, curDay, dayOfWeek );
+        return new DateTimeUnit( curYear, curMonth, curDay, dayOfWeek );
     }
 
     @Override
-    public DateUnit plusYears( DateUnit dateUnit, int years )
+    public DateTimeUnit plusYears( DateTimeUnit dateTimeUnit, int years )
     {
-        DateUnit result = new DateUnit( dateUnit.getYear() + years, dateUnit.getMonth(), dateUnit.getDay(), dateUnit.getDayOfWeek() );
+        DateTimeUnit result = new DateTimeUnit( dateTimeUnit.getYear() + years, dateTimeUnit.getMonth(), dateTimeUnit.getDay(), dateTimeUnit.getDayOfWeek() );
         updateDateUnit( result );
 
         return result;
     }
 
     @Override
-    public DateUnit plusMonths( DateUnit dateUnit, int months )
+    public DateTimeUnit plusMonths( DateTimeUnit dateTimeUnit, int months )
     {
-        DateUnit result = new DateUnit( dateUnit );
+        DateTimeUnit result = new DateTimeUnit( dateTimeUnit );
 
         while ( months != 0 )
         {
@@ -425,18 +438,18 @@ public class NepaliCalendar extends AbstractCalendar
     }
 
     @Override
-    public DateUnit plusWeeks( DateUnit dateUnit, int weeks )
+    public DateTimeUnit plusWeeks( DateTimeUnit dateTimeUnit, int weeks )
     {
-        return plusDays( dateUnit, weeks * daysInWeek() );
+        return plusDays( dateTimeUnit, weeks * daysInWeek() );
     }
 
     @Override
-    public DateUnit plusDays( DateUnit dateUnit, int days )
+    public DateTimeUnit plusDays( DateTimeUnit dateTimeUnit, int days )
     {
-        int curYear = dateUnit.getYear();
-        int curMonth = dateUnit.getMonth();
-        int curDay = dateUnit.getDay();
-        int dayOfWeek = dateUnit.getDayOfWeek();
+        int curYear = dateTimeUnit.getYear();
+        int curMonth = dateTimeUnit.getMonth();
+        int curDay = dateTimeUnit.getDay();
+        int dayOfWeek = dateTimeUnit.getDayOfWeek();
 
         while ( days != 0 )
         {
@@ -467,12 +480,12 @@ public class NepaliCalendar extends AbstractCalendar
             days--;
         }
 
-        return new DateUnit( curYear, curMonth, curDay, dayOfWeek );
+        return new DateTimeUnit( curYear, curMonth, curDay, dayOfWeek );
     }
 
     // check if day is more than current maximum for month, don't overflow, just set to maximum
     // set day of week
-    private void updateDateUnit( DateUnit result )
+    private void updateDateUnit( DateTimeUnit result )
     {
         int dm = conversionMap.get( result.getYear() )[result.getMonth()];
 
@@ -495,7 +508,7 @@ public class NepaliCalendar extends AbstractCalendar
      * Map that gives an array of month lengths based on Nepali year lookup.
      * Index 1 - 12 is used for months, index 0 is used to give year total (lazy calculated).
      */
-    private final static Map<Integer, int[]> conversionMap = new HashMap<Integer, int[]>();
+    private final static Map<Integer, int[]> conversionMap = new HashMap<>();
 
     static
     {
@@ -561,7 +574,7 @@ public class NepaliCalendar extends AbstractCalendar
         conversionMap.put( 2059, new int[]{ 0, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30 } );
         conversionMap.put( 2060, new int[]{ 0, 31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30 } );
         conversionMap.put( 2061, new int[]{ 0, 31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31 } );
-        conversionMap.put( 2062, new int[]{ 0, 31, 31, 31, 32, 31, 31, 29, 30, 29, 30, 29, 31 } );
+        conversionMap.put( 2062, new int[]{ 0, 30, 32, 31, 32, 31, 31, 29, 30, 29, 30, 29, 31 } );
         conversionMap.put( 2063, new int[]{ 0, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30 } );
         conversionMap.put( 2064, new int[]{ 0, 31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30 } );
         conversionMap.put( 2065, new int[]{ 0, 31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31 } );
@@ -580,15 +593,25 @@ public class NepaliCalendar extends AbstractCalendar
         conversionMap.put( 2078, new int[]{ 0, 31, 31, 31, 32, 31, 31, 30, 29, 30, 29, 30, 30 } );
         conversionMap.put( 2079, new int[]{ 0, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30 } );
         conversionMap.put( 2080, new int[]{ 0, 31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 30 } );
-        conversionMap.put( 2081, new int[]{ 0, 31, 31, 32, 32, 31, 30, 30, 30, 29, 30, 30, 30 } );
-        conversionMap.put( 2082, new int[]{ 0, 30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30 } );
-        conversionMap.put( 2083, new int[]{ 0, 31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30 } );
-        conversionMap.put( 2084, new int[]{ 0, 31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30 } );
-        conversionMap.put( 2085, new int[]{ 0, 31, 32, 31, 32, 30, 31, 30, 30, 29, 30, 30, 30 } );
-        conversionMap.put( 2086, new int[]{ 0, 30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30 } );
-        conversionMap.put( 2087, new int[]{ 0, 31, 31, 32, 31, 31, 31, 30, 30, 29, 30, 30, 30 } );
-        conversionMap.put( 2088, new int[]{ 0, 30, 31, 32, 32, 30, 31, 30, 30, 29, 30, 30, 30 } );
-        conversionMap.put( 2089, new int[]{ 0, 30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30 } );
-        conversionMap.put( 2090, new int[]{ 0, 30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30 } );
+        conversionMap.put( 2081, new int[]{ 0, 31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31 } );
+        conversionMap.put( 2082, new int[]{ 0, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30 } );
+        conversionMap.put( 2083, new int[]{ 0, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30 } );
+        conversionMap.put( 2084, new int[]{ 0, 31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31 } );
+        conversionMap.put( 2085, new int[]{ 0, 30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31 } );
+        conversionMap.put( 2086, new int[]{ 0, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30 } );
+        conversionMap.put( 2087, new int[]{ 0, 31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30 } );
+        conversionMap.put( 2088, new int[]{ 0, 31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31 } );
+        conversionMap.put( 2089, new int[]{ 0, 30, 32, 31, 32, 31, 31, 29, 30, 29, 30, 29, 31 } );
+        conversionMap.put( 2090, new int[]{ 0, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30 } );
+        conversionMap.put( 2091, new int[]{ 0, 31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30 } );
+        conversionMap.put( 2092, new int[]{ 0, 31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31 } );
+        conversionMap.put( 2093, new int[]{ 0, 31, 31, 31, 32, 31, 31, 29, 30, 30, 29, 29, 31 } );
+        conversionMap.put( 2094, new int[]{ 0, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30 } );
+        conversionMap.put( 2095, new int[]{ 0, 31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 29 } );
+        conversionMap.put( 2096, new int[]{ 0, 31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 32 } );
+        conversionMap.put( 2097, new int[]{ 0, 31, 31, 31, 32, 31, 31, 29, 30, 30, 29, 30, 30 } );
+        conversionMap.put( 2098, new int[]{ 0, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30 } );
+        conversionMap.put( 2099, new int[]{ 0, 31, 32, 31, 32, 31, 30, 30, 29, 30, 29, 30, 30 } );
+        conversionMap.put( 2100, new int[]{ 0, 31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31 } );
     }
 }

@@ -111,6 +111,7 @@ public class DefaultDataSetCompletenessEngine
     // DataSetCompletenessEngine implementation
     // -------------------------------------------------------------------------
 
+    @Override
     @Transactional
     public void exportDataSetCompleteness( Collection<Integer> periodIds, TaskId id )
     {
@@ -120,6 +121,7 @@ public class DefaultDataSetCompletenessEngine
         exportDataSetCompleteness( dataSetIds, periodIds, organisationUnitIds, id );
     }
 
+    @Override
     @Transactional
     public void exportDataSetCompleteness( Collection<Integer> dataSetIds, Collection<Integer> periodIds,
         Collection<Integer> organisationUnitIds, TaskId id )
@@ -146,9 +148,9 @@ public class DefaultDataSetCompletenessEngine
 
         FilterUtils.filter( dataSets, new DataSetWithOrganisationUnitsFilter() );
 
-        List<List<OrganisationUnit>> organisationUnitPages = new PaginatedList<OrganisationUnit>( organisationUnits ).setNumberOfPages( cpuCores ).getPages();
+        List<List<OrganisationUnit>> organisationUnitPages = new PaginatedList<>( organisationUnits ).setNumberOfPages( cpuCores ).getPages();
 
-        List<Future<?>> futures = new ArrayList<Future<?>>();
+        List<Future<?>> futures = new ArrayList<>();
 
         for ( List<OrganisationUnit> organisationUnitPage : organisationUnitPages )
         {

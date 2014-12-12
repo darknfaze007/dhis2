@@ -1,7 +1,10 @@
 package org.hisp.dhis.rbf.quality.dataentry;
 
+import static org.hisp.dhis.i18n.I18nUtils.i18n;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,8 +17,10 @@ import org.hisp.dhis.attribute.AttributeValue;
 import org.hisp.dhis.constant.Constant;
 import org.hisp.dhis.constant.ConstantService;
 import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
+import org.hisp.dhis.i18n.I18nService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
@@ -75,6 +80,16 @@ public class LoadQualityMaxDetailsAction
     @Autowired
     private OrganisationUnitGroupService orgUnitGroupService;
     
+    @Autowired
+    private DataElementService dataElementService;
+    
+    private I18nService i18nService;
+
+    public void setI18nService( I18nService service )
+    {
+        i18nService = service;
+    }
+
     // -------------------------------------------------------------------------
     // Input / Output
     // -------------------------------------------------------------------------
@@ -87,13 +102,13 @@ public class LoadQualityMaxDetailsAction
     }
 
     private String orgUnitGroupId;
-    
-    public void setOrgUnitGroupId(String orgUnitGroupId) 
-    {
-		this.orgUnitGroupId = orgUnitGroupId;
-	}
 
-	private String dataSetId;
+    public void setOrgUnitGroupId( String orgUnitGroupId )
+    {
+        this.orgUnitGroupId = orgUnitGroupId;
+    }
+
+    private String dataSetId;
 
     public void setDataSetId( String dataSetId )
     {
@@ -147,15 +162,22 @@ public class LoadQualityMaxDetailsAction
         Date sDate = dateFormat.parse( startDate );
         Date eDate = dateFormat.parse( endDate );
         Constant qualityMaxDataElement = constantService.getConstantByName( QUALITY_MAX_DATAELEMENT );
-        
+
         OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( orgUnitId );
         DataSet dataSet = dataSetService.getDataSet( Integer.parseInt( dataSetId ) );
-        OrganisationUnitGroup orgUnitGroup = orgUnitGroupService.getOrganisationUnitGroup( Integer.parseInt( orgUnitGroupId ) );
-        
-        if( organisationUnit == null || dataSet == null || orgUnitGroup == null )
+        OrganisationUnitGroup orgUnitGroup = orgUnitGroupService.getOrganisationUnitGroup( Integer
+            .parseInt( orgUnitGroupId ) );
+
+        if ( organisationUnit == null || dataSet == null || orgUnitGroup == null )
         {
-        	return SUCCESS;
+            return SUCCESS;
         }
+
+        
+        dataElements = new ArrayList<DataElement>();
+        dataElements = new ArrayList<DataElement>( dataElementService.getAllDataElements() );
+        
+        List<DataElement> tempDataElementList = new ArrayList<DataElement>();
         
         List<DataElement> dataElementList = new ArrayList<DataElement>( dataSet.getDataElements() );
         for ( DataElement de : dataElementList )
@@ -165,21 +187,37 @@ public class LoadQualityMaxDetailsAction
             {
                 if ( attValue.getAttribute().getId() == qualityMaxDataElement.getValue() )
                 {
-                    dataElements.add( de );
+                    tempDataElementList.add( de );
                 }
             }
         }
+
+        //dataElements.retainAll( tempDataElementList );
+        
+        dataElements = new ArrayList<DataElement>( geti18nDataElements( dataElementList ) );
+        
         
         for ( DataElement dataElement : dataElements )
         {
-            QualityMaxValue qualityMaxValue = qualityMaxValueService.getQualityMaxValue( orgUnitGroup, organisationUnit, dataElement, dataSet, sDate, eDate );
+            QualityMaxValue qualityMaxValue = qualityMaxValueService.getQualityMaxValue( orgUnitGroup,
+                organisationUnit, dataElement, dataSet, sDate, eDate );
             if ( qualityMaxValue != null )
             {
                 qualityMaxValueMap.put( dataElement.getId(), qualityMaxValue );
-                System.out.println( "In Quality Data Value" );
+                //System.out.println( "In Quality Data Value" );
             }
         }
-        Collections.sort( dataElements );
+        
+       
+        //Collections.sort( dataElements );
+        
+        
         return SUCCESS;
     }
+    
+    public Collection<DataElement> geti18nDataElements( List<DataElement> dataElements )
+    {
+        return i18n( i18nService, dataElements );
+    }
+    
 }

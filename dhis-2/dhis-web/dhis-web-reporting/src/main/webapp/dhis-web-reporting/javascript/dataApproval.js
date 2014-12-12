@@ -4,10 +4,6 @@ dhis2.util.namespace( 'dhis2.appr' );
 dhis2.appr.currentPeriodOffset = 0;
 dhis2.appr.permissions = null;
 
-$( function() {
-	dhis2.appr.displayCategoryOptionGroups();
-} );
-
 //------------------------------------------------------------------------------
 // Report
 //------------------------------------------------------------------------------
@@ -44,17 +40,11 @@ dhis2.appr.dataSetSelected = function()
     }
 }
 
-dhis2.appr.orgUnitSelected = function( orgUnits, orgUnitNames, children )
-{
-	dhis2.appr.displayCategoryOptionGroups();
-}
-
 dhis2.appr.displayPeriods = function()
 {
     var periodType = $( "#periodType" ).val();
     dhis2.dsr.displayPeriodsInternal( periodType, dhis2.appr.currentPeriodOffset );
-    dhis2.appr.displayCategoryOptionGroups();
-}
+};
 
 dhis2.appr.displayNextPeriods = function()
 {	
@@ -63,45 +53,17 @@ dhis2.appr.displayNextPeriods = function()
         dhis2.appr.currentPeriodOffset++;
         dhis2.appr.displayPeriods();
     }
-}
+};
 
 dhis2.appr.displayPreviousPeriods = function()
 {
     dhis2.appr.currentPeriodOffset--;
     dhis2.appr.displayPeriods();
-}
+};
 
 dhis2.appr.periodSelected = function()
 {
-    dhis2.appr.displayCategoryOptionGroups();
-}
-
-dhis2.appr.displayCategoryOptionGroups = function()
-{
-	var ou = selection.getSelected()[0];
-	var pe = $( "#periodId" ).val();
-	
-	if ( !ou || !pe ) {
-		return;
-	}
-	
-	var url = "getCategoryOptionGroups.action";
-	
-	$.getJSON( url, {ou:ou, pe:pe}, function( json ) {
-		if ( json.categoryOptionGroups && json.categoryOptionGroups.length > 1 ) {
-			var html = "";
-			$.each( json.categoryOptionGroups, function( index, group ) {
-				html += "<option value=\"" + group.uid + "\" data-dimension=\"" + group.groupSet + "\">" + group.name + "</option>";
-			} );
-	
-			$( "#categoryOptionGroupSection" ).show();
-			$( "#categoryOptionGroupId" ).html( html );
-		}
-		else {
-			$( "#categoryOptionGroupSection" ).hide();			
-		}
-	} );
-}
+};
 
 dhis2.appr.getDataReport = function()
 {	
@@ -110,17 +72,9 @@ dhis2.appr.getDataReport = function()
         pe: $( "#periodId" ).val(),
         ou: selection.getSelected()[0]
     };
-    
-    var cog = $( "#categoryOptionGroupId" ).val();
-    var cogs = $( "#categoryOptionGroupId :selected" ).data( "dimension" );
-    
-    if ( cog && cogs ) {
-    	dataReport.dimension = cogs + ":" + cog;
-    	dataReport.cog = cog;
-    }
-    
+        
     return dataReport;
-}
+};
 
 dhis2.appr.generateDataReport = function()
 {
@@ -128,17 +82,17 @@ dhis2.appr.generateDataReport = function()
 	
 	if ( !dataReport.ds )
     {
-        setHeaderMessage( i18n_select_data_set );
+		setHeaderDelayMessage( i18n_select_data_set );
         return false;
     }
     if ( !dataReport.pe )
     {
-        setHeaderMessage( i18n_select_period );
+    	setHeaderDelayMessage( i18n_select_period );
         return false;
     }
     if ( !selection.isSelected() )
     {
-        setHeaderMessage( i18n_select_organisation_unit );
+    	setHeaderDelayMessage( i18n_select_organisation_unit );
         return false;
     }
 
@@ -155,13 +109,13 @@ dhis2.appr.generateDataReport = function()
     	setTableStyles();
     	dhis2.appr.setApprovalState();
     } );
-}
+};
 
 dhis2.appr.hideCriteria = function()
 {
 	$( "#criteria" ).hide( "fast" );
 	$( "#dataButton" ).removeAttr( "disabled" );
-}
+};
 
 //------------------------------------------------------------------------------
 // Approval
@@ -288,7 +242,7 @@ dhis2.appr.setApprovalState = function()
 		    }
 	           	
 		} );	
-}
+};
 
 dhis2.appr.approveData = function()
 {
@@ -306,7 +260,7 @@ dhis2.appr.approveData = function()
 			alert( xhr.responseText );
 		}
 	} );
-}
+};
 
 dhis2.appr.unapproveData = function()
 {
@@ -324,7 +278,7 @@ dhis2.appr.unapproveData = function()
 			alert( xhr.responseText );
 		}
 	} );
-}
+};
 
 dhis2.appr.acceptData = function()
 {
@@ -342,7 +296,7 @@ dhis2.appr.acceptData = function()
             alert( xhr.responseText );
         }
     } );
-}
+};
 
 dhis2.appr.unacceptData = function()
 {
@@ -360,18 +314,18 @@ dhis2.appr.unacceptData = function()
             alert( xhr.responseText );
         }
   } );
-}
+};
 
 dhis2.appr.getApprovalUrl = function()
 {
 	var data = dhis2.appr.getDataReport();
-	var url = "../api/dataApprovals?ds=" + data.ds + "&pe=" + data.pe + "&ou=" + data.ou + "&cog=" + data.cog;
+	var url = "../api/dataApprovals?ds=" + data.ds + "&pe=" + data.pe + "&ou=" + data.ou;
 	return url;
-}
+};
 
 dhis2.appr.getAcceptanceUrl = function()
 {
 	var data = dhis2.appr.getDataReport();
-	var url = "../api/dataApprovals/acceptances?ds=" + data.ds + "&pe=" + data.pe + "&ou=" + data.ou + "&cog=" + data.cog;
+	var url = "../api/dataAcceptances?ds=" + data.ds + "&pe=" + data.pe + "&ou=" + data.ou;
 	return url;
-}
+};

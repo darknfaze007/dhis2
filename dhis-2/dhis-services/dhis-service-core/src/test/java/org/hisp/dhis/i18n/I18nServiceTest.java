@@ -39,39 +39,24 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.hisp.dhis.DhisTest;
+import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementService;
-import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
  */
 public class I18nServiceTest
-    extends DhisTest
+    extends DhisSpringTest
 {
+    @Autowired
     private I18nService i18nService;
-
-    // -------------------------------------------------------------------------
-    // Set up/tear down
-    // -------------------------------------------------------------------------
-
-    @Before
-    public void setUpTest()
-        throws Exception
-    {
-        i18nService = (I18nService) getBean( I18nService.ID );
-        
-        dataElementService = (DataElementService) getBean( DataElementService.ID );
-    }
-
-    @Override
-    public boolean emptyDatabaseAfterTest()
-    {
-        return true;
-    }
     
+    @Autowired
+    private DataElementService dataElementService;
+
     // -------------------------------------------------------------------------
     // Tests
     // -------------------------------------------------------------------------
@@ -86,7 +71,7 @@ public class I18nServiceTest
         DataElement dataElementA = createDataElement( 'A' );
         String idA = dataElementA.getUid();
         
-        Map<String, String> translationsA = new HashMap<String, String>();
+        Map<String, String> translationsA = new HashMap<>();
         translationsA.put( "name", "frenchNameA" );
         translationsA.put( "shortName", "frenchShortNameA" );
         translationsA.put( "description", "frenchDescriptionA" );        
@@ -108,9 +93,9 @@ public class I18nServiceTest
         String className = DataElement.class.getSimpleName();
         
         DataElement dataElementA = createDataElement( 'A' );
-        int idA = dataElementService.addDataElement( dataElementA );
+        dataElementService.addDataElement( dataElementA );
         
-        Map<String, String> translationsA = new HashMap<String, String>();
+        Map<String, String> translationsA = new HashMap<>();
         translationsA.put( "name", "frenchNameA" );
         translationsA.put( "shortName", "frenchShortNameA" );
         translationsA.put( "description", "frenchDescriptionA" );        
@@ -135,30 +120,30 @@ public class I18nServiceTest
         String className = DataElement.class.getSimpleName();
         
         DataElement dataElementA = createDataElement( 'A' );
-        int idA = dataElementService.addDataElement( dataElementA );
+        dataElementService.addDataElement( dataElementA );
 
         DataElement dataElementB = createDataElement( 'B' );
-        int idB = dataElementService.addDataElement( dataElementB );
+        dataElementService.addDataElement( dataElementB );
 
         DataElement dataElementC = createDataElement( 'C' );
-        int idC = dataElementService.addDataElement( dataElementC );
+        dataElementService.addDataElement( dataElementC );
         
-        List<DataElement> elements = new ArrayList<DataElement>();
+        List<DataElement> elements = new ArrayList<>();
         elements.add( dataElementA );
         elements.add( dataElementB );
         elements.add( dataElementC );        
         
-        Map<String, String> translationsA = new HashMap<String, String>();
+        Map<String, String> translationsA = new HashMap<>();
         translationsA.put( "name", "frenchNameA" );
         translationsA.put( "shortName", "frenchShortNameA" );
         translationsA.put( "description", "frenchDescriptionA" );
         
-        Map<String, String> translationsB = new HashMap<String, String>();
+        Map<String, String> translationsB = new HashMap<>();
         translationsB.put( "name", "frenchNameB" );
         translationsB.put( "shortName", "frenchShortNameB" );
         translationsB.put( "description", "frenchDescriptionB" );
         
-        Map<String, String> translationsC = new HashMap<String, String>();
+        Map<String, String> translationsC = new HashMap<>();
         translationsC.put( "name", "frenchNameC" );
         translationsC.put( "shortName", "frenchShortNameC" );
         translationsC.put( "description", "frenchDescriptionC" );        

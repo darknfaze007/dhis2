@@ -97,12 +97,13 @@ public class ShowAddProgramReminderAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         program = programService.getProgram( id );
 
-        userGroups = new ArrayList<UserGroup>( userGroupService.getAllUserGroups() );
+        userGroups = new ArrayList<>( userGroupService.getAllUserGroups() );
 
         attributes = program.getTrackedEntityAttributes();
 

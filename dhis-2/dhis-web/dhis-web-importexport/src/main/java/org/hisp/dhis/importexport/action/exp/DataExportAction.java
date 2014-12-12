@@ -50,7 +50,6 @@ import com.opensymphony.xwork2.Action;
 
 /**
  * @author Lars Helge Overland
- * @version $Id$
  */
 public class DataExportAction
     implements Action
@@ -70,11 +69,11 @@ public class DataExportAction
 
     private CurrentUserService currentUserService;
 
-    public void setCurrentUserService( CurrentUserService currentUserService)
+    public void setCurrentUserService( CurrentUserService currentUserService )
     {
         this.currentUserService = currentUserService;
     }
-    
+
     private DataElementService dataElementService;
 
     public void setDataElementService( DataElementService dataElementService )
@@ -82,7 +81,6 @@ public class DataExportAction
         this.dataElementService = dataElementService;
     }
 
-    
     private OrganisationUnitService organisationUnitService;
 
     public void setOrganisationUnitService( OrganisationUnitService organisationUnitService )
@@ -137,8 +135,7 @@ public class DataExportAction
     {
         this.exportFormat = exportFormat;
     }
-    
-    //Data
+
     private boolean dataValue;
 
     public void setDataValue( boolean dataValue )
@@ -152,7 +149,7 @@ public class DataExportAction
     {
         this.dataValueDaily = dataValueDaily;
     }
-    
+
     private String startDate;
 
     public void setStartDate( String startDate )
@@ -171,81 +168,77 @@ public class DataExportAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         ExportParams params = new ExportParams();
 
-        if ( dataValue || dataValueDaily  )
+        if ( dataValue || dataValueDaily )
         {
             params.setCategories( null );
             params.setCategoryCombos( null );
             params.setCategoryOptions( null );
             params.setCategoryOptionCombos( null );
             /*
-            params.setDataElementGroups( null );
-            params.setDataElementGroupSets( null );
-            params.setIndicators( null );
-            params.setIndicatorTypes( null );
-            params.setIndicatorGroups( null );
-            params.setIndicatorGroupSets( null );
-            params.setDataDictionaries( null );
-            params.setDataSets( null );
-            params.setOrganisationUnitGroups( null );
-            params.setOrganisationUnitGroupSets( null );
-            params.setOrganisationUnitLevels( null );
-            params.setValidationRules( null );
-            params.setReports( null );
-            params.setReportTables( null );
-            params.setPeriods( null ); // TODO Include only relevant periods
-            params.setCharts( null );
-            params.setPeriods( null );*/
-            
-            Set<Integer> dataElementz = new HashSet<Integer>();
-            
+             * params.setDataElementGroups( null );
+             * params.setDataElementGroupSets( null ); params.setIndicators(
+             * null ); params.setIndicatorTypes( null );
+             * params.setIndicatorGroups( null ); params.setIndicatorGroupSets(
+             * null ); params.setDataDictionaries( null ); params.setDataSets(
+             * null ); params.setOrganisationUnitGroups( null );
+             * params.setOrganisationUnitGroupSets( null );
+             * params.setOrganisationUnitLevels( null );
+             * params.setValidationRules( null ); params.setReports( null );
+             * params.setReportTables( null ); params.setPeriods( null ); //
+             * TODO Include only relevant periods params.setCharts( null );
+             * params.setPeriods( null );
+             */
+
+            Set<Integer> dataElementz = new HashSet<>();
+
             Collection<DataElement> children = dataElementService.getAllDataElements();
-            
+
             for ( DataElement child : children )
             {
-            	dataElementz.add( child.getId() );
+                dataElementz.add( child.getId() );
             }
-            
+
             params.setDataElements( dataElementz );
-            
-            Set<Integer> orgUnits = new HashSet<Integer>();
-            
+
+            Set<Integer> orgUnits = new HashSet<>();
+
             Collection<OrganisationUnit> orgChildren = organisationUnitService.getAllOrganisationUnits();
-            
+
             for ( OrganisationUnit child : orgChildren )
             {
-            	orgUnits.add( child.getId() );
+                orgUnits.add( child.getId() );
             }
-            
+
             params.setOrganisationUnits( orgUnits );
         }
 
-        
-        if(dataValue){
-        	params.setMetaData( false );
-        }
-        
-        if(dataValueDaily){
-        	params.setMetaData( false );
+        if ( dataValue )
+        {
+            params.setMetaData( false );
         }
 
-        System.out.println(dataValue+" "+dataValueDaily+" "+startDate+" "+endDate);
-        //params.setMetaData( true );
+        if ( dataValueDaily )
+        {
+            params.setMetaData( false );
+        }
+
+        // params.setMetaData( true );
         params.setIncludeDataValues( true );
         params.setCurrentUser( currentUserService.getCurrentUser() );
-        params.setDataValue(dataValue);
-        params.setDataValueDaily(dataValueDaily);
-        
+        params.setDataValue( dataValue );
+        params.setDataValueDaily( dataValueDaily );
+
         params.setI18n( i18n );
         params.setFormat( format );
-        params.setStartDate(getMediumDate( startDate ));
-        params.setEndDate(getMediumDate( endDate ));
-        
-        
+        params.setStartDate( getMediumDate( startDate ) );
+        params.setEndDate( getMediumDate( endDate ) );
+
         ExportService exportService = serviceProvider.provide( exportFormat );
 
         inputStream = exportService.exportData( params );

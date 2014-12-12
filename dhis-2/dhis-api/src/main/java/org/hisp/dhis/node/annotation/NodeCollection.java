@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
-@Target( { ElementType.FIELD } )
+@Target( { ElementType.FIELD, ElementType.METHOD } )
 @Retention( RetentionPolicy.RUNTIME )
 @NodeAnnotation
 public @interface NodeCollection
@@ -50,10 +50,6 @@ public @interface NodeCollection
     String itemNamespace() default "";
 
     boolean useWrapping() default true;
-
-    boolean isPersisted() default true;
-
-    boolean isOwner() default false;
 
     boolean isWritable() default true;
 

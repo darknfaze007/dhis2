@@ -113,10 +113,11 @@ public class AddSelectedOrganisationUnitAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        selectedUnits = new HashSet<OrganisationUnit>( selectionTreeManager.getSelectedOrganisationUnits() );
+        selectedUnits = new HashSet<>( selectionTreeManager.getSelectedOrganisationUnits() );
 
         if ( id != null )
         {

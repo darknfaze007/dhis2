@@ -29,11 +29,11 @@ package org.hisp.dhis.webapi.controller;
  */
 
 import com.google.common.collect.Lists;
-import org.hisp.dhis.webapi.utils.ContextUtils;
 import org.hisp.dhis.appmanager.App;
 import org.hisp.dhis.appmanager.AppManager;
 import org.hisp.dhis.dxf2.utils.JacksonUtils;
 import org.hisp.dhis.system.util.DateUtils;
+import org.hisp.dhis.webapi.utils.ContextUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
@@ -205,7 +205,7 @@ public class AppController
 
     private String getBaseUrl( HttpServletRequest request )
     {
-        String baseUrl = org.hisp.dhis.util.ContextUtils.getBaseUrl( request );
+        String baseUrl = ContextUtils.getBaseUrl( request );
         return baseUrl.substring( 0, baseUrl.length() - 1 );
     }
 }

@@ -29,10 +29,14 @@ package org.hisp.dhis.webapi.webdomain.form;
  */
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import org.hisp.dhis.common.DxfNamespaces;
 
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
+@JacksonXmlRootElement( localName = "field", namespace = DxfNamespaces.DXF_2_0 )
 public class Field
 {
     private String label;
@@ -52,6 +56,7 @@ public class Field
     }
 
     @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getLabel()
     {
         return label;
@@ -63,6 +68,7 @@ public class Field
     }
 
     @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getDataElement()
     {
         return dataElement;
@@ -74,6 +80,7 @@ public class Field
     }
 
     @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getCategoryOptionCombo()
     {
         return categoryOptionCombo;
@@ -85,6 +92,7 @@ public class Field
     }
 
     @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getValue()
     {
         return value;
@@ -96,6 +104,7 @@ public class Field
     }
 
     @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public InputType getType()
     {
         return type;
@@ -107,6 +116,7 @@ public class Field
     }
 
     @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getOptionSet()
     {
         return optionSet;

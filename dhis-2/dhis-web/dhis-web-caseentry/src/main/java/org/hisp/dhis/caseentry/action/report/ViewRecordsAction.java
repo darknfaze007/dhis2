@@ -77,14 +77,14 @@ public class ViewRecordsAction
         this.id = id;
     }
 
-    private Collection<TrackedEntityDataValue> dataValues = new ArrayList<TrackedEntityDataValue>();
+    private Collection<TrackedEntityDataValue> dataValues = new ArrayList<>();
 
     public Collection<TrackedEntityDataValue> getDataValues()
     {
         return dataValues;
     }
 
-    private Map<Integer, String> optionValueMap = new HashMap<Integer, String>();
+    private Map<Integer, String> optionValueMap = new HashMap<>();
 
     public Map<Integer, String> getOptionValueMap()
     {
@@ -109,6 +109,7 @@ public class ViewRecordsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {

@@ -13,17 +13,12 @@
     <id name="id" column="sectionid">
       <generator class="native" />
     </id>
+    &identifiableProperties;
 
     <property name="name" column="name" not-null="true" length="230"
         unique-key="key_sectionnamedataset" />
 
-    <property name="uid" column="uid" length="11" />
-
-    <property name="code" column="code" not-null="false" unique="true" length="50" />
-
-    <property name="created" type="timestamp" />
-
-    <property name="lastUpdated" type="timestamp" />
+    <property name="description" type="text" />
 
     <many-to-one name="dataSet" class="org.hisp.dhis.dataset.DataSet" column="datasetid"
         unique-key="key_sectionnamedataset" foreign-key="fk_section_datasetid" not-null="true" />
@@ -34,6 +29,14 @@
       <list-index column="sort_order" base="1" />
       <many-to-many class="org.hisp.dhis.dataelement.DataElement" column="dataelementid"
           foreign-key="fk_section_dataelementid" />
+    </list>
+
+    <list name="indicators" table="sectionindicators">
+      <cache usage="read-write" />
+      <key column="sectionid" foreign-key="fk_sectionindicators_sectionid" />
+      <list-index column="sort_order" base="1" />
+      <many-to-many class="org.hisp.dhis.indicator.Indicator" column="indicatorid"
+          foreign-key="fk_section_indicatorid" />
     </list>
 
     <set name="greyedFields" table="sectiongreyedfields">

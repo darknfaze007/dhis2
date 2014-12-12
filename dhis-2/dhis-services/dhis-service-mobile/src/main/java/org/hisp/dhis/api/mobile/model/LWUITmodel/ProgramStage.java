@@ -60,7 +60,7 @@ public class ProgramStage
 
     private List<Section> sections;
 
-    private List<ProgramStageDataElement> dataElements = new ArrayList<ProgramStageDataElement>();
+    private List<ProgramStageDataElement> dataElements = new ArrayList<>();
 
     public List<Section> getSections()
     {
@@ -82,11 +82,13 @@ public class ProgramStage
         this.dataElements = dataElements;
     }
 
+    @Override
     public String getClientVersion()
     {
         return clientVersion;
     }
 
+    @Override
     public void setClientVersion( String clientVersion )
     {
         this.clientVersion = clientVersion;
@@ -186,15 +188,15 @@ public class ProgramStage
         dout.writeBoolean( isSingleEvent );
 
         dout.writeInt( dataElements.size() );
-        for ( int i = 0; i < dataElements.size(); i++ )
+        for ( ProgramStageDataElement dataElement : dataElements )
         {
-            dataElements.get( i ).serialize( dout );
+            dataElement.serialize( dout );
         }
 
         dout.writeInt( sections.size() );
-        for ( int i = 0; i < sections.size(); i++ )
+        for ( Section section : sections )
         {
-            sections.get( i ).serialize( dout );
+            section.serialize( dout );
         }
     }
 
@@ -229,7 +231,7 @@ public class ProgramStage
         {
             for ( int i = 0; i < sectionSize; i++ )
             {
-                sections = new ArrayList<Section>();
+                sections = new ArrayList<>();
                 Section se = new Section();
                 se.deSerialize( dint );
                 sections.add( se );

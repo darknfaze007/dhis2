@@ -38,6 +38,7 @@ import java.util.Collection;
 
 import org.hisp.dhis.DhisSpringTest;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Dang Duy Hieu
@@ -46,11 +47,9 @@ import org.junit.Test;
 public class ConstantServiceTest
     extends DhisSpringTest
 {
-    public void setUpTest()
-    {
-        constantService = (ConstantService) getBean( ConstantService.ID );
-    }
-
+    @Autowired
+    private ConstantService constantService;
+    
     // -------------------------------------------------------------------------
     // Supportive methods
     // -------------------------------------------------------------------------
@@ -244,7 +243,7 @@ public class ConstantServiceTest
         Constant constantD = createConstant( 'D', 23.11d );
         Constant constantE = createConstant( 'E', 2.1d );
 
-        Collection<Constant> constantCollection = new ArrayList<Constant>();
+        Collection<Constant> constantCollection = new ArrayList<>();
 
         constantCollection.add( constantB );
         constantCollection.add( constantC );

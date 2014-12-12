@@ -52,6 +52,7 @@ public class DataElementBatchHandler
     // AbstractBatchHandler implementation
     // -------------------------------------------------------------------------
 
+    @Override
     protected void setTableName()
     {
         statementBuilder.setTableName( "dataelement" );
@@ -75,6 +76,7 @@ public class DataElementBatchHandler
         statementBuilder.setIdentifierValue( dataElement.getId() );
     }
 
+    @Override
     protected void setUniqueColumns()
     {
         statementBuilder.setUniqueColumn( "name" );
@@ -82,6 +84,7 @@ public class DataElementBatchHandler
         statementBuilder.setUniqueColumn( "code" );
     }
 
+    @Override
     protected void setUniqueValues( DataElement dataElement )
     {
         statementBuilder.setUniqueValue( dataElement.getName() );
@@ -89,6 +92,7 @@ public class DataElementBatchHandler
         statementBuilder.setUniqueValue( dataElement.getCode() );
     }
     
+    @Override
     protected void setColumns()
     {
         statementBuilder.setColumn( "uid" );
@@ -100,10 +104,10 @@ public class DataElementBatchHandler
         statementBuilder.setColumn( "domaintype" );
         statementBuilder.setColumn( "aggregationtype" );
         statementBuilder.setColumn( "categorycomboid" );
-        statementBuilder.setColumn( "sortorder" );
         statementBuilder.setColumn( "zeroissignificant" );
     }
     
+    @Override
     protected void setValues( DataElement dataElement )
     {
         statementBuilder.setValue( dataElement.getUid() );
@@ -115,7 +119,6 @@ public class DataElementBatchHandler
         statementBuilder.setValue( dataElement.getDomainType().name() );
         statementBuilder.setValue( dataElement.getAggregationOperator() );
         statementBuilder.setValue( dataElement.getCategoryCombo().getId() );
-        statementBuilder.setValue( dataElement.getSortOrder() );
         statementBuilder.setValue( dataElement.isZeroIsSignificant() );
     }
 }

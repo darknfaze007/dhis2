@@ -45,7 +45,10 @@ import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.program.ProgramStageDataElement;
 import org.hisp.dhis.program.ProgramStageSection;
 import org.hisp.dhis.program.ProgramTrackedEntityAttribute;
+import org.hisp.dhis.relationship.RelationshipType;
+import org.hisp.dhis.relationship.RelationshipTypeService;
 import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
 
 public class DefaultProgramService
@@ -57,6 +60,9 @@ public class DefaultProgramService
 
     private org.hisp.dhis.program.ProgramService programService;
 
+    @Autowired
+    private RelationshipTypeService relationshipTypeService;
+
     // -------------------------------------------------------------------------
     // ProgramService
     // -------------------------------------------------------------------------
@@ -64,7 +70,7 @@ public class DefaultProgramService
     @Override
     public List<Program> getPrograms( OrganisationUnit unit, String localeString )
     {
-        List<Program> programs = new ArrayList<Program>();
+        List<Program> programs = new ArrayList<>();
 
         for ( org.hisp.dhis.program.Program program : programService.getPrograms( unit ) )
         {
@@ -79,12 +85,12 @@ public class DefaultProgramService
     {
         Collection<org.hisp.dhis.program.Program> programByUnit = programService.getPrograms( unit );
 
-        Collection<org.hisp.dhis.program.Program> programByCurrentUser = new HashSet<org.hisp.dhis.program.Program>(
+        Collection<org.hisp.dhis.program.Program> programByCurrentUser = new HashSet<>(
             programService.getProgramsByCurrentUser() );
 
         programByCurrentUser.retainAll( programByUnit );
 
-        List<org.hisp.dhis.api.mobile.model.LWUITmodel.Program> programs = new ArrayList<org.hisp.dhis.api.mobile.model.LWUITmodel.Program>();
+        List<org.hisp.dhis.api.mobile.model.LWUITmodel.Program> programs = new ArrayList<>();
 
         for ( org.hisp.dhis.program.Program program : programByCurrentUser )
         {
@@ -97,7 +103,7 @@ public class DefaultProgramService
     @Override
     public List<Program> updateProgram( ModelList programsFromClient, String localeString, OrganisationUnit unit )
     {
-        List<Program> programs = new ArrayList<Program>();
+        List<Program> programs = new ArrayList<>();
         boolean isExisted = false;
 
         // Get all Program belong to this OrgUnit
@@ -129,6 +135,7 @@ public class DefaultProgramService
         return programs;
     }
 
+    @Override
     public Program getProgram( int programId, String localeString )
     {
         org.hisp.dhis.program.Program program = programService.getProgram( programId );
@@ -141,7 +148,7 @@ public class DefaultProgramService
         pr.setName( program.getName() );
         pr.setVersion( program.getVersion() );
 
-        List<ProgramStage> prStgs = new ArrayList<ProgramStage>();
+        List<ProgramStage> prStgs = new ArrayList<>();
 
         for ( org.hisp.dhis.program.ProgramStage programStage : program.getProgramStages() )
         {
@@ -153,7 +160,7 @@ public class DefaultProgramService
 
             prStg.setName( programStage.getName() );
 
-            List<DataElement> des = new ArrayList<DataElement>();
+            List<DataElement> des = new ArrayList<>();
 
             Set<ProgramStageDataElement> programStageDataElements = programStage.getProgramStageDataElements();
 
@@ -199,7 +206,7 @@ public class DefaultProgramService
             pr.setTrackedEntityName( program.getTrackedEntity().getName() );
         }
 
-        List<org.hisp.dhis.api.mobile.model.LWUITmodel.ProgramStage> prStgs = new ArrayList<org.hisp.dhis.api.mobile.model.LWUITmodel.ProgramStage>();
+        List<org.hisp.dhis.api.mobile.model.LWUITmodel.ProgramStage> prStgs = new ArrayList<>();
 
         for ( org.hisp.dhis.program.ProgramStage programStage : program.getProgramStages() )
         {
@@ -234,7 +241,7 @@ public class DefaultProgramService
 
             prStg.setSingleEvent( program.isSingleEvent() );
 
-            List<org.hisp.dhis.api.mobile.model.LWUITmodel.ProgramStageDataElement> des = new ArrayList<org.hisp.dhis.api.mobile.model.LWUITmodel.ProgramStageDataElement>();
+            List<org.hisp.dhis.api.mobile.model.LWUITmodel.ProgramStageDataElement> des = new ArrayList<>();
 
             Set<ProgramStageDataElement> programStageDataElements = programStage.getProgramStageDataElements();
 
@@ -255,7 +262,7 @@ public class DefaultProgramService
             prStg.setDataElements( des );
 
             // Set all program sections
-            List<org.hisp.dhis.api.mobile.model.LWUITmodel.Section> mobileSections = new ArrayList<org.hisp.dhis.api.mobile.model.LWUITmodel.Section>();
+            List<org.hisp.dhis.api.mobile.model.LWUITmodel.Section> mobileSections = new ArrayList<>();
             if ( programStage.getProgramStageSections().size() > 0 )
             {
                 for ( ProgramStageSection eachSection : programStage.getProgramStageSections() )
@@ -266,7 +273,7 @@ public class DefaultProgramService
 
                     // Set all data elements' id, then we could have full from
                     // data element list of program stage
-                    List<Integer> dataElementIds = new ArrayList<Integer>();
+                    List<Integer> dataElementIds = new ArrayList<>();
                     for ( ProgramStageDataElement eachPogramStageDataElement : eachSection
                         .getProgramStageDataElements() )
                     {
@@ -283,12 +290,11 @@ public class DefaultProgramService
 
         pr.setProgramStages( prStgs );
 
-        List<ProgramTrackedEntityAttribute> programPatientAttributes = new ArrayList<ProgramTrackedEntityAttribute>(
-            program.getAttributes() );
+        List<ProgramTrackedEntityAttribute> programPatientAttributes = new ArrayList<>(
+            program.getProgramAttributes() );
 
-        for ( int i = 0; i < programPatientAttributes.size(); i++ )
+        for ( ProgramTrackedEntityAttribute ppa : programPatientAttributes )
         {
-            ProgramTrackedEntityAttribute ppa = programPatientAttributes.get( i );
             pr.getProgramAttributes().add( this.getPatientAttributeForMobile( ppa ) );
         }
 
@@ -322,7 +328,7 @@ public class DefaultProgramService
             {
                 optionSet.setId( pa.getOptionSet().getId() );
                 optionSet.setName( pa.getOptionSet().getName() );
-                optionSet.setOptions( pa.getOptionSet().getOptions() );
+                // optionSet.setOptions( pa.getOptionSet().getOptions() );
 
                 mobileAttribute.setOptionSet( optionSet );
             }
@@ -335,5 +341,32 @@ public class DefaultProgramService
     public void setProgramService( org.hisp.dhis.program.ProgramService programService )
     {
         this.programService = programService;
+    }
+
+    @Override
+    public List<org.hisp.dhis.api.mobile.model.LWUITmodel.RelationshipType> getAllRelationshipTypes()
+    {
+        try
+        {
+            List<RelationshipType> relationshipTypes = new ArrayList<RelationshipType>(
+                relationshipTypeService.getAllRelationshipTypes() );
+
+            List<org.hisp.dhis.api.mobile.model.LWUITmodel.RelationshipType> mobileRelationshipTypes = new ArrayList<org.hisp.dhis.api.mobile.model.LWUITmodel.RelationshipType>();
+            for ( RelationshipType relType : relationshipTypes )
+            {
+                org.hisp.dhis.api.mobile.model.LWUITmodel.RelationshipType mobileRelType = new org.hisp.dhis.api.mobile.model.LWUITmodel.RelationshipType();
+                mobileRelType.setId( relType.getId() );
+                mobileRelType.setName( relType.getName() );
+                mobileRelType.setAIsToB( relType.getaIsToB() );
+                mobileRelType.setBIsToA( relType.getbIsToA() );
+                mobileRelationshipTypes.add( mobileRelType );
+            }
+            return mobileRelationshipTypes;
+        }
+        catch ( Exception e )
+        {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

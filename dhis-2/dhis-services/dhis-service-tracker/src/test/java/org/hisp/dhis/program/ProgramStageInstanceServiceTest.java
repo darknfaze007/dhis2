@@ -33,7 +33,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -47,7 +46,6 @@ import org.hisp.dhis.event.EventStatus;
 import org.hisp.dhis.mock.MockI18nFormat;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
-import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.sms.config.BulkSmsGatewayConfig;
 import org.hisp.dhis.sms.config.SmsConfiguration;
 import org.hisp.dhis.sms.config.SmsConfigurationManager;
@@ -58,6 +56,7 @@ import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminder;
 import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
 import org.hisp.dhis.trackedentityattributevalue.TrackedEntityAttributeValue;
 import org.hisp.dhis.trackedentityattributevalue.TrackedEntityAttributeValueService;
+import org.joda.time.DateTime;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -187,7 +186,8 @@ public class ProgramStageInstanceServiceTest
         programService.addProgram( programA );
 
         stageA = new ProgramStage( "A", programA );
-
+        stageA.setSortOrder( 1 );
+        
         TrackedEntityInstanceReminder reminderA = new TrackedEntityInstanceReminder( "A", 0,
             "Test program stage message template", TrackedEntityInstanceReminder.DUE_DATE_TO_COMPARE,
             TrackedEntityInstanceReminder.SEND_TO_TRACKED_ENTITY_INSTANCE, null, TrackedEntityInstanceReminder.MESSAGE_TYPE_BOTH );
@@ -197,7 +197,7 @@ public class ProgramStageInstanceServiceTest
             TrackedEntityInstanceReminder.SEND_TO_TRACKED_ENTITY_INSTANCE, TrackedEntityInstanceReminder.SEND_WHEN_TO_C0MPLETED_EVENT,
             TrackedEntityInstanceReminder.MESSAGE_TYPE_BOTH );
 
-        Set<TrackedEntityInstanceReminder> reminders = new HashSet<TrackedEntityInstanceReminder>();
+        Set<TrackedEntityInstanceReminder> reminders = new HashSet<>();
         reminders.add( reminderA );
         reminders.add( reminderB );
         stageA.setReminders( reminders );
@@ -205,17 +205,18 @@ public class ProgramStageInstanceServiceTest
         programStageService.saveProgramStage( stageA );
 
         stageB = new ProgramStage( "B", programA );
+        stageB.setSortOrder( 2 );
         TrackedEntityInstanceReminder reminderC = new TrackedEntityInstanceReminder( "C", 0,
             "Test program stage message template", TrackedEntityInstanceReminder.DUE_DATE_TO_COMPARE,
             TrackedEntityInstanceReminder.SEND_TO_TRACKED_ENTITY_INSTANCE, TrackedEntityInstanceReminder.SEND_WHEN_TO_C0MPLETED_EVENT,
             TrackedEntityInstanceReminder.MESSAGE_TYPE_BOTH );
 
-        reminders = new HashSet<TrackedEntityInstanceReminder>();
+        reminders = new HashSet<>();
         reminders.add( reminderC );
         stageB.setReminders( reminders );
         programStageService.saveProgramStage( stageB );
 
-        Set<ProgramStage> programStages = new HashSet<ProgramStage>();
+        Set<ProgramStage> programStages = new HashSet<>();
         programStages.add( stageA );
         programStages.add( stageB );
         programA.setProgramStages( programStages );
@@ -245,13 +246,15 @@ public class ProgramStageInstanceServiceTest
         programService.addProgram( programB );
 
         stageC = new ProgramStage( "C", programB );
+        stageC.setSortOrder( 1 );
         programStageService.saveProgramStage( stageC );
 
         stageD = new ProgramStage( "D", programB );
+        stageB.setSortOrder( 2 );
         stageC.setIrregular( true );
         programStageService.saveProgramStage( stageD );
 
-        programStages = new HashSet<ProgramStage>();
+        programStages = new HashSet<>();
         programStages.add( stageC );
         programStages.add( stageD );
         programB.setProgramStages( programStages );
@@ -261,14 +264,14 @@ public class ProgramStageInstanceServiceTest
          * Program Instance and Program Stage Instance
          */
 
-        Calendar calIncident = Calendar.getInstance();
-        PeriodType.clearTimeOfDay( calIncident );
-        calIncident.add( Calendar.DATE, -70 );
-        incidenDate = calIncident.getTime();
-
-        Calendar calEnrollment = Calendar.getInstance();
-        PeriodType.clearTimeOfDay( calEnrollment );
-        enrollmentDate = calEnrollment.getTime();
+        DateTime testDate1 = DateTime.now();
+        testDate1.withTimeAtStartOfDay();
+        testDate1 = testDate1.minusDays( 70 );
+        incidenDate = testDate1.toDate();
+        
+        DateTime testDate2 = DateTime.now();
+        testDate2.withTimeAtStartOfDay();
+        enrollmentDate = testDate2.toDate();
 
         programInstanceA = new ProgramInstance( enrollmentDate, incidenDate, entityInstanceA, programA );
         programInstanceA.setUid( "UID-PIA" );
@@ -391,7 +394,7 @@ public class ProgramStageInstanceServiceTest
         programStageInstanceService.addProgramStageInstance( programStageInstanceC );
         programStageInstanceService.addProgramStageInstance( programStageInstanceD1 );
 
-        Collection<ProgramInstance> programInstances = new HashSet<ProgramInstance>();
+        Collection<ProgramInstance> programInstances = new HashSet<>();
         programInstances.add( programInstanceA );
         programInstances.add( programInstanceB );
 

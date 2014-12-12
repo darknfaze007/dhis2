@@ -85,14 +85,26 @@ public class BaseNameableObject
         this.name = name;
     }
 
-    public BaseNameableObject( int id, String uid, String name, String shortName,
-        String code, String description )
+    public BaseNameableObject( int id, String uid, String name, String shortName, String code, String description )
     {
         super( id, uid, name );
         this.shortName = shortName;
         this.code = code;
         this.description = description;
     }
+    
+    public BaseNameableObject( NameableObject object )
+    {
+        super( object.getId(), object.getUid(), object.getName() );
+        this.shortName = object.getShortName();
+        this.code = object.getCode();
+        this.description = object.getDescription();
+    }
+
+    // -------------------------------------------------------------------------
+    // hashCode and equals
+    // -------------------------------------------------------------------------
+
 
     @Override
     public int hashCode()
@@ -144,6 +156,11 @@ public class BaseNameableObject
         return true;
     }
 
+    // -------------------------------------------------------------------------
+    // Getters and setters
+    // -------------------------------------------------------------------------
+
+    @Override
     @JsonProperty
     @JsonView( { ShortNameView.class, DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( isAttribute = true )
@@ -157,6 +174,7 @@ public class BaseNameableObject
         this.shortName = shortName;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -170,6 +188,7 @@ public class BaseNameableObject
         this.description = description;
     }
 
+    @Override
     public String getDisplayShortName()
     {
         return displayShortName != null && !displayShortName.trim().isEmpty() ? displayShortName : shortName;
@@ -180,6 +199,7 @@ public class BaseNameableObject
         this.displayShortName = displayShortName;
     }
 
+    @Override
     public String getDisplayDescription()
     {
         return displayDescription != null && !displayDescription.trim().isEmpty() ? displayDescription : description;

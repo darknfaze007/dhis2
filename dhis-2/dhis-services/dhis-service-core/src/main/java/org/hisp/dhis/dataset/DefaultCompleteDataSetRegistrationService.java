@@ -28,14 +28,15 @@ package org.hisp.dhis.dataset;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.Collection;
-
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.message.MessageService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.period.Period;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Lars Helge Overland
@@ -62,7 +63,7 @@ public class DefaultCompleteDataSetRegistrationService
     {
         this.messageService = messageService;
     }
-    
+
     private DataElementCategoryService categoryService;
 
     public void setCategoryService( DataElementCategoryService categoryService )
@@ -74,6 +75,7 @@ public class DefaultCompleteDataSetRegistrationService
     // CompleteDataSetRegistrationService
     // -------------------------------------------------------------------------
 
+    @Override
     public void saveCompleteDataSetRegistration( CompleteDataSetRegistration registration )
     {
         if ( registration.getAttributeOptionCombo() == null )
@@ -84,48 +86,75 @@ public class DefaultCompleteDataSetRegistrationService
         completeDataSetRegistrationStore.saveCompleteDataSetRegistration( registration );
     }
 
+    @Override
     public void saveCompleteDataSetRegistration( CompleteDataSetRegistration registration, boolean notify )
     {
         saveCompleteDataSetRegistration( registration );
-        
+
         if ( notify )
         {
             messageService.sendCompletenessMessage( registration );
         }
     }
-    
+
+    @Override
+    public void saveCompleteDataSetRegistrations( List<CompleteDataSetRegistration> registrations, boolean notify )
+    {
+        for ( CompleteDataSetRegistration registration : registrations )
+        {
+            saveCompleteDataSetRegistration( registration, notify );
+        }
+    }
+
+    @Override
     public void updateCompleteDataSetRegistration( CompleteDataSetRegistration registration )
     {
         completeDataSetRegistrationStore.updateCompleteDataSetRegistration( registration );
     }
-    
+
+    @Override
     public void deleteCompleteDataSetRegistration( CompleteDataSetRegistration registration )
     {
         completeDataSetRegistrationStore.deleteCompleteDataSetRegistration( registration );
     }
 
-    public CompleteDataSetRegistration getCompleteDataSetRegistration( DataSet dataSet, Period period, 
+    @Override
+    public void deleteCompleteDataSetRegistrations( List<CompleteDataSetRegistration> registrations )
+    {
+        for ( CompleteDataSetRegistration registration : registrations )
+        {
+            completeDataSetRegistrationStore.deleteCompleteDataSetRegistration( registration );
+        }
+    }
+
+    @Override
+    public CompleteDataSetRegistration getCompleteDataSetRegistration( DataSet dataSet, Period period,
         OrganisationUnit source, DataElementCategoryOptionCombo attributeOptionCombo )
     {
-        return completeDataSetRegistrationStore.getCompleteDataSetRegistration( dataSet, period, source, attributeOptionCombo );
+        return completeDataSetRegistrationStore
+            .getCompleteDataSetRegistration( dataSet, period, source, attributeOptionCombo );
     }
-        
+
+    @Override
     public Collection<CompleteDataSetRegistration> getAllCompleteDataSetRegistrations()
     {
         return completeDataSetRegistrationStore.getAllCompleteDataSetRegistrations();
-    }    
+    }
 
-    public Collection<CompleteDataSetRegistration> getCompleteDataSetRegistrations( 
+    @Override
+    public Collection<CompleteDataSetRegistration> getCompleteDataSetRegistrations(
         Collection<DataSet> dataSets, Collection<OrganisationUnit> sources, Collection<Period> periods )
     {
         return completeDataSetRegistrationStore.getCompleteDataSetRegistrations( dataSets, sources, periods );
-    }    
-    
+    }
+
+    @Override
     public void deleteCompleteDataSetRegistrations( DataSet dataSet )
     {
         completeDataSetRegistrationStore.deleteCompleteDataSetRegistrations( dataSet );
     }
-    
+
+    @Override
     public void deleteCompleteDataSetRegistrations( OrganisationUnit unit )
     {
         completeDataSetRegistrationStore.deleteCompleteDataSetRegistrations( unit );

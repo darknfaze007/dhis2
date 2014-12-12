@@ -4,14 +4,16 @@ function validateAddUpdateSqlView( mode ) {
   var name = $("#name").val();
   var sqlquery = $("#sqlquery").val();
 
-  $.getJSON(
-    "validateAddUpdateSqlView.action",
-    {
+  $.ajax( {
+    url: "validateAddUpdateSqlView.action",
+    type: "post",
+    data: {
       "name": name,
       "sqlquery": sqlquery,
       "mode": mode
     },
-    function( json ) {
+    dataType: "json",
+    success: function( json ) {
       if( json.response == "success" ) {
         if( mode == "add" ) {
           byId("addSqlViewForm").submit();
@@ -20,10 +22,10 @@ function validateAddUpdateSqlView( mode ) {
         byId("updateSqlViewForm").submit();
       }
       else if( json.response == "input" ) {
-        setMessage(json.message);
+        setHeaderDelayMessage(json.message);
       }
     }
-  );
+  } );
 }
 
 function removeSqlViewObject( context ) {
@@ -37,7 +39,6 @@ function showSqlViewDetails( context ) {
 
     var description = json.sqlView.description;
     setInnerHTML('descriptionField', description ? description : '[' + i18n_none + ']');
-    setInnerHTML('sqlQueryField', json.sqlView.sqlquery);
     setInnerHTML('idField', json.sqlView.uid);
 
     showDetails();
@@ -56,7 +57,7 @@ function runSqlViewQuery( context ) {
       if( json.response == "success" ) {
         setHeaderDelayMessage(json.message);
       } else {
-        setMessage(json.message);
+    	  setHeaderDelayMessage(json.message);
       }
     }
   );

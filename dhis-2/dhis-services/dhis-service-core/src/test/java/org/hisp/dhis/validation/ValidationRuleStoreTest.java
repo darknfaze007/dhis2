@@ -48,6 +48,7 @@ import org.hisp.dhis.expression.Expression;
 import org.hisp.dhis.expression.ExpressionService;
 import org.hisp.dhis.period.PeriodType;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
@@ -55,8 +56,16 @@ import org.junit.Test;
 public class ValidationRuleStoreTest
     extends DhisSpringTest
 {
+    @Autowired
     private ValidationRuleStore validationRuleStore;
 
+    @Autowired
+    private DataElementService dataElementService;
+
+    @Autowired
+    private DataElementCategoryService categoryService;
+
+    @Autowired
     private ExpressionService expressionService;
 
     private DataElement dataElementA;
@@ -85,14 +94,7 @@ public class ValidationRuleStoreTest
     public void setUpTest()
         throws Exception
     {
-        validationRuleStore = (ValidationRuleStore) getBean( ValidationRuleStore.ID );
-
-        dataElementService = (DataElementService) getBean( DataElementService.ID );
-
-        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
-
-        expressionService = (ExpressionService) getBean( ExpressionService.ID );
-
+      
         dataElementA = createDataElement( 'A' );
         dataElementB = createDataElement( 'B' );
         dataElementC = createDataElement( 'C' );
@@ -103,7 +105,7 @@ public class ValidationRuleStoreTest
         dataElementService.addDataElement( dataElementC );
         dataElementService.addDataElement( dataElementD );
 
-        dataElements = new HashSet<DataElement>();
+        dataElements = new HashSet<>();
 
         dataElements.add( dataElementA );
         dataElements.add( dataElementB );
@@ -112,11 +114,11 @@ public class ValidationRuleStoreTest
 
         DataElementCategoryOptionCombo categoryOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
 
-        optionCombos = new HashSet<DataElementCategoryOptionCombo>();
+        optionCombos = new HashSet<>();
         optionCombos.add( categoryOptionCombo );
 
-        expressionA = new Expression( "expressionA", "descriptionA", dataElements, optionCombos );
-        expressionB = new Expression( "expressionB", "descriptionB", dataElements, optionCombos );
+        expressionA = new Expression( "expressionA", "descriptionA", dataElements );
+        expressionB = new Expression( "expressionB", "descriptionB", dataElements );
 
         expressionService.addExpression( expressionB );
         expressionService.addExpression( expressionA );
@@ -139,7 +141,6 @@ public class ValidationRuleStoreTest
 
         assertEquals( validationRule.getName(), "ValidationRuleA" );
         assertEquals( validationRule.getDescription(), "DescriptionA" );
-        assertEquals( validationRule.getType(), ValidationRule.TYPE_ABSOLUTE );
         assertEquals( validationRule.getOperator(), equal_to );
         assertNotNull( validationRule.getLeftSide().getExpression() );
         assertNotNull( validationRule.getRightSide().getExpression() );
@@ -157,12 +158,10 @@ public class ValidationRuleStoreTest
 
         assertEquals( validationRule.getName(), "ValidationRuleA" );
         assertEquals( validationRule.getDescription(), "DescriptionA" );
-        assertEquals( validationRule.getType(), ValidationRule.TYPE_ABSOLUTE );
         assertEquals( validationRule.getOperator(), equal_to );
 
         validationRule.setName( "ValidationRuleB" );
         validationRule.setDescription( "DescriptionB" );
-        validationRule.setType( ValidationRule.TYPE_STATISTICAL );
         validationRule.setOperator( greater_than );
 
         validationRuleStore.update( validationRule );
@@ -171,7 +170,6 @@ public class ValidationRuleStoreTest
 
         assertEquals( validationRule.getName(), "ValidationRuleB" );
         assertEquals( validationRule.getDescription(), "DescriptionB" );
-        assertEquals( validationRule.getType(), ValidationRule.TYPE_STATISTICAL );
         assertEquals( validationRule.getOperator(), greater_than );
     }
 
@@ -236,23 +234,23 @@ public class ValidationRuleStoreTest
     @Test
     public void testGetValidationRuleCount()
     {
-        Set<DataElement> dataElementsA = new HashSet<DataElement>();
+        Set<DataElement> dataElementsA = new HashSet<>();
         dataElementsA.add( dataElementA );
         dataElementsA.add( dataElementB );
 
-        Set<DataElement> dataElementsB = new HashSet<DataElement>();
+        Set<DataElement> dataElementsB = new HashSet<>();
         dataElementsB.add( dataElementC );
         dataElementsB.add( dataElementD );
 
-        Set<DataElement> dataElementsC = new HashSet<DataElement>();
+        Set<DataElement> dataElementsC = new HashSet<>();
 
-        Set<DataElement> dataElementsD = new HashSet<DataElement>();
+        Set<DataElement> dataElementsD = new HashSet<>();
         dataElementsD.addAll( dataElementsA );
         dataElementsD.addAll( dataElementsB );
 
-        Expression expression1 = new Expression( "Expression1", "Expression1", dataElementsA, optionCombos );
-        Expression expression2 = new Expression( "Expression2", "Expression2", dataElementsB, optionCombos );
-        Expression expression3 = new Expression( "Expression3", "Expression3", dataElementsC, optionCombos );
+        Expression expression1 = new Expression( "Expression1", "Expression1", dataElementsA );
+        Expression expression2 = new Expression( "Expression2", "Expression2", dataElementsB );
+        Expression expression3 = new Expression( "Expression3", "Expression3", dataElementsC );
 
         expressionService.addExpression( expression1 );
         expressionService.addExpression( expression2 );

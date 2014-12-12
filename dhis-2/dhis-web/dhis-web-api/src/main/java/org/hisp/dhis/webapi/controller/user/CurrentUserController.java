@@ -28,23 +28,18 @@ package org.hisp.dhis.webapi.controller.user;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
-import org.hisp.dhis.webapi.controller.exception.FilterTooShortException;
-import org.hisp.dhis.webapi.controller.exception.NotAuthenticatedException;
-import org.hisp.dhis.webapi.utils.ContextUtils;
-import org.hisp.dhis.webapi.utils.ContextUtils.CacheStrategy;
-import org.hisp.dhis.webapi.utils.FormUtils;
-import org.hisp.dhis.webapi.webdomain.FormDataSet;
-import org.hisp.dhis.webapi.webdomain.FormOrganisationUnit;
-import org.hisp.dhis.webapi.webdomain.FormProgram;
-import org.hisp.dhis.webapi.webdomain.Forms;
-import org.hisp.dhis.webapi.webdomain.user.Dashboard;
-import org.hisp.dhis.webapi.webdomain.user.Inbox;
-import org.hisp.dhis.webapi.webdomain.user.Recipients;
-import org.hisp.dhis.webapi.webdomain.user.UserAccount;
+import org.hisp.dhis.acl.AclService;
+import org.hisp.dhis.common.IdentifiableObjectManager;
 import org.hisp.dhis.common.view.DetailedView;
+import org.hisp.dhis.dashboard.DashboardItem;
+import org.hisp.dhis.dataapproval.DataApprovalLevel;
+import org.hisp.dhis.dataapproval.DataApprovalLevelService;
+import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
+import org.hisp.dhis.dxf2.render.RenderService;
 import org.hisp.dhis.dxf2.utils.JacksonUtils;
 import org.hisp.dhis.i18n.I18nService;
 import org.hisp.dhis.interpretation.Interpretation;
@@ -58,10 +53,22 @@ import org.hisp.dhis.program.ProgramService;
 import org.hisp.dhis.system.util.TextUtils;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.User;
-import org.hisp.dhis.user.UserGroup;
 import org.hisp.dhis.user.UserGroupService;
 import org.hisp.dhis.user.UserService;
 import org.hisp.dhis.user.UserSettingService;
+import org.hisp.dhis.webapi.controller.exception.FilterTooShortException;
+import org.hisp.dhis.webapi.controller.exception.NotAuthenticatedException;
+import org.hisp.dhis.webapi.utils.ContextUtils;
+import org.hisp.dhis.webapi.utils.ContextUtils.CacheStrategy;
+import org.hisp.dhis.webapi.utils.FormUtils;
+import org.hisp.dhis.webapi.webdomain.FormDataSet;
+import org.hisp.dhis.webapi.webdomain.FormOrganisationUnit;
+import org.hisp.dhis.webapi.webdomain.FormProgram;
+import org.hisp.dhis.webapi.webdomain.Forms;
+import org.hisp.dhis.webapi.webdomain.user.Dashboard;
+import org.hisp.dhis.webapi.webdomain.user.Inbox;
+import org.hisp.dhis.webapi.webdomain.user.Recipients;
+import org.hisp.dhis.webapi.webdomain.user.UserAccount;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -127,7 +134,19 @@ public class CurrentUserController
     private ContextUtils contextUtils;
 
     @Autowired
+    private IdentifiableObjectManager manager;
+
+    @Autowired
     private I18nService i18nService;
+
+    @Autowired
+    protected AclService aclService;
+
+    @Autowired
+    private DataApprovalLevelService approvalLevelService;
+
+    @Autowired
+    private RenderService renderService;
 
     @RequestMapping( produces = { "application/json", "text/*" } )
     public void getCurrentUser( HttpServletResponse response ) throws Exception
@@ -140,7 +159,33 @@ public class CurrentUserController
         }
 
         response.setContentType( MediaType.APPLICATION_JSON_VALUE );
-        JacksonUtils.toJsonWithView( response.getOutputStream(), currentUser, DetailedView.class );
+        renderService.toJson( response.getOutputStream(), currentUser, DetailedView.class );
+    }
+
+    @RequestMapping( value = "/dashboards", produces = { "application/json", "text/*" } )
+    public void getDashboards( HttpServletResponse response ) throws NotAuthenticatedException, IOException
+    {
+        User currentUser = currentUserService.getCurrentUser();
+
+        if ( currentUser == null )
+        {
+            throw new NotAuthenticatedException();
+        }
+
+        List<org.hisp.dhis.dashboard.Dashboard> dashboards = Lists.newArrayList( manager.getAll( org.hisp.dhis.dashboard.Dashboard.class ) );
+
+        for ( org.hisp.dhis.dashboard.Dashboard dashboard : dashboards )
+        {
+            dashboard.setAccess( aclService.getAccess( dashboard ) );
+
+            for ( DashboardItem dashboardItem : dashboard.getItems() )
+            {
+                dashboardItem.setAccess( aclService.getAccess( dashboardItem ) );
+            }
+        }
+
+        response.setContentType( MediaType.APPLICATION_JSON_VALUE );
+        renderService.toJson( response.getOutputStream(), dashboards, DetailedView.class );
     }
 
     @RequestMapping( value = "/inbox", produces = { "application/json", "text/*" } )
@@ -154,11 +199,64 @@ public class CurrentUserController
         }
 
         Inbox inbox = new Inbox();
-        inbox.setMessageConversations( new ArrayList<MessageConversation>( messageService.getMessageConversations( 0, MAX_OBJECTS ) ) );
-        inbox.setInterpretations( new ArrayList<Interpretation>( interpretationService.getInterpretations( 0, MAX_OBJECTS ) ) );
+        inbox.setMessageConversations( new ArrayList<>( messageService.getMessageConversations( 0, MAX_OBJECTS ) ) );
+        inbox.setInterpretations( new ArrayList<>( interpretationService.getInterpretations( 0, MAX_OBJECTS ) ) );
+
+        for ( org.hisp.dhis.message.MessageConversation messageConversation : inbox.getMessageConversations() )
+        {
+            messageConversation.setAccess( aclService.getAccess( messageConversation ) );
+        }
+
+        for ( Interpretation interpretation : inbox.getInterpretations() )
+        {
+            interpretation.setAccess( aclService.getAccess( interpretation ) );
+        }
 
         response.setContentType( MediaType.APPLICATION_JSON_VALUE );
-        JacksonUtils.toJson( response.getOutputStream(), inbox );
+        renderService.toJson( response.getOutputStream(), inbox );
+    }
+
+    @RequestMapping( value = "/inbox/messageConversations", produces = { "application/json", "text/*" } )
+    public void getInboxMessageConversations( HttpServletResponse response ) throws Exception
+    {
+        User currentUser = currentUserService.getCurrentUser();
+
+        if ( currentUser == null )
+        {
+            throw new NotAuthenticatedException();
+        }
+
+        response.setContentType( MediaType.APPLICATION_JSON_VALUE );
+
+        List<MessageConversation> messageConversations = new ArrayList<>( messageService.getMessageConversations( 0, MAX_OBJECTS ) );
+
+        for ( org.hisp.dhis.message.MessageConversation messageConversation : messageConversations )
+        {
+            messageConversation.setAccess( aclService.getAccess( messageConversation ) );
+        }
+
+        renderService.toJson( response.getOutputStream(), messageConversations );
+    }
+
+    @RequestMapping( value = "/inbox/interpretations", produces = { "application/json", "text/*" } )
+    public void getInboxInterpretations( HttpServletResponse response ) throws Exception
+    {
+        User currentUser = currentUserService.getCurrentUser();
+
+        if ( currentUser == null )
+        {
+            throw new NotAuthenticatedException();
+        }
+
+        response.setContentType( MediaType.APPLICATION_JSON_VALUE );
+        List<Interpretation> interpretations = new ArrayList<>( interpretationService.getInterpretations( 0, MAX_OBJECTS ) );
+
+        for ( Interpretation interpretation : interpretations )
+        {
+            interpretation.setAccess( aclService.getAccess( interpretation ) );
+        }
+
+        renderService.toJson( response.getOutputStream(), interpretations );
     }
 
     @RequestMapping( value = "/dashboard", produces = { "application/json", "text/*" } )
@@ -176,11 +274,28 @@ public class CurrentUserController
         dashboard.setUnreadInterpretations( interpretationService.getNewInterpretationCount() );
 
         response.setContentType( MediaType.APPLICATION_JSON_VALUE );
-        JacksonUtils.toJson( response.getOutputStream(), dashboard );
+        renderService.toJson( response.getOutputStream(), dashboard );
     }
 
-    @RequestMapping( value = { "/profile", "/user-account" }, produces = { "application/json", "text/*" } )
-    public void getUserAccount( HttpServletResponse response ) throws Exception
+    @RequestMapping( value = { "/profile", "/user-account" }, produces = { "application/json", "text/html" } )
+    public void getUserAccountJson( HttpServletResponse response ) throws Exception
+    {
+        UserAccount userAccount = getUserAccount();
+
+        response.setContentType( MediaType.APPLICATION_JSON_VALUE );
+        renderService.toJson( response.getOutputStream(), userAccount );
+    }
+
+    @RequestMapping( value = { "/profile", "/user-account" }, produces = { "application/javascript" } )
+    public void getUserAccountJsonP( @RequestParam( defaultValue = "callback" ) String callback, HttpServletResponse response, HttpServletRequest request ) throws Exception
+    {
+        UserAccount userAccount = getUserAccount();
+
+        response.setContentType( "application/javascript" );
+        renderService.toJsonP( response.getOutputStream(), userAccount, callback );
+    }
+
+    private UserAccount getUserAccount() throws NotAuthenticatedException
     {
         User currentUser = currentUserService.getCurrentUser();
 
@@ -192,6 +307,7 @@ public class CurrentUserController
         UserAccount userAccount = new UserAccount();
 
         // user account
+        userAccount.setUsername( currentUser.getUsername() );
         userAccount.setFirstName( currentUser.getFirstName() );
         userAccount.setSurname( currentUser.getSurname() );
         userAccount.setEmail( currentUser.getEmail() );
@@ -217,15 +333,14 @@ public class CurrentUserController
         userAccount.getSettings().put( KEY_DB_LOCALE, TextUtils.toString( userSettingService.getUserSetting( KEY_DB_LOCALE ) ) );
         userAccount.getSettings().put( KEY_MESSAGE_EMAIL_NOTIFICATION, TextUtils.toString( userSettingService.getUserSetting( KEY_MESSAGE_EMAIL_NOTIFICATION ) ) );
         userAccount.getSettings().put( KEY_MESSAGE_SMS_NOTIFICATION, TextUtils.toString( userSettingService.getUserSetting( KEY_MESSAGE_SMS_NOTIFICATION ) ) );
-
-        response.setContentType( MediaType.APPLICATION_JSON_VALUE );
-        JacksonUtils.toJson( response.getOutputStream(), userAccount );
+        userAccount.getSettings().put( KEY_ANALYSIS_DISPLAY_PROPERTY, TextUtils.toString( userSettingService.getUserSetting( KEY_ANALYSIS_DISPLAY_PROPERTY ) ) );
+        return userAccount;
     }
 
     @RequestMapping( value = { "/profile", "/user-account" }, method = RequestMethod.POST, consumes = "application/json" )
     public void postUserAccountJson( HttpServletResponse response, HttpServletRequest request ) throws Exception
     {
-        UserAccount userAccount = JacksonUtils.fromJson( request.getInputStream(), UserAccount.class );
+        UserAccount userAccount = renderService.fromJson( request.getInputStream(), UserAccount.class );
         User currentUser = currentUserService.getCurrentUser();
 
         if ( currentUser == null )
@@ -264,7 +379,7 @@ public class CurrentUserController
         User currentUser = currentUserService.getCurrentUser();
 
         response.setContentType( MediaType.APPLICATION_JSON_VALUE );
-        JacksonUtils.toJson( response.getOutputStream(), currentUser.getUserCredentials().getAllAuthorities() );
+        renderService.toJson( response.getOutputStream(), currentUser.getUserCredentials().getAllAuthorities() );
     }
 
     @RequestMapping( value = "/authorization/{auth}", produces = { "application/json", "text/*" } )
@@ -275,7 +390,7 @@ public class CurrentUserController
         boolean hasAuth = currentUser != null && currentUser.getUserCredentials().isAuthorized( auth );
 
         response.setContentType( MediaType.APPLICATION_JSON_VALUE );
-        JacksonUtils.toJson( response.getOutputStream(), hasAuth );
+        renderService.toJson( response.getOutputStream(), hasAuth );
     }
 
     @RequestMapping( value = "/recipients", produces = { "application/json", "text/*" } )
@@ -297,13 +412,13 @@ public class CurrentUserController
         }
 
         Recipients recipients = new Recipients();
-        recipients.setOrganisationUnits( new HashSet<OrganisationUnit>( organisationUnitService.getOrganisationUnitsBetweenByName( filter, 0, MAX_OBJECTS ) ) );
+        recipients.setOrganisationUnits( new HashSet<>( organisationUnitService.getOrganisationUnitsBetweenByName( filter, 0, MAX_OBJECTS ) ) );
 
-        recipients.setUsers( new HashSet<User>( userService.getAllUsersBetweenByName( filter, 0, MAX_OBJECTS ) ) );
-        recipients.setUserGroups( new HashSet<UserGroup>( userGroupService.getUserGroupsBetweenByName( filter, 0, MAX_OBJECTS ) ) );
+        recipients.setUsers( new HashSet<>( userService.getAllUsersBetweenByName( filter, 0, MAX_OBJECTS ) ) );
+        recipients.setUserGroups( new HashSet<>( userGroupService.getUserGroupsBetweenByName( filter, 0, MAX_OBJECTS ) ) );
 
         response.setContentType( MediaType.APPLICATION_JSON_VALUE );
-        JacksonUtils.toJson( response.getOutputStream(), recipients );
+        renderService.toJson( response.getOutputStream(), recipients );
     }
 
     @RequestMapping( value = { "/assignedOrganisationUnits", "/organisationUnits" }, produces = { "application/json", "text/*" } )
@@ -316,12 +431,12 @@ public class CurrentUserController
             throw new NotAuthenticatedException();
         }
 
-        Set<OrganisationUnit> userOrganisationUnits = new HashSet<OrganisationUnit>();
+        Set<OrganisationUnit> userOrganisationUnits = new HashSet<>();
         userOrganisationUnits.add( currentUser.getOrganisationUnit() );
 
         if ( parameters.containsKey( "includeChildren" ) && Boolean.parseBoolean( parameters.get( "includeChildren" ) ) )
         {
-            List<OrganisationUnit> children = new ArrayList<OrganisationUnit>();
+            List<OrganisationUnit> children = new ArrayList<>();
 
             for ( OrganisationUnit organisationUnit : userOrganisationUnits )
             {
@@ -332,11 +447,11 @@ public class CurrentUserController
         }
         else if ( parameters.containsKey( "includeDescendants" ) && Boolean.parseBoolean( parameters.get( "includeDescendants" ) ) )
         {
-            List<OrganisationUnit> children = new ArrayList<OrganisationUnit>();
+            List<OrganisationUnit> children = new ArrayList<>();
 
             for ( OrganisationUnit organisationUnit : userOrganisationUnits )
             {
-                children.addAll( organisationUnitService.getOrganisationUnitsWithChildren( organisationUnit.getUid() ) );
+                children.addAll( organisationUnitService.getOrganisationUnitWithChildren( organisationUnit.getUid() ) );
             }
 
             userOrganisationUnits.addAll( children );
@@ -352,7 +467,7 @@ public class CurrentUserController
         Class<?> viewClass = JacksonUtils.getViewClass( viewName );
 
         response.setContentType( MediaType.APPLICATION_JSON_VALUE );
-        JacksonUtils.toJsonWithView( response.getOutputStream(), userOrganisationUnits, viewClass );
+        renderService.toJson( response.getOutputStream(), userOrganisationUnits, viewClass );
     }
 
     @RequestMapping( value = { "/assignedPrograms", "/programs" }, produces = { "application/json", "text/*" } )
@@ -367,19 +482,19 @@ public class CurrentUserController
             throw new NotAuthenticatedException();
         }
 
-        Set<OrganisationUnit> userOrganisationUnits = new HashSet<OrganisationUnit>();
-        Set<OrganisationUnit> organisationUnits = new HashSet<OrganisationUnit>();
-        Set<Program> programs = new HashSet<Program>();
-        Map<String, List<Program>> programAssociations = new HashMap<String, List<Program>>();
+        Set<OrganisationUnit> userOrganisationUnits = new HashSet<>();
+        Set<OrganisationUnit> organisationUnits = new HashSet<>();
+        Set<Program> programs = new HashSet<>();
+        Map<String, List<Program>> programAssociations = new HashMap<>();
         List<Program> userPrograms;
 
         if ( type == null )
         {
-            userPrograms = new ArrayList<Program>( programService.getProgramsByCurrentUser() );
+            userPrograms = new ArrayList<>( programService.getProgramsByCurrentUser() );
         }
         else
         {
-            userPrograms = new ArrayList<Program>( programService.getProgramsByCurrentUser( type ) );
+            userPrograms = new ArrayList<>( programService.getProgramsByCurrentUser( type ) );
         }
 
         if ( currentUserService.currentUserIsSuper() && currentUser.getOrganisationUnits().isEmpty() )
@@ -393,18 +508,18 @@ public class CurrentUserController
 
         if ( parameters.containsKey( "includeDescendants" ) && Boolean.parseBoolean( parameters.get( "includeDescendants" ) ) )
         {
-            List<OrganisationUnit> children = new ArrayList<OrganisationUnit>();
+            List<OrganisationUnit> children = new ArrayList<>();
 
             for ( OrganisationUnit organisationUnit : userOrganisationUnits )
             {
-                children.addAll( organisationUnitService.getOrganisationUnitsWithChildren( organisationUnit.getUid() ) );
+                children.addAll( organisationUnitService.getOrganisationUnitWithChildren( organisationUnit.getUid() ) );
             }
 
             userOrganisationUnits.addAll( children );
         }
         else
         {
-            List<OrganisationUnit> children = new ArrayList<OrganisationUnit>();
+            List<OrganisationUnit> children = new ArrayList<>();
 
             for ( OrganisationUnit organisationUnit : userOrganisationUnits )
             {
@@ -416,7 +531,7 @@ public class CurrentUserController
 
         for ( OrganisationUnit organisationUnit : userOrganisationUnits )
         {
-            List<Program> ouPrograms = new ArrayList<Program>( programService.getPrograms( organisationUnit ) );
+            List<Program> ouPrograms = new ArrayList<>( programService.getPrograms( organisationUnit ) );
 
             if ( !ouPrograms.isEmpty() )
             {
@@ -472,12 +587,13 @@ public class CurrentUserController
         }
 
         response.setContentType( MediaType.APPLICATION_JSON_VALUE );
-        JacksonUtils.toJson( response.getOutputStream(), forms );
+        renderService.toJson( response.getOutputStream(), forms );
     }
 
     @SuppressWarnings( "unchecked" )
     @RequestMapping( value = { "/assignedDataSets", "/dataSets" }, produces = { "application/json", "text/*" } )
-    public void getDataSets( HttpServletResponse response, @RequestParam Map<String, String> parameters ) throws IOException, NotAuthenticatedException
+    public void getDataSets( @RequestParam( defaultValue = "false" ) boolean optionSets, @RequestParam( defaultValue = "50" ) int maxOptions,
+        HttpServletResponse response, @RequestParam Map<String, String> parameters ) throws IOException, NotAuthenticatedException
     {
         User currentUser = currentUserService.getCurrentUser();
 
@@ -488,17 +604,17 @@ public class CurrentUserController
 
         Forms forms = new Forms();
 
-        Set<OrganisationUnit> organisationUnits = new HashSet<OrganisationUnit>();
+        Set<OrganisationUnit> organisationUnits = new HashSet<>();
         Set<DataSet> userDataSets;
-        Set<OrganisationUnit> userOrganisationUnits = new HashSet<OrganisationUnit>( currentUser.getOrganisationUnits() );
+        Set<OrganisationUnit> userOrganisationUnits = new HashSet<>( currentUser.getOrganisationUnits() );
 
         if ( currentUser.getUserCredentials().getAllAuthorities().contains( "ALL" ) )
         {
-            userDataSets = new HashSet<DataSet>( dataSetService.getAllDataSets() );
+            userDataSets = new HashSet<>( dataSetService.getAllDataSets() );
 
             if ( userOrganisationUnits.isEmpty() )
             {
-                userOrganisationUnits = new HashSet<OrganisationUnit>( organisationUnitService.getRootOrganisationUnits() );
+                userOrganisationUnits = new HashSet<>( organisationUnitService.getRootOrganisationUnits() );
             }
         }
         else
@@ -508,18 +624,18 @@ public class CurrentUserController
 
         if ( parameters.containsKey( "includeDescendants" ) && Boolean.parseBoolean( parameters.get( "includeDescendants" ) ) )
         {
-            List<OrganisationUnit> children = new ArrayList<OrganisationUnit>();
+            List<OrganisationUnit> children = new ArrayList<>();
 
             for ( OrganisationUnit organisationUnit : userOrganisationUnits )
             {
-                children.addAll( organisationUnitService.getOrganisationUnitsWithChildren( organisationUnit.getUid() ) );
+                children.addAll( organisationUnitService.getOrganisationUnitWithChildren( organisationUnit.getUid() ) );
             }
 
             userOrganisationUnits.addAll( children );
         }
         else
         {
-            List<OrganisationUnit> children = new ArrayList<OrganisationUnit>();
+            List<OrganisationUnit> children = new ArrayList<>();
 
             for ( OrganisationUnit organisationUnit : userOrganisationUnits )
             {
@@ -567,14 +683,40 @@ public class CurrentUserController
                 formDataSet.setId( uid );
                 formDataSet.setLabel( dataSet.getDisplayName() );
 
-                forms.getForms().put( uid, FormUtils.fromDataSet( dataSet ) );
+                forms.getForms().put( uid, FormUtils.fromDataSet( dataSet, false ) );
                 formOrganisationUnit.getDataSets().add( formDataSet );
+
+                if ( optionSets )
+                {
+                    for ( DataElement dataElement : dataSet.getDataElements() )
+                    {
+                        if ( dataElement.hasOptionSet() )
+                        {
+                            int size = maxOptions;
+
+                            if ( size >= dataElement.getOptionSet().getOptions().size() )
+                            {
+                                size = dataElement.getOptionSet().getOptions().size();
+                            }
+
+                            forms.getOptionSets().put( dataElement.getOptionSet().getUid(), dataElement.getOptionSet().getOptionValues().subList( 0, size - 1 ) );
+                        }
+                    }
+                }
             }
 
             forms.getOrganisationUnits().put( formOrganisationUnit.getId(), formOrganisationUnit );
         }
 
         response.setContentType( MediaType.APPLICATION_JSON_VALUE );
-        JacksonUtils.toJson( response.getOutputStream(), forms );
+        renderService.toJson( response.getOutputStream(), forms );
+    }
+
+    @RequestMapping( value = "/dataApprovalLevels", produces = { "application/json", "text/*" } )
+    public void getApprovalLevels( HttpServletResponse response ) throws IOException
+    {
+        List<DataApprovalLevel> approvalLevels = approvalLevelService.getUserDataApprovalLevels();
+        response.setContentType( MediaType.APPLICATION_JSON_VALUE );
+        renderService.toJson( response.getOutputStream(), approvalLevels );
     }
 }

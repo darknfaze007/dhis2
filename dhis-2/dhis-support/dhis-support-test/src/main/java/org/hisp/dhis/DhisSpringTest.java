@@ -43,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Lars Helge Overland
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations={"classpath*:/META-INF/dhis/beans.xml"})
+@ContextConfiguration( locations = { "classpath*:/META-INF/dhis/beans.xml", "classpath*:/META-INF/dhis/security.xml" } )
 @Transactional
 public abstract class DhisSpringTest
     extends DhisConvenienceTest implements ApplicationContextAware
@@ -54,11 +54,12 @@ public abstract class DhisSpringTest
 
     protected ApplicationContext context;
 
+    @Override
     public void setApplicationContext( ApplicationContext context )
     {
         this.context = context;
     }
-
+    
     // -------------------------------------------------------------------------
     // Fixture
     // -------------------------------------------------------------------------
@@ -66,7 +67,7 @@ public abstract class DhisSpringTest
     @Before
     public final void before()
         throws Exception
-    {       
+    {
         executeStartupRoutines();
         
         setUpTest();

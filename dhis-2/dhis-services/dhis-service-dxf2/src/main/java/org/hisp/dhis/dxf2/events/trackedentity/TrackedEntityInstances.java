@@ -43,14 +43,14 @@ import java.util.List;
 @JacksonXmlRootElement( localName = "trackedEntityInstances", namespace = DxfNamespaces.DXF_2_0 )
 public class TrackedEntityInstances
 {
-    private List<TrackedEntityInstance> trackedEntityInstances = new ArrayList<TrackedEntityInstance>();
+    private List<TrackedEntityInstance> trackedEntityInstances = new ArrayList<>();
 
     public TrackedEntityInstances()
     {
     }
 
-    @JsonProperty( "trackedEntityInstanceList" )
-    @JacksonXmlElementWrapper( localName = "trackedEntityInstanceList", namespace = DxfNamespaces.DXF_2_0 )
+    @JsonProperty( "trackedEntityInstances" )
+    @JacksonXmlElementWrapper( localName = "trackedEntityInstances", useWrapping = false, namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "trackedEntityInstance", namespace = DxfNamespaces.DXF_2_0 )
     public List<TrackedEntityInstance> getTrackedEntityInstances()
     {

@@ -140,7 +140,7 @@ public class GenerateStatisticalProgramReportAction
         this.type = type;
     }
 
-    private Collection<ProgramInstance> programInstances = new ArrayList<ProgramInstance>();
+    private Collection<ProgramInstance> programInstances = new ArrayList<>();
 
     public Collection<ProgramInstance> getProgramInstances()
     {
@@ -158,6 +158,7 @@ public class GenerateStatisticalProgramReportAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -172,7 +173,7 @@ public class GenerateStatisticalProgramReportAction
         // Get orgunitIds
         // ---------------------------------------------------------------------
 
-        Collection<Integer> orgunitIds = new HashSet<Integer>();
+        Collection<Integer> orgunitIds = new HashSet<>();
 
         if ( facilityLB.equals( "selected" ) )
         {

@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
 import org.hisp.dhis.common.BaseLinkableObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.event.EventStatus;
@@ -53,7 +54,13 @@ public class Event extends BaseLinkableObject
 
     private String programStage;
 
+    private String enrollment;
+
+    private EventStatus enrollmentStatus;
+
     private String orgUnit;
+    
+    private String orgUnitName;
 
     private String trackedEntityInstance;
 
@@ -65,9 +72,11 @@ public class Event extends BaseLinkableObject
 
     private Coordinate coordinate;
 
-    private List<DataValue> dataValues = new ArrayList<DataValue>();
+    private List<DataValue> dataValues = new ArrayList<>();
 
-    private List<Note> notes = new ArrayList<Note>();
+    private List<Note> notes = new ArrayList<>();
+    
+    private Boolean followup;
 
     public Event()
     {
@@ -83,6 +92,18 @@ public class Event extends BaseLinkableObject
     public void setEvent( String event )
     {
         this.event = event;
+    }
+
+    @JsonProperty( required = true )
+    @JacksonXmlProperty( isAttribute = true )
+    public EventStatus getEnrollmentStatus()
+    {
+        return enrollmentStatus;
+    }
+
+    public void setEnrollmentStatus( EventStatus programStatus )
+    {
+        this.enrollmentStatus = programStatus;
     }
 
     @JsonProperty( required = true )
@@ -121,6 +142,18 @@ public class Event extends BaseLinkableObject
         this.programStage = programStage;
     }
 
+    @JsonProperty( required = true )
+    @JacksonXmlProperty( isAttribute = true )
+    public String getEnrollment()
+    {
+        return enrollment;
+    }
+
+    public void setEnrollment( String enrollment )
+    {
+        this.enrollment = enrollment;
+    }
+
     @JsonProperty
     @JacksonXmlProperty( isAttribute = true )
     public String getOrgUnit()
@@ -133,6 +166,18 @@ public class Event extends BaseLinkableObject
         this.orgUnit = orgUnit;
     }
 
+    @JsonProperty
+    @JacksonXmlProperty( isAttribute = true )
+    public String getOrgUnitName()
+    {
+        return orgUnitName;
+    }
+
+    public void setOrgUnitName( String orgUnitName )
+    {
+        this.orgUnitName = orgUnitName;
+    }
+    
     @JsonProperty
     @JacksonXmlProperty( isAttribute = true )
     public String getTrackedEntityInstance()
@@ -217,6 +262,18 @@ public class Event extends BaseLinkableObject
     public void setNotes( List<Note> notes )
     {
         this.notes = notes;
+    }
+    
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    public Boolean getFollowup()
+    {
+        return followup;
+    }
+
+    public void setFollowup( Boolean followup )
+    {
+        this.followup = followup;
     }
 
     @Override

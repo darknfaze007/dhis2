@@ -28,22 +28,20 @@ package org.hisp.dhis.dashboard.usergroup.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.opensymphony.xwork2.Action;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.hisp.dhis.attribute.AttributeService;
-import org.hisp.dhis.hibernate.exception.UpdateAccessDeniedException;
-import org.hisp.dhis.security.SecurityService;
-import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.system.util.AttributeUtils;
+import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserGroup;
 import org.hisp.dhis.user.UserGroupService;
 import org.hisp.dhis.user.UserService;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.hisp.dhis.setting.SystemSettingManager.KEY_ONLY_MANAGE_WITHIN_USER_GROUPS;
+import com.opensymphony.xwork2.Action;
 
 public class UpdateUserGroupAction
     implements Action
@@ -53,6 +51,13 @@ public class UpdateUserGroupAction
     public void setUserService( UserService userService )
     {
         this.userService = userService;
+    }
+
+    private CurrentUserService currentUserService;
+
+    public void setCurrentUserService( CurrentUserService currentUserService )
+    {
+        this.currentUserService = currentUserService;
     }
 
     private UserGroupService userGroupService;
@@ -69,29 +74,15 @@ public class UpdateUserGroupAction
         this.attributeService = attributeService;
     }
 
-    private SystemSettingManager systemSettingManager;
-
-    public void setSystemSettingManager( SystemSettingManager systemSettingManager )
-    {
-        this.systemSettingManager = systemSettingManager;
-    }
-
-    private SecurityService securityService;
-
-    public void setSecurityService( SecurityService securityService )
-    {
-        this.securityService = securityService;
-    }
-
     // -------------------------------------------------------------------------
     // Parameters
     // -------------------------------------------------------------------------
 
-    private List<Integer> groupMembersList;
+    private List<String> usersSelected;
 
-    public void setGroupMembersList( List<Integer> groupMembersList )
+    public void setUsersSelected( List<String> usersSelected )
     {
-        this.groupMembersList = groupMembersList;
+        this.usersSelected = usersSelected;
     }
 
     private String name;
@@ -119,58 +110,45 @@ public class UpdateUserGroupAction
     // Action Implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        boolean writeGroupRequired = (Boolean) systemSettingManager.getSystemSetting( KEY_ONLY_MANAGE_WITHIN_USER_GROUPS, false );
+        if ( usersSelected == null )
+        {
+            usersSelected = new ArrayList<>();
+        }
 
         UserGroup userGroup = userGroupService.getUserGroup( userGroupId );
 
-        Set<User> userList = new HashSet<User>();
-
-        for ( Integer groupMember : groupMembersList )
+        if ( !userGroup.getManagedByGroups().isEmpty() && !currentUserService.currentUserIsSuper() )
         {
-            User user = userService.getUser( groupMember );
-            userList.add( user );
+            //TODO: Allow user with F_USER_ADD_WITHIN_MANAGED_GROUP to modify their managed groups
+            //as long as they are not loosing or gaining users to manage.
 
-            if ( writeGroupRequired && !userGroup.getMembers().contains( user) && !userService.canUpdate( user.getUserCredentials() ) )
-            {
-                throw new UpdateAccessDeniedException( "You don't have permission to add all selected users to this group" );
-            }
+            return ERROR;
         }
 
-        if ( writeGroupRequired )
+        Set<User> users = new HashSet<>();
+
+        for ( String userUid : usersSelected )
         {
-            for ( User member : userGroup.getMembers() )
+            User user = userService.getUser( userUid );
+
+            if ( user == null )
             {
-                if ( !userList.contains( member ) ) // Trying to remove member user from group.
-                {
-                    boolean otherGroupFound = false;
-
-                    for ( UserGroup ug : member.getGroups() )
-                    {
-                        if ( !userGroup.equals( ug ) && securityService.canWrite( ug ) )
-                        {
-                            otherGroupFound = true;
-                            break;
-                        }
-                    }
-
-                    if ( !otherGroupFound )
-                    {
-                        throw new UpdateAccessDeniedException( "You can't remove member who belongs to no other user groups that you control" );
-                    }
-                }
+                continue;
             }
+
+            users.add( user );
         }
 
         userGroup.setName( name );
-        userGroup.updateUsers( userList );
+        userGroup.updateUsers( users );
 
         if ( jsonAttributeValues != null )
         {
-            AttributeUtils.updateAttributeValuesFromJson( userGroup.getAttributeValues(), 
-                jsonAttributeValues, attributeService );
+            AttributeUtils.updateAttributeValuesFromJson( userGroup.getAttributeValues(), jsonAttributeValues, attributeService );
         }
 
         userGroupService.updateUserGroup( userGroup );

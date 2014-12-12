@@ -306,10 +306,18 @@ public class UpdateDataSetAction
         this.jsonAttributeValues = jsonAttributeValues;
     }
 
+    private boolean mobile;
+    
+    public void setMobile( boolean mobile )
+    {
+        this.mobile = mobile;
+    }
+    
     // -------------------------------------------------------------------------
     // Action
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -321,7 +329,7 @@ public class UpdateDataSetAction
         shortName = nullIfEmpty( shortName );
         description = nullIfEmpty( description );
 
-        Set<DataElement> dataElements = new HashSet<DataElement>();
+        Set<DataElement> dataElements = new HashSet<>();
 
         MapLegendSet legendSet = mappingService.getMapLegendSet( selectedLegendSetId );
 
@@ -330,7 +338,7 @@ public class UpdateDataSetAction
             dataElements.add( dataElementService.getDataElement( id ) );
         }
 
-        Set<Indicator> indicators = new HashSet<Indicator>();
+        Set<Indicator> indicators = new HashSet<>();
 
         for ( String id : inSelected )
         {
@@ -345,11 +353,11 @@ public class UpdateDataSetAction
         dataSet.setTimelyDays( timelyDays );
         dataSet.setSkipAggregation( skipAggregation );
 
-        if ( !(equalsNullSafe( name, dataSet.getName() ) &&
+        if ( !( equalsNullSafe( name, dataSet.getName() ) &&
             periodType.equals( dataSet.getPeriodType() ) &&
             dataElements.equals( dataSet.getDataElements() ) &&
             indicators.equals( dataSet.getIndicators() ) &&
-            renderAsTabs == dataSet.isRenderAsTabs()) )
+            renderAsTabs == dataSet.isRenderAsTabs() ) )
         {
             dataSet.increaseVersion(); // Check if version must be updated
         }
@@ -367,6 +375,7 @@ public class UpdateDataSetAction
         dataSet.setNoValueRequiresComment( noValueRequiresComment );
         dataSet.setNotifyCompletingUser( notifyCompletingUser );
         dataSet.setApproveData( approveData );
+        dataSet.setMobile( mobile );
         dataSet.setSkipOffline( skipOffline );
         dataSet.setDataElementDecoration( dataElementDecoration );
         dataSet.setRenderAsTabs( renderAsTabs );

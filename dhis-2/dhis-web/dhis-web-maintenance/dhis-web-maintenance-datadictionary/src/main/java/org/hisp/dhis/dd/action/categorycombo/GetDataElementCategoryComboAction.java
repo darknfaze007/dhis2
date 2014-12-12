@@ -73,14 +73,14 @@ public class GetDataElementCategoryComboAction
         return dataElementCategoryCombo;
     }
 
-    private Collection<DataElementCategory> dataElementCategories = new ArrayList<DataElementCategory>();
+    private Collection<DataElementCategory> dataElementCategories = new ArrayList<>();
 
     public Collection<DataElementCategory> getDataElementCategories()
     {
         return dataElementCategories;
     }
 
-    private Collection<DataElementCategory> allDataElementCategories = new ArrayList<DataElementCategory>();
+    private Collection<DataElementCategory> allDataElementCategories = new ArrayList<>();
 
     public Collection<DataElementCategory> getAllDataElementCategories()
     {
@@ -91,6 +91,7 @@ public class GetDataElementCategoryComboAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         dataElementCategoryCombo = dataElementCategoryService.getDataElementCategoryCombo( id );

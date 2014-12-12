@@ -74,9 +74,27 @@ public class ListUtils
      */
     public static <T> void removeAll( List<T> list, Integer... indexes )
     {
-        List<Integer> inx = new ArrayList<Integer>( Arrays.asList( indexes ) );
+        List<Integer> inx = new ArrayList<>( Arrays.asList( indexes ) );
         
         removeAll( list, inx );
+    }
+    
+    /**
+     * Retains only elements in the give list that are part of the given retain
+     * list.
+     * 
+     * @param list the target list.
+     * @param retain the elements to retain in the target list.
+     */
+    public static <T> List<T> retainAll( List<T> list, List<T> retain )
+    {
+        if ( list == null || retain == null )
+        {
+            return list;
+        }
+        
+        list.retainAll( retain );
+        return list;
     }
     
     /**
@@ -87,7 +105,7 @@ public class ListUtils
      */
     public static <T> List<T> getAtIndexes( List<T> list, List<Integer> indexes )
     {
-        List<T> elements = new ArrayList<T>();
+        List<T> elements = new ArrayList<>();
         
         for ( Integer index : indexes )
         {
@@ -132,9 +150,9 @@ public class ListUtils
      * @param comparator the comparator.
      * @return a set of duplicates from the given list.
      */
-    public static <T> Collection<T> getDuplicates( List<T> list, Comparator<T> comparator )
+    public static <T> Set<T> getDuplicates( List<T> list, Comparator<T> comparator )
     {
-        Set<T> duplicates = new HashSet<T>();
+        Set<T> duplicates = new HashSet<>();
         
         Collections.sort( list, comparator );
         
@@ -152,6 +170,28 @@ public class ListUtils
         
         return duplicates;
     }
+
+    /**
+     * Returns the duplicates in the given list.
+     * 
+     * @param list the list.
+     * @return a set of duplicates from the given list.
+     */
+    public static <T> Set<T> getDuplicates( List<T> list )
+    {
+        Set<T> duplicates = new HashSet<>();
+        UniqueArrayList<T> uniqueElements = new UniqueArrayList<>();
+        
+        for ( T element : list )
+        {
+            if ( !uniqueElements.add( element ) )
+            {
+                duplicates.add( element );
+            }
+        }
+        
+        return duplicates;
+    }
     
     /**
      * Returns a Collection with the given items.
@@ -159,9 +199,10 @@ public class ListUtils
      * @param items the items which should be included in the Collection.
      * @return a Collection.
      */
-    public static <T> Collection<T> getCollection( T... items )
+    @SafeVarargs
+    public static final <T> Collection<T> getCollection( final T... items )
     {
-        List<T> list = new ArrayList<T>();
+        List<T> list = new ArrayList<>();
         
         for ( T item : items )
         {
@@ -177,9 +218,10 @@ public class ListUtils
      * @param items the items which should be included in the List.
      * @return a List.
      */
-    public static <T> List<T> getList( T... items )
+    @SafeVarargs
+    public static final <T> List<T> getList( final T... items )
     {
-        List<T> list = new ArrayList<T>();
+        List<T> list = new ArrayList<>();
         
         for ( T item : items )
         {
@@ -228,5 +270,24 @@ public class ListUtils
         int end = start + max;
         
         return list.subList( Math.max( 0, start ), Math.min( list.size(), end ) );
+    }
+    
+    /**
+     * Unions the given array of lists into a single list.
+     * 
+     * @param lists the array of lists.
+     * @return a union of the given lists.
+     */
+    @SafeVarargs
+    public static final <T> List<T> union( final List<T>... lists )
+    {
+        final List<T> union = new ArrayList<>();
+        
+        for ( List<T> list : lists )
+        {
+            union.addAll( list );
+        }
+        
+        return union;
     }
 }

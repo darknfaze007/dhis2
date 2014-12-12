@@ -36,7 +36,11 @@ import java.util.Map;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataset.DataSet;
+import org.hisp.dhis.eventchart.EventChart;
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeDimension;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
@@ -47,7 +51,7 @@ public class BaseAnalyticalObjectTest
     @Test
     public void testSortKeys()
     {
-        Map<String, Double> valueMap = new HashMap<String, Double>();
+        Map<String, Object> valueMap = new HashMap<>();
         
         valueMap.put( "b1-a1-c1", 1d );
         valueMap.put( "a2-c2-b2", 2d );
@@ -62,12 +66,17 @@ public class BaseAnalyticalObjectTest
         assertTrue( valueMap.containsKey( "a3-b3-c3" ) );
         assertTrue( valueMap.containsKey( "a4-b4-c4" ) );
         
-        assertEquals( 1d, valueMap.get( "a1-b1-c1" ), 0.01 );
-        assertEquals( 2d, valueMap.get( "a2-b2-c2" ), 0.01 );
-        assertEquals( 3d, valueMap.get( "a3-b3-c3" ), 0.01 );
-        assertEquals( 4d, valueMap.get( "a4-b4-c4" ), 0.01 );
+        Object d1 = 1d;
+        Object d2 = 2d;
+        Object d3 = 3d;
+        Object d4 = 4d;
         
-        valueMap = new HashMap<String, Double>();
+        assertEquals( d1, valueMap.get( "a1-b1-c1" ) );
+        assertEquals( d2, valueMap.get( "a2-b2-c2" ) );
+        assertEquals( d3, valueMap.get( "a3-b3-c3" ) );
+        assertEquals( d4, valueMap.get( "a4-b4-c4" ) );
+        
+        valueMap = new HashMap<>();
         
         valueMap.put( "b1", 1d );
         valueMap.put( "b2", 2d );
@@ -78,10 +87,10 @@ public class BaseAnalyticalObjectTest
         assertTrue( valueMap.containsKey( "b1" ) );
         assertTrue( valueMap.containsKey( "b2" ) );
         
-        assertEquals( 1d, valueMap.get( "b1" ), 0.01 );
-        assertEquals( 2d, valueMap.get( "b2" ), 0.01 );
+        assertEquals( d1, valueMap.get( "b1" ) );
+        assertEquals( d2, valueMap.get( "b2" ) );
 
-        valueMap = new HashMap<String, Double>();
+        valueMap = new HashMap<>();
         
         valueMap.put( null, 1d );
         
@@ -90,6 +99,37 @@ public class BaseAnalyticalObjectTest
         assertEquals( 0, valueMap.size() );
     }
     
+    @Test
+    public void testSortKey()
+    {
+        String expected = "a-b-c";
+        assertEquals( expected, BaseAnalyticalObject.sortKey( "b-c-a" ) );
+    }
+    
+    @Test
+    public void testPopulateAnalyticalProperties()
+    {
+        TrackedEntityAttribute tea = new TrackedEntityAttribute();
+
+        TrackedEntityAttributeDimension tead = new TrackedEntityAttributeDimension( tea, "EQ:10" );
+        
+        EventChart chart = new EventChart();
+        chart.getColumnDimensions().add( tea.getUid() );
+        chart.getAttributeDimensions().add( tead );
+        
+        chart.populateAnalyticalProperties();
+        
+        assertEquals( 1, chart.getColumns().size() );
+        
+        DimensionalObject dim = chart.getColumns().get( 0 );
+        
+        assertNotNull( dim );
+        assertEquals( tea.getDimension(), dim.getDimension() );
+        assertEquals( DimensionType.TRACKED_ENTITY_ATTRIBUTE, dim.getDimensionType() );
+        assertEquals( AnalyticsType.EVENT, dim.getAnalyticsType() );
+        assertEquals( tead.getFilter(), dim.getFilter() );
+    }
+
     @Test
     public void testGetIdentifier()
     {
@@ -101,11 +141,11 @@ public class BaseAnalyticalObjectTest
         oB.setUid( "b1" );
         oC.setUid( "c1" );
         
-        List<NameableObject> column = new ArrayList<NameableObject>();
+        List<NameableObject> column = new ArrayList<>();
         column.add( oC );
         column.add( oA );
         
-        List<NameableObject> row = new ArrayList<NameableObject>();
+        List<NameableObject> row = new ArrayList<>();
         row.add( oB );
         
         assertEquals( "a1-b1-c1", BaseAnalyticalObject.getIdentifier( column, row ) );

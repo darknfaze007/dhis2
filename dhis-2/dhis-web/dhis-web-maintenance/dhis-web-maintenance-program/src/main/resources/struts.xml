@@ -284,7 +284,7 @@
     <!-- ProgramStage -->
 
     <action name="programStage"
-      class="org.hisp.dhis.trackedentity.action.programstage.GetProgramStageListAction">
+      class="org.hisp.dhis.trackedentity.action.program.GetProgramAction">
       <result name="success" type="velocity">/main.vm</result>
       <param name="page">/dhis-web-maintenance-program/programStage.vm</param>
       <param name="menu">/dhis-web-maintenance-program/menu.vm</param>
@@ -362,18 +362,26 @@
       <param name="requiredAuthorities">F_PROGRAMSTAGE_DELETE</param>
     </action>
 
-    <action name="saveProgramStageSortOder"
-      class="org.hisp.dhis.trackedentity.action.programstage.SaveProgramStageSortOrderAction">
-      <result name="success" type="velocity-json">
-        /dhis-web-commons/ajax/jsonResponseSuccess.vm
-      </result>
-    </action>
-
     <action name="programStageList"
       class="org.hisp.dhis.trackedentity.action.programstage.GetProgramStageListAction">
       <result name="success" type="velocity">/content.vm</result>
       <param name="page">/dhis-web-maintenance-program/programStageList.vm</param>
       <param name="javascripts">javascript/programStage.js</param>
+    </action>
+    
+    <action name="sortProgramStagesForm"
+      class="org.hisp.dhis.trackedentity.action.program.GetProgramAction">
+      <result name="success" type="velocity">/main.vm</result>
+      <param name="page">/dhis-web-maintenance-program/sortProgramStagesForm.vm</param>
+      <param name="javascripts">javascript/programStage.js</param>
+      <param name="stylesheets">style/basic.css</param>
+      <param name="requiredAuthorities">F_PROGRAMSTAGE_ADD</param>
+    </action>
+    
+    <action name="sortProgramStages"
+      class="org.hisp.dhis.trackedentity.action.programstage.SortProgramStagesAction">
+      <result name="success" type="redirect">programStage.action?id=${id}</result>
+      <param name="requiredAuthorities">F_PROGRAMSTAGE_ADD</param>
     </action>
 
     <!-- Program stage section -->
@@ -545,7 +553,7 @@
       <param name="page">/dhis-web-maintenance-program/trackedEntityForm.vm</param>
       <param name="menu">/dhis-web-maintenance-program/menu.vm</param>
       <param name="javascripts">javascript/trackedEntityForm.js</param>
-      <param name="requiredAuthorities">F_ADD_TRACKED_ENTITY_FORM</param>
+      <param name="requiredAuthorities">F_TRACKED_ENTITY_FORM_MANAGEMENT</param>
     </action>
 
     <action name="viewTrackedEntityForm"
@@ -558,12 +566,14 @@
         javascript/viewTrackedEntityForm.js
       </param>
       <param name="stylesheets">style/basic.css</param>
+      <param name="requiredAuthorities">F_TRACKED_ENTITY_FORM_ADD</param>
     </action>
 
     <action name="saveTrackedEntityForm"
       class="org.hisp.dhis.trackedentity.action.dataentryform.SaveTrackedEntityFormAction">
       <result name="success" type="redirect">trackedEntityForm.action
       </result>
+      <param name="requiredAuthorities">F_TRACKED_ENTITY_FORM_ADD</param>
     </action>
 
     <action name="autoSaveTrackedEntityForm"
@@ -571,6 +581,7 @@
       <result name="success" type="velocity-json">
         /dhis-web-commons/ajax/jsonResponseSuccess.vm
       </result>
+      <param name="requiredAuthorities">F_TRACKED_ENTITY_FORM_ADD</param>
     </action>
 
     <action name="removeDataEntryForm"
@@ -584,6 +595,7 @@
       class="org.hisp.dhis.trackedentity.action.dataentryform.RemoveTrackedEntityFormAction">
       <result name="success" type="redirect">trackedEntityForm.action
       </result>
+      <param name="requiredAuthorities">F_TRACKED_ENTITY_FORM_DELETE</param>
     </action>
 
     <action name="showTrackedEntityForm"
@@ -591,6 +603,7 @@
       <result name="success" type="velocity">
         /dhis-web-maintenance-program/dataEntryFormCode.vm
       </result>
+      <param name="requiredAuthorities">F_TRACKED_ENTITY_FORM_ADD</param>
     </action>
 
     <action name="setAutoSaveTrackedEntityFormSetting"
@@ -598,6 +611,7 @@
       <result name="success" type="velocity-json">
         ../dhis-web-commons/ajax/jsonResponseSuccess.vm
       </result>
+      <param name="requiredAuthorities">F_TRACKED_ENTITY_FORM_ADD</param>
     </action>
 
     <!-- Tracked Entity Attribute Group -->
@@ -799,6 +813,13 @@
         /dhis-web-commons/ajax/jsonProgramStages.vm
       </result>
       <param name="onExceptionReturn">plainTextError</param>
+    </action>
+    
+     <action name="getOptions"
+      class="org.hisp.dhis.trackedentity.action.caseaggregation.GetOptionsAction">
+      <result name="success" type="velocity-json">
+        /dhis-web-maintenance-program/jsonOptions.vm
+      </result>
     </action>
 
     <!-- Validation - ValidationCriteria -->
@@ -1209,7 +1230,7 @@
       <result name="success" type="velocity">/main.vm</result>
       <param name="page">/dhis-web-maintenance-program/updateTrackedEntity.vm</param>
       <param name="javascripts">javascript/trackedEntity.js</param>
-      <param name="requiredAuthorities">F_TRACKED_ENTITY_ADD</param>
+      <param name="requiredAuthorities">F_TRACKED_ENTITY_UPDATE</param>
     </action>
 
     <action name="updateTrackedEntity"

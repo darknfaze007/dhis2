@@ -47,6 +47,7 @@ import org.apache.commons.lang.StringUtils;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
+import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.dataset.CompleteDataSetRegistration;
 import org.hisp.dhis.dataset.CompleteDataSetRegistrationService;
 import org.hisp.dhis.dataset.DataSet;
@@ -73,7 +74,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DataValueSMSListener
     implements IncomingSmsListener
 {
-   
+
     private static final String defaultPattern = "([a-zA-Z]+)\\s*(\\d+)";
 
     private CompleteDataSetRegistrationService registrationService;
@@ -91,6 +92,8 @@ public class DataValueSMSListener
     private DataSetService dataSetService;
 
     private IncomingSmsService incomingSmsService;
+
+    private DataElementService dataElementService;
 
     @Transactional
     @Override
@@ -203,7 +206,7 @@ public class DataValueSMSListener
 
     private Map<String, String> parse( String sms, SMSCommand smsCommand )
     {
-        HashMap<String, String> output = new HashMap<String, String>();
+        HashMap<String, String> output = new HashMap<>();
         Pattern pattern = Pattern.compile( defaultPattern );
         if ( !StringUtils.isBlank( smsCommand.getSeparator() ) )
         {
@@ -264,7 +267,7 @@ public class DataValueSMSListener
 
     private Collection<OrganisationUnit> getOrganisationUnitsByPhoneNumber( String sender )
     {
-        Collection<OrganisationUnit> orgUnits = new ArrayList<OrganisationUnit>();
+        Collection<OrganisationUnit> orgUnits = new ArrayList<>();
         Collection<User> users = userService.getUsersByPhoneNumber( sender );
         for ( User u : users )
         {
@@ -407,7 +410,7 @@ public class DataValueSMSListener
             }
 
             dv.setValue( value );
-            dv.setTimestamp( new java.util.Date() );
+            dv.setLastUpdated( new java.util.Date() );
             dv.setStoredBy( storedBy );
 
             if ( newDataValue )
@@ -417,6 +420,77 @@ public class DataValueSMSListener
             else
             {
                 dataValueService.updateDataValue( dv );
+            }
+        }
+
+        if ( code.getFormula() != null )
+        {
+            try
+            {
+
+                // +de
+                String formula = code.getFormula();
+
+                String targetDataElementId = formula.substring( 1, formula.length() );
+                String operation = String.valueOf( formula.charAt( 0 ) );
+
+                System.out.println( "Operation: " + operation );
+
+                DataElement targetDataElement = dataElementService.getDataElement( Integer
+                    .parseInt( targetDataElementId ) );
+
+                if ( targetDataElement == null )
+                {
+                    return false;
+                }
+
+                DataValue targetDataValue = dataValueService.getDataValue( targetDataElement, period, orgunit,
+                    dataElementCategoryService.getDefaultDataElementCategoryOptionCombo() );
+                int targetValue = 0;
+                boolean newTargetDataValue = false;
+                if ( targetDataValue == null )
+                {
+                    targetDataValue = new DataValue();
+                    targetDataValue.setCategoryOptionCombo( dataElementCategoryService
+                        .getDefaultDataElementCategoryOptionCombo() );
+                    targetDataValue.setSource( orgunit );
+                    targetDataValue.setDataElement( targetDataElement );
+                    targetDataValue.setPeriod( period );
+                    targetDataValue.setComment( "" );
+                    newTargetDataValue = true;
+                }
+                else
+                {
+                    targetValue = Integer.parseInt( targetDataValue.getValue() );
+                }
+
+                if ( operation.equals( "+" ) )
+                {
+                    targetValue = targetValue + Integer.parseInt( value );
+                }
+                else if ( operation.equals( "-" ) )
+                {
+                    targetValue = targetValue - Integer.parseInt( value );
+                }
+
+
+                targetDataValue.setValue( String.valueOf( targetValue ) );
+                targetDataValue.setLastUpdated( new java.util.Date() );
+                targetDataValue.setStoredBy( storedBy );
+                if ( newTargetDataValue )
+                {
+                    dataValueService.addDataValue( targetDataValue );
+                }
+                else
+                {
+                    dataValueService.updateDataValue( targetDataValue );
+                }
+
+            }
+            catch ( Exception e )
+            {
+                e.printStackTrace();
+                return false;
             }
         }
 
@@ -531,8 +605,8 @@ public class DataValueSMSListener
 
         Period period = null;
 
-        Map<String, DataValue> codesWithDataValues = new TreeMap<String, DataValue>();
-        List<String> codesWithoutDataValues = new ArrayList<String>();
+        Map<String, DataValue> codesWithDataValues = new TreeMap<>();
+        List<String> codesWithoutDataValues = new ArrayList<>();
 
         for ( SMSCode code : command.getCodes() )
         {
@@ -580,14 +654,22 @@ public class DataValueSMSListener
         }
         notInReport = notInReport.substring( 0, notInReport.length() - 1 );
 
-        if ( codesWithoutDataValues.size() > 0 )
+        if ( command.getSuccessMessage() != null && !StringUtils.isEmpty( command.getSuccessMessage() ) )
         {
-            smsSender.sendMessage( reportBack + notInReport, sender );
+            smsSender.sendMessage( command.getSuccessMessage(), sender );
         }
         else
         {
+            // if ( codesWithoutDataValues.size() > 0 )
+            // {
+            // smsSender.sendMessage( reportBack + notInReport, sender );
+            // }
+            // else
+            // {
             smsSender.sendMessage( reportBack, sender );
+            // }
         }
+
     }
 
     private void registerCompleteDataSet( DataSet dataSet, Period period, OrganisationUnit organisationUnit,
@@ -595,8 +677,9 @@ public class DataValueSMSListener
     {
         CompleteDataSetRegistration registration = new CompleteDataSetRegistration();
 
-        DataElementCategoryOptionCombo optionCombo = dataElementCategoryService.getDefaultDataElementCategoryOptionCombo(); //TODO
-        
+        DataElementCategoryOptionCombo optionCombo = dataElementCategoryService
+            .getDefaultDataElementCategoryOptionCombo(); // TODO
+
         if ( registrationService.getCompleteDataSetRegistration( dataSet, period, organisationUnit, optionCombo ) == null )
         {
             registration.setDataSet( dataSet );
@@ -611,8 +694,9 @@ public class DataValueSMSListener
 
     private void deregisterCompleteDataSet( DataSet dataSet, Period period, OrganisationUnit organisationUnit )
     {
-        DataElementCategoryOptionCombo optionCombo = dataElementCategoryService.getDefaultDataElementCategoryOptionCombo(); //TODO
-        
+        DataElementCategoryOptionCombo optionCombo = dataElementCategoryService
+            .getDefaultDataElementCategoryOptionCombo(); // TODO
+
         CompleteDataSetRegistration registration = registrationService.getCompleteDataSetRegistration( dataSet, period,
             organisationUnit, optionCombo );
 
@@ -701,4 +785,15 @@ public class DataValueSMSListener
     {
         this.incomingSmsService = incomingSmsService;
     }
+
+    public DataElementService getDataElementService()
+    {
+        return dataElementService;
+    }
+
+    public void setDataElementService( DataElementService dataElementService )
+    {
+        this.dataElementService = dataElementService;
+    }
+
 }

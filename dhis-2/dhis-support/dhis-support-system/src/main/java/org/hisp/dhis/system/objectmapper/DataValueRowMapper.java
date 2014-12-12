@@ -45,6 +45,7 @@ import org.hisp.dhis.period.Period;
 public class DataValueRowMapper
     implements RowMapper<DataValue>, org.springframework.jdbc.core.RowMapper<DataValue>
 {
+    @Override
     public DataValue mapRow( ResultSet resultSet )
         throws SQLException
     {
@@ -55,16 +56,17 @@ public class DataValueRowMapper
         dataValue.setAttributeOptionCombo( new DataElementCategoryOptionCombo() );
         dataValue.setSource( new OrganisationUnit() );
         dataValue.setPeriod( new Period() );
-        
-        dataValue.getDataElement().setId( resultSet.getInt( 1 ) );
-        dataValue.getPeriod().setId( resultSet.getInt( 2 ) );
-        dataValue.getSource().setId( resultSet.getInt( 3 ) );
-        dataValue.getCategoryOptionCombo().setId( resultSet.getInt( 4 ) );
-        dataValue.setValue( resultSet.getString( 5 ) );
-        dataValue.setStoredBy( resultSet.getString( 6 ) );
-        dataValue.setTimestamp( resultSet.getDate( 7 ) );
-        dataValue.setComment( resultSet.getString( 8 ) );
-        
+
+        dataValue.getDataElement().setId( resultSet.getInt( "dataelementid" ) );
+        dataValue.getPeriod().setId( resultSet.getInt( "periodid" ) );
+        dataValue.getSource().setId( resultSet.getInt( "sourceid" ) );
+        dataValue.getCategoryOptionCombo().setId( resultSet.getInt( "categoryoptioncomboid" ) );
+        dataValue.setValue( resultSet.getString( "value" ) );
+        dataValue.setStoredBy( resultSet.getString( "storedby" ) );
+        dataValue.setCreated( resultSet.getDate( "created" ) );
+        dataValue.setLastUpdated( resultSet.getDate( "lastupdated" ) );
+        dataValue.setComment( resultSet.getString( "comment" ) );
+
         return dataValue;
     }
 

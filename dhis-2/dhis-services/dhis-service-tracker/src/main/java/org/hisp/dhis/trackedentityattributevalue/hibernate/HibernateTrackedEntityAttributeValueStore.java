@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.hibernate.Query;
-import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hisp.dhis.hibernate.HibernateGenericStore;
 import org.hisp.dhis.program.Program;
@@ -95,7 +94,7 @@ public class HibernateTrackedEntityAttributeValueStore
     {
         if ( entityInstances == null || entityInstances.isEmpty() )
         {
-            return new ArrayList<TrackedEntityAttributeValue>();
+            return new ArrayList<>();
         }
         
         return getCriteria( Restrictions.in( "entityInstance", entityInstances ) ).list();
@@ -108,16 +107,6 @@ public class HibernateTrackedEntityAttributeValueStore
         return getCriteria( 
             Restrictions.eq( "attribute", attribute ),
             Restrictions.ilike( "value", "%" + searchText + "%" ) ).list();
-    }
-
-    @Override
-    @SuppressWarnings( "unchecked" )
-    public Collection<TrackedEntityInstance> getTrackedEntityInstances( TrackedEntityAttribute attribute, String value )
-    {
-        return getCriteria(
-            Restrictions.and( Restrictions.eq( "attribute", attribute ), 
-            Restrictions.eq( "value", value ) ) ).
-            setProjection( Projections.property( "entityInstance" ) ).list();
     }
 
     @Override

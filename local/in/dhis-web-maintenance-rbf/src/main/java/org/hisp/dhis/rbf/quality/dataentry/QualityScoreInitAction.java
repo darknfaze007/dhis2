@@ -106,6 +106,7 @@ public class QualityScoreInitAction implements Action
     	 
         organisationUnit = selectionManager.getSelectedOrganisationUnit();
         
+        dataSets = new ArrayList<DataSet>();
         if( organisationUnit == null )
         {
             System.out.println("Organisationunit is null");
@@ -113,16 +114,18 @@ public class QualityScoreInitAction implements Action
         else
         {
             System.out.println("Organisationunit is not null ---" + organisationUnit.getId() );
+            dataSets = new ArrayList<DataSet>( organisationUnit.getDataSets() );
         }
         
         if( organisationUnit == null && orgUnitId != null )
         {
             organisationUnit = organisationUnitService.getOrganisationUnit( orgUnitId );
-           
+            dataSets = new ArrayList<DataSet>( organisationUnit.getDataSets() );
         }
-       // List<OrganisationUnit> organisationUnitList = new ArrayList<OrganisationUnit>( organisationUnitService.getLeafOrganisationUnits(organisationUnit.getId()) ) ;
+       
+        // List<OrganisationUnit> organisationUnitList = new ArrayList<OrganisationUnit>( organisationUnitService.getLeafOrganisationUnits(organisationUnit.getId()) ) ;
         
-        dataSets = new ArrayList<DataSet>( organisationUnit.getDataSets() );
+        //dataSets = new ArrayList<DataSet>( organisationUnit.getDataSets() );
         
         List<Lookup> lookups = new ArrayList<Lookup>( lookupService.getAllLookupsByType( Lookup.DS_QUALITY_TYPE ) );
         
@@ -141,6 +144,7 @@ public class QualityScoreInitAction implements Action
         }
         
         dataSets.retainAll( pbfDataSets );
+        
         Collections.sort(dataSets);
         return SUCCESS;
     }

@@ -49,13 +49,13 @@ public class ImportSummaries
 
     private int ignored;
 
-    private List<ImportSummary> importSummaries = new ArrayList<ImportSummary>();
+    private List<ImportSummary> importSummaries = new ArrayList<>();
 
     public ImportSummaries()
     {
     }
 
-    public void addImportSummary( ImportSummary importSummary )
+    public ImportSummaries addImportSummary( ImportSummary importSummary )
     {
         if ( importSummary.getDataValueCount() != null )
         {
@@ -72,6 +72,8 @@ public class ImportSummaries
         }
 
         importSummaries.add( importSummary );
+        
+        return this;
     }
 
     @JsonProperty

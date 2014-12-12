@@ -94,6 +94,7 @@ public class GetOrgunitUserListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -105,13 +106,13 @@ public class GetOrgunitUserListAction
             {
                 this.paging = createPaging( userService.getUsersWithoutOrganisationUnitCountByName( key ) );
                 
-                userCredentialsList = new ArrayList<UserCredentials>( userService.getUsersWithoutOrganisationUnitBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
+                userCredentialsList = new ArrayList<>( userService.getUsersWithoutOrganisationUnitBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
             }
             else 
             {
                 this.paging = createPaging( userService.getUsersByOrganisationUnitCountByName( organisationUnit, key ) );
                 
-                userCredentialsList = new ArrayList<UserCredentials>( userService.getUsersByOrganisationUnitBetweenByName( organisationUnit, key, paging.getStartPos(), paging.getPageSize() ) );
+                userCredentialsList = new ArrayList<>( userService.getUsersByOrganisationUnitBetweenByName( organisationUnit, key, paging.getStartPos(), paging.getPageSize() ) );
             }
         }
         else
@@ -120,13 +121,13 @@ public class GetOrgunitUserListAction
             {
                 this.paging = createPaging( userService.getUsersWithoutOrganisationUnitCount(  ) );
                 
-                userCredentialsList = new ArrayList<UserCredentials>( userService.getUsersWithoutOrganisationUnitBetween( paging.getStartPos(), paging.getPageSize() ) );
+                userCredentialsList = new ArrayList<>( userService.getUsersWithoutOrganisationUnitBetween( paging.getStartPos(), paging.getPageSize() ) );
             }
             else 
             {
                 this.paging = createPaging( userService.getUsersByOrganisationUnitCount( organisationUnit ) );
                 
-                userCredentialsList = new ArrayList<UserCredentials>( userService.getUsersByOrganisationUnitBetween( organisationUnit, paging.getStartPos(), paging.getPageSize() ) );                
+                userCredentialsList = new ArrayList<>( userService.getUsersByOrganisationUnitBetween( organisationUnit, paging.getStartPos(), paging.getPageSize() ) );
             }
         }
         

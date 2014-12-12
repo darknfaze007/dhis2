@@ -67,10 +67,11 @@ public class AddUserGroupFormAction
     // Action Implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        attributes = new ArrayList<Attribute>( attributeService.getUserGroupAttributes() );
+        attributes = new ArrayList<>( attributeService.getUserGroupAttributes() );
         Collections.sort( attributes, AttributeSortOrderComparator.INSTANCE );
 
         return SUCCESS;

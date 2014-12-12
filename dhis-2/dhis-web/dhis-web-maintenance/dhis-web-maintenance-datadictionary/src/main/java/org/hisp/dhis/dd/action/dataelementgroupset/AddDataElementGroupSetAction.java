@@ -28,14 +28,13 @@ package org.hisp.dhis.dd.action.dataelementgroupset;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.opensymphony.xwork2.Action;
 import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataelement.DataElementGroupSet;
 import org.hisp.dhis.dataelement.DataElementService;
 
-import com.opensymphony.xwork2.Action;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Tran Thanh Tri
@@ -88,29 +87,28 @@ public class AddDataElementGroupSetAction
         this.dataDimension = dataDimension;
     }
 
-    private List<String> groupMembers = new ArrayList<String>();
+    private List<String> degSelected = new ArrayList<>();
 
-    public void setGroupMembers( List<String> groupMembers )
+    public void setDegSelected( List<String> degSelected )
     {
-        this.groupMembers = groupMembers;
+        this.degSelected = degSelected;
     }
 
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         DataElementGroupSet dataElementGroupSet = new DataElementGroupSet( name, description, compulsory, dataDimension );
 
-        List<DataElementGroup> dataElementGroups = new ArrayList<DataElementGroup>();
+        List<DataElementGroup> dataElementGroups = new ArrayList<>();
 
-        for ( String id : this.groupMembers )
+        for ( String id : degSelected )
         {
-            DataElementGroup dataElementGroup = dataElementService.getDataElementGroup( Integer.parseInt( id ) );
-
-            dataElementGroups.add( dataElementGroup );
+            dataElementGroups.add( dataElementService.getDataElementGroup( id ) );
         }
 
         dataElementGroupSet.setMembers( dataElementGroups );

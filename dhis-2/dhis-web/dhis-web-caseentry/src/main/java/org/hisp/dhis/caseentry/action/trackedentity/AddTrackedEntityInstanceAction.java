@@ -110,6 +110,7 @@ public class AddTrackedEntityInstanceAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         OrganisationUnit organisationUnit = selectionManager.getSelectedOrganisationUnit();
@@ -144,7 +145,7 @@ public class AddTrackedEntityInstanceAction
 
         Collection<TrackedEntityAttribute> attributes = attributeService.getAllTrackedEntityAttributes();
 
-        Set<TrackedEntityAttributeValue> attributeValues = new HashSet<TrackedEntityAttributeValue>();
+        Set<TrackedEntityAttributeValue> attributeValues = new HashSet<>();
 
         TrackedEntityAttributeValue attributeValue = null;
 

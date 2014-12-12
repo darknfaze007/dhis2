@@ -28,25 +28,29 @@ package org.hisp.dhis.dataapproval;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hisp.dhis.dataelement.CategoryOptionGroup;
-import org.hisp.dhis.dataelement.DataElementCategoryOption;
+import org.hisp.dhis.common.ListMap;
+import org.hisp.dhis.dataapproval.exceptions.DataMayNotBeAcceptedException;
+import org.hisp.dhis.dataapproval.exceptions.DataMayNotBeApprovedException;
+import org.hisp.dhis.dataapproval.exceptions.DataMayNotBeUnacceptedException;
+import org.hisp.dhis.dataapproval.exceptions.DataMayNotBeUnapprovedException;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
-import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodService;
-import org.hisp.dhis.period.PeriodType;
-import org.hisp.dhis.security.SecurityService;
+import org.hisp.dhis.setting.SystemSettingManager;
+import org.hisp.dhis.system.util.CollectionUtils;
 import org.hisp.dhis.user.CurrentUserService;
-import org.hisp.dhis.user.User;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -76,25 +80,11 @@ public class DefaultDataApprovalService
         this.dataApprovalLevelService = dataApprovalLevelService;
     }
 
-    private OrganisationUnitService organisationUnitService;
-
-    public void setOrganisationUnitService( OrganisationUnitService organisationUnitService )
-    {
-        this.organisationUnitService = organisationUnitService;
-    }
-
     private CurrentUserService currentUserService;
 
     public void setCurrentUserService( CurrentUserService currentUserService )
     {
         this.currentUserService = currentUserService;
-    }
-
-    private DataElementCategoryService categoryService;
-
-    public void setCategoryService( DataElementCategoryService categoryService )
-    {
-        this.categoryService = categoryService;
     }
 
     private PeriodService periodService;
@@ -104,168 +94,284 @@ public class DefaultDataApprovalService
         this.periodService = periodService;
     }
 
-    private SecurityService securityService;
+    private SystemSettingManager systemSettingManager;
 
-    public void setSecurityService( SecurityService securityService )
+    public void setSystemSettingManager( SystemSettingManager systemSettingManager )
     {
-        this.securityService = securityService;
+        this.systemSettingManager = systemSettingManager;
     }
 
     // -------------------------------------------------------------------------
     // DataApproval
     // -------------------------------------------------------------------------
 
-    public void addDataApproval( DataApproval dataApproval )
+    @Override
+    public void approveData( List<DataApproval> dataApprovalList )
     {
-        if ( ( dataApproval.getCategoryOptionGroup() == null || securityService.canRead( dataApproval.getCategoryOptionGroup() ) )
-            && mayApprove( dataApproval.getOrganisationUnit() ) )
+        log.debug( "approveData ( " + dataApprovalList.size() + " items )" );
+
+        List<DataApproval> expandedList = expandPeriods( dataApprovalList );
+
+        Map<DataApproval, DataApprovalStatus> statusMap = getStatusMap( expandedList );
+
+        List<DataApproval> checkedList = new ArrayList<>();
+
+        for ( DataApproval da : expandedList )
         {
-            PeriodType selectionPeriodType = dataApproval.getPeriod().getPeriodType();
-            PeriodType dataSetPeriodType = dataApproval.getDataSet().getPeriodType();
+            DataApprovalStatus status = getStatus( da, statusMap );
 
-            if ( selectionPeriodType.equals( dataSetPeriodType ) )
+            if ( da.getDataApprovalLevel() == null ) // Determine the approval level.
             {
-                dataApprovalStore.addDataApproval( dataApproval );
-            }
-            else if ( selectionPeriodType.getFrequencyOrder() <= dataSetPeriodType.getFrequencyOrder() )
-            {
-                log.warn( "Attempted data approval for period " + dataApproval.getPeriod().getIsoDate()
-                + " is incompatible with data set period type " + dataSetPeriodType.getName() + "." );
-            }
-            else
-            {
-                approveCompositePeriod( dataApproval );
-            }
-        }
-        else
-        {
-            warnNotPermitted( dataApproval, "approve", mayApprove( dataApproval.getOrganisationUnit() ) );
-        }
-    }
-
-    public void deleteDataApproval( DataApproval dataApproval )
-    {
-        if ( ( dataApproval.getCategoryOptionGroup() == null || securityService.canRead( dataApproval.getCategoryOptionGroup() ) )
-            && mayUnapprove( dataApproval.getOrganisationUnit(), dataApproval.isAccepted() ) )
-        {
-            PeriodType selectionPeriodType = dataApproval.getPeriod().getPeriodType();
-            PeriodType dataSetPeriodType = dataApproval.getDataSet().getPeriodType();
-
-            if ( selectionPeriodType.equals( dataSetPeriodType ) )
-            {
-                dataApprovalStore.deleteDataApproval( dataApproval );
-
-                for ( OrganisationUnit ancestor : dataApproval.getOrganisationUnit().getAncestors() )
+                if ( status.getState().isApproved() ) // If approved already, approve at next level up (lower level number).
                 {
-                    DataApproval ancestorApproval = dataApprovalStore.getDataApproval(
-                            dataApproval.getDataSet(), dataApproval.getPeriod(), ancestor, dataApproval.getCategoryOptionGroup() );
-
-                    if ( ancestorApproval != null )
-                    {
-                        dataApprovalStore.deleteDataApproval ( ancestorApproval );
-                    }
+                    da.setDataApprovalLevel( dataApprovalLevelService.getDataApprovalLevelByLevelNumber(
+                            status.getDataApproval().getDataApprovalLevel().getLevel() - 1 ) );
+                }
+                else
+                {
+                    da.setDataApprovalLevel( status.getDataApproval().getDataApprovalLevel() );
                 }
             }
-            else if ( selectionPeriodType.getFrequencyOrder() <= dataSetPeriodType.getFrequencyOrder() )
+
+            if ( status != null && status.getState().isApproved() &&
+                    da.getDataApprovalLevel().getLevel() >= status.getDataApprovalLevel().getLevel() )
             {
-                log.warn( "Attempted data unapproval for period " + dataApproval.getPeriod().getIsoDate()
-                        + " is incompatible with data set period type " + dataSetPeriodType.getName() + "." );
+                continue; // Already approved at or above this level
             }
-            else
+
+            if ( status == null || !status.getPermissions().isMayApprove() )
             {
-                unapproveCompositePeriod( dataApproval );
+                log.warn( "approveData: data may not be approved, state " +
+                        ( status == null ? "(null)" : status.getState().name() ) + " " + da );
+
+                throw new DataMayNotBeApprovedException();
             }
+
+            checkedList.add ( da );
         }
-        else
+
+        for ( DataApproval da : checkedList )
         {
-            warnNotPermitted( dataApproval, "unapprove", mayUnapprove( dataApproval.getOrganisationUnit(), dataApproval.isAccepted() ) );
+            log.debug( "-> approving " + da );
+
+            dataApprovalStore.addDataApproval( da );
         }
-    }
-
-    public DataApprovalStatus getDataApprovalStatus( DataSet dataSet, Period period, OrganisationUnit organisationUnit, DataElementCategoryOptionCombo attributeOptionCombo )
-    {
-        Set<DataElementCategoryOption> categoryOptions = 
-            attributeOptionCombo == null || attributeOptionCombo.equals( categoryService.getDefaultDataElementCategoryOptionCombo() ) ? 
-                null : attributeOptionCombo.getCategoryOptions();
         
-        return getDataApprovalStatus( dataSet, period, organisationUnit, null, categoryOptions );
+        log.info( "Approvals saved: " + checkedList.size() );
     }
 
+    @Override
+    public void unapproveData( List<DataApproval> dataApprovalList )
+    {
+        log.debug( "unapproveData ( " + dataApprovalList.size() + " items )" );
+
+        List<DataApproval> expandedList = expandPeriods( dataApprovalList );
+
+        Map<DataApproval, DataApprovalStatus> statusMap = getStatusMap( expandedList );
+
+        List<DataApproval> checkedList = new ArrayList<>();
+
+        for ( DataApproval da : expandedList )
+        {
+            DataApprovalStatus status = getStatus( da, statusMap );
+
+            if ( da.getDataApprovalLevel() == null )
+            {
+                da.setDataApprovalLevel( status.getDataApproval().getDataApprovalLevel() );
+            }
+
+            if ( status == null || !status.getState().isApproved() ||
+                    da.getDataApprovalLevel().getLevel() < status.getDataApprovalLevel().getLevel() )
+            {
+                continue; // Already unapproved at or below this level
+            }
+
+            if ( !status.getPermissions().isMayUnapprove() )
+            {
+                log.warn( "unapproveData: data may not be unapproved, state " + status.getState().name() + " " + da );
+
+                throw new DataMayNotBeUnapprovedException();
+            }
+
+            checkedList.add ( da );
+        }
+
+        for ( DataApproval da : checkedList )
+        {
+            log.debug( "unapproving " + da );
+
+            DataApproval d = dataApprovalStore.getDataApproval( da.getDataApprovalLevel(), da.getDataSet(),
+                    da.getPeriod(), da.getOrganisationUnit(), da.getAttributeOptionCombo() );
+
+            dataApprovalStore.deleteDataApproval( d );
+        }
+        
+        log.info( "Approvals deleted: " + dataApprovalList.size() );
+    }
+
+    @Override
+    public void acceptData( List<DataApproval> dataApprovalList )
+    {
+        log.debug( "acceptData ( " + dataApprovalList.size() + " items )" );
+
+        List<DataApproval> expandedList = expandPeriods( dataApprovalList );
+
+        Map<DataApproval, DataApprovalStatus> statusMap = getStatusMap( expandedList );
+
+        List<DataApproval> checkedList = new ArrayList<>();
+
+        for ( DataApproval da : expandedList )
+        {
+            DataApprovalStatus status = getStatus( da, statusMap );
+
+            if ( da.getDataApprovalLevel() == null )
+            {
+                da.setDataApprovalLevel( status.getDataApproval().getDataApprovalLevel() );
+            }
+
+            if ( status != null &&
+                    ( status.getState().isAccepted() && da.getDataApprovalLevel().getLevel() == status.getDataApprovalLevel().getLevel()
+                    || da.getDataApprovalLevel().getLevel() > status.getDataApprovalLevel().getLevel() ) )
+            {
+                continue; // Already accepted at, or approved above, this level
+            }
+
+            if ( status == null || !status.getPermissions().isMayAccept() )
+            {
+                log.warn( "acceptData: data may not be accepted, state " + ( status == null ? "(null)" : status.getState().name() ) + " " + da );
+
+                throw new DataMayNotBeAcceptedException();
+            }
+
+            checkedList.add ( da );
+        }
+
+        for ( DataApproval da : checkedList )
+        {
+            da.setAccepted( true );
+
+            log.debug( "accepting " + da );
+
+            DataApproval d = dataApprovalStore.getDataApproval( da.getDataApprovalLevel(), da.getDataSet(),
+                    da.getPeriod(), da.getOrganisationUnit(), da.getAttributeOptionCombo() );
+
+            d.setAccepted( true );
+
+            dataApprovalStore.updateDataApproval( d );
+        }
+        
+        log.info( "Accepts saved: " + dataApprovalList.size() );
+    }
+
+    @Override
+    public void unacceptData( List<DataApproval> dataApprovalList )
+    {
+        log.debug( "unacceptData ( " + dataApprovalList.size() + " items )" );
+
+        List<DataApproval> expandedList = expandPeriods( dataApprovalList );
+
+        Map<DataApproval, DataApprovalStatus> statusMap = getStatusMap( expandedList );
+
+        List<DataApproval> checkedList = new ArrayList<>();
+
+        for ( DataApproval da : expandedList )
+        {
+            DataApprovalStatus status = getStatus( da, statusMap );
+
+            if ( da.getDataApprovalLevel() == null )
+            {
+                da.setDataApprovalLevel( status.getDataApproval().getDataApprovalLevel() );
+            }
+
+            if ( status == null || ( !status.getState().isAccepted() && da.getDataApprovalLevel().getLevel() == status.getDataApprovalLevel().getLevel() )
+                || da.getDataApprovalLevel().getLevel() < status.getDataApprovalLevel().getLevel() )
+            {
+                continue; // Already unaccepted at, or not approved up to, this level
+            }
+
+            if ( !status.getPermissions().isMayUnaccept() )
+            {
+                log.warn( "unacceptData: data may not be unaccepted, state " + ( status == null ? "(null)" : status.getState().name() )
+                        + " " + da + " " + status.getPermissions() );
+
+                throw new DataMayNotBeUnacceptedException();
+            }
+
+            checkedList.add ( da );
+        }
+
+        for ( DataApproval da : checkedList )
+        {
+            log.debug( "unaccepting " + da );
+
+            DataApproval d = dataApprovalStore.getDataApproval( da.getDataApprovalLevel(), da.getDataSet(),
+                    da.getPeriod(), da.getOrganisationUnit(), da.getAttributeOptionCombo() );
+
+            d.setAccepted( false );
+
+            dataApprovalStore.updateDataApproval( d );
+        }
+        
+        log.info( "Accepts deleted: " + dataApprovalList.size() );
+    }
+
+    @Override
     public DataApprovalStatus getDataApprovalStatus( DataSet dataSet, Period period, OrganisationUnit organisationUnit,
-        Set<CategoryOptionGroup> categoryOptionGroups, Set<DataElementCategoryOption> dataElementCategoryOptions )
+        DataElementCategoryOptionCombo attributeOptionCombo )
     {
-        DataApprovalSelection dataApprovalSelection = new DataApprovalSelection( dataSet, period, organisationUnit,
-                categoryOptionGroups, dataElementCategoryOptions,
-                dataApprovalStore, dataApprovalLevelService,
-                organisationUnitService, categoryService, periodService);
+        log.debug( "getDataApprovalStatus( " + dataSet.getName() + ", "
+                + period.getPeriodType().getName() + " " + period.getName() + " " + period + ", "
+                + organisationUnit.getName() + ", "
+                + ( attributeOptionCombo == null ? "(null)" : attributeOptionCombo.getName() ) + " )" );
 
-        return dataApprovalSelection.getDataApprovalStatus();
-    }
+        period = periodService.reloadPeriod( period );
 
-    public DataApprovalPermissions getDataApprovalPermissions( DataSet dataSet, Period period, 
-        OrganisationUnit organisationUnit, DataElementCategoryOptionCombo attributeOptionCombo )
-    {
-        Set<DataElementCategoryOption> categoryOptions = 
-            attributeOptionCombo == null || attributeOptionCombo.equals( categoryService.getDefaultDataElementCategoryOptionCombo() ) ?
-                null : attributeOptionCombo.getCategoryOptions();
-        
-        return getDataApprovalPermissions( dataSet, period, organisationUnit, null, categoryOptions );
-    }
+        List<DataApprovalStatus> statuses = dataApprovalStore.getDataApprovals( CollectionUtils.asSet( dataSet ),
+                period, organisationUnit, attributeOptionCombo );
 
-    public DataApprovalPermissions getDataApprovalPermissions( DataSet dataSet, Period period,
-        OrganisationUnit organisationUnit, Set<CategoryOptionGroup> categoryOptionGroups, Set<DataElementCategoryOption> dataElementCategoryOptions )
-    {
-        DataApprovalStatus status = getDataApprovalStatus( dataSet, period,
-            organisationUnit, categoryOptionGroups, dataElementCategoryOptions );
-
-        DataApprovalPermissions permissions = new DataApprovalPermissions();
-
-        log.debug( "getDataApprovalPermissions() getting permissions." );
-
-        permissions.setDataApprovalStatus( status );
-
-        DataApprovalLevel dataApprovalLevel = status.getDataApprovalLevel();
-
-        if ( dataApprovalLevel != null && securityService.canRead( dataApprovalLevel )
-            && ( dataApprovalLevel.getCategoryOptionGroupSet() == null || securityService.canRead( dataApprovalLevel.getCategoryOptionGroupSet() ))
-            && canReadOneCategoryOptionGroup( categoryOptionGroups ) )
+        if ( statuses != null && !statuses.isEmpty() )
         {
-            boolean unacceptPermissionNeededToUnapprove = false;
+            DataApprovalStatus status = statuses.get( 0 );
 
-            switch ( status.getDataApprovalState() )
+            DataApproval da = status.getDataApproval();
+
+            da = dataApprovalStore.getDataApproval( da.getDataApprovalLevel(), da.getDataSet(), da.getPeriod(), da.getOrganisationUnit(), da.getAttributeOptionCombo() );
+
+            if ( da != null )
             {
-                case PARTIALLY_ACCEPTED_HERE:
-                case ACCEPTED_HERE:
-                    unacceptPermissionNeededToUnapprove = true;
-                case PARTIALLY_APPROVED_HERE:
-                case APPROVED_HERE:
-                case UNAPPROVED_READY:
-                    permissions.setMayApprove( mayApprove( organisationUnit ) );
-                    permissions.setMayUnapprove( mayUnapprove( organisationUnit, unacceptPermissionNeededToUnapprove ) );
-                    permissions.setMayAccept( mayAcceptOrUnaccept( organisationUnit ) );
-                    permissions.setMayUnaccept( permissions.isMayAccept() );
-                    break;
+                status.setDataApproval( da ); // Includes created and creator from database.
             }
+
+            return status;
         }
 
-        log.debug( "Returning permissions for " + organisationUnit.getName()
-                + " " + status.getDataApprovalState().name()
-                + " may approve = " + permissions.isMayApprove()
-                + " may unapprove = " + permissions.isMayUnapprove()
-                + " may accept = " + permissions.isMayAccept()
-                + " may unaccept = " + permissions.isMayUnaccept() );
-
-        return permissions;
+        return new DataApprovalStatus( DataApprovalState.UNAPPROVABLE, null, null, null );
     }
 
-    public void accept( DataApproval dataApproval )
+    @Override
+    public DataApprovalStatus getDataApprovalStatusAndPermissions( DataSet dataSet, Period period, OrganisationUnit organisationUnit,
+        DataElementCategoryOptionCombo attributeOptionCombo )
     {
-        acceptOrUnaccept( dataApproval, true );
+        DataApprovalStatus status = getDataApprovalStatus( dataSet, period, organisationUnit, attributeOptionCombo );
+
+        status.setPermissions( makePermissionsEvaluator().getPermissions( status ) );
+
+        return status;
     }
 
-    public void unaccept( DataApproval dataApproval )
+    @Override
+    public List<DataApprovalStatus> getUserDataApprovalsAndPermissions( Set<DataSet> dataSets, Period period, OrganisationUnit orgUnit )
     {
-        acceptOrUnaccept( dataApproval, false );
+        DataApprovalPermissionsEvaluator permissionsEvaluator = makePermissionsEvaluator();
+
+        List<DataApprovalStatus> statusList = dataApprovalStore.getDataApprovals( dataSets, period, orgUnit, null );
+        
+        for ( DataApprovalStatus status : statusList )
+        {
+            status.setPermissions( permissionsEvaluator.getPermissions( status ) );
+        }
+
+        return statusList;
     }
 
     // -------------------------------------------------------------------------
@@ -273,325 +379,115 @@ public class DefaultDataApprovalService
     // -------------------------------------------------------------------------
 
     /**
-     * Accept or unaccept a data approval.
-     *
-     * @param dataApproval the data approval object.
-     * @param accepted true to accept, false to unaccept.
+     * Returns an list of data approval expanded based on periods. In the cases
+     * where the data set of the approval has a more frequent period type than
+     * the period of the approval, additional approval objects are included for
+     * that period type for each period between the start date and end date of the
+     * approval period.
      */
-    public void acceptOrUnaccept ( DataApproval dataApproval, boolean accepted )
+    private List<DataApproval> expandPeriods( List<DataApproval> approvalList )
     {
-        if ( ( dataApproval.getCategoryOptionGroup() == null || securityService.canRead( dataApproval.getCategoryOptionGroup() ) )
-                && mayAcceptOrUnaccept( dataApproval.getOrganisationUnit() ) )
-        {
-            PeriodType selectionPeriodType = dataApproval.getPeriod().getPeriodType();
-            PeriodType dataSetPeriodType = dataApproval.getDataSet().getPeriodType();
+        List<DataApproval> expandedList = new ArrayList<>();
 
-            if ( selectionPeriodType.equals( dataSetPeriodType ) )
+        for ( DataApproval da : approvalList )
+        {
+            if ( da.getPeriod().getPeriodType().getFrequencyOrder() > da.getDataSet().getPeriodType().getFrequencyOrder() )
             {
-                dataApproval.setAccepted( accepted );
-                dataApprovalStore.updateDataApproval( dataApproval );
-            } else if ( selectionPeriodType.getFrequencyOrder() <= dataSetPeriodType.getFrequencyOrder() )
-            {
-                log.warn( "Attempted data approval for period " + dataApproval.getPeriod().getIsoDate()
-                        + " is incompatible with data set period type " + dataSetPeriodType.getName() + "." );
-            } else
-            {
-                acceptOrUnacceptCompositePeriod( dataApproval, accepted );
+                Collection<Period> periods = periodService.getPeriodsBetweenDates( da.getDataSet().getPeriodType(), 
+                    da.getPeriod().getStartDate(), da.getPeriod().getEndDate() );
+
+                for ( Period period : periods )
+                {
+                    expandedList.add( new DataApproval( da.getDataApprovalLevel(), da.getDataSet(),
+                        period, da.getOrganisationUnit(), da.getAttributeOptionCombo(), da.isAccepted(),
+                        da.getCreated(), da.getCreator() ) );
+                }
             }
-        } else
-        {
-            warnNotPermitted( dataApproval, accepted ? "accept" : "unaccept", mayAcceptOrUnaccept( dataApproval.getOrganisationUnit() ) );
-        }
-    }
-
-    /**
-     * Approves data for a longer period that contains multiple data approval
-     * periods. When individual periods are already approved, no action is
-     * necessary. (It's possible that they could be accepted as well.)
-     *
-     * @param da data approval object describing the longer period.
-     */
-    private void approveCompositePeriod( DataApproval da )
-    {
-        Collection<Period> periods = periodService.getPeriodsBetweenDates(
-                da.getDataSet().getPeriodType(),
-                da.getPeriod().getStartDate(),
-                da.getPeriod().getEndDate() );
-
-        for ( Period period : periods )
-        {
-            DataApprovalStatus status = getDataApprovalStatus( da.getDataSet(), period, da.getOrganisationUnit(),
-                    da.getCategoryOptionGroup() == null ? null : org.hisp.dhis.system.util.CollectionUtils.asSet( da.getCategoryOptionGroup() ), null );
-
-            if ( status.getDataApprovalState().isReady() && !status.getDataApprovalState().isApproved() )
+            else
             {
-                DataApproval dataApproval = new DataApproval( da );
-                dataApproval.setPeriod( period );
-
-                dataApprovalStore.addDataApproval( dataApproval );
-            }
-        }
-    }
-
-    /**
-     * Unapproves data for a longer period that contains multiple data approval
-     * periods. When individual periods are already unapproved, no action is
-     * necessary.
-     * <p>
-     * Note that when we delete approval for a period, we also need to make
-     * sure that approval is removed for any ancestors at higher levels of
-     * approval. For this reason, we go back through the main deleteDataApproval
-     * method. (It won't call back here, becuase it's only for one period.)
-     *
-     * @param da data approval object describing the longer period.
-     */
-    void unapproveCompositePeriod( DataApproval da )
-    {
-        Collection<Period> periods = periodService.getPeriodsBetweenDates(
-                da.getDataSet().getPeriodType(),
-                da.getPeriod().getStartDate(),
-                da.getPeriod().getEndDate() );
-
-        for ( Period period : periods )
-        {
-            DataApprovalStatus status = getDataApprovalStatus( da.getDataSet(), period, da.getOrganisationUnit(),
-                    da.getCategoryOptionGroup() == null ? null : org.hisp.dhis.system.util.CollectionUtils.asSet( da.getCategoryOptionGroup() ), null );
-
-            if ( status.getDataApprovalState().isApproved() )
-            {
-                deleteDataApproval( status.getDataApproval() );
-            }
-        }
-    }
-
-    /**
-     * Accepts or unaccepts data for a longer period that contains multiple
-     * data approval periods. When individual periods are already at the
-     * desired accptance state, no action is necessary.
-     *
-     * @param da data approval object describing the longer period.
-     * @param accepted true to accept, false to unaccept.
-     */
-    private void acceptOrUnacceptCompositePeriod( DataApproval da, boolean accepted )
-    {
-        Collection<Period> periods = periodService.getPeriodsBetweenDates(
-                da.getDataSet().getPeriodType(),
-                da.getPeriod().getStartDate(),
-                da.getPeriod().getEndDate() );
-
-        DataApprovalLevel lowestApprovalLevel = null;
-
-        for ( Period period : periods )
-        {
-            DataApprovalStatus status = getDataApprovalStatus( da.getDataSet(), period, da.getOrganisationUnit(),
-                    da.getCategoryOptionGroup() == null ? null : org.hisp.dhis.system.util.CollectionUtils.asSet( da.getCategoryOptionGroup() ), null );
-
-            if ( status.getDataApprovalState().isApprovable() && status.getDataApprovalState().isAccepted() != accepted )
-            {
-                status.getDataApproval().setAccepted( accepted );
-                dataApprovalStore.updateDataApproval( status.getDataApproval() );
-            }
-        }
-    }
-
-    /**
-     * Return true if there are no category option groups, or if there is
-     * one and the user can read it.
-     *
-     * @param categoryOptionGroups option groups (if any) for data selection
-     * @return true if at most 1 option group and user can read, else false
-     */
-    boolean canReadOneCategoryOptionGroup( Set<CategoryOptionGroup> categoryOptionGroups )
-    {
-        if ( categoryOptionGroups == null || categoryOptionGroups.size() == 0 )
-        {
-            return true;
-        }
-
-        if ( categoryOptionGroups.size() != 1 )
-        {
-            return false;
-        }
-
-        return ( securityService.canRead( (CategoryOptionGroup) categoryOptionGroups.toArray()[0] ) );
-    }
-
-    /**
-     * Checks to see whether a user may approve data for a given
-     * organisation unit.
-     *
-     * @param organisationUnit The organisation unit to check for permission.
-     * @return true if the user may approve, otherwise false
-     */
-    private boolean mayApprove( OrganisationUnit organisationUnit )
-    {
-        User user = currentUserService.getCurrentUser();
-
-        if ( user != null )
-        {
-            boolean mayApprove = user.getUserCredentials().isAuthorized( DataApproval.AUTH_APPROVE );
-
-            if ( mayApprove && user.getOrganisationUnits().contains( organisationUnit ) )
-            {
-                log.debug( "mayApprove = true because organisation unit " + organisationUnit.getName()
-                        + " is assigned to user and user may approve at same level." );
-
-                return true;
-            }
-
-            boolean mayApproveAtLowerLevels = user.getUserCredentials().isAuthorized( DataApproval.AUTH_APPROVE_LOWER_LEVELS );
-
-            if ( mayApproveAtLowerLevels && CollectionUtils.containsAny( user.getOrganisationUnits(),
-                organisationUnit.getAncestors() ) )
-            {
-                log.debug( "mayApprove = true because organisation unit " + organisationUnit.getName()
-                        + " is under user and user may approve at lower levels." );
-
-                return true;
+                expandedList.add( da );
             }
         }
 
-        log.debug( "mayApprove = false for organisation unit " + organisationUnit.getName() );
-
-        return false;
+        return expandedList;
     }
 
     /**
-     * Checks to see whether a user may unapprove for a given organisation unit.
-     * <p>
-     * A user may unapprove data for organisation unit A if they have the
-     * authority to approve data for organisation unit B, and B is an
-     * ancestor of A.
-     * <p>
-     * A user may also unapprove data for organisation unit A if they have
-     * the authority to approve data for organisation unit A, and A has no
-     * ancestors.
-     * <p>
-     * But a user may not unapprove data for an organisation unit if the data
-     * has been approved already at a higher level for the same period and
-     * data set, and the user is not authorized to remove that approval as well.
-     *
-     * @param organisationUnit The data approval status to check for permission.
-     * @param unacceptPermissionNeededToUnapprove Whether *unaccept* permission
-     *                                   is also needed to unapprove this data.
-     * @return true if the user may unapprove, otherwise false
+     * Returns the data approval status of the given data approval based on the
+     * given status map.
      */
-    private boolean mayUnapprove( OrganisationUnit organisationUnit, boolean unacceptPermissionNeededToUnapprove )
+    private DataApprovalStatus getStatus( DataApproval da, Map<DataApproval, DataApprovalStatus> statusMap )
     {
-        if ( isAuthorizedToUnapprove( organisationUnit ) )
-        {
-            if ( !unacceptPermissionNeededToUnapprove || mayAcceptOrUnaccept( organisationUnit ) )
-            {
-                log.debug( "mayUnapprove = true for organisation unit " + organisationUnit.getName() );
+        return statusMap.get( new DataApproval( null, da.getDataSet(), da.getPeriod(),
+            da.getOrganisationUnit(), da.getAttributeOptionCombo(), false, null, null ) );
+    }
 
-                return true;
+    /**
+     * Returns a mapping from data approval to data approval status for the given
+     * list of data approvals.
+     */
+    private Map<DataApproval, DataApprovalStatus> getStatusMap( List<DataApproval> dataApprovalList )
+    {
+        Map<DataApproval, DataApprovalStatus> statusMap = new HashMap<>();
+
+        DataApprovalPermissionsEvaluator evaluator = makePermissionsEvaluator();
+
+        ListMap<String, DataApproval> listMap = getIndexedListMap( dataApprovalList );
+        
+        for ( String key : listMap.keySet() )
+        {
+            List<DataApproval> dataApprovals = listMap.get( key );
+            
+            Set<DataSet> dataSets = new HashSet<>();
+
+            for ( DataApproval da : dataApprovals )
+            {
+                dataSets.add( da.getDataSet() );
+            }
+
+            Period period = dataApprovals.get(0).getPeriod();
+
+            OrganisationUnit orgUnit = dataApprovals.get(0).getOrganisationUnit();
+
+            List<DataApprovalStatus> statuses = dataApprovalStore.getDataApprovals( dataSets, period, orgUnit, null );
+
+            for ( DataApprovalStatus status : statuses )
+            {
+                status.setPermissions( evaluator.getPermissions( status ) );
+
+                DataApproval da = status.getDataApproval();
+
+                for ( DataSet ds : dataSets )
+                {
+                    statusMap.put( new DataApproval( null, ds, da.getPeriod(), da.getOrganisationUnit(),
+                        da.getAttributeOptionCombo(), false, null, null ), status );
+                }
             }
         }
 
-        log.debug( "mayUnapprove = false for organisation unit " + organisationUnit.getName() );
-
-        return false;
+        return statusMap;
     }
 
     /**
-     * Checks to see whether a user may accept or unaccept for a given
-     * organisation unit.
-     *
-     * @param organisationUnit The organisation unit to check for permission.
-     * @return true if the user may accept or unaccept, otherwise false.
+     * Returns an indexed map where the key is based on organisation unit and period.
      */
-    private boolean mayAcceptOrUnaccept ( OrganisationUnit organisationUnit )
+    private ListMap<String, DataApproval> getIndexedListMap( List<DataApproval> dataApprovalList )
     {
-        User user = currentUserService.getCurrentUser();
+        ListMap<String, DataApproval> map = new ListMap<>();
 
-        if ( user != null )
+        for ( DataApproval approval : dataApprovalList )
         {
-            boolean mayAcceptAtLowerLevels = user.getUserCredentials().isAuthorized( DataApproval.AUTH_ACCEPT_LOWER_LEVELS );
-
-            if ( mayAcceptAtLowerLevels && CollectionUtils.containsAny( user.getOrganisationUnits(),
-                organisationUnit.getAncestors() ) )
-            {
-                log.debug( "User may accept or unaccept for organisation unit " + organisationUnit.getName() );
-
-                return true;
-            }
+            String key = approval == null ? null : approval.getOrganisationUnit().getId() + "-" + approval.getPeriod().getId();
+            
+            map.putValue( key, approval );
         }
 
-        log.debug( "User with AUTH_ACCEPT_LOWER_LEVELS " + user.getUserCredentials().isAuthorized( DataApproval.AUTH_ACCEPT_LOWER_LEVELS )
-                + " with " + user.getOrganisationUnits().size() + " org units"
-                + " may not accept or unaccept for organisation unit " + organisationUnit.getName()
-                + " with " + organisationUnit.getAncestors().size() + " ancestors." );
-
-        return false;
+        return map;
     }
 
-    /**
-     * Tests whether the user is authorized to unapprove for this organisation
-     * unit.
-     * <p>
-     * Whether the user actually may unapprove an existing approval depends
-     * also on whether there are higher-level approvals that the user is
-     * authorized to unapprove.
-     *
-     * @param organisationUnit OrganisationUnit to check for approval.
-     * @return true if the user may approve, otherwise false
-     */
-    private boolean isAuthorizedToUnapprove( OrganisationUnit organisationUnit )
+    private DataApprovalPermissionsEvaluator makePermissionsEvaluator()
     {
-        log.debug( "isAuthorizedToUnapprove( " + organisationUnit.getName() + ")" );
-
-        if ( mayApprove( organisationUnit ) )
-        {
-            log.debug( "User may unapprove at " + organisationUnit.getName() );
-
-            return true;
-        }
-
-        for ( OrganisationUnit ancestor : organisationUnit.getAncestors() )
-        {
-            if ( mayApprove( ancestor ) )
-            {
-                log.debug( "User may unapprove at " + ancestor.getName() );
-
-                return true;
-            }
-        }
-
-        log.debug( "User may not unapprove at " + organisationUnit.getName() );
-
-        return false;
-    }
-
-    /**
-     * Warns if the user is not permitted to make a data approval operation.
-     * If the UI is working correctly, the user should never be able to choose
-     * an operation for which they are not permitted. So this should happen
-     * only if there is a programming error, or if the user is trying to perform
-     * an operation that the UI would not normally offer.
-     *
-     * @param dataApproval the data approval object for the attempted operation.
-     * @param operation the name of the operation attempted.
-     * @param mayOperate whether the user may perform this operation.
-     */
-    private void warnNotPermitted( DataApproval dataApproval, String operation, boolean mayOperate )
-    {
-        String warning = "User " + currentUserService.getCurrentUsername() + " tried to " + operation
-                + " data for (org unit " + dataApproval.getOrganisationUnit().getName()
-                + ", period " + dataApproval.getPeriod().getName()
-                + ", data set " + dataApproval.getDataSet().getName()
-                + ", COG " + ( dataApproval.getCategoryOptionGroup() == null ? "[null]" : dataApproval.getCategoryOptionGroup().getName() )
-                + ")";
-
-        if ( dataApproval.getCategoryOptionGroup() != null && !securityService.canRead( dataApproval.getCategoryOptionGroup() ) )
-        {
-            warning += " but couldn't read COG";
-        }
-
-        if ( !mayOperate )
-        {
-            warning += " but couldn't " + operation  + " for " + dataApproval.getOrganisationUnit().getName();
-        }
-
-        log.warn( warning + "." );
+        return DataApprovalPermissionsEvaluator.makePermissionsEvaluator(
+            currentUserService, systemSettingManager, dataApprovalLevelService );
     }
 }

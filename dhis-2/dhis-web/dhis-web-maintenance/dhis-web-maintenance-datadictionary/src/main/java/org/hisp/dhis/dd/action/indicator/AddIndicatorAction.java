@@ -169,7 +169,7 @@ public class AddIndicatorAction
         this.jsonAttributeValues = jsonAttributeValues;
     }
 
-    private Collection<String> selectedGroups = new HashSet<String>();
+    private Collection<String> selectedGroups = new HashSet<>();
 
     public void setSelectedGroups( Collection<String> selectedGroups )
     {
@@ -180,6 +180,7 @@ public class AddIndicatorAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         IndicatorType indicatorType = indicatorService.getIndicatorType( indicatorTypeId );

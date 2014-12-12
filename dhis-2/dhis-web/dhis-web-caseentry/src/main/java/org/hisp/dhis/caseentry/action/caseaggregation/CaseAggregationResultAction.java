@@ -144,7 +144,7 @@ public class CaseAggregationResultAction
         return autoSave;
     }
 
-    private List<Grid> grids = new ArrayList<Grid>();
+    private List<Grid> grids = new ArrayList<>();
 
     public List<Grid> getGrids()
     {
@@ -155,6 +155,7 @@ public class CaseAggregationResultAction
     // Action Implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -165,7 +166,7 @@ public class CaseAggregationResultAction
         DataSet selectedDataSet = dataSetService.getDataSet( dataSetId );
 
         Collection<CaseAggregationCondition> aggregationConditions = aggregationConditionService
-            .getCaseAggregationCondition( selectedDataSet.getDataElements() );
+            .getCaseAggregationConditions( selectedDataSet.getDataElements(), null, null, null );
 
         // ---------------------------------------------------------------------
         // Get selected periods list
@@ -176,14 +177,14 @@ public class CaseAggregationResultAction
 
         CalendarPeriodType periodType = (CalendarPeriodType) PeriodType.getPeriodTypeByName( selectedDataSet
             .getPeriodType().getName() );
-        List<Period> periods = new ArrayList<Period>();
+        List<Period> periods = new ArrayList<>();
         periods.addAll( periodType.generatePeriods( sDate, eDate ) );
 
         // ---------------------------------------------------------------------
         // Get selected orgunits
         // ---------------------------------------------------------------------
 
-        Set<Integer> orgunitIds = new HashSet<Integer>();
+        Set<Integer> orgunitIds = new HashSet<>();
 
         OrganisationUnit selectedOrgunit = selectionTreeManager.getReloadedSelectedOrganisationUnit();
 
@@ -212,20 +213,14 @@ public class CaseAggregationResultAction
         // Aggregation
         // ---------------------------------------------------------------------
 
-        for ( CaseAggregationCondition condition : aggregationConditions )
+        if ( autoSave )
         {
-            for ( Period period : periods )
-            {
-                if ( autoSave )
-                {
-                    aggregationConditionService.insertAggregateValue( condition, orgunitIds, period );
-                }
-                else
-                {
-                    grids.add( aggregationConditionService.getAggregateValue( condition, orgunitIds, period, format,
-                        i18n ) );
-                }
-            }
+            aggregationConditionService.insertAggregateValue( aggregationConditions, orgunitIds, periods );
+        }
+        else
+        {
+            grids = aggregationConditionService.getAggregateValue( aggregationConditions, orgunitIds, periods, format,
+                i18n );
         }
         return SUCCESS;
     }

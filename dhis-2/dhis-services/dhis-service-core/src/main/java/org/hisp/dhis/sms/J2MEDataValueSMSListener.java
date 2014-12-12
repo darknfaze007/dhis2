@@ -81,7 +81,7 @@ public class J2MEDataValueSMSListener
     private CompleteDataSetRegistrationService registrationService;
 
     private SmsSender smsSender;
-    
+
     @Transactional
     @Override
     public boolean accept( IncomingSms sms )
@@ -100,7 +100,7 @@ public class J2MEDataValueSMSListener
 
         return smsCommandService.getSMSCommand( commandString, ParserType.J2ME_PARSER ) != null;
     }
-    
+
     @Transactional
     @Override
     public void receive( IncomingSms sms )
@@ -180,7 +180,7 @@ public class J2MEDataValueSMSListener
             keyValuePairs[0] = sms;
         }
 
-        Map<String, String> keyValueMap = new HashMap<String, String>();
+        Map<String, String> keyValueMap = new HashMap<>();
         for ( String keyValuePair : keyValuePairs )
         {
             String[] token = keyValuePair.split( Pattern.quote( smsCommand.getSeparator() ) );
@@ -235,7 +235,7 @@ public class J2MEDataValueSMSListener
             }
 
             dv.setValue( value );
-            dv.setTimestamp( new java.util.Date() );
+            dv.setLastUpdated( new java.util.Date() );
             dv.setStoredBy( storedBy );
 
             if ( ValidationUtils.dataValueIsValid( value, dv.getDataElement() ) != null )
@@ -287,13 +287,13 @@ public class J2MEDataValueSMSListener
             }
             throw new SMSParserException( messageListingOrgUnits );
         }
-        
+
         return orgUnit;
     }
 
     private Collection<OrganisationUnit> getOrganisationUnitsByPhoneNumber( String sender )
     {
-        Collection<OrganisationUnit> orgUnits = new ArrayList<OrganisationUnit>();
+        Collection<OrganisationUnit> orgUnits = new ArrayList<>();
         Collection<User> users = userService.getUsersByPhoneNumber( sender );
         for ( User u : users )
         {
@@ -345,8 +345,9 @@ public class J2MEDataValueSMSListener
     {
         CompleteDataSetRegistration registration = new CompleteDataSetRegistration();
 
-        DataElementCategoryOptionCombo optionCombo = dataElementCategoryService.getDefaultDataElementCategoryOptionCombo(); //TODO
-        
+        DataElementCategoryOptionCombo optionCombo = dataElementCategoryService
+            .getDefaultDataElementCategoryOptionCombo(); // TODO
+
         if ( registrationService.getCompleteDataSetRegistration( dataSet, period, organisationUnit, optionCombo ) == null )
         {
             registration.setDataSet( dataSet );
@@ -402,6 +403,11 @@ public class J2MEDataValueSMSListener
         if ( missingElements )
         {
             reportBack += notInReport;
+        }
+        
+        if ( command.getSuccessMessage() != null && !StringUtils.isEmpty( command.getSuccessMessage() ) )
+        {
+            reportBack = command.getSuccessMessage();
         }
 
         smsSender.sendMessage( reportBack, sender );

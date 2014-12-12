@@ -37,8 +37,9 @@ import org.apache.commons.lang.NotImplementedException;
 import org.hisp.dhis.analytics.AggregationType;
 import org.hisp.dhis.analytics.AnalyticsService;
 import org.hisp.dhis.analytics.DataQueryParams;
-import org.hisp.dhis.common.BaseAnalyticalObject;
+import org.hisp.dhis.common.AnalyticalObject;
 import org.hisp.dhis.common.DimensionalObject;
+import org.hisp.dhis.common.DisplayProperty;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.i18n.I18nFormat;
 
@@ -48,9 +49,9 @@ import org.hisp.dhis.i18n.I18nFormat;
 public class MockAnalyticsService
     implements AnalyticsService
 {
-    private Map<String, Double> valueMap;
+    private Map<String, Object> valueMap;
 
-    public MockAnalyticsService( Map<String, Double> valueMap )
+    public MockAnalyticsService( Map<String, Object> valueMap )
     {
         this.valueMap = valueMap;
     }
@@ -68,33 +69,40 @@ public class MockAnalyticsService
     }
 
     @Override
-    public Map<String, Double> getAggregatedDataValueMapping( DataQueryParams params )
+    public Map<String, Object> getAggregatedDataValueMapping( DataQueryParams params )
     {
         return valueMap;
     }
 
     @Override
-    public Map<String, Double> getAggregatedDataValueMapping( BaseAnalyticalObject object, I18nFormat format )
+    public Map<String, Object> getAggregatedDataValueMapping( AnalyticalObject object, I18nFormat format )
     {
         return valueMap;
     }
 
     @Override
     public DataQueryParams getFromUrl( Set<String> dimensionParams, Set<String> filterParams, AggregationType aggregationType, 
-        String measureCriteria, boolean skipMeta, boolean skipRounding, boolean hierarchyMeta, boolean ignoreLimit, boolean hideEmptyRows, boolean showHierarchy, I18nFormat format )
+        String measureCriteria, boolean skipMeta, boolean skipRounding, boolean hierarchyMeta, boolean ignoreLimit, boolean hideEmptyRows, 
+        boolean showHierarchy, DisplayProperty displayProperty, I18nFormat format )
     {
         throw new NotImplementedException();
     }
 
     @Override
-    public DataQueryParams getFromAnalyticalObject( BaseAnalyticalObject object, I18nFormat format )
+    public DataQueryParams getFromAnalyticalObject( AnalyticalObject object, I18nFormat format )
     {
         throw new NotImplementedException();
+    }
+    
+    @Override
+    public List<DimensionalObject> getDimensionalObjects( Set<String> dimensionParams, I18nFormat format )
+    {
+        throw new NotImplementedException();        
     }
 
     @Override
     public List<DimensionalObject> getDimension( String dimension, List<String> items, Date relativePeriodDate,
-        I18nFormat format )
+        I18nFormat format, boolean allowNull )
     {
         throw new NotImplementedException();
     }

@@ -87,10 +87,11 @@ public class GetDataElementGroupsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        dataElementGroups = new ArrayList<DataElementGroup>( dataElementService.getAllDataElementGroups() );
+        dataElementGroups = new ArrayList<>( dataElementService.getAllDataElementGroups() );
 
         if ( filterNoGroupSet )
         {

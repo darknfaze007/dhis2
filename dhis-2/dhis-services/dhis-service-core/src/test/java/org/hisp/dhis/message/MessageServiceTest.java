@@ -29,9 +29,11 @@ package org.hisp.dhis.message;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,6 +42,7 @@ import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserService;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
@@ -47,6 +50,12 @@ import org.junit.Test;
 public class MessageServiceTest
     extends DhisSpringTest
 {
+    @Autowired
+    private MessageService messageService;
+
+    @Autowired
+    private UserService _userService;
+    
     private User sender;
     private User userA;
     private User userB;
@@ -58,11 +67,11 @@ public class MessageServiceTest
     // Fixture
     // -------------------------------------------------------------------------
 
+    @Override
     @Before
     public void setUpTest()
     {
-        messageService = (MessageService) getBean( MessageService.ID );
-        userService = (UserService) getBean( UserService.ID );
+        userService = _userService;
         
         sender = createUser( 'S' );
         userA = createUser( 'A' );
@@ -74,7 +83,7 @@ public class MessageServiceTest
         userService.addUser( userB );
        
         
-        users = new HashSet<User>();
+        users = new HashSet<>();
         users.add( userA );
         users.add( userB );        
     }
@@ -198,5 +207,32 @@ public class MessageServiceTest
         assertNotNull( message );
         assertEquals( "Subject", message.getSubject() );
         assertEquals( 2, message.getMessages().size() );       
+    }
+
+    @Test
+    public void testGetMessageConversations()
+    {
+        MessageConversation conversationA = new MessageConversation( "SubjectA", sender );
+        MessageConversation conversationB = new MessageConversation( "SubjectB", sender );
+        MessageConversation conversationC = new MessageConversation( "SubjectC", userA );
+
+        messageService.saveMessageConversation( conversationA );
+        messageService.saveMessageConversation( conversationB );
+        messageService.saveMessageConversation( conversationC );
+
+        String uidA = conversationA.getUid();
+        String uidB = conversationB.getUid();
+
+        messageService.saveMessageConversation( conversationA );
+        messageService.saveMessageConversation( conversationB );
+        messageService.saveMessageConversation( conversationC );
+
+        String[] uids = { uidA, uidB };
+
+        Collection<MessageConversation> conversations = messageService.getMessageConversations( uids );
+
+        assertTrue( conversations.contains( conversationA ) );
+        assertTrue( conversations.contains( conversationB ) );
+        assertFalse( conversations.contains( conversationC ) );
     }
 }

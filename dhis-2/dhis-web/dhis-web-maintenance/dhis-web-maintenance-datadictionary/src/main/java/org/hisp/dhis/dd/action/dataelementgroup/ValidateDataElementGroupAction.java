@@ -107,11 +107,11 @@ public class ValidateDataElementGroupAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         if ( name != null )
         {
-
             DataElementGroup match = dataElementService.getDataElementGroupByName( name );
 
             if ( match != null && (id == null || match.getId() != id) )

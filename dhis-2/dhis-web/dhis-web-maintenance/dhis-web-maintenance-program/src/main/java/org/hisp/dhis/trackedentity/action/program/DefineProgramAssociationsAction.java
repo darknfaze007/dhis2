@@ -80,12 +80,13 @@ public class DefineProgramAssociationsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         Collection<OrganisationUnit> rootUnits = selectionTreeManager.getRootOrganisationUnits();
 
-        Set<OrganisationUnit> unitsInTheTree = new HashSet<OrganisationUnit>();
+        Set<OrganisationUnit> unitsInTheTree = new HashSet<>();
 
         getUnitsInTheTree( rootUnits, unitsInTheTree );
 
@@ -113,7 +114,7 @@ public class DefineProgramAssociationsAction
 
     private Set<OrganisationUnit> convert( Collection<OrganisationUnit> organisationUnits )
     {
-        Set<OrganisationUnit> units = new HashSet<OrganisationUnit>();
+        Set<OrganisationUnit> units = new HashSet<>();
 
         units.addAll( organisationUnits );
 

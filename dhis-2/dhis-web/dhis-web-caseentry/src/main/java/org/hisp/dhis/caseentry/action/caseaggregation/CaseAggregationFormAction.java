@@ -60,7 +60,7 @@ public class CaseAggregationFormAction
     // Input/Output
     // -------------------------------------------------------------------------
 
-    private List<DataSet> datasets = new ArrayList<DataSet>();
+    private List<DataSet> datasets = new ArrayList<>();
 
     public List<DataSet> getDatasets()
     {
@@ -71,13 +71,14 @@ public class CaseAggregationFormAction
     // Implementation Action
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         Collection<CaseAggregationCondition> aggConditions = aggregationConditionService
             .getAllCaseAggregationCondition();
 
-        Collection<DataSet> uniqueDataSetList = new HashSet<DataSet>();        
+        Collection<DataSet> uniqueDataSetList = new HashSet<>();
         for ( CaseAggregationCondition aggCondition : aggConditions )
         {
             DataElement dataElement = aggCondition.getAggregationDataElement();

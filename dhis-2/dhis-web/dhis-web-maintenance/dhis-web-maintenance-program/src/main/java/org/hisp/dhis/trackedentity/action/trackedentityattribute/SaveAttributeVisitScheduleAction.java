@@ -61,7 +61,7 @@ public class SaveAttributeVisitScheduleAction
     // Input/Output
     // -------------------------------------------------------------------------
 
-    private List<Integer> selectedAttributeIds = new ArrayList<Integer>();
+    private List<Integer> selectedAttributeIds = new ArrayList<>();
 
     public void setSelectedAttributeIds( List<Integer> selectedAttributeIds )
     {
@@ -72,6 +72,7 @@ public class SaveAttributeVisitScheduleAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {

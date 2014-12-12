@@ -28,6 +28,14 @@ package org.hisp.dhis.common;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import org.hisp.dhis.calendar.Calendar;
+import org.hisp.dhis.calendar.DateTimeUnit;
+import org.hisp.dhis.dataelement.DataElementCategory;
+import org.hisp.dhis.dataelement.DataElementCategoryCombo;
+import org.hisp.dhis.dataelement.DataElementCategoryOption;
+import org.hisp.dhis.period.Period;
+import org.hisp.dhis.period.PeriodType;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,6 +55,15 @@ public class IdentifiableObjectUtils
     private static final String SEPARATOR_JOIN = ", ";
     private static final String SEPARATOR = "-";
     private static final SimpleDateFormat LONG_DATE_FORMAT = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss" );
+
+    public static final Map<String, String> CLASS_ALIAS = new HashMap<String, String>()
+    {
+        {
+            put( "CategoryOption", DataElementCategoryOption.class.getSimpleName() );
+            put( "Category", DataElementCategory.class.getSimpleName() );
+            put( "CategoryCombo", DataElementCategoryCombo.class.getSimpleName() );
+        }
+    };
 
     /**
      * Joins the names of the IdentifiableObjects in the given list and separates
@@ -83,7 +100,7 @@ public class IdentifiableObjectUtils
      */
     public static <T extends IdentifiableObject> List<String> getUids( Collection<T> objects )
     {
-        List<String> uids = new ArrayList<String>();
+        List<String> uids = new ArrayList<>();
 
         if ( objects != null )
         {
@@ -97,6 +114,58 @@ public class IdentifiableObjectUtils
     }
 
     /**
+     * Returns a list of calendar specific period identifiers for the given collection of
+     * periods and calendar.
+     *
+     * @param periods  the list of periods.
+     * @param calendar the calendar to use for generation of iso periods.
+     * @return a list of iso period identifiers.
+     */
+    public static <T extends IdentifiableObject> List<String> getLocalPeriodIdentifiers( Collection<T> periods, Calendar calendar )
+    {
+        List<String> localIdentifiers = new ArrayList<>();
+
+        for ( IdentifiableObject object : periods )
+        {
+            Period period = (Period) object;
+            DateTimeUnit dateTimeUnit = calendar.fromIso( period.getStartDate() );
+            localIdentifiers.add( period.getPeriodType().getIsoDate( dateTimeUnit ) );
+        }
+
+        return localIdentifiers;
+    }
+
+    /**
+     * Returns a local period identifier for a specific date / periodType / calendar.
+     *
+     * @param date       Date to create from
+     * @param periodType PeriodType to create from
+     * @param calendar   Calendar to create from
+     * @return Period identifier based on given calendar
+     */
+    public static String getLocalPeriodIdentifier( Date date, PeriodType periodType, Calendar calendar )
+    {
+        return getLocalPeriodIdentifier( periodType.createPeriod( date, calendar ), calendar );
+    }
+
+    /**
+     * Returns a local period identifier for a specific period / calendar.
+     *
+     * @param period   the list of periods.
+     * @param calendar the calendar to use for generation of iso periods.
+     * @return Period identifier based on given calendar
+     */
+    public static String getLocalPeriodIdentifier( Period period, Calendar calendar )
+    {
+        if ( calendar.isIso8601() )
+        {
+            return period.getIsoDate();
+        }
+
+        return period.getPeriodType().getIsoDate( calendar.fromIso( period.getStartDate() ) );
+    }
+
+    /**
      * Returns a list of internal identifiers for the given collection of IdentifiableObjects.
      *
      * @param objects the list of IdentifiableObjects.
@@ -104,7 +173,7 @@ public class IdentifiableObjectUtils
      */
     public static <T extends IdentifiableObject> List<Integer> getIdentifiers( Collection<T> objects )
     {
-        List<Integer> uids = new ArrayList<Integer>();
+        List<Integer> uids = new ArrayList<>();
 
         if ( objects != null )
         {
@@ -128,7 +197,7 @@ public class IdentifiableObjectUtils
     public static <T extends IdentifiableObject> List<T> filterNameByKey( List<T> identifiableObjects, String key,
         boolean ignoreCase )
     {
-        List<T> objects = new ArrayList<T>();
+        List<T> objects = new ArrayList<>();
         ListIterator<T> iterator = identifiableObjects.listIterator();
 
         if ( ignoreCase )
@@ -158,7 +227,7 @@ public class IdentifiableObjectUtils
      */
     public static List<IdentifiableObject> getList( IdentifiableObject... objects )
     {
-        List<IdentifiableObject> list = new ArrayList<IdentifiableObject>();
+        List<IdentifiableObject> list = new ArrayList<>();
 
         if ( objects != null )
         {
@@ -176,7 +245,7 @@ public class IdentifiableObjectUtils
      */
     public static List<IdentifiableObject> asList( Collection<? extends IdentifiableObject> collection )
     {
-        List<IdentifiableObject> list = new ArrayList<IdentifiableObject>();
+        List<IdentifiableObject> list = new ArrayList<>();
         list.addAll( collection );
         return list;
     }
@@ -189,10 +258,10 @@ public class IdentifiableObjectUtils
      * @param collection the collection.
      * @return a list.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings( "unchecked" )
     public static <T extends IdentifiableObject> List<T> asTypedList( Collection<IdentifiableObject> collection )
     {
-        List<T> list = new ArrayList<T>();
+        List<T> list = new ArrayList<>();
 
         if ( collection != null )
         {
@@ -212,7 +281,7 @@ public class IdentifiableObjectUtils
      */
     public static <T extends IdentifiableObject> List<T> removeDuplicates( List<T> list )
     {
-        final List<T> temp = new ArrayList<T>( list );
+        final List<T> temp = new ArrayList<>( list );
         list.clear();
 
         for ( T object : temp )
@@ -270,7 +339,7 @@ public class IdentifiableObjectUtils
      */
     public static List<Integer> getIdList( Collection<? extends IdentifiableObject> identifiableObjects )
     {
-        List<Integer> integers = new ArrayList<Integer>();
+        List<Integer> integers = new ArrayList<>();
 
         if ( identifiableObjects != null )
         {
@@ -295,7 +364,7 @@ public class IdentifiableObjectUtils
      */
     public static Map<String, String> getUidNameMap( Collection<? extends IdentifiableObject> objects )
     {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
 
         if ( objects != null )
         {

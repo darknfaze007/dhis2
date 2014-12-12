@@ -28,15 +28,15 @@ package org.hisp.dhis.dd.action.categoryoptiongroupset;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.opensymphony.xwork2.Action;
 import org.hisp.dhis.dataelement.CategoryOptionGroup;
 import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.opensymphony.xwork2.Action;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Chau Thu Tran
@@ -71,16 +71,9 @@ public class ShowUpdateCategoryOptionGroupSetAction
 
     private List<CategoryOptionGroup> categoryOptionGroups;
 
-    public List<CategoryOptionGroup> getCategoryOptions()
+    public List<CategoryOptionGroup> getCategoryOptionGroups()
     {
         return categoryOptionGroups;
-    }
-
-    private List<CategoryOptionGroup> groupMembers;
-
-    public List<CategoryOptionGroup> getGroupMembers()
-    {
-        return groupMembers;
     }
 
     // -------------------------------------------------------------------------
@@ -93,7 +86,9 @@ public class ShowUpdateCategoryOptionGroupSetAction
     {
         categoryOptionGroupSet = dataElementCategoryService.getCategoryOptionGroupSet( id );
 
-        groupMembers = new ArrayList<CategoryOptionGroup>( categoryOptionGroupSet.getMembers() );
+        categoryOptionGroups = new ArrayList<>( categoryOptionGroupSet.getMembers() );
+
+        Collections.sort( categoryOptionGroups );
 
         return SUCCESS;
     }

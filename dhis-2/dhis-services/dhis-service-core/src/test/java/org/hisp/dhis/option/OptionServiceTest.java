@@ -34,45 +34,49 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hisp.dhis.DhisTest;
+import org.hisp.dhis.DhisSpringTest;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
  */
 public class OptionServiceTest
-    extends DhisTest
+    extends DhisSpringTest
 {
+    @Autowired
     private OptionService optionService;
 
-    private List<String> options = new ArrayList<String>();
+    private List<Option> options = new ArrayList<>();
 
     private OptionSet optionSetA = new OptionSet( "OptionSetA" );
 
     private OptionSet optionSetB = new OptionSet( "OptionSetB" );
 
     private OptionSet optionSetC = new OptionSet( "OptionSetC" );
-
+  
+    private Option option1;
+    private Option option2;
+    private Option option3;
+    private Option option4;
+    
     @Override
     public void setUpTest()
     {
-        optionService = (OptionService) getBean( OptionService.ID );
-
-        options.add( "OptA1" );
-        options.add( "OptA2" );
-        options.add( "OptB1" );
-        options.add( "OptB2" );
+        option1 = new Option("OptA1","OptA1");
+        option2 = new Option("OptA2","OptA2");
+        option3 = new Option("OptB1","OptB1");
+        option4 = new Option("OptB2","OptB2");
+        
+        options.add( option1);
+        options.add( option2);
+        options.add( option3);
+        options.add( option4);
 
         optionSetA.setOptions( options );
         optionSetB.setOptions( options );
     }
     
-    @Override
-    public boolean emptyDatabaseAfterTest()
-    {
-        return true;
-    }
-
     @Test
     public void testSaveGet()
     {
@@ -92,10 +96,10 @@ public class OptionServiceTest
         assertEquals( 4, optionSetB.getOptions().size() );
         assertEquals( 0, optionSetC.getOptions().size() );
 
-        assertTrue( optionSetA.getOptions().contains( "OptA1" ) );
-        assertTrue( optionSetA.getOptions().contains( "OptA2" ) );
-        assertTrue( optionSetA.getOptions().contains( "OptB1" ) );
-        assertTrue( optionSetA.getOptions().contains( "OptB2" ) );
+        assertTrue( optionSetA.getOptions().contains( option1 ) );
+        assertTrue( optionSetA.getOptions().contains( option2 ) );
+        assertTrue( optionSetA.getOptions().contains( option3 ) );
+        assertTrue( optionSetA.getOptions().contains( option4 ) );
     }
 
     @Test
@@ -113,8 +117,8 @@ public class OptionServiceTest
     {
         int idA = optionService.saveOptionSet( optionSetA );
 
-        List<String> options = optionService.getOptions( idA, "OptA", 10 );
-        
+        List<Option> options = optionService.getOptions( idA, "OptA", 10 );
+
         assertEquals( 2, options.size() );
 
         options = optionService.getOptions( idA, "OptA1", 10 );

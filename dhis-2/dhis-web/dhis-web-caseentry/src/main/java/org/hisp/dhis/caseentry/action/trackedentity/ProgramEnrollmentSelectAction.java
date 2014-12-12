@@ -36,7 +36,6 @@ import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramInstance;
-import org.hisp.dhis.program.ProgramInstanceService;
 import org.hisp.dhis.program.ProgramService;
 import org.hisp.dhis.trackedentity.TrackedEntityInstance;
 import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
@@ -68,13 +67,6 @@ public class ProgramEnrollmentSelectAction
         this.programService = programService;
     }
 
-    private ProgramInstanceService programInstanceService;
-
-    public void setProgramInstanceService( ProgramInstanceService programInstanceService )
-    {
-        this.programInstanceService = programInstanceService;
-    }
-
     private OrganisationUnitSelectionManager selectionManager;
 
     public void setSelectionManager( OrganisationUnitSelectionManager selectionManager )
@@ -100,7 +92,7 @@ public class ProgramEnrollmentSelectAction
         return entityInstance;
     }
 
-    private Collection<Program> programs = new ArrayList<Program>();
+    private Collection<Program> programs = new ArrayList<>();
 
     public Collection<Program> getPrograms()
     {
@@ -111,6 +103,7 @@ public class ProgramEnrollmentSelectAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -119,25 +112,26 @@ public class ProgramEnrollmentSelectAction
 
         // Get all programs
 
-        programs = new ArrayList<Program>( programService.getProgramsByCurrentUser( orgunit ) );
+        programs = new ArrayList<>( programService.getProgramsByCurrentUser( orgunit ) );
         programs.retainAll( programService.getProgramsByTrackedEntity( entityInstance.getTrackedEntity() ) );
         programs.removeAll( programService.getPrograms( Program.SINGLE_EVENT_WITHOUT_REGISTRATION ) );
 
         Iterator<Program> iterProgram = programs.iterator();
         while ( iterProgram.hasNext() )
         {
-            if ( iterProgram.next().getOnlyEnrollOnce() )
+            Program program = iterProgram.next();
+            for ( ProgramInstance programInstance : entityInstance.getProgramInstances() )
             {
-                iterProgram.remove();
+                if ( programInstance.getProgram().equals( program ) )
+                {
+                    if (programInstance.getStatus() == ProgramInstance.STATUS_ACTIVE 
+                        || program.getOnlyEnrollOnce()
+                        || ((programInstance.getStatus() == ProgramInstance.STATUS_COMPLETED && program.isSingleEvent() )))
+                    { 
+                        iterProgram.remove();
+                    }
+                }
             }
-        }
-
-        Collection<ProgramInstance> programInstances = programInstanceService.getProgramInstances( entityInstance,
-            ProgramInstance.STATUS_ACTIVE );
-
-        for ( ProgramInstance programInstance : programInstances )
-        {
-            programs.remove( programInstance.getProgram() );
         }
 
         return SUCCESS;

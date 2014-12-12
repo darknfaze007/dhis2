@@ -38,10 +38,13 @@ import org.hisp.dhis.dataelement.CategoryOptionGroup;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataelement.DataElementGroup;
+import org.hisp.dhis.dxf2.csv.CsvImportService;
+import org.hisp.dhis.dxf2.gml.GmlImportService;
 import org.hisp.dhis.dxf2.metadata.ImportOptions;
 import org.hisp.dhis.dxf2.metadata.ImportService;
 import org.hisp.dhis.importexport.ImportStrategy;
 import org.hisp.dhis.importexport.action.util.ImportMetaDataCsvTask;
+import org.hisp.dhis.importexport.action.util.ImportMetaDataGmlTask;
 import org.hisp.dhis.importexport.action.util.ImportMetaDataTask;
 import org.hisp.dhis.option.OptionSet;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
@@ -53,6 +56,7 @@ import org.hisp.dhis.system.scheduling.Scheduler;
 import org.hisp.dhis.system.util.StreamUtils;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.User;
+import org.hisp.dhis.validation.ValidationRule;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.opensymphony.xwork2.Action;
@@ -70,6 +74,7 @@ public class MetaDataImportAction
        put( "categoryoptiongroup", CategoryOptionGroup.class );
        put( "organisationunit", OrganisationUnit.class );
        put( "organisationunitgroup", OrganisationUnitGroup.class );
+       put( "validationrule", ValidationRule.class );
        put( "optionset", OptionSet.class );
     }};
     
@@ -79,7 +84,13 @@ public class MetaDataImportAction
 
     @Autowired
     private ImportService importService;
+    
+    @Autowired
+    private CsvImportService csvImportService;
 
+    @Autowired
+    private GmlImportService gmlImportService;
+    
     @Autowired
     private CurrentUserService currentUserService;
 
@@ -156,14 +167,22 @@ public class MetaDataImportAction
         importOptions.setDryRun( dryRun );
 
         String userId = user != null ? user.getUid() : null;
-        
-        if ( "csv".equals( importFormat ) && classKey != null && KEY_CLASS_MAP.get( classKey ) != null )
+
+        if ( "csv".equals( importFormat ) )
         {
-            scheduler.executeTask( new ImportMetaDataCsvTask( userId, importService, importOptions, in, taskId, KEY_CLASS_MAP.get( classKey ) ) );
+            if( classKey != null && KEY_CLASS_MAP.get( classKey ) != null )
+            {
+                scheduler.executeTask( new ImportMetaDataCsvTask( userId, importService, csvImportService,
+                    importOptions, in, taskId, KEY_CLASS_MAP.get( classKey ) ) );
+            }
         }
-        else
+        else if ( "gml".equals( importFormat ) )
         {
-            scheduler.executeTask( new ImportMetaDataTask( userId, importService, importOptions, in, taskId ) );
+            scheduler.executeTask( new ImportMetaDataGmlTask( userId, gmlImportService, importOptions, in, taskId ) );
+        }
+        else if ( "json".equals( importFormat ) || "xml".equals( importFormat ) )
+        {
+            scheduler.executeTask( new ImportMetaDataTask( userId, importService, importOptions, in, taskId, importFormat ) );
         }
         
         return SUCCESS;

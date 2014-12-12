@@ -60,18 +60,21 @@ public class UserSettingInterceptor
     // UserSettingInterceptor implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void destroy()
     {
     }
 
+    @Override
     public void init()
     {
     }
 
+    @Override
     public String intercept( ActionInvocation invocation )
         throws Exception
     {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
 
         map.put( KEY_STYLE, styleManager.getCurrentStyle() );
         map.put( KEY_STYLE_DIRECTORY, styleManager.getCurrentStyleDirectory() );

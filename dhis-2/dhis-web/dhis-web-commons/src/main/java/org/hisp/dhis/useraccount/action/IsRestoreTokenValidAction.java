@@ -80,6 +80,7 @@ public class IsRestoreTokenValidAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         UserCredentials credentials = userService.getUserCredentialsByUsername( username );
@@ -88,9 +89,9 @@ public class IsRestoreTokenValidAction
         {
             return ERROR;
         }
-        
-        boolean verified = securityService.verifyToken( credentials, token, RestoreType.RECOVER_PASSWORD );
-        
-        return verified ? SUCCESS : ERROR;
+
+        String errorMessage = securityService.verifyToken( credentials, token, RestoreType.RECOVER_PASSWORD );
+
+        return errorMessage == null ? SUCCESS : ERROR;
     }
 }

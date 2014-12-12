@@ -37,6 +37,9 @@ import java.util.Map;
 
 import org.hisp.dhis.dataentryform.DataEntryForm;
 import org.hisp.dhis.i18n.I18n;
+import org.hisp.dhis.option.Option;
+import org.hisp.dhis.option.OptionService;
+import org.hisp.dhis.option.OptionSet;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
@@ -49,11 +52,11 @@ import org.hisp.dhis.program.ProgramStageInstance;
 import org.hisp.dhis.program.ProgramStageInstanceService;
 import org.hisp.dhis.program.ProgramStageSection;
 import org.hisp.dhis.program.ProgramStageService;
-import org.hisp.dhis.program.comparator.ProgramStageDataElementSortOrderComparator;
 import org.hisp.dhis.program.comparator.ProgramStageSectionSortOrderComparator;
 import org.hisp.dhis.trackedentity.TrackedEntityInstance;
 import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
 import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.opensymphony.xwork2.Action;
 
@@ -110,6 +113,9 @@ public class LoadDataEntryAction
         this.organisationUnitService = organisationUnitService;
     }
 
+    @Autowired
+    private OptionService optionService;
+
     // -------------------------------------------------------------------------
     // Input && Output
     // -------------------------------------------------------------------------
@@ -126,7 +132,7 @@ public class LoadDataEntryAction
 
     private I18n i18n;
 
-    private List<ProgramStageDataElement> programStageDataElements = new ArrayList<ProgramStageDataElement>();
+    private List<ProgramStageDataElement> programStageDataElements = new ArrayList<>();
 
     private Map<Integer, TrackedEntityDataValue> entityInstanceDataValueMap;
 
@@ -136,9 +142,9 @@ public class LoadDataEntryAction
 
     private ProgramStage programStage;
 
-    private List<ProgramStageSection> sections = new ArrayList<ProgramStageSection>();
+    private List<ProgramStageSection> sections = new ArrayList<>();
 
-    private Map<String, Double> calAttributeValueMap = new HashMap<String, Double>();
+    private Map<String, Double> calAttributeValueMap = new HashMap<>();
 
     private ProgramIndicatorService programIndicatorService;
 
@@ -246,7 +252,7 @@ public class LoadDataEntryAction
         return latitude;
     }
 
-    private Map<String, String> programIndicatorsMap = new HashMap<String, String>();
+    private Map<String, String> programIndicatorsMap = new HashMap<>();
 
     public Map<String, String> getProgramIndicatorsMap()
     {
@@ -257,11 +263,12 @@ public class LoadDataEntryAction
     {
         return displayOptionSetAsRadioButton;
     }
-
+    
     // -------------------------------------------------------------------------
     // Implementation Action
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -288,14 +295,13 @@ public class LoadDataEntryAction
         // Get program-stage-instance
         // ---------------------------------------------------------------------
 
-        programStageDataElements = new ArrayList<ProgramStageDataElement>( programStage.getProgramStageDataElements() );
-        Collections.sort( programStageDataElements, new ProgramStageDataElementSortOrderComparator() );
+        programStageDataElements = new ArrayList<>( programStage.getProgramStageDataElements() );
 
         DataEntryForm dataEntryForm = programStage.getDataEntryForm();
 
         if ( programStage.getDataEntryType().equals( ProgramStage.TYPE_SECTION ) )
         {
-            sections = new ArrayList<ProgramStageSection>( programStage.getProgramStageSections() );
+            sections = new ArrayList<>( programStage.getProgramStageSections() );
 
             Collections.sort( sections, new ProgramStageSectionSortOrderComparator() );
         }
@@ -359,12 +365,25 @@ public class LoadDataEntryAction
         Collection<TrackedEntityDataValue> entityInstanceDataValues = dataValueService
             .getTrackedEntityDataValues( programStageInstance );
 
-        entityInstanceDataValueMap = new HashMap<Integer, TrackedEntityDataValue>( entityInstanceDataValues.size() );
+        entityInstanceDataValueMap = new HashMap<>( entityInstanceDataValues.size() );
 
         for ( TrackedEntityDataValue entityInstanceDataValue : entityInstanceDataValues )
         {
             int key = entityInstanceDataValue.getDataElement().getId();
-            entityInstanceDataValueMap.put( key, entityInstanceDataValue );
+            OptionSet optionSet = entityInstanceDataValue.getDataElement().getOptionSet();
+            if ( optionSet != null )
+            {
+                String value = entityInstanceDataValue.getValue();
+                Option option = optionService.getOptionByCode( optionSet, value );
+                
+                TrackedEntityDataValue instanceDataValue = new TrackedEntityDataValue(entityInstanceDataValue.getProgramStageInstance(), entityInstanceDataValue.getDataElement());
+                instanceDataValue.setValue( option.getName() );
+                entityInstanceDataValueMap.put( key, instanceDataValue );
+            }
+            else
+            {
+                entityInstanceDataValueMap.put( key, entityInstanceDataValue );
+            }
         }
 
         return entityInstanceDataValues;

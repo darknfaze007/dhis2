@@ -38,6 +38,7 @@ import org.apache.commons.lang.BooleanUtils;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.i18n.I18n;
+import org.hisp.dhis.option.Option;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
 import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
@@ -105,7 +106,7 @@ public class DefaultProgramDataEntryService
         I18n i18n, ProgramStage programStage, ProgramStageInstance programStageInstance,
         OrganisationUnit organisationUnit )
     {
-        Map<String, Collection<TrackedEntityDataValue>> mapDataValue = new HashMap<String, Collection<TrackedEntityDataValue>>();
+        Map<String, Collection<TrackedEntityDataValue>> mapDataValue = new HashMap<>();
 
         // ---------------------------------------------------------------------
         // Inline Javascript to add to HTML before outputting
@@ -508,6 +509,7 @@ public class DefaultProgramDataEntryService
         return populateI18nStrings( sb.toString(), i18n );
     }
 
+    @Override
     public String prepareDataEntryFormForEdit( String htmlCode )
     {
         // ---------------------------------------------------------------------
@@ -571,7 +573,7 @@ public class DefaultProgramDataEntryService
         String inputHTML = "";
         if ( dataElement != null )
         {
-            String metaData = "<input id=\'" + id + "\' name=\'" + id + "\' options=\'no\' type=\'radio\' optionset='"
+            String metaData = "<input class='optionset' id=\'" + id + "\' name=\'" + id + "\' options=\'no\' type=\'radio\' optionset='"
                 + dataElement.getOptionSet().getUid() + "'";
             metaData += " data=\"{compulsory:$COMPULSORY, deName:\'$DATAELEMENTNAME\', deType:\'"
                 + dataElement.getDetailedNumberType() + "\' }\" ";
@@ -586,14 +588,16 @@ public class DefaultProgramDataEntryService
                 inputHTML += " checked ";
             }
 
-            inputHTML += "onclick=\"saveRadio( \'" + dataElement.getUid() + "\', \'$option\' )\" />"
+            inputHTML += " value='' onclick=\"saveRadio( \'" + dataElement.getUid() + "\', \'$option\' )\" />"
                 + i18n.getString( "non_value" );
             inputHTML += " </td>";
 
             int index = 1;
 
-            for ( String optionValue : dataElement.getOptionSet().getOptions() )
+            for ( Option option : dataElement.getOptionSet().getOptions() )
             {
+                String optionValue = option.getName();
+                String optionCode = option.getCode();
                 if ( index == 4 )
                 {
                     inputHTML += "</tr><tr>";
@@ -601,11 +605,11 @@ public class DefaultProgramDataEntryService
                 }
 
                 inputHTML += "<td>" + metaData;
-                if ( entityInstanceDataValue != null && entityInstanceDataValue.getValue().equals( optionValue ) )
+                if ( entityInstanceDataValue != null && entityInstanceDataValue.getValue().equals( optionCode ) )
                 {
                     inputHTML += " checked ";
                 }
-                inputHTML += " onclick=\"saveRadio( \'" + dataElement.getUid() + "\', \'" + optionValue + "\' )\"  />"
+                inputHTML += " onclick=\"saveRadio( \'" + dataElement.getUid() + "\', \'" + optionCode + "\' )\"  />"
                     + optionValue;
                 inputHTML += "</td>";
                 index++;
@@ -665,13 +669,12 @@ public class DefaultProgramDataEntryService
         {
             if ( entityInstanceDataValue.equalsIgnoreCase( "true" ) )
             {
-                inputHTML = inputHTML.replace( "<option value=\"true\">", "<option value=\"" + i18n.getString( "true" )
-                    + "\" selected>" );
+                inputHTML = inputHTML.replace( "<option value=\"true\">", "<option value=\"true\" selected>" );
             }
             else if ( entityInstanceDataValue.equalsIgnoreCase( "false" ) )
             {
                 inputHTML = inputHTML.replace( "<option value=\"false\">",
-                    "<option value=\"" + i18n.getString( "false" ) + "\" selected>" );
+                    "<option value=\"false\" selected>" );
             }
         }
 
@@ -829,7 +832,7 @@ public class DefaultProgramDataEntryService
         {
             return null;
         }
-        Map<String, DataElement> map = new HashMap<String, DataElement>();
+        Map<String, DataElement> map = new HashMap<>();
 
         for ( DataElement element : dataElements )
         {

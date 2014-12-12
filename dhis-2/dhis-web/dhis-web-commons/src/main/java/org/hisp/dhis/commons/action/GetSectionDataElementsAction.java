@@ -30,10 +30,10 @@ package org.hisp.dhis.commons.action;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
@@ -66,13 +66,6 @@ public class GetSectionDataElementsAction
         this.categoryService = categoryService;
     }
 
-    private Comparator<DataElement> dataElementComparator;
-
-    public void setDataElementComparator( Comparator<DataElement> dataElementComparator )
-    {
-        this.dataElementComparator = dataElementComparator;
-    }
-
     // -------------------------------------------------------------------------
     // Input & Output
     // -------------------------------------------------------------------------
@@ -91,7 +84,7 @@ public class GetSectionDataElementsAction
         this.categoryComboId = categoryComboId;
     }
 
-    private List<DataElement> dataElements = new ArrayList<DataElement>();
+    private List<DataElement> dataElements = new ArrayList<>();
 
     public List<DataElement> getDataElements()
     {
@@ -115,7 +108,7 @@ public class GetSectionDataElementsAction
 
         DataElementCategoryCombo categoryCombo = categoryService.getDataElementCategoryCombo( categoryComboId );
 
-        dataElements = new ArrayList<DataElement>( dataSet.getDataElements() );
+        dataElements = new ArrayList<>( dataSet.getDataElements() );
 
         for ( Section section : dataSet.getSections() )
         {
@@ -136,7 +129,7 @@ public class GetSectionDataElementsAction
             }
         }
 
-        Collections.sort( dataElements, dataElementComparator );
+        Collections.sort( dataElements, IdentifiableObjectNameComparator.INSTANCE );
 
         return SUCCESS;
     }

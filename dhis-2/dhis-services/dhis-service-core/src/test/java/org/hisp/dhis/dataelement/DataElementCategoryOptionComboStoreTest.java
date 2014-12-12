@@ -38,6 +38,7 @@ import java.util.Set;
 
 import org.hisp.dhis.DhisSpringTest;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
@@ -45,7 +46,11 @@ import org.junit.Test;
 public class DataElementCategoryOptionComboStoreTest
     extends DhisSpringTest
 {
+    @Autowired
     private CategoryOptionComboStore categoryOptionComboStore;
+    
+    @Autowired
+    private DataElementCategoryService categoryService;
     
     private DataElementCategory categoryA;
     private DataElementCategory categoryB;
@@ -69,11 +74,7 @@ public class DataElementCategoryOptionComboStoreTest
     @Override
     public void setUpTest()
         throws Exception
-    {
-        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
-        
-        categoryOptionComboStore = (CategoryOptionComboStore) getBean( "org.hisp.dhis.dataelement.CategoryOptionComboStore" );
-        
+    {  
         categoryOptionA = new DataElementCategoryOption( "Male" );
         categoryOptionB = new DataElementCategoryOption( "Female" );
         categoryOptionC = new DataElementCategoryOption( "0-20" );
@@ -115,7 +116,7 @@ public class DataElementCategoryOptionComboStoreTest
     {
         categoryOptionComboA = new DataElementCategoryOptionCombo();
         
-        Set<DataElementCategoryOption> categoryOptions = new HashSet<DataElementCategoryOption>();
+        Set<DataElementCategoryOption> categoryOptions = new HashSet<>();
         
         categoryOptions.add( categoryOptionA );
         categoryOptions.add( categoryOptionB );        
@@ -137,7 +138,7 @@ public class DataElementCategoryOptionComboStoreTest
     {
         categoryOptionComboA = new DataElementCategoryOptionCombo();
         
-        Set<DataElementCategoryOption> categoryOptions = new HashSet<DataElementCategoryOption>();
+        Set<DataElementCategoryOption> categoryOptions = new HashSet<>();
         
         categoryOptions.add( categoryOptionA );
         categoryOptions.add( categoryOptionB );        
@@ -233,19 +234,19 @@ public class DataElementCategoryOptionComboStoreTest
         categoryService.generateOptionCombos( categoryComboA );
         categoryService.generateOptionCombos( categoryComboB );
         
-        Set<DataElementCategoryOption> categoryOptions1 = new HashSet<DataElementCategoryOption>();
+        Set<DataElementCategoryOption> categoryOptions1 = new HashSet<>();
         categoryOptions1.add( categoryOptionA );
         categoryOptions1.add( categoryOptionC );
 
-        Set<DataElementCategoryOption> categoryOptions2 = new HashSet<DataElementCategoryOption>();
+        Set<DataElementCategoryOption> categoryOptions2 = new HashSet<>();
         categoryOptions2.add( categoryOptionA );
         categoryOptions2.add( categoryOptionD );
 
-        Set<DataElementCategoryOption> categoryOptions3 = new HashSet<DataElementCategoryOption>();
+        Set<DataElementCategoryOption> categoryOptions3 = new HashSet<>();
         categoryOptions3.add( categoryOptionB );
         categoryOptions3.add( categoryOptionC );
 
-        Set<DataElementCategoryOption> categoryOptions4 = new HashSet<DataElementCategoryOption>();
+        Set<DataElementCategoryOption> categoryOptions4 = new HashSet<>();
         categoryOptions4.add( categoryOptionB );
         categoryOptions4.add( categoryOptionC );
         

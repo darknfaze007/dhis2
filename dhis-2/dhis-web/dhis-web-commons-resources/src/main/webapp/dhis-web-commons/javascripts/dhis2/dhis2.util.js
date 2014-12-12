@@ -60,6 +60,28 @@ dhis2.util.escape = function( text ) {
 };
 
 /**
+ * Convert a Java properties file into a javascript object.
+ */
+dhis2.util.parseJavaProperties = function( javaProperties ) {
+    var obj = {}, lines;
+    
+    if (typeof javaProperties !== 'string') {
+        return obj;
+    }
+    
+    lines = javaProperties.split(/\n/);
+
+    for (var i = 0, a; i < lines.length; i++) {
+        if (!!(typeof lines[i] === 'string' && lines[i].length && lines[i].indexOf('=') !== -1)) {
+            a = lines[i].split('=');
+            obj[a[0].trim()] = eval('"' + a[1].trim().replace(/"/g, '\'') + '"');
+        }
+    }
+
+    return obj;
+};
+
+/**
  * jQuery cannot correctly filter strings with () in them, so here is a fix
  * until jQuery gets updated.
  */
@@ -103,6 +125,25 @@ dhis2.util.uuid = function() {
   return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 };
 
+
+dhis2.util.uid = function() {
+  var letters = "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  var allowedChars = "0123456789" + letters;
+  var NUMBER_OF_CODEPOINTS = allowedChars.length;
+  var CODESIZE = 11;
+  var uid;
+
+  //the uid should start with a char 
+  uid = letters.charAt( Math.random() * (letters.length) );
+
+  for ( var i = 1; i < CODESIZE; ++i ){
+    uid += allowedChars.charAt( Math.random() * (NUMBER_OF_CODEPOINTS) );
+  }
+  
+  return uid;
+};
+
+
 /**
  * Normalizes an argument object returned from a jQuery promise. If the argument
  * is undefined, not an array or an empty array, undefined is returned. If the
@@ -123,6 +164,26 @@ dhis2.util.normalizeArguments = function( args ) {
     return arr;
   }
 };
+
+/**
+ * Convenience method to be used from inside custom forms. When a function is
+ * registered inside a form it will be loaded every time the form is loaded,
+ * hence the need to unregister and the register the function.
+ */
+dhis2.util.on = function( event, fn )
+{
+    $( document ).off( event ).on( event, fn );
+};
+
+/**
+ * Returns a query parameter string where _ is the parameter and the time stamp
+ * in milliseconds is the value, intended to force fresh non-cached responses
+ * from server.
+ */
+dhis2.util.cacheBust = function()
+{
+	return "_=" + new Date().getTime();
+}
 
 /**
  * adds ':containsNC' to filtering.

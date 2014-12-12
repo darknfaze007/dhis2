@@ -65,22 +65,25 @@ public class XWorkPortalModuleInterceptor
     // AroundInterceptor implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void destroy()
     {
         // TODO Auto-generated method stub
         
     }
 
+    @Override
     public void init()
     {
         // TODO Auto-generated method stub
         
     }
 
+    @Override
     public String intercept( ActionInvocation actionInvocation )
         throws Exception
     {
-        Map<String, Object> handle = new HashMap<String, Object>( 2 );
+        Map<String, Object> handle = new HashMap<>( 2 );
 
         handle.put( KEY_MENU_MODULES, moduleManager.getAccessibleMenuModulesAndApps() );
 

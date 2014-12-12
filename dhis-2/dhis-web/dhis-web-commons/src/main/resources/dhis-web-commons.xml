@@ -29,6 +29,7 @@
       <result-type name="gridCsvResult" class="org.hisp.dhis.result.GridCsvResult" />
       <result-type name="gridXlsResult" class="org.hisp.dhis.result.GridXlsResult" />
       <result-type name="gridPdfResult" class="org.hisp.dhis.result.GridPdfResult" />
+      <result-type name="gridPdfInlineResult" class="org.hisp.dhis.result.GridPdfInlineResult" />
       <result-type name="gridJasperResult" class="org.hisp.dhis.result.GridJasperResult" />
       <result-type name="gridJrxmlResult" class="org.hisp.dhis.result.GridJrxmlResult" />
     </result-types>
@@ -297,6 +298,11 @@
     
     <action name="getModules" class="org.hisp.dhis.webportal.menu.action.GetModulesAction">
       <result name="success" type="velocity-json">/dhis-web-commons/ajax/jsonModules.vm</result>
+      <param name="onExceptionReturn">plainTextError</param>
+    </action>
+    
+    <action name="getHelpPageLinkModule" class="org.hisp.dhis.commons.action.NoAction">
+      <result name="success" type="velocity-json">/dhis-web-commons/ajax/jsonHelpPageLinkModule.vm</result>
       <param name="onExceptionReturn">plainTextError</param>
     </action>
 
@@ -620,6 +626,13 @@
     <action name="getSectionDataElements" class="org.hisp.dhis.commons.action.GetSectionDataElementsAction">
       <result name="success" type="velocity-json">
         /dhis-web-commons/ajax/jsonDataElements.vm
+      </result>
+      <param name="onExceptionReturn">plainTextError</param>
+    </action>
+
+    <action name="getSectionIndicators" class="org.hisp.dhis.commons.action.GetSectionIndicatorsAction">
+      <result name="success" type="velocity-json">
+        /dhis-web-commons/ajax/jsonIndicators.vm
       </result>
       <param name="onExceptionReturn">plainTextError</param>
     </action>

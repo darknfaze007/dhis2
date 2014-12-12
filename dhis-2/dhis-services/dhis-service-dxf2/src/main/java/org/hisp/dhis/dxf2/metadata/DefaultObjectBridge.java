@@ -34,13 +34,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.IdentifiableObjectManager;
-import org.hisp.dhis.dxf2.timer.SystemNanoTimer;
-import org.hisp.dhis.dxf2.timer.Timer;
+import org.hisp.dhis.common.IdentifiableProperty;
 import org.hisp.dhis.period.PeriodStore;
 import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.schema.Schema;
 import org.hisp.dhis.schema.SchemaService;
 import org.hisp.dhis.system.deletion.DeletionManager;
+import org.hisp.dhis.system.timer.SystemTimer;
+import org.hisp.dhis.system.timer.Timer;
 import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserCredentials;
 import org.hisp.dhis.user.UserService;
@@ -124,8 +125,7 @@ public class DefaultObjectBridge
     public void init()
     {
         log.info( "Building object-bridge maps (preheatCache: " + preheatCache + ")." );
-        Timer timer = new SystemNanoTimer();
-        timer.start();
+        Timer timer = new SystemTimer().start();
 
         masterMap = Maps.newHashMap();
         periodTypeMap = Maps.newHashMap();
@@ -140,9 +140,9 @@ public class DefaultObjectBridge
         for ( Class<?> type : registeredTypes )
         {
             populateIdentifiableObjectMap( type );
-            populateIdentifiableObjectMap( type, IdentifiableObject.IdentifiableProperty.UID );
-            populateIdentifiableObjectMap( type, IdentifiableObject.IdentifiableProperty.CODE );
-            populateIdentifiableObjectMap( type, IdentifiableObject.IdentifiableProperty.NAME );
+            populateIdentifiableObjectMap( type, IdentifiableProperty.UID );
+            populateIdentifiableObjectMap( type, IdentifiableProperty.CODE );
+            populateIdentifiableObjectMap( type, IdentifiableProperty.NAME );
         }
 
         timer.stop();
@@ -180,7 +180,7 @@ public class DefaultObjectBridge
     }
 
     @SuppressWarnings( "unchecked" )
-    private void populateIdentifiableObjectMap( Class<?> clazz, IdentifiableObject.IdentifiableProperty property )
+    private void populateIdentifiableObjectMap( Class<?> clazz, IdentifiableProperty property )
     {
         Map<String, IdentifiableObject> map = new HashMap<>();
 
@@ -191,15 +191,15 @@ public class DefaultObjectBridge
 
         if ( !preheatCache || map != null )
         {
-            if ( property == IdentifiableObject.IdentifiableProperty.UID )
+            if ( property == IdentifiableProperty.UID )
             {
                 uidMap.put( (Class<? extends IdentifiableObject>) clazz, map );
             }
-            else if ( property == IdentifiableObject.IdentifiableProperty.CODE )
+            else if ( property == IdentifiableProperty.CODE )
             {
                 codeMap.put( (Class<? extends IdentifiableObject>) clazz, map );
             }
-            else if ( property == IdentifiableObject.IdentifiableProperty.NAME )
+            else if ( property == IdentifiableProperty.NAME )
             {
                 if ( !preheatCache )
                 {
@@ -504,7 +504,7 @@ public class DefaultObjectBridge
                 }
             }
 
-            if ( identifiableObject.getCode() != null )
+            if ( identifiableObject.haveUniqueCode() && identifiableObject.getCode() != null )
             {
                 Map<String, IdentifiableObject> map = codeMap.get( identifiableObject.getClass() );
 
@@ -568,10 +568,20 @@ public class DefaultObjectBridge
         {
             entity = map.get( identifiableObject.getUid() );
         }
+        else
+        {
+            uidMap.put( identifiableObject.getClass(), new HashMap<String, IdentifiableObject>() );
+            map = uidMap.get( identifiableObject.getClass() );
+        }
 
         if ( !preheatCache && entity == null )
         {
             entity = manager.get( identifiableObject.getClass(), identifiableObject.getUid() );
+
+            if ( entity != null )
+            {
+                map.put( entity.getUid(), entity );
+            }
         }
 
         return entity;
@@ -586,10 +596,20 @@ public class DefaultObjectBridge
         {
             entity = map.get( identifiableObject.getCode() );
         }
+        else
+        {
+            codeMap.put( identifiableObject.getClass(), new HashMap<String, IdentifiableObject>() );
+            map = codeMap.get( identifiableObject.getClass() );
+        }
 
-        if ( !preheatCache && entity == null )
+        if ( !preheatCache && entity == null && identifiableObject.haveUniqueCode() )
         {
             entity = manager.getByCode( identifiableObject.getClass(), identifiableObject.getCode() );
+
+            if ( entity != null )
+            {
+                map.put( entity.getCode(), entity );
+            }
         }
 
         return entity;
@@ -604,10 +624,20 @@ public class DefaultObjectBridge
         {
             entity = map.get( identifiableObject.getName() );
         }
+        else
+        {
+            nameMap.put( identifiableObject.getClass(), new HashMap<String, IdentifiableObject>() );
+            map = nameMap.get( identifiableObject.getClass() );
+        }
 
-        if ( !preheatCache && identifiableObject.haveUniqueNames() && entity == null )
+        if ( !preheatCache && entity == null && identifiableObject.haveUniqueNames() )
         {
             entity = manager.getByName( identifiableObject.getClass(), identifiableObject.getName() );
+
+            if ( entity != null )
+            {
+                map.put( entity.getName(), entity );
+            }
         }
 
         return entity;

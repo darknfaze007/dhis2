@@ -28,13 +28,10 @@ package org.hisp.dhis.dashboard.usergroup.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import static org.hisp.dhis.setting.SystemSettingManager.KEY_ONLY_MANAGE_WITHIN_USER_GROUPS;
-
+import java.util.ArrayList;
 import java.util.List;
 
 import org.hisp.dhis.attribute.AttributeService;
-import org.hisp.dhis.hibernate.exception.CreateAccessDeniedException;
-import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.system.util.AttributeUtils;
 import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserGroup;
@@ -71,22 +68,15 @@ public class AddUserGroupAction
         this.attributeService = attributeService;
     }
 
-    private SystemSettingManager systemSettingManager;
-
-    public void setSystemSettingManager( SystemSettingManager systemSettingManager )
-    {
-        this.systemSettingManager = systemSettingManager;
-    }
-
     // -------------------------------------------------------------------------
     // Parameters
     // -------------------------------------------------------------------------
 
-    private List<Integer> groupMembersList;
+    private List<String> usersSelected;
 
-    public void setGroupMembersList( List<Integer> groupMembersList )
+    public void setUsersSelected( List<String> usersSelected )
     {
-        this.groupMembersList = groupMembersList;
+        this.usersSelected = usersSelected;
     }
 
     private String name;
@@ -107,28 +97,32 @@ public class AddUserGroupAction
     // Action Implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        boolean writeGroupRequired = (Boolean) systemSettingManager.getSystemSetting( KEY_ONLY_MANAGE_WITHIN_USER_GROUPS, false );
+        if ( usersSelected == null )
+        {
+            usersSelected = new ArrayList<>();
+        }
 
         UserGroup userGroup = new UserGroup( name );
-        
-        for ( Integer groupMember : groupMembersList )
-        {
-            User user = userService.getUser( groupMember );
-            userGroup.addUser( user );
 
-            if ( writeGroupRequired && !userGroup.getMembers().contains( user) && !userService.canUpdate( user.getUserCredentials() ) )
+        for ( String userUid : usersSelected )
+        {
+            User user = userService.getUser( userUid );
+
+            if( user == null )
             {
-                throw new CreateAccessDeniedException( "- You don't have permission to add all selected users to this group." );
+                continue;
             }
+
+            userGroup.addUser( user );
         }
 
         if ( jsonAttributeValues != null )
         {
-            AttributeUtils.updateAttributeValuesFromJson( userGroup.getAttributeValues(), jsonAttributeValues,
-                attributeService );
+            AttributeUtils.updateAttributeValuesFromJson( userGroup.getAttributeValues(), jsonAttributeValues, attributeService );
         }
 
         userGroupService.addUserGroup( userGroup );

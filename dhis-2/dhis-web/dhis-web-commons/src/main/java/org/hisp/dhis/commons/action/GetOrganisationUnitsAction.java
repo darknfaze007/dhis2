@@ -82,16 +82,17 @@ public class GetOrganisationUnitsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         if ( level == null || level == ALL )
         {
-            organisationUnits = new ArrayList<OrganisationUnit>( organisationUnitService.getAllOrganisationUnits() );
+            organisationUnits = new ArrayList<>( organisationUnitService.getAllOrganisationUnits() );
         }
         else
         {
-            organisationUnits = new ArrayList<OrganisationUnit>(
+            organisationUnits = new ArrayList<>(
                 organisationUnitService.getOrganisationUnitsAtLevel( level ) );
         }
 

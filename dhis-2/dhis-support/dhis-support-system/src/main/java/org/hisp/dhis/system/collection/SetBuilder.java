@@ -41,7 +41,7 @@ public class SetBuilder<E>
     
     public SetBuilder()
     {
-        set = new HashSet<E>();
+        set = new HashSet<>();
     }
     
     public SetBuilder<E> add( E element )
@@ -50,7 +50,8 @@ public class SetBuilder<E>
         return this;
     }
     
-    public SetBuilder<E> add( E... elements )
+    @SafeVarargs
+    public final SetBuilder<E> add( final E... elements )
     {
         for ( E element : elements )
         {
@@ -71,6 +72,6 @@ public class SetBuilder<E>
      */
     public Set<E> build()
     {
-        return new HashSet<E>( set );
+        return new HashSet<>( set );
     }
 }

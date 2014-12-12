@@ -70,14 +70,14 @@ public class ExpandSubtreeAction
     // Output
     // -------------------------------------------------------------------------
 
-    private List<OrganisationUnit> parents = new ArrayList<OrganisationUnit>();
+    private List<OrganisationUnit> parents = new ArrayList<>();
 
     public List<OrganisationUnit> getParents()
     {
         return parents;
     }
 
-    private Map<OrganisationUnit, List<OrganisationUnit>> childrenMap = new HashMap<OrganisationUnit, List<OrganisationUnit>>();
+    private Map<OrganisationUnit, List<OrganisationUnit>> childrenMap = new HashMap<>();
 
     public Map<OrganisationUnit, List<OrganisationUnit>> getChildrenMap()
     {
@@ -88,6 +88,7 @@ public class ExpandSubtreeAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {

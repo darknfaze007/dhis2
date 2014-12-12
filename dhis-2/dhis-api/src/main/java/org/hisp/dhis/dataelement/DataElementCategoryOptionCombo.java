@@ -53,7 +53,7 @@ import java.util.Set;
 /**
  * @author Abyot Aselefew
  */
-@JacksonXmlRootElement(localName = "categoryOptionCombo", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement( localName = "categoryOptionCombo", namespace = DxfNamespaces.DXF_2_0 )
 public class DataElementCategoryOptionCombo
     extends BaseNameableObject
 {
@@ -75,7 +75,7 @@ public class DataElementCategoryOptionCombo
      * The category options.
      */
     @Scanned
-    private Set<DataElementCategoryOption> categoryOptions = new HashSet<DataElementCategoryOption>();
+    private Set<DataElementCategoryOption> categoryOptions = new HashSet<>();
 
     // -------------------------------------------------------------------------
     // Transient properties
@@ -234,8 +234,8 @@ public class DataElementCategoryOptionCombo
             return false;
         }
 
-        final Set<String> names1 = new HashSet<String>();
-        final Set<String> names2 = new HashSet<String>();
+        final Set<String> names1 = new HashSet<>();
+        final Set<String> names2 = new HashSet<>();
 
         for ( DataElementCategoryOption option : categoryOptions )
         {
@@ -281,7 +281,7 @@ public class DataElementCategoryOptionCombo
      */
     public static Map<Integer, String> getCategoryOptionComboMap( Collection<DataElementCategoryOptionCombo> categoryOptionCombos )
     {
-        Map<Integer, String> map = new HashMap<Integer, String>();
+        Map<Integer, String> map = new HashMap<>();
 
         for ( DataElementCategoryOptionCombo coc : categoryOptionCombos )
         {
@@ -290,7 +290,7 @@ public class DataElementCategoryOptionCombo
 
         return map;
     }
-
+    
     // -------------------------------------------------------------------------
     // Getters and setters
     // -------------------------------------------------------------------------
@@ -364,9 +364,9 @@ public class DataElementCategoryOptionCombo
     }
 
     @JsonProperty
-    @JsonSerialize(as = BaseIdentifiableObject.class)
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JsonSerialize( as = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public DataElementCategoryCombo getCategoryCombo()
     {
         return categoryCombo;
@@ -378,10 +378,10 @@ public class DataElementCategoryOptionCombo
     }
 
     @JsonProperty
-    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlElementWrapper(localName = "categoryOptions", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty(localName = "categoryOption", namespace = DxfNamespaces.DXF_2_0)
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "categoryOptions", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "categoryOption", namespace = DxfNamespaces.DXF_2_0 )
     public Set<DataElementCategoryOption> getCategoryOptions()
     {
         return categoryOptions;
@@ -401,7 +401,8 @@ public class DataElementCategoryOptionCombo
         {
             DataElementCategoryOptionCombo dataElementCategoryOptionCombo = (DataElementCategoryOptionCombo) other;
 
-            categoryCombo = dataElementCategoryOptionCombo.getCategoryCombo() == null ? categoryCombo : dataElementCategoryOptionCombo.getCategoryCombo();
+            categoryCombo = dataElementCategoryOptionCombo.getCategoryCombo() == null ? categoryCombo : dataElementCategoryOptionCombo
+                .getCategoryCombo();
 
             removeAllCategoryOptions();
 

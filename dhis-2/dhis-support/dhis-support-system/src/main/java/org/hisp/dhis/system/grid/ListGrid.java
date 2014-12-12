@@ -37,8 +37,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
@@ -109,16 +111,16 @@ public class ListGrid
     /**
      * Represents a mapping between column names and the index of the column in the grid.
      */
-    private Map<String, Integer> columnIndexMap = new HashMap<String, Integer>();
+    private Map<String, Integer> columnIndexMap = new HashMap<>();
 
     /**
      * Default constructor.
      */
     public ListGrid()
     {
-        this.headers = new ArrayList<GridHeader>();
-        this.metaData = new HashMap<Object, Object>();
-        this.grid = new ArrayList<List<Object>>();
+        this.headers = new ArrayList<>();
+        this.metaData = new HashMap<>();
+        this.grid = new ArrayList<>();
     }
     
     /**
@@ -126,15 +128,16 @@ public class ListGrid
      */
     public ListGrid( Map<Object, Object> metaData )
     {
-        this.headers = new ArrayList<GridHeader>();
+        this.headers = new ArrayList<>();
         this.metaData = metaData;
-        this.grid = new ArrayList<List<Object>>();
+        this.grid = new ArrayList<>();
     }
 
     // ---------------------------------------------------------------------
     // Public methods
     // ---------------------------------------------------------------------
 
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class } )
     public String getTitle()
@@ -142,6 +145,7 @@ public class ListGrid
         return title;
     }
 
+    @Override
     public Grid setTitle( String title )
     {
         this.title = title;
@@ -149,6 +153,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class } )
     public String getSubtitle()
@@ -156,6 +161,7 @@ public class ListGrid
         return subtitle;
     }
 
+    @Override
     public Grid setSubtitle( String subtitle )
     {
         this.subtitle = subtitle;
@@ -163,6 +169,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class } )
     public String getTable()
@@ -170,6 +177,7 @@ public class ListGrid
         return table;
     }
 
+    @Override
     public Grid setTable( String table )
     {
         this.table = table;
@@ -177,6 +185,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid addHeader( GridHeader header )
     {
         headers.add( header );
@@ -186,6 +195,7 @@ public class ListGrid
         return this;
     }
     
+    @Override
     public Grid addEmptyHeaders( int number )
     {
         for ( int i = 0; i < number; i++ )
@@ -198,6 +208,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class } )
     public List<GridHeader> getHeaders()
@@ -205,9 +216,10 @@ public class ListGrid
         return headers;
     }
 
+    @Override
     public List<GridHeader> getVisibleHeaders()
     {
-        List<GridHeader> tempHeaders = new ArrayList<GridHeader>();
+        List<GridHeader> tempHeaders = new ArrayList<>();
 
         for ( GridHeader header : headers )
         {
@@ -219,7 +231,14 @@ public class ListGrid
 
         return tempHeaders;
     }
-
+    
+    @Override
+    public int getIndexOfHeader( String name )
+    {
+        return headers.indexOf( new GridHeader( name, null ) );
+    }
+    
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class } )
     public int getHeight()
@@ -227,6 +246,7 @@ public class ListGrid
         return (grid != null && grid.size() > 0) ? grid.size() : 0;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class } )
     public int getWidth()
@@ -236,6 +256,7 @@ public class ListGrid
         return (grid != null && grid.size() > 0) ? grid.get( 0 ).size() : 0;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DetailedView.class } )
     public Map<Object, Object> getMetaData()
@@ -243,16 +264,19 @@ public class ListGrid
         return metaData;
     }
     
+    @Override
     public void setMetaData( Map<Object, Object> metaData )
     {
         this.metaData = metaData;
     }
 
+    @Override
     public void addMetaData( Object key, Object value )
     {
         this.metaData.put( key, value );
     }
     
+    @Override
     public int getVisibleWidth()
     {
         verifyGridState();
@@ -260,15 +284,17 @@ public class ListGrid
         return (grid != null && grid.size() > 0) ? getVisibleRows().get( 0 ).size() : 0;
     }
 
+    @Override
     public Grid addRow()
     {
-        grid.add( new ArrayList<Object>() );
+        grid.add( new ArrayList<>() );
 
         currentRowWriteIndex++;
 
         return this;
     }
     
+    @Override
     public Grid addRows( Grid grid )
     {
         List<List<Object>> rows = grid.getRows();
@@ -283,6 +309,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid addValue( Object value )
     {
         grid.get( currentRowWriteIndex ).add( value );
@@ -290,6 +317,7 @@ public class ListGrid
         return this;
     }
     
+    @Override
     public Grid addValues( Object[] values )
     {
         List<Object> row = grid.get( currentRowWriteIndex );
@@ -302,6 +330,7 @@ public class ListGrid
         return this;
     }
     
+    @Override
     public Grid addEmptyValues( int number )
     {
         for ( int i = 0; i < number; i++ )
@@ -312,11 +341,13 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public List<Object> getRow( int rowIndex )
     {
         return grid.get( rowIndex );
     }
 
+    @Override
     @JsonProperty
     @JsonSerialize( using = JacksonRowDataSerializer.class )
     @JsonView( { DetailedView.class } )
@@ -325,17 +356,18 @@ public class ListGrid
         return grid;
     }
 
+    @Override
     public List<List<Object>> getVisibleRows()
     {
         verifyGridState();
 
-        List<List<Object>> tempGrid = new ArrayList<List<Object>>();
+        List<List<Object>> tempGrid = new ArrayList<>();
 
         if ( headers != null && headers.size() > 0 )
         {
             for ( List<Object> row : grid )
             {
-                List<Object> tempRow = new ArrayList<Object>();
+                List<Object> tempRow = new ArrayList<>();
 
                 for ( int i = 0; i < row.size(); i++ )
                 {
@@ -352,9 +384,10 @@ public class ListGrid
         return tempGrid;
     }
 
+    @Override
     public List<Object> getColumn( int columnIndex )
     {
-        List<Object> column = new ArrayList<Object>();
+        List<Object> column = new ArrayList<>();
 
         for ( List<Object> row : grid )
         {
@@ -364,6 +397,7 @@ public class ListGrid
         return column;
     }
 
+    @Override
     public Object getValue( int rowIndex, int columnIndex )
     {
         if ( grid.size() < rowIndex || grid.get( rowIndex ) == null || grid.get( rowIndex ).size() < columnIndex )
@@ -374,6 +408,7 @@ public class ListGrid
         return grid.get( rowIndex ).get( columnIndex );
     }
     
+    @Override
     public Grid addColumn( List<Object> columnValues )
     {
         verifyGridState();
@@ -394,6 +429,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid removeColumn( int columnIndex )
     {
         verifyGridState();
@@ -413,6 +449,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid removeColumn( GridHeader header )
     {
         int index = headers.indexOf( header );
@@ -425,6 +462,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid removeCurrentWriteRow()
     {
         grid.remove( currentRowWriteIndex );
@@ -434,11 +472,13 @@ public class ListGrid
         return this;
     }
     
+    @Override
     public boolean hasMetaDataKey( String key )
     {
         return metaData != null && metaData.containsKey( key );
     }
     
+    @Override
     public Grid limitGrid( int limit )
     {
         if ( limit < 0 )
@@ -454,6 +494,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid limitGrid( int startPos, int endPos )
     {
         if ( startPos < 0 || endPos < startPos || endPos > getHeight() )
@@ -466,6 +507,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid sortGrid( int columnIndex, int order )
     {
         if ( order == 0 )
@@ -485,6 +527,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid addRegressionColumn( int columnIndex, boolean addHeader )
     {
         verifyGridState();
@@ -505,7 +548,7 @@ public class ListGrid
             }
         }
 
-        List<Object> regressionColumn = new ArrayList<Object>();
+        List<Object> regressionColumn = new ArrayList<>();
 
         for ( int i = 0; i < column.size(); i++ )
         {
@@ -541,6 +584,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid addRegressionToGrid( int startColumnIndex, int numberOfColumns )
     {
         for ( int i = 0; i < numberOfColumns; i++ )
@@ -553,13 +597,14 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid addCumulativeColumn( int columnIndex, boolean addHeader )
     {
         verifyGridState();
 
         List<Object> column = getColumn( columnIndex );
 
-        List<Object> cumulativeColumn = new ArrayList<Object>();
+        List<Object> cumulativeColumn = new ArrayList<>();
 
         double sum = 0d;
 
@@ -590,6 +635,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid addCumulativesToGrid( int startColumnIndex, int numberOfColumns )
     {
         for ( int i = 0; i < numberOfColumns; i++ )
@@ -602,6 +648,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid substituteMetaData( Map<Object, Object> metaDataMap )
     {
         if ( metaDataMap == null || headers == null || headers.isEmpty() )
@@ -633,6 +680,7 @@ public class ListGrid
         return this;
     }
     
+    @Override
     public Grid substituteMetaData( int columnIndex, Map<Object, Object> metaDataMap )
     {
         if ( metaDataMap == null )
@@ -656,11 +704,46 @@ public class ListGrid
         
         return this;
     }
-
+    
+    @Override
+    public List<Integer> getMetaColumnIndexes()
+    {
+        List<Integer> indexes = new ArrayList<>();
+        
+        for ( int i = 0; i < headers.size(); i++ )
+        {
+            GridHeader header = headers.get( i );
+            
+            if ( header != null && header.isMeta() )
+            {
+                indexes.add( i );
+            }
+        }
+        
+        return indexes;
+    }
+    
+    @Override
+    public Set<Object> getUniqueValues( String columnName )
+    {
+        int columnIndex = getIndexOfHeader( columnName );
+                
+        Set<Object> values = new HashSet<>();
+        
+        if ( columnIndex != -1 )
+        {
+            List<Object> column = getColumn( columnIndex );
+            values.addAll( column );            
+        }
+        
+        return values;
+    }
+            
     // -------------------------------------------------------------------------
     // JRDataSource implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public boolean next()
         throws JRException
     {
@@ -674,6 +757,7 @@ public class ListGrid
         return next;
     }
 
+    @Override
     public Object getFieldValue( JRField field )
         throws JRException
     {
@@ -686,6 +770,7 @@ public class ListGrid
     // SQL utility methods
     // -------------------------------------------------------------------------
 
+    @Override
     public Grid addHeaders( ResultSet rs )
     {
         try
@@ -707,6 +792,7 @@ public class ListGrid
         return this;
     }
 
+    @Override
     public Grid addHeaders( SqlRowSet rs )
     {
         SqlRowSetMetaData rsmd = rs.getMetaData();
@@ -721,6 +807,7 @@ public class ListGrid
         return this;
     }
     
+    @Override
     public Grid addRows( ResultSet rs )
     {
         try
@@ -745,6 +832,7 @@ public class ListGrid
         return this;
     }
     
+    @Override
     public Grid addRows( SqlRowSet rs )
     {
         int cols = rs.getMetaData().getColumnCount();
@@ -810,7 +898,7 @@ public class ListGrid
 
         if ( headers != null && headers.size() > 0 )
         {
-            List<String> headerNames = new ArrayList<String>();
+            List<String> headerNames = new ArrayList<>();
 
             for ( GridHeader header : headers )
             {

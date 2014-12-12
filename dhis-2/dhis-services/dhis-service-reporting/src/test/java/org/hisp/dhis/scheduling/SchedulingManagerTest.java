@@ -29,12 +29,13 @@ package org.hisp.dhis.scheduling;
  */
 
 import static org.hisp.dhis.scheduling.SchedulingManager.TASK_ANALYTICS_ALL;
-import static org.hisp.dhis.scheduling.SchedulingManager.TASK_DATAMART_LAST_6_MONTHS;
 import static org.hisp.dhis.scheduling.SchedulingManager.TASK_RESOURCE_TABLE;
-import static org.hisp.dhis.system.scheduling.Scheduler.CRON_DAILY_0AM_EXCEPT_SUNDAY;
-import static org.hisp.dhis.system.scheduling.Scheduler.CRON_WEEKLY_SUNDAY_0AM;
+import static org.hisp.dhis.scheduling.SchedulingManager.TASK_DATAMART_LAST_YEAR;
+import static org.hisp.dhis.system.scheduling.Scheduler.CRON_DAILY_0AM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import java.util.Set;
 
 import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.common.ListMap;
@@ -54,20 +55,18 @@ public class SchedulingManagerTest
     @Test
     public void testScheduleTasks()
     {
-        ListMap<String, String> cronKeyMap = new ListMap<String, String>();
-        cronKeyMap.putValue( CRON_DAILY_0AM_EXCEPT_SUNDAY, TASK_RESOURCE_TABLE );
-        cronKeyMap.putValue( CRON_DAILY_0AM_EXCEPT_SUNDAY, TASK_ANALYTICS_ALL );
-        cronKeyMap.putValue( CRON_WEEKLY_SUNDAY_0AM, TASK_DATAMART_LAST_6_MONTHS );
+        ListMap<String, String> cronKeyMap = new ListMap<>();
+        cronKeyMap.putValue( CRON_DAILY_0AM, TASK_RESOURCE_TABLE );
+        cronKeyMap.putValue( CRON_DAILY_0AM, TASK_ANALYTICS_ALL );
+        cronKeyMap.putValue( CRON_DAILY_0AM, TASK_DATAMART_LAST_YEAR );
                 
         schedulingManager.scheduleTasks( cronKeyMap );
         
         cronKeyMap = schedulingManager.getCronKeyMap();
         
-        assertEquals( 2, cronKeyMap.size() );
-        assertTrue( cronKeyMap.containsKey( CRON_DAILY_0AM_EXCEPT_SUNDAY ) );
-        assertTrue( cronKeyMap.containsKey( CRON_WEEKLY_SUNDAY_0AM ) );
-        assertEquals( 2, cronKeyMap.get( CRON_DAILY_0AM_EXCEPT_SUNDAY ).size() );
-        assertEquals( 1, cronKeyMap.get( CRON_WEEKLY_SUNDAY_0AM ).size() );
+        assertEquals( 1, cronKeyMap.size() );
+        assertTrue( cronKeyMap.containsKey( CRON_DAILY_0AM ) );
+        assertEquals( 3, cronKeyMap.get( CRON_DAILY_0AM ).size() );
         
         assertEquals( Scheduler.STATUS_RUNNING, schedulingManager.getTaskStatus() );
     }
@@ -75,9 +74,9 @@ public class SchedulingManagerTest
     @Test
     public void testStopTasks()
     {
-        ListMap<String, String> cronKeyMap = new ListMap<String, String>();
-        cronKeyMap.putValue( CRON_DAILY_0AM_EXCEPT_SUNDAY, TASK_RESOURCE_TABLE );
-        cronKeyMap.putValue( CRON_DAILY_0AM_EXCEPT_SUNDAY, TASK_ANALYTICS_ALL );
+        ListMap<String, String> cronKeyMap = new ListMap<>();
+        cronKeyMap.putValue( CRON_DAILY_0AM, TASK_RESOURCE_TABLE );
+        cronKeyMap.putValue( CRON_DAILY_0AM, TASK_ANALYTICS_ALL );
 
         assertEquals( Scheduler.STATUS_NOT_STARTED, schedulingManager.getTaskStatus() );
         
@@ -88,5 +87,23 @@ public class SchedulingManagerTest
         schedulingManager.stopTasks();
 
         assertEquals( Scheduler.STATUS_NOT_STARTED, schedulingManager.getTaskStatus() );
+    }
+    
+    @Test
+    public void testGetScheduledKeys()
+    {
+        ListMap<String, String> cronKeyMap = new ListMap<>();
+        cronKeyMap.putValue( CRON_DAILY_0AM, TASK_RESOURCE_TABLE );
+        cronKeyMap.putValue( CRON_DAILY_0AM, TASK_ANALYTICS_ALL );
+        cronKeyMap.putValue( CRON_DAILY_0AM, TASK_DATAMART_LAST_YEAR );
+                
+        schedulingManager.scheduleTasks( cronKeyMap );
+        
+        Set<String> keys = schedulingManager.getScheduledKeys();
+        
+        assertEquals( 3, keys.size() );
+        assertTrue( keys.contains( TASK_RESOURCE_TABLE ) );
+        assertTrue( keys.contains( TASK_ANALYTICS_ALL ) );
+        assertTrue( keys.contains( TASK_DATAMART_LAST_YEAR ) );        
     }
 }

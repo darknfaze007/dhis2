@@ -32,6 +32,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.hibernate.SessionFactory;
 import org.hisp.dhis.system.util.ReflectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.OrderComparator;
@@ -58,12 +59,22 @@ public class DefaultSchemaService implements SchemaService
     @Autowired
     private List<SchemaDescriptor> descriptors = Lists.newArrayList();
 
+    @Autowired
+    private SessionFactory sessionFactory;
+
     @PostConstruct
     public void init()
     {
         for ( SchemaDescriptor descriptor : descriptors )
         {
             Schema schema = descriptor.getSchema();
+
+            if ( sessionFactory.getClassMetadata( schema.getKlass() ) != null )
+            {
+                schema.setPersisted( true );
+            }
+
+            schema.setDisplayName( beautify( schema.getName() ) );
 
             if ( schema.getProperties().isEmpty() )
             {
@@ -110,12 +121,14 @@ public class DefaultSchemaService implements SchemaService
             return schema;
         }
 
-        klass = ReflectionUtils.getRealClass( klass );
+        klass = propertyIntrospectorService.getConcreteClass( ReflectionUtils.getRealClass( klass ) );
 
         String name = getName( klass );
 
         schema = new Schema( klass, name, name + "s" );
+        schema.setDisplayName( beautify( schema.getName() ) );
         schema.setPropertyMap( Maps.newHashMap( propertyIntrospectorService.getPropertiesMap( schema.getKlass() ) ) );
+        schema.setMetadata( false );
 
         updateSelf( schema );
 
@@ -150,6 +163,15 @@ public class DefaultSchemaService implements SchemaService
     }
 
     @Override
+    public List<Schema> getSortedSchemas()
+    {
+        List<Schema> schemas = Lists.newArrayList( classSchemaMap.values() );
+        Collections.sort( schemas, OrderComparator.INSTANCE );
+
+        return schemas;
+    }
+
+    @Override
     public List<Schema> getMetadataSchemas()
     {
         List<Schema> schemas = getSchemas();
@@ -177,9 +199,16 @@ public class DefaultSchemaService implements SchemaService
         {
             Property property = schema.getPropertyMap().get( "__self__" );
             schema.setName( property.getName() );
+            schema.setCollectionName( schema.getPlural() );
             schema.setNamespace( property.getNamespace() );
 
             schema.getPropertyMap().remove( "__self__" );
         }
+    }
+
+    private String beautify( String name )
+    {
+        String[] camelCaseWords = org.apache.commons.lang.StringUtils.capitalize( name ).split( "(?=[A-Z])" );
+        return org.apache.commons.lang.StringUtils.join( camelCaseWords, " " ).trim();
     }
 }

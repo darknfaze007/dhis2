@@ -68,7 +68,7 @@ public class GetAssignedGroupsByDataElementAction
         this.dataElementId = dataElementId;
     }
 
-    private List<DataElementGroup> dataElementGroups = new ArrayList<DataElementGroup>();
+    private List<DataElementGroup> dataElementGroups = new ArrayList<>();
 
     public List<DataElementGroup> getDataElementGroups()
     {
@@ -79,6 +79,7 @@ public class GetAssignedGroupsByDataElementAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -86,7 +87,7 @@ public class GetAssignedGroupsByDataElementAction
         {
             DataElement dataElement = dataElementService.getDataElement( dataElementId );
 
-            dataElementGroups = new ArrayList<DataElementGroup>( dataElementService
+            dataElementGroups = new ArrayList<>( dataElementService
                 .getGroupsContainingDataElement( dataElement ) );
 
             Collections.sort( dataElementGroups, IdentifiableObjectNameComparator.INSTANCE );

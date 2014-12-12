@@ -100,13 +100,14 @@ public class RoutineDataDailyCaptureRowHandler
         this.period = new Period();
         this.source = new OrganisationUnit();
         this.value = new DataValue();
-        this.list = new ArrayList<Integer>();
+        this.list = new ArrayList<>();
     }
 
     // -------------------------------------------------------------------------
     // RowHandler implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void handleRow( Object object )
     {
         final Dhis14RoutineDataDailyCapture dhis14Value = (Dhis14RoutineDataDailyCapture) object;

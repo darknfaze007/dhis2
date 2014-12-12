@@ -102,13 +102,14 @@ public class GetDataElementsByDataSetAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         DataSet dataSet = dataSetService.getDataSet( id );
 
         query = StringUtils.trimToNull( query );
 
-        dataElements = new ArrayList<DataElement>( dataElementService.getDataElements( dataSet, query,
+        dataElements = new ArrayList<>( dataElementService.getDataElements( dataSet, query,
             MAX_DATAELEMENTS_DISPLAYED ) );
 
         Collections.sort( dataElements, IdentifiableObjectNameComparator.INSTANCE );

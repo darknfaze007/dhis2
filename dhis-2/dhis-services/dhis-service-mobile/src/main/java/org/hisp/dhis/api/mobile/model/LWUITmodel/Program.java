@@ -60,9 +60,9 @@ public class Program
     
     private String trackedEntityName = "Tracked Entity";
 
-    private List<ProgramStage> programStages = new ArrayList<ProgramStage>();
+    private List<ProgramStage> programStages = new ArrayList<>();
 
-    private List<PatientAttribute> programAttributes = new ArrayList<PatientAttribute>();
+    private List<PatientAttribute> programAttributes = new ArrayList<>();
 
     public List<ProgramStage> getProgramStages()
     {
@@ -84,11 +84,13 @@ public class Program
         this.version = version;
     }
 
+    @Override
     public String getClientVersion()
     {
         return clientVersion;
     }
 
+    @Override
     public void setClientVersion( String clientVersion )
     {
         this.clientVersion = clientVersion;
@@ -157,17 +159,15 @@ public class Program
 
         // Write program stage
         dout.writeInt( programStages.size() );
-        for ( int i = 0; i < programStages.size(); i++ )
+        for ( ProgramStage ps : programStages )
         {
-            ProgramStage ps = programStages.get( i );
             ps.serialize( dout );
         }
 
         // Write program attribute
         dout.writeInt( programAttributes.size() );
-        for ( int i = 0; i < programAttributes.size(); i++ )
+        for ( PatientAttribute pa : programAttributes )
         {
-            PatientAttribute pa = programAttributes.get( i );
             pa.serialize( dout );
         }
 

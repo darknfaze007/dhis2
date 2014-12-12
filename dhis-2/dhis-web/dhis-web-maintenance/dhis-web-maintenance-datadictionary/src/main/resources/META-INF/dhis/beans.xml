@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="
-http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
 
   <!-- Data Element -->
 
@@ -9,16 +9,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
     scope="prototype">
     <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
     <property name="userSettingService" ref="org.hisp.dhis.user.UserSettingService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.dataelement.GetDataElementListSortOrderAction" class="org.hisp.dhis.dd.action.dataelement.GetDataElementListSortOrderAction"
-    scope="prototype">
-    <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.dataelement.SaveDataElementSortOrderAction" class="org.hisp.dhis.dd.action.dataelement.SaveDataElementSortOrderAction"
-    scope="prototype">
-    <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
   </bean>
 
   <bean id="org.hisp.dhis.dd.action.dataelementgroup.ShowUpdateDataElementGroupFormAction" class="org.hisp.dhis.dd.action.dataelementgroup.ShowUpdateDataElementGroupFormAction"
@@ -311,16 +301,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
     <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
   </bean>
 
-  <bean id="org.hisp.dhis.dd.action.indicator.GetIndicatorListSortOrderAction" class="org.hisp.dhis.dd.action.indicator.GetIndicatorListSortOrderAction"
-    scope="prototype">
-    <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.indicator.SaveIndicatorSortOrderAction" class="org.hisp.dhis.dd.action.indicator.SaveIndicatorSortOrderAction"
-    scope="prototype">
-    <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
-  </bean>
-
   <bean id="org.hisp.dhis.dd.action.indicator.GetIndicatorAction" class="org.hisp.dhis.dd.action.indicator.GetIndicatorAction"
     scope="prototype">
     <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
@@ -354,42 +334,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
   <bean id="org.hisp.dhis.dd.action.indicator.ValidateIndicatorAction" class="org.hisp.dhis.dd.action.indicator.ValidateIndicatorAction"
     scope="prototype">
-    <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
-  </bean>
-
-  <!-- DataDictionary -->
-
-  <bean id="org.hisp.dhis.dd.action.datadictionary.AddDataDictionaryAction" class="org.hisp.dhis.dd.action.datadictionary.AddDataDictionaryAction"
-    scope="prototype">
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
-    <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
-    <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.datadictionary.GetDataDictionaryAction" class="org.hisp.dhis.dd.action.datadictionary.GetDataDictionaryAction"
-    scope="prototype">
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.datadictionary.GetDataDictionaryListAction" class="org.hisp.dhis.dd.action.datadictionary.GetDataDictionaryListAction"
-    scope="prototype">
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.datadictionary.GetDataDictionaryMembersAction" class="org.hisp.dhis.dd.action.datadictionary.GetDataDictionaryMembersAction"
-    scope="prototype">
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.datadictionary.RemoveDataDictionaryAction" class="org.hisp.dhis.dd.action.datadictionary.RemoveDataDictionaryAction"
-    scope="prototype">
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
-  </bean>
-
-  <bean id="org.hisp.dhis.dd.action.datadictionary.UpdateDataDictionaryAction" class="org.hisp.dhis.dd.action.datadictionary.UpdateDataDictionaryAction"
-    scope="prototype">
-    <property name="dataDictionaryService" ref="org.hisp.dhis.datadictionary.DataDictionaryService" />
-    <property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
     <property name="indicatorService" ref="org.hisp.dhis.indicator.IndicatorService" />
   </bean>
 
@@ -558,6 +502,28 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
   
   <bean id="org.hisp.dhis.dd.action.categoryoptiongroupset.ValidateCategoryOptionGroupSetAction" class="org.hisp.dhis.dd.action.categoryoptiongroupset.ValidateCategoryOptionGroupSetAction"
     scope="prototype">
+  </bean>
+  
+   <!-- CategoryOptionCombo -->
+
+  <bean id="org.hisp.dhis.dd.action.category.GetCategoryOptionComboListAction" class="org.hisp.dhis.dd.action.category.GetCategoryOptionComboListAction"
+    scope="prototype">
+    <property name="categoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.category.GetCategoryOptionComboAction" class="org.hisp.dhis.dd.action.category.GetCategoryOptionComboAction"
+    scope="prototype">
+    <property name="categoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.category.UpdateCategoryOptionComboAction" class="org.hisp.dhis.dd.action.category.UpdateCategoryOptionComboAction"
+    scope="prototype">
+    <property name="categoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
+  </bean>
+  
+  <bean id="org.hisp.dhis.dd.action.category.ValidateCategoryOptionComboAction" class="org.hisp.dhis.dd.action.category.ValidateCategoryOptionComboAction"
+    scope="prototype">
+    <property name="categoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
   </bean>
   
 </beans>

@@ -144,11 +144,12 @@ public class FormUtilsImpl
     // Utils
     // -------------------------------------------------------------------------
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map<String, DeflatedDataValue> getValidationViolations( OrganisationUnit organisationUnit,
         Collection<DataElement> dataElements, Period period )
     {
-        Map<String, DeflatedDataValue> validationErrorMap = new HashMap<String, DeflatedDataValue>();
+        Map<String, DeflatedDataValue> validationErrorMap = new HashMap<>();
 
         Double factor = (Double) systemSettingManager.getSystemSetting( SystemSettingManager.KEY_FACTOR_OF_DEVIATION,
             2.0 );
@@ -171,12 +172,13 @@ public class FormUtilsImpl
         return validationErrorMap;
     }
 
+    @Override
     public List<String> getValidationRuleViolations( OrganisationUnit organisationUnit, DataSet dataSet, Period period )
     {
-        List<ValidationResult> validationRuleResults = new ArrayList<ValidationResult>( validationRuleService.validate(
+        List<ValidationResult> validationRuleResults = new ArrayList<>( validationRuleService.validate(
             dataSet, period, organisationUnit, null ) );
 
-        List<String> validationRuleViolations = new ArrayList<String>( validationRuleResults.size() );
+        List<String> validationRuleViolations = new ArrayList<>( validationRuleResults.size() );
 
         for ( ValidationResult result : validationRuleResults )
         {
@@ -193,10 +195,11 @@ public class FormUtilsImpl
         return validationRuleViolations;
     }
 
+    @Override
     public Map<String, String> getDataValueMap( OrganisationUnit organisationUnit, DataSet dataSet, Period period )
     {
-        Map<String, String> dataValueMap = new HashMap<String, String>();
-        List<DataValue> values = new ArrayList<DataValue>( dataValueService.getDataValues( organisationUnit, period,
+        Map<String, String> dataValueMap = new HashMap<>();
+        List<DataValue> values = new ArrayList<>( dataValueService.getDataValues( organisationUnit, period,
             dataSet.getDataElements() ) );
 
         for ( DataValue dataValue : values )
@@ -213,32 +216,35 @@ public class FormUtilsImpl
         return dataValueMap;
     }
 
+    @Override
     public List<OrganisationUnit> organisationUnitWithDataSetsFilter( Collection<OrganisationUnit> organisationUnits )
     {
-        List<OrganisationUnit> ous = new ArrayList<OrganisationUnit>( organisationUnits );
+        List<OrganisationUnit> ous = new ArrayList<>( organisationUnits );
         FilterUtils.filter( ous, new OrganisationUnitWithDataSetsFilter() );
 
         return ous;
     }
 
+    @Override
     public List<OrganisationUnit> getSortedOrganisationUnitsForCurrentUser()
     {
         User user = currentUserService.getCurrentUser();
         Validate.notNull( user );
 
-        List<OrganisationUnit> organisationUnits = new ArrayList<OrganisationUnit>( user.getOrganisationUnits() );
+        List<OrganisationUnit> organisationUnits = new ArrayList<>( user.getOrganisationUnits() );
         Collections.sort( organisationUnits, IdentifiableObjectNameComparator.INSTANCE );
 
         return organisationUnitWithDataSetsFilter( organisationUnits );
     }
 
+    @Override
     public List<DataSet> getDataSetsForCurrentUser( Integer organisationUnitId )
     {
         Validate.notNull( organisationUnitId );
 
         OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( organisationUnitId );
 
-        List<DataSet> dataSets = new ArrayList<DataSet>( organisationUnit.getDataSets() );
+        List<DataSet> dataSets = new ArrayList<>( organisationUnit.getDataSets() );
 
         UserCredentials userCredentials = currentUserService.getCurrentUser().getUserCredentials();
 
@@ -250,11 +256,13 @@ public class FormUtilsImpl
         return dataSets;
     }
 
+    @Override
     public List<Period> getPeriodsForDataSet( Integer dataSetId )
     {
         return getPeriodsForDataSet( dataSetId, 0, DEFAULT_MAX_PERIODS );
     }
 
+    @Override
     public List<Period> getPeriodsForDataSet( Integer dataSetId, int first, int max )
     {
         Validate.notNull( dataSetId );

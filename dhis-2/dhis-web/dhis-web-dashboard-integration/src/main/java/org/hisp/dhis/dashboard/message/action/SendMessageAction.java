@@ -105,12 +105,13 @@ public class SendMessageAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         String metaData = MessageService.META_USER_AGENT +
             ServletActionContext.getRequest().getHeader( ContextUtils.HEADER_USER_AGENT );
 
-        Set<User> users = new HashSet<User>();
+        Set<User> users = new HashSet<>();
 
         if ( !ignoreTree )
         {

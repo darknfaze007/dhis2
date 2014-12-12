@@ -3,7 +3,6 @@
 {
   font-family: LiberationSans, sans-serif;
   line-height: 125%;
-  overflow: hidden;
 }
 
 html,body
@@ -22,6 +21,7 @@ a
 a:hover
 {
   color: #fff;
+  text-decoration: underline;
 }
 
 #flagArea
@@ -63,6 +63,7 @@ a:hover
 #accountArea
 {
   position: absolute;
+  top: 22px;
   right: 17px;
   padding: 18px 30px 18px 0;
   font-size: 17px;
@@ -71,7 +72,7 @@ a:hover
 #loginField
 {
   position: relative;
-  margin: 120px auto 0 auto;
+  margin: 128px auto 0 auto;
   width: 270px;
 }
 
@@ -114,7 +115,7 @@ a:hover
 #notificationArea
 {
   background-color: #D0E6FD;
-  color: #1D5288;
+  color: #333;
   margin-top: 15px;
   padding: 15px;
   border-radius: 3px;
@@ -122,7 +123,7 @@ a:hover
 
 #notificationArea a 
 {
-  color: #6b90b8;
+  color: #2E527C;
 }
 
 #footerArea
@@ -130,11 +131,16 @@ a:hover
   position: absolute;
   bottom: 0;
   left: 0;
-  padding: 10px 0 9px 50px;
-  font-size: 12px;
+  padding: 10px 0 9px 0;
+  font-size: 13px;
   border-top: 1px solid #416f9d;
   color: #6b90b8;
   width: 100%;
+}
+
+#poweredByLabel
+{
+  margin-left: 50px;
 }
 
 #localeSelect

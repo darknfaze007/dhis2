@@ -28,7 +28,6 @@ package org.hisp.dhis.common;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.common.IdentifiableObject.IdentifiableProperty;
 import org.hisp.dhis.common.NameableObject.NameableProperty;
 
 import java.util.Collection;
@@ -68,7 +67,13 @@ public interface IdentifiableObjectManager
 
     <T extends IdentifiableObject> Collection<T> getAll( Class<T> clazz );
 
+    <T extends IdentifiableObject> Collection<T> getAllByName( Class<T> clazz, String name );
+
+    <T extends IdentifiableObject> Collection<T> getAllByNameIgnoreCase( Class<T> clazz, String name );
+
     <T extends IdentifiableObject> Collection<T> getAllSorted( Class<T> clazz );
+
+    <T extends IdentifiableObject> Collection<T> getAllSortedByLastUpdated( Class<T> clazz );
 
     <T extends IdentifiableObject> List<T> getByUid( Class<T> clazz, Collection<String> uids );
 
@@ -78,11 +83,17 @@ public interface IdentifiableObjectManager
 
     <T extends IdentifiableObject> List<T> getBetween( Class<T> clazz, int first, int max );
 
-    <T extends IdentifiableObject> List<T> getBetweenByName( Class<T> clazz, String name, int first, int max );
+    <T extends IdentifiableObject> List<T> getBetweenLikeName( Class<T> clazz, String name, int first, int max );
 
     <T extends IdentifiableObject> Collection<T> getByLastUpdated( Class<T> clazz, Date lastUpdated );
 
+    <T extends IdentifiableObject> Collection<T> getByCreated( Class<T> clazz, Date created );
+
     <T extends IdentifiableObject> Collection<T> getByLastUpdatedSorted( Class<T> clazz, Date lastUpdated );
+
+    <T extends IdentifiableObject> Collection<T> getByCreatedSorted( Class<T> clazz, Date created );
+    
+    <T extends IdentifiableObject> Date getLastUpdated( Class<T> clazz );
 
     void delete( IdentifiableObject object );
 
@@ -99,6 +110,20 @@ public interface IdentifiableObjectManager
     IdentifiableObject getObject( int id, String simpleClassName );
 
     <T extends IdentifiableObject> int getCount( Class<T> clazz );
+
+    <T extends IdentifiableObject> int getCountByName( Class<T> clazz, String name );
+
+    <T extends IdentifiableObject> int getCountByShortName( Class<T> clazz, String shortName );
+
+    <T extends IdentifiableObject> int getCountByCreated( Class<T> clazz, Date created );
+
+    <T extends IdentifiableObject> int getCountByLastUpdated( Class<T> clazz, Date lastUpdated );
+
+    <T extends IdentifiableObject> int getCountLikeName( Class<T> clazz, String name );
+
+    <T extends IdentifiableObject> int getCountLikeShortName( Class<T> clazz, String shortName );
+
+    void refresh( Object object );
 
     // -------------------------------------------------------------------------
     // NO ACL

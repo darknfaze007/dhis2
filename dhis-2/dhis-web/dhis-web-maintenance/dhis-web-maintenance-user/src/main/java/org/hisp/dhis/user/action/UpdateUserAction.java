@@ -28,23 +28,20 @@ package org.hisp.dhis.user.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import static org.hisp.dhis.setting.SystemSettingManager.KEY_ONLY_MANAGE_WITHIN_USER_GROUPS;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.hisp.dhis.attribute.AttributeService;
+import org.hisp.dhis.common.IdentifiableObjectManager;
 import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
-import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.oust.manager.SelectionTreeManager;
 import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
 import org.hisp.dhis.security.PasswordManager;
-import org.hisp.dhis.security.SecurityService;
 import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.system.util.AttributeUtils;
 import org.hisp.dhis.system.util.LocaleUtils;
@@ -60,6 +57,7 @@ import org.hisp.dhis.user.UserSettingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
+import com.google.common.collect.Lists;
 import com.opensymphony.xwork2.Action;
 
 /**
@@ -107,13 +105,6 @@ public class UpdateUserAction
         this.currentUserService = currentUserService;
     }
 
-    private SecurityService securityService;
-
-    public void setSecurityService( SecurityService securityService )
-    {
-        this.securityService = securityService;
-    }
-
     private AttributeService attributeService;
 
     public void setAttributeService( AttributeService attributeService )
@@ -121,12 +112,8 @@ public class UpdateUserAction
         this.attributeService = attributeService;
     }
 
-    private I18n i18n;
-
-    public void setI18n( I18n i18n )
-    {
-        this.i18n = i18n;
-    }
+    @Autowired
+    private IdentifiableObjectManager manager;
 
     @Autowired
     private UserGroupService userGroupService;
@@ -204,21 +191,21 @@ public class UpdateUserAction
         this.localeDb = localeDb;
     }
 
-    private List<String> urSelected = new ArrayList<String>();
+    private List<String> urSelected = new ArrayList<>();
 
     public void setUrSelected( List<String> urSelected )
     {
         this.urSelected = urSelected;
     }
 
-    private List<String> ugSelected = new ArrayList<String>();
+    private List<String> ugSelected = new ArrayList<>();
 
     public void setUgSelected( List<String> ugSelected )
     {
         this.ugSelected = ugSelected;
     }
 
-    private List<String> dcSelected = new ArrayList<String>();
+    private List<String> dcSelected = new ArrayList<>();
 
     public void setDcSelected( List<String> dcSelected )
     {
@@ -232,6 +219,13 @@ public class UpdateUserAction
         this.jsonAttributeValues = jsonAttributeValues;
     }
 
+    private String ouwtSelected;
+
+    public void setOuwtSelected( String ouwtSelected )
+    {
+        this.ouwtSelected = ouwtSelected;
+    }
+
     private String message;
 
     public String getMessage()
@@ -243,9 +237,12 @@ public class UpdateUserAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
+        //TODO: Allow user with F_USER_ADD_WITHIN_MANAGED_GROUP to update a user within managed groups.
+
         if ( email != null && email.trim().length() == 0 )
         {
             email = null;
@@ -257,36 +254,6 @@ public class UpdateUserAction
         }
 
         User currentUser = currentUserService.getCurrentUser();
-
-        // ---------------------------------------------------------------------
-        // Check if user group is required, before we start updating the user
-        // ---------------------------------------------------------------------
-
-        Boolean canManageGroups = (Boolean) systemSettingManager.getSystemSetting( KEY_ONLY_MANAGE_WITHIN_USER_GROUPS, false );
-        
-        if ( canManageGroups && !currentUser.getUserCredentials().getAllAuthorities().contains( "ALL" ) )
-        {
-            boolean groupFound = false;
-
-            for ( String ug : ugSelected )
-            {
-                UserGroup group = userGroupService.getUserGroup( ug );
-
-                if ( group != null && securityService.canWrite( group ) )
-                {
-                    groupFound = true;
-
-                    break;
-                }
-            }
-
-            if ( !groupFound )
-            {
-                message = i18n.getString( "users_must_belong_to_a_group_controlled_by_the_user_manager" );
-
-                return ERROR;
-            }
-        }
 
         // ---------------------------------------------------------------------
         // User credentials and user
@@ -311,7 +278,7 @@ public class UpdateUserAction
 
         if ( rawPassword != null )
         {
-            userCredentials.setPassword( passwordManager.encodePassword( userCredentials.getUsername(), rawPassword ) );
+            userCredentials.setPassword( passwordManager.encode( rawPassword ) );
         }
 
         if ( jsonAttributeValues != null )
@@ -324,22 +291,22 @@ public class UpdateUserAction
         // Organisation units
         // ---------------------------------------------------------------------
 
-        Set<OrganisationUnit> dataCaptureOrgUnits = new HashSet<OrganisationUnit>( selectionManager.getSelectedOrganisationUnits() );
+        Set<OrganisationUnit> dataCaptureOrgUnits = new HashSet<>( selectionManager.getSelectedOrganisationUnits() );
         user.updateOrganisationUnits( dataCaptureOrgUnits );
 
-        Set<OrganisationUnit> dataViewOrgUnits = new HashSet<OrganisationUnit>( selectionTreeManager.getReloadedSelectedOrganisationUnits() );
+        Set<OrganisationUnit> dataViewOrgUnits = new HashSet<>( selectionTreeManager.getReloadedSelectedOrganisationUnits() );
         user.setDataViewOrganisationUnits( dataViewOrgUnits );
 
         if ( dataViewOrgUnits.size() == 0 && currentUser.getDataViewOrganisationUnits().size() != 0 )
         {
-            user.setDataViewOrganisationUnits( new HashSet<OrganisationUnit>( currentUser.getDataViewOrganisationUnits() ) );
+            user.setDataViewOrganisationUnits( new HashSet<>( currentUser.getDataViewOrganisationUnits() ) );
         }
 
         // ---------------------------------------------------------------------
         // User roles
         // ---------------------------------------------------------------------
 
-        Set<UserAuthorityGroup> userAuthorityGroups = new HashSet<UserAuthorityGroup>();
+        Set<UserAuthorityGroup> userAuthorityGroups = new HashSet<>();
 
         for ( String id : urSelected )
         {
@@ -357,8 +324,8 @@ public class UpdateUserAction
         // from the current user.
         // ---------------------------------------------------------------------
 
-        userCredentials.setCogsDimensionConstraints( new HashSet<CategoryOptionGroupSet>( currentUser.getUserCredentials().getCogsDimensionConstraints() ) );
-        userCredentials.setCatDimensionConstraints( new HashSet<DataElementCategory>( currentUser.getUserCredentials().getCatDimensionConstraints() ) );
+        userCredentials.setCogsDimensionConstraints( new HashSet<>( currentUser.getUserCredentials().getCogsDimensionConstraints() ) );
+        userCredentials.setCatDimensionConstraints( new HashSet<>( currentUser.getUserCredentials().getCatDimensionConstraints() ) );
 
         for ( String id : dcSelected )
         {
@@ -382,7 +349,7 @@ public class UpdateUserAction
         // ---------------------------------------------------------------------
         // Update User
         // ---------------------------------------------------------------------
-        
+
         userService.updateUserCredentials( userCredentials );
         userService.updateUser( user );
 
@@ -390,13 +357,26 @@ public class UpdateUserAction
         // Update organisation unit trees if current user is being updated
         // ---------------------------------------------------------------------
 
-        if ( user.equals( currentUserService.getCurrentUser() ) && !dataCaptureOrgUnits.isEmpty() )
+        if ( user.equals( currentUser ) && !dataCaptureOrgUnits.isEmpty() )
         {
             selectionManager.setRootOrganisationUnits( dataCaptureOrgUnits );
             selectionManager.setSelectedOrganisationUnits( dataCaptureOrgUnits );
         }
-        
-        if ( user.equals( currentUserService.getCurrentUser() ) && !dataViewOrgUnits.isEmpty() )
+        else
+        {
+            selectionManager.setRootOrganisationUnits( currentUser.getOrganisationUnits() );
+
+            if ( ouwtSelected != null && manager.search( OrganisationUnit.class, ouwtSelected ) != null )
+            {
+                selectionManager.setSelectedOrganisationUnits( Lists.newArrayList( manager.search( OrganisationUnit.class, ouwtSelected ) ) );
+            }
+            else
+            {
+                selectionManager.setSelectedOrganisationUnits( currentUser.getOrganisationUnits() );
+            }
+        }
+
+        if ( user.equals( currentUser ) && !dataViewOrgUnits.isEmpty() )
         {
             selectionTreeManager.setRootOrganisationUnits( dataViewOrgUnits );
             selectionTreeManager.setSelectedOrganisationUnits( dataViewOrgUnits );
@@ -413,14 +393,14 @@ public class UpdateUserAction
         // User groups
         // ---------------------------------------------------------------------
 
-        Set<UserGroup> userGroups = new HashSet<UserGroup>();
+        Set<UserGroup> userGroups = new HashSet<>();
 
         for ( String id : ugSelected )
         {
             userGroups.add( userGroupService.getUserGroup( id ) );
         }
 
-        for ( UserGroup userGroup : new HashSet<UserGroup>( user.getGroups() ) )
+        for ( UserGroup userGroup : new HashSet<>( user.getGroups() ) )
         {
             if ( !userGroups.contains( userGroup ) )
             {

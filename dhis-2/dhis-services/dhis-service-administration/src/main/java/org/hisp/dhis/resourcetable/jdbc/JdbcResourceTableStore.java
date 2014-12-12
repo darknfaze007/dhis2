@@ -80,6 +80,7 @@ public class JdbcResourceTableStore
     // ResourceTableStore implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void batchUpdate( int columns, String tableName, List<Object[]> batchArgs )
     {
         if ( columns == 0 || tableName == null )
@@ -103,6 +104,7 @@ public class JdbcResourceTableStore
     // OrganisationUnitStructure
     // -------------------------------------------------------------------------
 
+    @Override
     public void createOrganisationUnitStructure( int maxLevel )
     {
         try
@@ -142,6 +144,7 @@ public class JdbcResourceTableStore
     // DataElementCategoryOptionComboName
     // -------------------------------------------------------------------------
     
+    @Override
     public void createDataElementCategoryOptionComboName()
     {
         try
@@ -165,6 +168,7 @@ public class JdbcResourceTableStore
     // CategoryOptionGroupSetTable
     // -------------------------------------------------------------------------
 
+    @Override
     public void createCategoryOptionGroupSetStructure( List<CategoryOptionGroupSet> groupSets )
     {
         try
@@ -185,6 +189,7 @@ public class JdbcResourceTableStore
     // DataElementGroupSetTable
     // -------------------------------------------------------------------------
 
+    @Override
     public void createDataElementGroupSetStructure( List<DataElementGroupSet> groupSets )
     {
         try
@@ -201,6 +206,7 @@ public class JdbcResourceTableStore
         jdbcTemplate.execute( statement.getStatement() );
     }
 
+    @Override
     public void populateDataElementGroupSetStructure( List<DataElementGroupSet> groupSets )
     {
         String sql = 
@@ -211,14 +217,16 @@ public class JdbcResourceTableStore
         {
             sql += "(" +
                 "select deg.name from dataelementgroup deg " +
-                "inner join dataelementgroupmembers degm on degm.dataelementgroupid = deg.dataelementgroupid and degm.dataelementid = d.dataelementid " +
+                "inner join dataelementgroupmembers degm on degm.dataelementgroupid = deg.dataelementgroupid " +
                 "inner join dataelementgroupsetmembers degsm on degsm.dataelementgroupid = degm.dataelementgroupid and degsm.dataelementgroupsetid = " + groupSet.getId() + " " +
+                "where degm.dataelementid = d.dataelementid " +
                 "limit 1) as " + statementBuilder.columnQuote( groupSet.getName() ) + ", ";
             
             sql += "(" +
                 "select deg.uid from dataelementgroup deg " +
-                "inner join dataelementgroupmembers degm on degm.dataelementgroupid = deg.dataelementgroupid and degm.dataelementid = d.dataelementid " +
+                "inner join dataelementgroupmembers degm on degm.dataelementgroupid = deg.dataelementgroupid " +
                 "inner join dataelementgroupsetmembers degsm on degsm.dataelementgroupid = degm.dataelementgroupid and degsm.dataelementgroupsetid = " + groupSet.getId() + " " +
+                "where degm.dataelementid = d.dataelementid " +
                 "limit 1) as " + statementBuilder.columnQuote( groupSet.getUid() ) + ", ";            
         }
 
@@ -234,6 +242,7 @@ public class JdbcResourceTableStore
     // DataElementGroupSetTable
     // -------------------------------------------------------------------------
 
+    @Override
     public void createIndicatorGroupSetStructure( List<IndicatorGroupSet> groupSets )
     {
         try
@@ -250,6 +259,7 @@ public class JdbcResourceTableStore
         jdbcTemplate.execute( statement.getStatement() );
     }
 
+    @Override
     public void populateIndicatorGroupSetStructure( List<IndicatorGroupSet> groupSets )
     {
         String sql =
@@ -260,14 +270,16 @@ public class JdbcResourceTableStore
         {
             sql += "(" +
                 "select ig.name from indicatorgroup ig " +
-                "inner join indicatorgroupmembers igm on igm.indicatorgroupid = ig.indicatorgroupid and igm.indicatorid = i.indicatorid " +
+                "inner join indicatorgroupmembers igm on igm.indicatorgroupid = ig.indicatorgroupid " +
                 "inner join indicatorgroupsetmembers igsm on igsm.indicatorgroupid = igm.indicatorgroupid and igsm.indicatorgroupsetid = " + groupSet.getId() + " " +
+                "where igm.indicatorid = i.indicatorid " +
                 "limit 1) as " + statementBuilder.columnQuote( groupSet.getName() ) + ", ";
 
             sql += "(" +
                 "select ig.uid from indicatorgroup ig " +
-                "inner join indicatorgroupmembers igm on igm.indicatorgroupid = ig.indicatorgroupid and igm.indicatorid = i.indicatorid " +
+                "inner join indicatorgroupmembers igm on igm.indicatorgroupid = ig.indicatorgroupid " +
                 "inner join indicatorgroupsetmembers igsm on igsm.indicatorgroupid = igm.indicatorgroupid and igsm.indicatorgroupsetid = " + groupSet.getId() + " " +
+                "where igm.indicatorid = i.indicatorid " +
                 "limit 1) as " + statementBuilder.columnQuote( groupSet.getUid() ) + ", ";            
         }
 
@@ -283,6 +295,7 @@ public class JdbcResourceTableStore
     // OrganisationUnitGroupSetTable
     // -------------------------------------------------------------------------
 
+    @Override
     public void createOrganisationUnitGroupSetStructure( List<OrganisationUnitGroupSet> groupSets )
     {
         try
@@ -298,7 +311,8 @@ public class JdbcResourceTableStore
         
         jdbcTemplate.execute( statement.getStatement() );
     }
-        
+    
+    @Override
     public void populateOrganisationUnitGroupSetStructure( List<OrganisationUnitGroupSet> groupSets )
     {
         String sql = 
@@ -309,14 +323,16 @@ public class JdbcResourceTableStore
         {
             sql += "(" + 
                 "select oug.name from orgunitgroup oug " +
-                "inner join orgunitgroupmembers ougm on ougm.orgunitgroupid = oug.orgunitgroupid and ougm.organisationunitid = ou.organisationunitid " +
+                "inner join orgunitgroupmembers ougm on ougm.orgunitgroupid = oug.orgunitgroupid " +
                 "inner join orgunitgroupsetmembers ougsm on ougsm.orgunitgroupid = ougm.orgunitgroupid and ougsm.orgunitgroupsetid = " + groupSet.getId() + " " +
+                "where ougm.organisationunitid = ou.organisationunitid " +
                 "limit 1) as " + statementBuilder.columnQuote( groupSet.getName() ) + ", ";
             
             sql += "(" +
                 "select oug.uid from orgunitgroup oug " +
-                "inner join orgunitgroupmembers ougm on ougm.orgunitgroupid = oug.orgunitgroupid and ougm.organisationunitid = ou.organisationunitid " +
+                "inner join orgunitgroupmembers ougm on ougm.orgunitgroupid = oug.orgunitgroupid " +
                 "inner join orgunitgroupsetmembers ougsm on ougsm.orgunitgroupid = ougm.orgunitgroupid and ougsm.orgunitgroupsetid = " + groupSet.getId() + " " +
+                "where ougm.organisationunitid = ou.organisationunitid " +
                 "limit 1) as " + statementBuilder.columnQuote( groupSet.getUid() ) + ", ";
         }
         
@@ -332,6 +348,7 @@ public class JdbcResourceTableStore
     // CategoryTable
     // -------------------------------------------------------------------------
 
+    @Override
     public void createCategoryStructure( List<DataElementCategory> categories )
     {
         try
@@ -348,10 +365,47 @@ public class JdbcResourceTableStore
         jdbcTemplate.execute( statement.getStatement() );
     }
 
+    @Override
+    public void populateCategoryStructure( List<DataElementCategory> categories )
+    {
+        String sql = 
+            "insert into " + CreateCategoryTableStatement.TABLE_NAME + " " +
+            "select coc.categoryoptioncomboid as cocid, con.categoryoptioncomboname as cocname, ";
+        
+        for ( DataElementCategory category : categories )
+        {
+            sql += "(" +
+                "select co.name from categoryoptioncombos_categoryoptions cocco " +
+                "inner join dataelementcategoryoption co on cocco.categoryoptionid = co.categoryoptionid " +
+                "inner join categories_categoryoptions cco on co.categoryoptionid = cco.categoryoptionid " +
+                "where coc.categoryoptioncomboid = cocco.categoryoptioncomboid " +
+                "and cco.categoryid = " + category.getId() + " " +
+                "limit 1) as " + statementBuilder.columnQuote( category.getName() ) + ", ";
+
+            sql += "(" +
+                "select co.uid from categoryoptioncombos_categoryoptions cocco " +
+                "inner join dataelementcategoryoption co on cocco.categoryoptionid = co.categoryoptionid " +
+                "inner join categories_categoryoptions cco on co.categoryoptionid = cco.categoryoptionid " +
+                "where coc.categoryoptioncomboid = cocco.categoryoptioncomboid " +
+                "and cco.categoryid = " + category.getId() + " " +
+                "limit 1) as " + statementBuilder.columnQuote( category.getUid() ) + ", ";
+        }
+
+        sql = TextUtils.removeLastComma( sql ) + " ";
+        sql += 
+            "from categoryoptioncombo coc " +
+            "inner join _categoryoptioncomboname con on coc.categoryoptioncomboid = con.categoryoptioncomboid";
+        
+        log.info( "Populate category structure SQL: " + sql );
+        
+        jdbcTemplate.execute( sql );        
+    }
+    
     // -------------------------------------------------------------------------
     // DataElementStructure
     // -------------------------------------------------------------------------
 
+    @Override
     public void createDataElementStructure()
     {
         try
@@ -370,6 +424,7 @@ public class JdbcResourceTableStore
             "datasetid INTEGER, " +
             "datasetuid CHARACTER(11), " +
             "datasetname VARCHAR(250), " +
+            "datasetapprovallevel INTEGER, " +
             "periodtypeid INTEGER, " + 
             "periodtypename VARCHAR(250) )";
         
@@ -392,6 +447,7 @@ public class JdbcResourceTableStore
     // PeriodTable
     // -------------------------------------------------------------------------
 
+    @Override
     public void createDatePeriodStructure()
     {
         try
@@ -419,6 +475,7 @@ public class JdbcResourceTableStore
         jdbcTemplate.execute( sql );
     }
 
+    @Override
     public void createPeriodStructure()
     {
         try
@@ -454,6 +511,7 @@ public class JdbcResourceTableStore
     // DataElementCategoryOptionComboTable
     // -------------------------------------------------------------------------
 
+    @Override
     public void createAndGenerateDataElementCategoryOptionCombo()
     {
         try
@@ -465,16 +523,21 @@ public class JdbcResourceTableStore
             // Do nothing, table does not exist
         }
         
-        final String create = "CREATE TABLE " + TABLE_NAME_DATA_ELEMENT_CATEGORY_OPTION_COMBO + 
-            " (dataelementuid VARCHAR(11) NOT NULL, categoryoptioncombouid VARCHAR(11) NOT NULL)";
+        final String create = "CREATE TABLE " + TABLE_NAME_DATA_ELEMENT_CATEGORY_OPTION_COMBO + " (" +
+            "dataelementid INTEGER NOT NULL, " +
+            "dataelementuid VARCHAR(11) NOT NULL, " +
+            "categoryoptioncomboid INTEGER NOT NULL, " +
+            "categoryoptioncombouid VARCHAR(11) NOT NULL)";
         
         jdbcTemplate.execute( create );
         
         log.info( "Create data element category option combo SQL: " + create );
         
         final String sql = 
-            "insert into " + TABLE_NAME_DATA_ELEMENT_CATEGORY_OPTION_COMBO + " (dataelementuid, categoryoptioncombouid) " +
-            "select de.uid as dataelementuid, coc.uid as categoryoptioncombouid " +
+            "insert into " + TABLE_NAME_DATA_ELEMENT_CATEGORY_OPTION_COMBO + 
+            " (dataelementid, dataelementuid, categoryoptioncomboid, categoryoptioncombouid) " +
+            "select de.dataelementid as dataelementid, de.uid as dataelementuid, " +
+            "coc.categoryoptioncomboid as categoryoptioncomboid, coc.uid as categoryoptioncombouid " +
             "from dataelement de " +
             "join categorycombos_optioncombos cc on de.categorycomboid = cc.categorycomboid " +
             "join categoryoptioncombo coc on cc.categoryoptioncomboid = coc.categoryoptioncomboid";

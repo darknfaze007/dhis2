@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
 
   <!-- ResourceTable -->
 
@@ -34,6 +34,7 @@
 	<property name="dataEntryFormService" ref="org.hisp.dhis.dataentryform.DataEntryFormService" />
 	<property name="categoryService" ref="org.hisp.dhis.dataelement.DataElementCategoryService" />
 	<property name="constantService" ref="org.hisp.dhis.constant.ConstantService" />
+	<property name="periodService" ref="org.hisp.dhis.period.PeriodService" />
   </bean>
   
   <!-- Maintenance -->

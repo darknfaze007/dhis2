@@ -175,6 +175,7 @@ public class RunAggregationQueryAction
         Period period = new Period();
         
         period = PeriodType.getPeriodFromIsoString( selectedPeriodId );
+        period = periodService.reloadPeriod( period );
         
         if( period != null )
         {
@@ -212,7 +213,12 @@ public class RunAggregationQueryAction
                 
                 Set<OrganisationUnit> orgUnits = new HashSet<OrganisationUnit>( dataSet.getSources() );
                 
+                System.out.println( " Size of DataSet Source -- " + orgUnits.size() );
+                
+                
                 orgUnits.retainAll( orgUnitList );
+                
+                System.out.println( " Size of OrgList Source -- " + orgUnits.size() );
                 
                 List<Period> periods = new ArrayList<Period>();
                 
@@ -239,6 +245,21 @@ public class RunAggregationQueryAction
                 periods.add( getCurrentPeriod( dataSet.getPeriodType(), aggregationPeriod ) );
 
                 aggregationResultMap.putAll( defaultPBFAggregationService.calculateOverallUnadjustedPBFAmount( periods, dataElement, orgUnits, dataSetId ) );
+            }
+            else if( condition.getOperator().equals( Lookup.PBF_AGG_TYPE_QUANTITY_VALIDATED ) )
+            {
+                Set<OrganisationUnit> orgUnits = new HashSet<OrganisationUnit>();
+                
+                orgUnits.addAll( orgUnitList );
+                
+                List<Period> periods = new ArrayList<Period>();
+                
+                //periods.add( getCurrentPeriod( dataSet.getPeriodType(), new Date() ) );
+                
+                periods.add( period );
+
+                aggregationResultMap.putAll( defaultPBFAggregationService.calculateQuantityValidated( periods, orgUnits ) );
+                
             }
             
             dataElements.add( dataElement );

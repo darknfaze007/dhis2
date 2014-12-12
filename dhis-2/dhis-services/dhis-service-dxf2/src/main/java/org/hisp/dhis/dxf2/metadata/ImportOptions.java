@@ -28,17 +28,26 @@ package org.hisp.dhis.dxf2.metadata;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.common.IdentifiableObject.IdentifiableProperty;
+import org.hisp.dhis.common.IdentifiableProperty;
 import org.hisp.dhis.importexport.ImportStrategy;
 
 /**
+ * The idScheme is a general setting which will apply to all objects. The idSchemes
+ * can also be defined for specific objects such as dataElementIdScheme. The
+ * general setting will override specific settings.
+ * 
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
 public class ImportOptions
 {
+    private static final ImportOptions DEFAULT_OPTIONS = new ImportOptions( 
+        IdentifiableProperty.UID, IdentifiableProperty.UID, false, true, ImportStrategy.NEW_AND_UPDATES, false );
+
+    private IdentifiableProperty idScheme;
+    
     private IdentifiableProperty dataElementIdScheme;
 
-    private IdentifiableProperty orgUnitIdScheme = IdentifiableProperty.UID;
+    private IdentifiableProperty orgUnitIdScheme;
 
     private boolean dryRun;
 
@@ -50,12 +59,9 @@ public class ImportOptions
 
     private boolean skipExistingCheck;
 
-    private static final ImportOptions DEFAULT_OPTIONS = new ImportOptions( IdentifiableProperty.UID, IdentifiableProperty.UID, false, true, ImportStrategy.NEW_AND_UPDATES, false );
-
-    public static ImportOptions getDefaultImportOptions()
-    {
-        return DEFAULT_OPTIONS;
-    }
+    //--------------------------------------------------------------------------
+    // Constructors
+    //--------------------------------------------------------------------------
 
     public ImportOptions()
     {
@@ -66,7 +72,8 @@ public class ImportOptions
         this.importStrategy = importStrategy;
     }
 
-    public ImportOptions( IdentifiableProperty dataElementIdScheme, IdentifiableProperty orgUnitIdScheme, boolean dryRun, boolean preheatCache, ImportStrategy importStrategy, boolean skipExistingCheck )
+    public ImportOptions( IdentifiableProperty dataElementIdScheme, IdentifiableProperty orgUnitIdScheme, 
+        boolean dryRun, boolean preheatCache, ImportStrategy importStrategy, boolean skipExistingCheck )
     {
         this.dataElementIdScheme = dataElementIdScheme;
         this.orgUnitIdScheme = orgUnitIdScheme;
@@ -76,20 +83,46 @@ public class ImportOptions
         this.skipExistingCheck = skipExistingCheck;
     }
 
+    public ImportOptions( IdentifiableProperty idScheme, IdentifiableProperty dataElementIdScheme, IdentifiableProperty orgUnitIdScheme, 
+        boolean dryRun, boolean preheatCache, ImportStrategy importStrategy, boolean skipExistingCheck )
+    {
+        this.idScheme = idScheme;
+        this.dataElementIdScheme = dataElementIdScheme;
+        this.orgUnitIdScheme = orgUnitIdScheme;
+        this.preheatCache = preheatCache;
+        this.dryRun = dryRun;
+        this.importStrategy = importStrategy;
+        this.skipExistingCheck = skipExistingCheck;
+    }
+
+    //--------------------------------------------------------------------------
+    // Logic
+    //--------------------------------------------------------------------------
+
+    public static ImportOptions getDefaultImportOptions()
+    {
+        return DEFAULT_OPTIONS;
+    }
+
     //--------------------------------------------------------------------------
     // Get methods
     //--------------------------------------------------------------------------
 
+    public IdentifiableProperty getIdScheme()
+    {
+        return idScheme != null ? idScheme : IdentifiableProperty.UID;
+    }
+
     public IdentifiableProperty getDataElementIdScheme()
     {
-        return dataElementIdScheme != null ? dataElementIdScheme : IdentifiableProperty.UID;
+        return dataElementIdScheme != null ? dataElementIdScheme : ( idScheme != null ? idScheme : IdentifiableProperty.UID );
     }
 
     public IdentifiableProperty getOrgUnitIdScheme()
     {
-        return orgUnitIdScheme != null ? orgUnitIdScheme : IdentifiableProperty.UID;
+        return orgUnitIdScheme != null ? orgUnitIdScheme : ( idScheme != null ? idScheme : IdentifiableProperty.UID );
     }
-
+    
     public boolean isDryRun()
     {
         return dryRun;
@@ -113,6 +146,11 @@ public class ImportOptions
     //--------------------------------------------------------------------------
     // Set methods
     //--------------------------------------------------------------------------
+
+    public void setIdScheme( String scheme )
+    {
+        this.idScheme = scheme != null ? IdentifiableProperty.valueOf( scheme.toUpperCase() ) : null;
+    }
 
     public void setDataElementIdScheme( String scheme )
     {
@@ -162,7 +200,7 @@ public class ImportOptions
     @Override
     public String toString()
     {
-        return "[data element id scheme: " + dataElementIdScheme + ", org unit id scheme: " +
+        return "[Id scheme: " + idScheme + ", data element id scheme: " + dataElementIdScheme + ", org unit id scheme: " +
             orgUnitIdScheme + ", dry run: " + dryRun + ", async: " + async + ", strategy: " + importStrategy + ", skip check: " + skipExistingCheck + "]";
     }
 }

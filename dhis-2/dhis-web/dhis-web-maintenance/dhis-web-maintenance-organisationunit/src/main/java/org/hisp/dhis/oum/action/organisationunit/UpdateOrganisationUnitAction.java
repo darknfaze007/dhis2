@@ -40,7 +40,7 @@ import java.util.Set;
 
 import org.hisp.dhis.attribute.AttributeService;
 import org.hisp.dhis.calendar.CalendarService;
-import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.calendar.DateTimeUnit;
 import org.hisp.dhis.common.IdentifiableObjectManager;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
@@ -225,21 +225,21 @@ public class UpdateOrganisationUnitAction
         this.phoneNumber = phoneNumber;
     }
 
-    private Collection<String> dataSets = new HashSet<String>();
+    private Collection<String> dataSets = new HashSet<>();
 
     public void setDataSets( Collection<String> dataSets )
     {
         this.dataSets = dataSets;
     }
 
-    private List<String> orgUnitGroupSets = new ArrayList<String>();
+    private List<String> orgUnitGroupSets = new ArrayList<>();
 
     public void setOrgUnitGroupSets( List<String> orgUnitGroupSets )
     {
         this.orgUnitGroupSets = orgUnitGroupSets;
     }
 
-    private List<String> orgUnitGroups = new ArrayList<String>();
+    private List<String> orgUnitGroups = new ArrayList<>();
 
     public void setOrgUnitGroups( List<String> orgUnitGroups )
     {
@@ -257,6 +257,7 @@ public class UpdateOrganisationUnitAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -272,14 +273,14 @@ public class UpdateOrganisationUnitAction
         email = nullIfEmpty( email );
         phoneNumber = nullIfEmpty( phoneNumber );
 
-        DateUnit isoOpeningDate = calendarService.getSystemCalendar().toIso( openingDate );
+        DateTimeUnit isoOpeningDate = calendarService.getSystemCalendar().toIso( openingDate );
         Date oDate = isoOpeningDate.toJdkCalendar().getTime();
 
         Date cDate = null;
 
         if ( closedDate != null && closedDate.trim().length() != 0 )
         {
-            DateUnit isoClosingDate = calendarService.getSystemCalendar().toIso( closedDate );
+            DateTimeUnit isoClosingDate = calendarService.getSystemCalendar().toIso( closedDate );
             cDate = isoClosingDate.toJdkCalendar().getTime();
         }
 
@@ -337,7 +338,7 @@ public class UpdateOrganisationUnitAction
             organisationUnit.setFeatureType( featureType );
         }
 
-        Set<DataSet> sets = new HashSet<DataSet>();
+        Set<DataSet> sets = new HashSet<>();
 
         for ( String id : dataSets )
         {

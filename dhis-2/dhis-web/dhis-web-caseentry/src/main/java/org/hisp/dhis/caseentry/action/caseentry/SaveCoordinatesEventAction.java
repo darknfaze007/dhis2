@@ -81,6 +81,7 @@ public class SaveCoordinatesEventAction
     // Action implementation
     // --------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -91,12 +92,9 @@ public class SaveCoordinatesEventAction
         ProgramStageInstance programStageInstance = programStageInstanceService
             .getProgramStageInstance( programStageInstanceId );
 
-        if ( longitude != null && latitude != null )
-        {
-            programStageInstance.setLongitude( longitude );
-            programStageInstance.setLatitude( latitude );
-        }
-
+        programStageInstance.setLongitude( longitude );
+        programStageInstance.setLatitude( latitude );
+            
         programStageInstanceService.updateProgramStageInstance( programStageInstance );
 
         return SUCCESS;

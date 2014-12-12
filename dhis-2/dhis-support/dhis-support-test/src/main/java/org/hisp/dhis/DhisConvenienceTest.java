@@ -34,7 +34,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -51,16 +50,10 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hisp.dhis.aggregation.AggregatedDataValueService;
-import org.hisp.dhis.aggregation.AggregatedOrgUnitDataValueService;
 import org.hisp.dhis.chart.Chart;
 import org.hisp.dhis.common.DimensionalObject;
 import org.hisp.dhis.common.IdentifiableObjectManager;
-import org.hisp.dhis.concept.Concept;
 import org.hisp.dhis.constant.Constant;
-import org.hisp.dhis.constant.ConstantService;
-import org.hisp.dhis.datadictionary.DataDictionary;
-import org.hisp.dhis.datadictionary.DataDictionaryService;
 import org.hisp.dhis.dataelement.CategoryOptionGroup;
 import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElement;
@@ -68,20 +61,12 @@ import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
-import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementDomain;
 import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataelement.DataElementGroupSet;
-import org.hisp.dhis.dataelement.DataElementService;
-import org.hisp.dhis.dataentryform.DataEntryFormService;
-import org.hisp.dhis.dataset.CompleteDataSetRegistrationService;
 import org.hisp.dhis.dataset.DataSet;
-import org.hisp.dhis.dataset.DataSetService;
-import org.hisp.dhis.dataset.SectionService;
 import org.hisp.dhis.datavalue.DataValue;
-import org.hisp.dhis.datavalue.DataValueService;
 import org.hisp.dhis.expression.Expression;
-import org.hisp.dhis.expression.ExpressionService;
 import org.hisp.dhis.expression.Operator;
 import org.hisp.dhis.external.location.LocationManager;
 import org.hisp.dhis.importexport.ImportDataValue;
@@ -89,26 +74,20 @@ import org.hisp.dhis.importexport.ImportObjectStatus;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.indicator.IndicatorGroup;
 import org.hisp.dhis.indicator.IndicatorGroupSet;
-import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.indicator.IndicatorType;
 import org.hisp.dhis.mapping.MapLegend;
 import org.hisp.dhis.mapping.MapLegendSet;
-import org.hisp.dhis.mapping.MappingService;
-import org.hisp.dhis.message.MessageService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
-import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
-import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.MonthlyPeriodType;
 import org.hisp.dhis.period.Period;
-import org.hisp.dhis.period.PeriodService;
 import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramStage;
-import org.hisp.dhis.program.ProgramStageService;
+import org.hisp.dhis.program.ProgramStageDataElement;
+import org.hisp.dhis.program.ProgramTrackedEntityAttribute;
 import org.hisp.dhis.relationship.RelationshipType;
-import org.hisp.dhis.resourcetable.ResourceTableService;
 import org.hisp.dhis.sqlview.SqlView;
 import org.hisp.dhis.trackedentity.TrackedEntity;
 import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
@@ -121,10 +100,9 @@ import org.hisp.dhis.user.UserCredentials;
 import org.hisp.dhis.user.UserGroup;
 import org.hisp.dhis.user.UserService;
 import org.hisp.dhis.validation.ValidationCriteria;
-import org.hisp.dhis.validation.ValidationCriteriaService;
 import org.hisp.dhis.validation.ValidationRule;
 import org.hisp.dhis.validation.ValidationRuleGroup;
-import org.hisp.dhis.validation.ValidationRuleService;
+import org.joda.time.DateTime;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -164,67 +142,20 @@ public abstract class DhisConvenienceTest
     // Service references
     // -------------------------------------------------------------------------
 
-    protected DataElementService dataElementService;
-
-    protected DataElementCategoryService categoryService;
-
-    protected DataDictionaryService dataDictionaryService;
-
-    protected IndicatorService indicatorService;
-
-    protected DataSetService dataSetService;
-
-    protected SectionService sectionService;
-
-    protected CompleteDataSetRegistrationService completeDataSetRegistrationService;
-
-    protected OrganisationUnitService organisationUnitService;
-
-    protected OrganisationUnitGroupService organisationUnitGroupService;
-
-    protected AggregatedDataValueService aggregatedDataValueService;
-
-    protected AggregatedOrgUnitDataValueService aggregatedOrgUnitDataValueService;
-
-    protected PeriodService periodService;
-
-    protected ConstantService constantService;
-
-    protected ValidationRuleService validationRuleService;
-
-    protected ValidationCriteriaService validationCriteriaService;
-
-    protected ExpressionService expressionService;
-
-    protected DataValueService dataValueService;
-
-    protected ResourceTableService resourceTableService;
-
-    protected MappingService mappingService;
-
-    protected ProgramStageService programStageService;
-
-    protected DataEntryFormService dataEntryFormService;
-
     protected UserService userService;
-
-    protected MessageService messageService;
-
+    
     protected IdentifiableObjectManager identifiableObjectManager;
 
     static
     {
-        Calendar calendar = Calendar.getInstance();
-        calendar.clear();
-        calendar.set( 1970, Calendar.JANUARY, 1 );
-
-        date = calendar.getTime();
+        DateTime dateTime = new DateTime(1970, 1, 1, 0, 0);
+        date = dateTime.toDate();
     }
 
     // -------------------------------------------------------------------------
     // Convenience methods
     // -------------------------------------------------------------------------
-
+    
     /**
      * Creates a date.
      *
@@ -235,14 +166,8 @@ public abstract class DhisConvenienceTest
      */
     public static Date getDate( int year, int month, int day )
     {
-        final Calendar calendar = Calendar.getInstance();
-
-        calendar.clear();
-        calendar.set( Calendar.YEAR, year );
-        calendar.set( Calendar.MONTH, month - 1 );
-        calendar.set( Calendar.DAY_OF_MONTH, day );
-
-        return calendar.getTime();
+        DateTime dateTime = new DateTime(year, month, day, 0, 0);
+        return dateTime.toDate();
     }
 
     /**
@@ -253,12 +178,11 @@ public abstract class DhisConvenienceTest
      */
     public Date getDay( int day )
     {
-        final Calendar calendar = Calendar.getInstance();
+        DateTime dataTime = DateTime.now();
+        dataTime = dataTime.withTimeAtStartOfDay() ;
+        dataTime = dataTime.withDayOfYear( day );
 
-        calendar.clear();
-        calendar.set( Calendar.DAY_OF_YEAR, day );
-
-        return calendar.getTime();
+        return dataTime.toDate();
     }
 
     /**
@@ -273,7 +197,7 @@ public abstract class DhisConvenienceTest
      */
     public static boolean equals( Collection<?> actual, Object... reference )
     {
-        final Collection<Object> collection = new HashSet<Object>();
+        final Collection<Object> collection = new HashSet<>();
 
         Collections.addAll( collection, reference );
 
@@ -679,21 +603,6 @@ public abstract class DhisConvenienceTest
     /**
      * @param uniqueCharacter A unique character to identify the object.
      */
-    public static DataDictionary createDataDictionary( char uniqueCharacter )
-    {
-        DataDictionary dictionary = new DataDictionary();
-        dictionary.setAutoFields();
-
-        dictionary.setName( "DataDictionary" + uniqueCharacter );
-        dictionary.setDescription( "Description" + uniqueCharacter );
-        dictionary.setRegion( "Region" + uniqueCharacter );
-
-        return dictionary;
-    }
-
-    /**
-     * @param uniqueCharacter A unique character to identify the object.
-     */
     public static IndicatorType createIndicatorType( char uniqueCharacter )
     {
         IndicatorType type = new IndicatorType();
@@ -903,7 +812,8 @@ public abstract class DhisConvenienceTest
         dataValue.setValue( value );
         dataValue.setComment( "Comment" );
         dataValue.setStoredBy( "StoredBy" );
-        dataValue.setTimestamp( date );
+        dataValue.setCreated( date );
+        dataValue.setLastUpdated( date );
 
         return dataValue;
     }
@@ -929,7 +839,8 @@ public abstract class DhisConvenienceTest
         dataValue.setValue( value );
         dataValue.setComment( "Comment" );
         dataValue.setStoredBy( "StoredBy" );
-        dataValue.setTimestamp( date );
+        dataValue.setCreated( date );
+        dataValue.setLastUpdated( date );
 
         return dataValue;
     }
@@ -956,7 +867,8 @@ public abstract class DhisConvenienceTest
         dataValue.setValue( value );
         dataValue.setComment( "Comment" );
         dataValue.setStoredBy( "StoredBy" );
-        dataValue.setTimestamp( lastupdated );
+        dataValue.setCreated( lastupdated );
+        dataValue.setLastUpdated( lastupdated );
 
         return dataValue;
     }
@@ -976,7 +888,6 @@ public abstract class DhisConvenienceTest
 
         validationRule.setName( "ValidationRule" + uniqueCharacter );
         validationRule.setDescription( "Description" + uniqueCharacter );
-        validationRule.setType( ValidationRule.TYPE_ABSOLUTE );
         validationRule.setOperator( operator );
         validationRule.setLeftSide( leftSide );
         validationRule.setRightSide( rightSide );
@@ -1011,7 +922,6 @@ public abstract class DhisConvenienceTest
 
         validationRule.setName( "MonitoringRule" + uniqueCharacter );
         validationRule.setDescription( "Description" + uniqueCharacter );
-        validationRule.setType( ValidationRule.TYPE_ABSOLUTE );
         validationRule.setRuleType( ValidationRule.RULE_TYPE_SURVEILLANCE );
         validationRule.setOperator( operator );
         validationRule.setLeftSide( leftSide );
@@ -1055,7 +965,6 @@ public abstract class DhisConvenienceTest
         expression.setExpression( expressionString );
         expression.setDescription( "Description" + uniqueCharacter );
         expression.setDataElementsInExpression( dataElementsInExpression );
-        expression.setOptionCombosInExpression( optionCombosInExpression );
 
         return expression;
     }
@@ -1144,6 +1053,18 @@ public abstract class DhisConvenienceTest
         return user;
     }
 
+    public static UserCredentials createUserCredentials( char uniqueCharacter, User user )
+    {
+        UserCredentials credentials = new UserCredentials();
+        credentials.setName( "UserCredentials" + uniqueCharacter );
+        credentials.setUsername( "Username" + uniqueCharacter );
+        credentials.setPassword( "Password" + uniqueCharacter );
+        credentials.setUser( user );
+        user.setUserCredentials( credentials );
+        
+        return credentials;
+    }
+    
     public static UserGroup createUserGroup( char uniqueCharacter, Set<User> users )
     {
         UserGroup userGroup = new UserGroup();
@@ -1154,13 +1075,32 @@ public abstract class DhisConvenienceTest
 
         return userGroup;
     }
+    
+    public static UserAuthorityGroup createUserAuthorityGroup( char uniqueCharacter )
+    {
+        UserAuthorityGroup role = new UserAuthorityGroup();
+        role.setAutoFields();
 
-    protected static Program createProgram( char uniqueCharacter, Set<ProgramStage> programStages,
-        OrganisationUnit organisationUnit )
+        role.setUid( BASE_UID + uniqueCharacter );
+        role.setName( "UserAuthorityGroup" + uniqueCharacter );
+        
+        return role;
+    }
+
+    public static Program createProgram( char uniqueCharacter, Set<ProgramStage> programStages,
+        OrganisationUnit unit )
+    {
+        Set<OrganisationUnit> units = new HashSet<>();
+        units.add( unit );
+        
+        return createProgram( uniqueCharacter, programStages, null, units );
+    }
+    
+    public static Program createProgram( char uniqueCharacter, Set<ProgramStage> programStages,
+        Set<TrackedEntityAttribute> attributes, Set<OrganisationUnit> organisationUnits )
     {
         Program program = new Program();
-        program.setAutoFields();
-
+        
         program.setName( "Program" + uniqueCharacter );
         program.setDescription( "Description" + uniqueCharacter );
         program.setDateOfEnrollmentDescription( "DateOfEnrollmentDescription" );
@@ -1173,11 +1113,25 @@ public abstract class DhisConvenienceTest
             for ( ProgramStage programStage : programStages )
             {
                 programStage.setProgram( program );
+                program.getProgramStages().add( programStage );
+            }
+        }
+        
+        if ( attributes != null )
+        {
+            int i = 0;
+            
+            for ( TrackedEntityAttribute attribute : attributes )
+            {
+                program.getProgramAttributes().add( new ProgramTrackedEntityAttribute( attribute, i++, false ) );
             }
         }
 
-        program.getOrganisationUnits().add( organisationUnit );
-
+        if ( organisationUnits != null )
+        {            
+            program.getOrganisationUnits().addAll( organisationUnits );
+        }
+        
         return program;
     }
 
@@ -1189,13 +1143,28 @@ public abstract class DhisConvenienceTest
     public static ProgramStage createProgramStage( char uniqueCharacter, int minDays, boolean irregular )
     {
         ProgramStage programStage = new ProgramStage();
-        programStage.setAutoFields();
 
         programStage.setName( "ProgramStage" + uniqueCharacter );
         programStage.setDescription( "description" + uniqueCharacter );
         programStage.setMinDaysFromStart( minDays );
         programStage.setIrregular( irregular );
 
+        return programStage;
+    }
+    
+    public static ProgramStage createProgramStage( char uniqueCharacter, Set<DataElement> dataElements )
+    {
+        ProgramStage programStage = createProgramStage( uniqueCharacter, 0 );
+        
+        if ( dataElements != null )
+        {
+            for ( DataElement dataElement : dataElements )
+            {
+                ProgramStageDataElement psd = new ProgramStageDataElement( programStage, dataElement, false );
+                programStage.getProgramStageDataElements().add( psd );
+            }
+        }
+        
         return programStage;
     }
 
@@ -1347,20 +1316,6 @@ public abstract class DhisConvenienceTest
 
     /**
      * @param uniqueCharacter A unique character to identify the object.
-     * @return a concept instance
-     */
-    protected static Concept createConcept( char uniqueCharacter )
-    {
-        Concept concept = new Concept();
-        concept.setAutoFields();
-
-        concept.setName( "Concept" + uniqueCharacter );
-
-        return concept;
-    }
-
-    /**
-     * @param uniqueCharacter A unique character to identify the object.
      * @param value           The value for constant
      * @return a constant instance
      */
@@ -1406,9 +1361,9 @@ public abstract class DhisConvenienceTest
         {
             String[] children = dir.list();
 
-            for ( int i = 0; i < children.length; i++ )
+            for ( String aChildren : children )
             {
-                boolean success = deleteDir( new File( dir, children[i] ) );
+                boolean success = deleteDir( new File( dir, aChildren ) );
 
                 if ( !success )
                 {
@@ -1551,7 +1506,7 @@ public abstract class DhisConvenienceTest
         user.getUserCredentials().setUser( user );
         userService.addUserCredentials( user.getUserCredentials() );
 
-        List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+        List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add( new SimpleGrantedAuthority( "ALL" ) );
 
         UserDetails userDetails = new org.springframework.security.core.userdetails.User( "username", "password", authorities );

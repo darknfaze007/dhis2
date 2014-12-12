@@ -28,20 +28,16 @@ package org.hisp.dhis.dd.action.categorycombo;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-
+import com.opensymphony.xwork2.Action;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 
-import com.opensymphony.xwork2.Action;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Selamawit
- * @version $Id$
  */
 public class AddDataElementCategoryComboAction
     implements Action
@@ -76,23 +72,24 @@ public class AddDataElementCategoryComboAction
     }
 
     private boolean skipTotal;
-    
+
     public void setSkipTotal( boolean skipTotal )
     {
         this.skipTotal = skipTotal;
     }
-    
-    private Collection<String> selectedList = new HashSet<String>();
 
-    public void setSelectedList( Collection<String> selectedList )
+    private List<String> caSelected = new ArrayList<>();
+
+    public void setCaSelected( List<String> caSelected )
     {
-        this.selectedList = selectedList;
+        this.caSelected = caSelected;
     }
 
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         DataElementCategoryCombo categoryCombo = new DataElementCategoryCombo();
@@ -100,13 +97,11 @@ public class AddDataElementCategoryComboAction
         categoryCombo.setDimensionType( dimensionType );
         categoryCombo.setSkipTotal( skipTotal );
 
-        List<DataElementCategory> categories = new ArrayList<DataElementCategory>();
+        List<DataElementCategory> categories = new ArrayList<>();
 
-        for ( String id : selectedList )
+        for ( String id : caSelected )
         {
-            DataElementCategory dataElementCategory = dataElementCategoryService.getDataElementCategory( 
-                Integer.parseInt( id ) );
-
+            DataElementCategory dataElementCategory = dataElementCategoryService.getDataElementCategory( id );
             categories.add( dataElementCategory );
         }
 
@@ -115,7 +110,7 @@ public class AddDataElementCategoryComboAction
         dataElementCategoryService.addDataElementCategoryCombo( categoryCombo );
 
         dataElementCategoryService.generateOptionCombos( categoryCombo );
-        
+
         return SUCCESS;
     }
 }

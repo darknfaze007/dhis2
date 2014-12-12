@@ -34,10 +34,15 @@ import static org.hisp.dhis.common.DimensionalObject.DATA_X_DIM_ID;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import org.apache.commons.collections.ListUtils;
+import org.apache.commons.lang.StringUtils;
+import org.hisp.dhis.common.comparator.ObjectStringValueComparator;
 
 /**
  * @author Lars Helge Overland
@@ -49,6 +54,8 @@ public class DimensionalObjectUtils
     public static final String ITEM_SEP = "-";
     
     private static final Pattern INT_PATTERN = Pattern.compile( "^(0|-?[1-9]\\d*)$" );
+
+    public static final String TITLE_ITEM_SEP = ", ";
     
     /**
      * Converts a concrete dimensional class identifier to a dimension identifier.
@@ -75,7 +82,7 @@ public class DimensionalObjectUtils
      */
     public static List<String> getUniqueDimensions( List<DimensionalObject> dimensions )
     {
-        List<String> dims = new ArrayList<String>();
+        List<String> dims = new ArrayList<>();
         
         if ( dimensions != null )
         {
@@ -102,7 +109,7 @@ public class DimensionalObjectUtils
      */
     public static List<String> getDimensions( List<DimensionalObject> dimensions )
     {
-        List<String> dims = new ArrayList<String>();
+        List<String> dims = new ArrayList<>();
         
         if ( dimensions != null )
         {
@@ -125,7 +132,7 @@ public class DimensionalObjectUtils
      */
     public static NameableObject[][] getItemArray( List<DimensionalObject> dimensions )
     {
-        List<NameableObject[]> arrays = new ArrayList<NameableObject[]>();
+        List<NameableObject[]> arrays = new ArrayList<>();
         
         for ( DimensionalObject dimension : dimensions )
         {
@@ -142,9 +149,10 @@ public class DimensionalObjectUtils
      * @param elements the elements to put on the map.
      * @return a map.
      */
-    public static <T> Map<T, T> asMap( T... elements )
+    @SafeVarargs
+    public static final <T> Map<T, T> asMap( final T... elements )
     {
-        Map<T, T> map = new HashMap<T, T>();
+        Map<T, T> map = new HashMap<>();
         
         if ( elements != null && ( elements.length % 2 == 0 ) )
         {
@@ -188,10 +196,10 @@ public class DimensionalObjectUtils
         
         if ( param.split( DIMENSION_NAME_SEP ).length > 1 )
         {
-            return new ArrayList<String>( Arrays.asList( param.split( DIMENSION_NAME_SEP )[1].split( OPTION_SEP ) ) );
+            return new ArrayList<>( Arrays.asList( param.split( DIMENSION_NAME_SEP )[1].split( OPTION_SEP ) ) );
         }
         
-        return new ArrayList<String>();
+        return new ArrayList<>();
     }
     
     /**
@@ -205,7 +213,7 @@ public class DimensionalObjectUtils
             return null;
         }
         
-        return new ArrayList<String>( Arrays.asList( param.split( OPTION_SEP ) ) );
+        return new ArrayList<>( Arrays.asList( param.split( OPTION_SEP ) ) );
     }
 
     /**
@@ -270,5 +278,81 @@ public class DimensionalObjectUtils
         }
         
         return null;
+    }
+
+    /**
+     * Sets items on the given dimension based on the unique values of the matching 
+     * column in the given grid. Items are BaseNameableObjects where the name, 
+     * code and short name properties are set to the column value. The dimension
+     * analytics type must be equal to EVENT.
+     * 
+     * @param dimension the dimension.
+     * @param naForNull indicates whether a [n/a] string should be used as
+     *        replacement for null values.
+     * @param grid the grid with data values.
+     */
+    public static void setDimensionItemsForFilters( DimensionalObject dimension, Grid grid, boolean naForNull )
+    {
+        if ( dimension == null || grid == null || !AnalyticsType.EVENT.equals( dimension.getAnalyticsType() ) )
+        {
+            return;
+        }
+            
+        BaseDimensionalObject dim = (BaseDimensionalObject) dimension;
+        
+        List<String> filterItems = dim.getFilterItemsAsList();
+        
+        List<Object> values = new ArrayList<>( grid.getUniqueValues( dim.getDimension() ) );
+        
+        Collections.sort( values, ObjectStringValueComparator.INSTANCE );
+        
+        // Use order of items in filter if specified
+        
+        List<?> itemList = filterItems != null ? ListUtils.retainAll( filterItems, values ) : values;
+                
+        List<NameableObject> items = NameableObjectUtils.getNameableObjects( itemList, naForNull );
+        
+        dim.setItems( items );
+    }
+        
+    /**
+     * Accepts filter strings on the format:
+     * </p>
+     * <code>operator:filter:operator:filter</code>
+     * </p>
+     * and returns a pretty print version on the format:
+     * </p>
+     * <code>operator filter, operator filter</code>
+     * 
+     * @param filter the filter.
+     * @return a pretty print version of the filter.
+     */
+    public static String getPrettyFilter( String filter )
+    {
+        if ( filter == null || !filter.contains( DIMENSION_NAME_SEP ) )
+        {
+            return null;
+        }
+        
+        List<String> filterItems = new ArrayList<>();
+        
+        String[] split = filter.split( DIMENSION_NAME_SEP );
+
+        for ( int i = 0; i < split.length; i += 2 )
+        {
+            QueryOperator operator = QueryOperator.fromString( split[i] );
+            String value = split[i+1];
+            
+            if ( operator != null )
+            {
+                boolean ignoreOperator = ( QueryOperator.LIKE.equals( operator ) || QueryOperator.IN.equals( operator ) );
+                
+                value = value.replaceAll( QueryFilter.OPTION_SEP, TITLE_ITEM_SEP );
+                
+                filterItems.add( ( ignoreOperator ? StringUtils.EMPTY : ( operator.getValue() + " " ) ) + value );
+            }
+        }
+        
+        return StringUtils.join( filterItems, TITLE_ITEM_SEP );
     }
 }

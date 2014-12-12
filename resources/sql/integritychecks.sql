@@ -1,4 +1,14 @@
 ﻿
+-- Get periods with equal period type and start date (not valid)
+
+select p1.periodtypeid, p1.startdate, p1.enddate 
+from period p1
+inner join period p2
+on p1.periodtypeid = p2.periodtypeid
+and p1.startdate = p2.startdate
+where p1.periodid != p2.periodid
+order by p1.periodtypeid, p1.startdate, p1.enddate;
+
 -- Get name of datasets for a dataelement
 
 select ds.name from dataset ds
@@ -123,6 +133,18 @@ select * from dataelementcategory where categoryid not in (select distinct categ
 
 select * from categorycombo where categorycomboid not in (select distinct categorycomboid from categorycombos_categories);
 
+-- Get category options with more than one membership for a category 
+
+select categoryid, categoryoptionid, count(*) from categories_categoryoptions group by categoryid, categoryoptionid having count(*) > 1;
+
+-- Get categories with more than one membership for a category combination
+
+select categorycomboid, categoryid, count(*) from categorycombos_categories group by categorycomboid, categoryid having count(*) > 1;
+
+-- Category option combos members of more than one category combo
+
+select categoryoptioncomboid, count(categoryoptioncomboid) as count from categorycombos_optioncombos group by categoryoptioncomboid having count(categoryoptioncomboid) > 1;
+
 -- Get category options with count of memberships in categories
 
 select cc.categoryoptionid, co.name, (
@@ -140,7 +162,7 @@ join categorycombos_optioncombos co on (n.categoryoptioncomboid=co.categoryoptio
 join categorycombo c on (co.categorycomboid=c.categorycomboid)
 order by c.name, n.categoryoptioncomboname;
 
--- Get category combinations without data elements
+-- Get category combinations without data elements or data sets
 
 select * from categorycombo where categorycomboid not in (select distinct categorycomboid from dataelement);
 

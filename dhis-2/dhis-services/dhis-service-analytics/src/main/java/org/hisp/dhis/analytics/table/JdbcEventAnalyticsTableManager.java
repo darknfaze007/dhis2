@@ -40,6 +40,7 @@ import java.util.concurrent.Future;
 
 import org.hisp.dhis.analytics.AnalyticsTable;
 import org.hisp.dhis.dataelement.DataElement;
+import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitLevel;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
@@ -71,7 +72,7 @@ public class JdbcEventAnalyticsTableManager
     {
         log.info( "Get tables using earliest: " + earliest + ", latest: " + latest );
 
-        List<AnalyticsTable> tables = new ArrayList<AnalyticsTable>();
+        List<AnalyticsTable> tables = new ArrayList<>();
 
         if ( earliest != null && latest != null )
         {
@@ -94,6 +95,7 @@ public class JdbcEventAnalyticsTableManager
         return tables;
     }
 
+    @Override
     public String validState()
     {
         boolean hasData = jdbcTemplate.queryForRowSet( "select dataelementid from trackedentitydatavalue limit 1" ).next();
@@ -106,11 +108,13 @@ public class JdbcEventAnalyticsTableManager
         return null;
     }
 
+    @Override
     public String getTableName()
     {
         return "analytics_event";
     }
 
+    @Override
     public void createTable( AnalyticsTable table )
     {
         final String tableName = table.getTempTableName();
@@ -121,7 +125,11 @@ public class JdbcEventAnalyticsTableManager
 
         String sqlCreate = "create table " + tableName + " (";
 
-        for ( String[] col : getDimensionColumns( table ) )
+        List<String[]> columns = getDimensionColumns( table );
+        
+        validateDimensionColumns( columns );
+        
+        for ( String[] col : columns )
         {
             sqlCreate += col[0] + " " + col[1] + ",";
         }
@@ -130,8 +138,10 @@ public class JdbcEventAnalyticsTableManager
 
         sqlCreate += statementBuilder.getTableOptions( false );
 
-        log.info( "Create SQL: " + sqlCreate );
-
+        log.info( "Creating table: " + tableName );
+        
+        log.debug( "Create SQL: " + sqlCreate );
+        
         executeSilently( sqlCreate );
     }
 
@@ -150,6 +160,7 @@ public class JdbcEventAnalyticsTableManager
 
             final String start = DateUtils.getMediumDateString( table.getPeriod().getStartDate() );
             final String end = DateUtils.getMediumDateString( table.getPeriod().getEndDate() );
+            final String tableName = table.getTempTableName();
 
             String sql = "insert into " + table.getTempTableName() + " (";
 
@@ -168,6 +179,7 @@ public class JdbcEventAnalyticsTableManager
             sql = removeLast( sql, 1 ) + " ";
 
             sql += "from programstageinstance psi " +
+                "left join _organisationunitgroupsetstructure ougs on psi.organisationunitid=ougs.organisationunitid " +
                 "left join programinstance pi on psi.programinstanceid=pi.programinstanceid " +
                 "left join programstage ps on psi.programstageid=ps.programstageid " +
                 "left join program pr on pi.programid=pr.programid " +
@@ -181,14 +193,13 @@ public class JdbcEventAnalyticsTableManager
                 "and psi.organisationunitid is not null " +
                 "and psi.executiondate is not null";
 
-            log.info( "Populate SQL: " + sql );
-
-            jdbcTemplate.execute( sql );
+            populateAndLog( sql, tableName );
         }
 
         return null;
     }
 
+    @Override
     public List<String[]> getDimensionColumns( AnalyticsTable table )
     {
         final String dbl = statementBuilder.getDoubleColumnType();
@@ -197,18 +208,28 @@ public class JdbcEventAnalyticsTableManager
             + MathUtils.NUMERIC_LENIENT_REGEXP + "'";
         final String doubleSelect = "cast(value as " + dbl + ")";
 
-        List<String[]> columns = new ArrayList<String[]>();
+        List<String[]> columns = new ArrayList<>();
 
-        Collection<OrganisationUnitLevel> levels = organisationUnitService.getOrganisationUnitLevels();
+        Collection<OrganisationUnitGroupSet> orgUnitGroupSets = 
+            organisationUnitGroupService.getDataDimensionOrganisationUnitGroupSets();
 
+        Collection<OrganisationUnitLevel> levels = 
+            organisationUnitService.getOrganisationUnitLevels();
+
+        List<PeriodType> periodTypes = PeriodType.getAvailablePeriodTypes();
+
+        for ( OrganisationUnitGroupSet groupSet : orgUnitGroupSets )
+        {
+            String[] col = { quote( groupSet.getUid() ), "character(11)", "ougs." + quote( groupSet.getUid() ) };
+            columns.add( col );
+        }
+        
         for ( OrganisationUnitLevel level : levels )
         {
             String column = quote( PREFIX_ORGUNITLEVEL + level.getLevel() );
             String[] col = { column, "character(11)", "ous." + column };
             columns.add( col );
         }
-
-        List<PeriodType> periodTypes = PeriodType.getAvailablePeriodTypes();
 
         for ( PeriodType periodType : periodTypes )
         {
@@ -264,6 +285,7 @@ public class JdbcEventAnalyticsTableManager
         return columns;
     }
 
+    @Override
     public Date getEarliestData()
     {
         final String sql = "select min(psi.executiondate) from programstageinstance psi "
@@ -272,6 +294,7 @@ public class JdbcEventAnalyticsTableManager
         return jdbcTemplate.queryForObject( sql, Date.class );
     }
 
+    @Override
     public Date getLatestData()
     {
         final String sql = "select max(psi.executiondate) from programstageinstance psi "
@@ -280,10 +303,18 @@ public class JdbcEventAnalyticsTableManager
         return jdbcTemplate.queryForObject( sql, Date.class );
     }
 
+    @Override
     @Async
     public Future<?> applyAggregationLevels( ConcurrentLinkedQueue<AnalyticsTable> tables,
         Collection<String> dataElements, int aggregationLevel )
     {
         return null; // Not relevant
+    }
+
+    @Override
+    @Async
+    public Future<?> vacuumTablesAsync( ConcurrentLinkedQueue<AnalyticsTable> tables )
+    {
+        return null; // Not needed
     }
 }

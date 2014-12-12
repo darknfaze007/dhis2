@@ -55,11 +55,16 @@ import java.util.Map;
  *
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
-public class Jackson2PropertyIntrospectorService extends AbstractPropertyIntrospectorService
+public class Jackson2PropertyIntrospectorService
+    extends AbstractPropertyIntrospectorService
 {
+
+    @Override
     protected Map<String, Property> scanClass( Class<?> clazz )
     {
         Map<String, Property> propertyMap = Maps.newHashMap();
+        Map<String, Property> hibernatePropertyMap = getPropertiesFromHibernate( clazz );
+        List<String> classFieldNames = ReflectionUtils.getAllFieldNames( clazz );
 
         // TODO this is quite nasty, should find a better way of exposing properties at class-level
         if ( clazz.isAnnotationPresent( JacksonXmlRootElement.class ) )
@@ -88,51 +93,36 @@ public class Jackson2PropertyIntrospectorService extends AbstractPropertyIntrosp
             Method method = property.getGetterMethod();
             JsonProperty jsonProperty = method.getAnnotation( JsonProperty.class );
 
-            String name = jsonProperty.value();
+            String fieldName = getFieldName( method );
+            property.setName( !StringUtils.isEmpty( jsonProperty.value() ) ? jsonProperty.value() : fieldName );
+            property.setReadable( true );
 
-            if ( StringUtils.isEmpty( name ) )
+            if ( classFieldNames.contains( fieldName ) )
             {
-                String[] getters = new String[]{
-                    "is", "has", "get"
-                };
-
-                name = method.getName();
-
-                for ( String getter : getters )
-                {
-                    if ( name.startsWith( getter ) )
-                    {
-                        name = name.substring( getter.length() );
-                    }
-                }
-
-                name = StringUtils.uncapitalize( name );
+                property.setFieldName( fieldName );
             }
 
-            property.setName( name );
+            if ( hibernatePropertyMap.containsKey( fieldName ) )
+            {
+                Property hibernateProperty = hibernatePropertyMap.get( fieldName );
+                property.setPersisted( true );
+                property.setWritable( true );
+                property.setUnique( hibernateProperty.isUnique() );
+                property.setNullable( hibernateProperty.isNullable() );
+                property.setMaxLength( hibernateProperty.getMaxLength() );
+                property.setMinLength( hibernateProperty.getMinLength() );
+                property.setCollection( hibernateProperty.isCollection() );
+                property.setCascade( hibernateProperty.getCascade() );
+                property.setOwner( hibernateProperty.isOwner() );
+
+                property.setGetterMethod( hibernateProperty.getGetterMethod() );
+                property.setSetterMethod( hibernateProperty.getSetterMethod() );
+            }
 
             if ( method.isAnnotationPresent( Description.class ) )
             {
                 Description description = method.getAnnotation( Description.class );
                 property.setDescription( description.value() );
-            }
-
-            if ( method.isAnnotationPresent( JsonView.class ) )
-            {
-                JsonView jsonView = method.getAnnotation( JsonView.class );
-
-                for ( Class<?> klass : jsonView.value() )
-                {
-                    if ( ExportView.class.isAssignableFrom( klass ) )
-                    {
-                        property.setOwner( true );
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                property.setOwner( true );
             }
 
             if ( method.isAnnotationPresent( JacksonXmlProperty.class ) )
@@ -141,7 +131,7 @@ public class Jackson2PropertyIntrospectorService extends AbstractPropertyIntrosp
 
                 if ( StringUtils.isEmpty( jacksonXmlProperty.localName() ) )
                 {
-                    property.setName( name );
+                    property.setName( property.getName() );
                 }
                 else
                 {
@@ -156,25 +146,13 @@ public class Jackson2PropertyIntrospectorService extends AbstractPropertyIntrosp
                 property.setAttribute( jacksonXmlProperty.isAttribute() );
             }
 
-            if ( method.isAnnotationPresent( JacksonXmlElementWrapper.class ) )
-            {
-                JacksonXmlElementWrapper jacksonXmlElementWrapper = method.getAnnotation( JacksonXmlElementWrapper.class );
-
-                // TODO what if element-wrapper have different namespace?
-                if ( !StringUtils.isEmpty( jacksonXmlElementWrapper.localName() ) )
-                {
-                    property.setCollectionName( jacksonXmlElementWrapper.localName() );
-                }
-            }
-
-            propertyMap.put( name, property );
-
             Class<?> returnType = method.getReturnType();
             property.setKlass( returnType );
 
             if ( Collection.class.isAssignableFrom( returnType ) )
             {
                 property.setCollection( true );
+                property.setCollectionName( property.getName() );
 
                 Type type = method.getGenericReturnType();
 
@@ -207,9 +185,51 @@ public class Jackson2PropertyIntrospectorService extends AbstractPropertyIntrosp
                     property.setSimple( true );
                 }
             }
+
+            if ( property.isCollection() )
+            {
+                if ( method.isAnnotationPresent( JacksonXmlElementWrapper.class ) )
+                {
+                    JacksonXmlElementWrapper jacksonXmlElementWrapper = method.getAnnotation( JacksonXmlElementWrapper.class );
+                    property.setCollectionWrapping( jacksonXmlElementWrapper.useWrapping() );
+
+                    // TODO what if element-wrapper have different namespace?
+                    if ( !StringUtils.isEmpty( jacksonXmlElementWrapper.localName() ) )
+                    {
+                        property.setCollectionName( jacksonXmlElementWrapper.localName() );
+                    }
+                }
+
+                propertyMap.put( property.getCollectionName(), property );
+            }
+            else
+            {
+                propertyMap.put( property.getName(), property );
+            }
         }
 
         return propertyMap;
+    }
+
+    private String getFieldName( Method method )
+    {
+        String name;
+
+        String[] getters = new String[]{
+            "is", "has", "get"
+        };
+
+        name = method.getName();
+
+        for ( String getter : getters )
+        {
+            if ( name.startsWith( getter ) )
+            {
+                name = name.substring( getter.length() );
+            }
+        }
+
+        return StringUtils.uncapitalize( name );
     }
 
     private static List<Property> collectProperties( Class<?> klass )

@@ -34,12 +34,11 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.struts2.ServletActionContext;
-import org.hisp.dhis.webapi.utils.ContextUtils;
 import org.hisp.dhis.attribute.AttributeService;
+import org.hisp.dhis.common.IdentifiableObjectManager;
 import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
-import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.oust.manager.SelectionTreeManager;
 import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
@@ -49,8 +48,8 @@ import org.hisp.dhis.security.SecurityService;
 import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.system.util.AttributeUtils;
 import org.hisp.dhis.system.util.LocaleUtils;
-import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.CurrentUserService;
+import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserAuthorityGroup;
 import org.hisp.dhis.user.UserCredentials;
 import org.hisp.dhis.user.UserGroup;
@@ -58,12 +57,12 @@ import org.hisp.dhis.user.UserGroupService;
 import org.hisp.dhis.user.UserService;
 import org.hisp.dhis.user.UserSetting;
 import org.hisp.dhis.user.UserSettingService;
+import org.hisp.dhis.webapi.utils.ContextUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
+import com.google.common.collect.Lists;
 import com.opensymphony.xwork2.Action;
-
-import static org.hisp.dhis.setting.SystemSettingManager.KEY_ONLY_MANAGE_WITHIN_USER_GROUPS;
 
 /**
  * @author Torgeir Lorange Ostby
@@ -119,12 +118,8 @@ public class AddUserAction
         this.attributeService = attributeService;
     }
 
-    private I18n i18n;
-
-    public void setI18n( I18n i18n )
-    {
-        this.i18n = i18n;
-    }
+    @Autowired
+    private IdentifiableObjectManager manager;
 
     @Autowired
     private CurrentUserService currentUserService;
@@ -238,21 +233,21 @@ public class AddUserAction
         this.localeDb = localeDb;
     }
 
-    private List<String> urSelected = new ArrayList<String>();
+    private List<String> urSelected = new ArrayList<>();
 
     public void setUrSelected( List<String> urSelected )
     {
         this.urSelected = urSelected;
     }
 
-    private List<String> ugSelected = new ArrayList<String>();
+    private List<String> ugSelected = new ArrayList<>();
 
     public void setUgSelected( List<String> ugSelected )
     {
         this.ugSelected = ugSelected;
     }
 
-    private List<String> dcSelected = new ArrayList<String>();
+    private List<String> dcSelected = new ArrayList<>();
 
     public void setDcSelected( List<String> dcSelected )
     {
@@ -266,6 +261,13 @@ public class AddUserAction
         this.jsonAttributeValues = jsonAttributeValues;
     }
 
+    private String ouwtSelected;
+
+    public void setOuwtSelected( String ouwtSelected )
+    {
+        this.ouwtSelected = ouwtSelected;
+    }
+
     private String message;
 
     public String getMessage()
@@ -277,9 +279,12 @@ public class AddUserAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
+        //TODO: Allow user with F_USER_ADD_WITHIN_MANAGED_GROUP to add a user within managed groups.
+
         if ( email != null && email.trim().length() == 0 )
         {
             email = null;
@@ -290,36 +295,6 @@ public class AddUserAction
         inviteEmail = inviteEmail.trim();
 
         User currentUser = currentUserService.getCurrentUser();
-
-        // ---------------------------------------------------------------------
-        // Check if user group is required, before we add the user
-        // ---------------------------------------------------------------------
-
-        boolean canManageGroups = (Boolean) systemSettingManager.getSystemSetting( KEY_ONLY_MANAGE_WITHIN_USER_GROUPS, false );
-        
-        if ( canManageGroups && !currentUser.getUserCredentials().getAllAuthorities().contains( "ALL" ) )
-        {
-            boolean groupFound = false;
-
-            for ( String ug : ugSelected )
-            {
-                UserGroup group = userGroupService.getUserGroup( ug );
-
-                if ( group != null && securityService.canWrite( group ) )
-                {
-                    groupFound = true;
-
-                    break;
-                }
-            }
-
-            if ( !groupFound )
-            {
-                message = i18n.getString( "users_must_belong_to_a_group_controlled_by_the_user_manager" );
-
-                return ERROR;
-            }
-        }
 
         // ---------------------------------------------------------------------
         // User credentials and user
@@ -352,35 +327,34 @@ public class AddUserAction
             user.setEmail( email );
             user.setPhoneNumber( phoneNumber );
 
-            userCredentials.setPassword( passwordManager.encodePassword( username, rawPassword ) );
+            userCredentials.setPassword( passwordManager.encode( rawPassword ) );
         }
 
         if ( jsonAttributeValues != null )
         {
-            AttributeUtils.updateAttributeValuesFromJson( user.getAttributeValues(), jsonAttributeValues,
-                attributeService );
+            AttributeUtils.updateAttributeValuesFromJson( user.getAttributeValues(), jsonAttributeValues, attributeService );
         }
 
         // ---------------------------------------------------------------------
         // Organisation units
         // ---------------------------------------------------------------------
 
-        Set<OrganisationUnit> dataCaptureOrgUnits = new HashSet<OrganisationUnit>( selectionManager.getSelectedOrganisationUnits() );
+        Set<OrganisationUnit> dataCaptureOrgUnits = new HashSet<>( selectionManager.getSelectedOrganisationUnits() );
         user.updateOrganisationUnits( dataCaptureOrgUnits );
 
-        Set<OrganisationUnit> dataViewOrgUnits = new HashSet<OrganisationUnit>( selectionTreeManager.getReloadedSelectedOrganisationUnits() );
+        Set<OrganisationUnit> dataViewOrgUnits = new HashSet<>( selectionTreeManager.getReloadedSelectedOrganisationUnits() );
         user.setDataViewOrganisationUnits( dataViewOrgUnits );
 
         if ( dataViewOrgUnits.size() == 0 && currentUser.getDataViewOrganisationUnits().size() != 0 )
         {
-            user.setDataViewOrganisationUnits( new HashSet<OrganisationUnit>( currentUser.getDataViewOrganisationUnits() ) );
+            user.setDataViewOrganisationUnits( new HashSet<>( currentUser.getDataViewOrganisationUnits() ) );
         }
 
         // ---------------------------------------------------------------------
         // User roles
         // ---------------------------------------------------------------------
 
-        Set<UserAuthorityGroup> userAuthorityGroups = new HashSet<UserAuthorityGroup>();
+        Set<UserAuthorityGroup> userAuthorityGroups = new HashSet<>();
 
         for ( String id : urSelected )
         {
@@ -398,8 +372,8 @@ public class AddUserAction
         // from the current user.
         // ---------------------------------------------------------------------
 
-        userCredentials.setCogsDimensionConstraints( new HashSet<CategoryOptionGroupSet>( currentUser.getUserCredentials().getCogsDimensionConstraints() ) );
-        userCredentials.setCatDimensionConstraints( new HashSet<DataElementCategory>( currentUser.getUserCredentials().getCatDimensionConstraints() ) );
+        userCredentials.setCogsDimensionConstraints( new HashSet<>( currentUser.getUserCredentials().getCogsDimensionConstraints() ) );
+        userCredentials.setCatDimensionConstraints( new HashSet<>( currentUser.getUserCredentials().getCatDimensionConstraints() ) );
 
         for ( String id : dcSelected )
         {
@@ -436,7 +410,7 @@ public class AddUserAction
 
         if ( ACCOUNT_ACTION_INVITE.equals( accountAction ) )
         {
-            RestoreOptions restoreOptions = inviteUsername.isEmpty() ? RestoreOptions.INVITE_WITH_USERNAME_CHOICE : RestoreOptions.INVITE_WITH_DEFINED_USERNAME;
+            RestoreOptions restoreOptions = inviteUsername == null || inviteUsername.isEmpty() ? RestoreOptions.INVITE_WITH_USERNAME_CHOICE : RestoreOptions.INVITE_WITH_DEFINED_USERNAME;
 
             securityService.sendRestoreMessage( userCredentials, getRootPath(), restoreOptions );
         }
@@ -450,6 +424,15 @@ public class AddUserAction
             UserGroup userGroup = userGroupService.getUserGroup( id );
             userGroup.addUser( user );
             userGroupService.updateUserGroup( userGroup );
+        }
+
+        if ( ouwtSelected != null && manager.search( OrganisationUnit.class, ouwtSelected ) != null )
+        {
+            selectionManager.setSelectedOrganisationUnits( Lists.newArrayList( manager.search( OrganisationUnit.class, ouwtSelected ) ) );
+        }
+        else
+        {
+            selectionManager.setSelectedOrganisationUnits( currentUser.getOrganisationUnits() );
         }
 
         return SUCCESS;

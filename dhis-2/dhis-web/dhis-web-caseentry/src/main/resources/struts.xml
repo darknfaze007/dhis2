@@ -543,6 +543,8 @@
 
 		<action name="registerTrackedEntityInstanceLocation"
 			class="org.hisp.dhis.caseentry.action.trackedentity.RegisterTrackedEntityInstanceLocationAction">
+			<result name="input" type="velocity-json">/dhis-web-commons/ajax/jsonResponseInput.vm
+			</result>
 			<result name="success" type="velocity-json">/dhis-web-commons/ajax/jsonResponseSuccess.vm
 			</result>
 			<param name="requiredAuthorities">F_TRACKED_ENTITY_INSTANCE_CHANGE_LOCATION</param>
@@ -623,13 +625,6 @@
 			<result name="success" type="velocity">/content.vm</result>
 			<param name="page">/dhis-web-caseentry/attributeFormDiv.vm</param>
 			<param name="requiredAuthorities">F_TRACKED_ENTITY_INSTANCE_ADD</param>
-		</action>
-
-		<action name="getAttributesByProgram"
-			class="org.hisp.dhis.caseentry.action.trackedentity.GetAttributesByProgramAction">
-			<result name="success" type="velocity-json">
-				/dhis-web-caseentry/jsonProgramAttributes.vm
-			</result>
 		</action>
 		
 		<action name="getVisitScheduleAttributes"

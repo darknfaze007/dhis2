@@ -67,7 +67,7 @@ public class GetAppearanceSettingsStringAction
     // Output
     // -------------------------------------------------------------------------
 
-    private Map<String, String> translations = new Hashtable<String, String>();
+    private Map<String, String> translations = new Hashtable<>();
 
     public Map<String, String> getTranslations()
     {
@@ -78,6 +78,7 @@ public class GetAppearanceSettingsStringAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         translations = translateSystemSettingManager.getTranslationNoFallbackSystemAppearanceSettings( localeCode );

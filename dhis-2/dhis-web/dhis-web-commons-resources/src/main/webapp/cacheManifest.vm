@@ -1,10 +1,11 @@
 CACHE MANIFEST
-# 2.16 $!systemInfo.revision
+# 2.18-SNAPSHOT $!systemInfo.revision
 # appcache for user: $username
 # system calendar: $keyCalendar
 NETWORK:
 *
 CACHE:
+../dhis-web-commons/font-awesome/css/font-awesome.min.css?_rev=$!{buildRevision}
 ../dhis-web-commons/css/light_blue/light_blue.css?_rev=$!{buildRevision}
 ../dhis-web-commons/css/light_blue/logo_banner.png
 ../dhis-web-commons/css/india/india.css?_rev=$!{buildRevision}
@@ -16,6 +17,7 @@ CACHE:
 css/widgets.css?_rev=$!{buildRevision}
 css/print.css?_rev=$!{buildRevision}
 ../dhis-web-dataentry/style/dhis-web-dataentry.css?_rev=$!{buildRevision}
+../api/files/style?_rev=$!{buildRevision}
 ../favicon.ico
 javascripts/es5-shim.min.js?_rev=$!{buildRevision}
 javascripts/es5-sham.min.js?_rev=$!{buildRevision}
@@ -46,6 +48,7 @@ javascripts/dhis2/dhis2.storage.js?_rev=$!{buildRevision}
 javascripts/dhis2/dhis2.appcache.js?_rev=$!{buildRevision}
 javascripts/jQuery/jquery.cookie.js?_rev=$!{buildRevision}
 ../main.js?_rev=$!{buildRevision}
+../api/files/script?_rev=$!{buildRevision}
 ouwt/ouwt.js?_rev=$!{buildRevision}
 fonts/LiberationSans-Regular-webfont.eot
 fonts/LiberationSans-Regular-webfont.woff
@@ -93,3 +96,14 @@ fonts/LiberationSans-Bold-webfont.svg
 ../dhis-web-commons/javascripts/jQuery/ui/css/redmond/images/ui-icons_cd0a0a_256x240.png
 ../dhis-web-commons/javascripts/jQuery/ui/css/redmond/images/ui-icons_d8e7f3_256x240.png
 ../dhis-web-commons/javascripts/jQuery/ui/css/redmond/images/ui-icons_f9bd01_256x240.png
+
+# Calendar
+../dhis-web-commons/javascripts/jQuery/calendars/css/jquery.calendars.picker.css?_rev=$!{buildRevision}
+
+../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.min.js?_rev=$!{buildRevision}
+../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.plus.min.js?_rev=$!{buildRevision}
+#if( $keyCalendar == "coptic" || $keyCalendar == "ethiopian" || $keyCalendar == "islamic"  || $keyCalendar == "julian" || $keyCalendar == "nepali" || $keyCalendar == "thai" )
+../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.${keyCalendar}.min.js?_rev=$!{buildRevision}">
+#end
+../dhis-web-commons/javascripts/dhis2/dhis2.period.js?_rev=$!{buildRevision}
+../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.picker.min.js?_rev=$!{buildRevision}

@@ -52,6 +52,7 @@ public class IndicatorBatchHandler
     // AbstractBatchHandler implementation
     // -------------------------------------------------------------------------
 
+    @Override
     protected void setTableName()
     {
         statementBuilder.setTableName( "indicator" );
@@ -75,6 +76,7 @@ public class IndicatorBatchHandler
         statementBuilder.setIdentifierValue( indicator.getId() );
     }
 
+    @Override
     protected void setUniqueColumns()
     {
         statementBuilder.setUniqueColumn( "name" );
@@ -82,6 +84,7 @@ public class IndicatorBatchHandler
         statementBuilder.setUniqueColumn( "code" );
     }
     
+    @Override
     protected void setUniqueValues( Indicator indicator )
     {        
         statementBuilder.setUniqueValue( indicator.getName() );
@@ -89,6 +92,7 @@ public class IndicatorBatchHandler
         statementBuilder.setUniqueValue( indicator.getCode() );
     }
     
+    @Override
     protected void setColumns()
     {
         statementBuilder.setColumn( "uid" );
@@ -102,9 +106,9 @@ public class IndicatorBatchHandler
         statementBuilder.setColumn( "numeratordescription" );
         statementBuilder.setColumn( "denominator" );
         statementBuilder.setColumn( "denominatordescription" );
-        statementBuilder.setColumn( "sortorder" );
     }
     
+    @Override
     protected void setValues( Indicator indicator )
     {
         statementBuilder.setValue( indicator.getUid() );
@@ -118,6 +122,5 @@ public class IndicatorBatchHandler
         statementBuilder.setValue( indicator.getNumeratorDescription() );
         statementBuilder.setValue( indicator.getDenominator() );
         statementBuilder.setValue( indicator.getDenominatorDescription() );
-        statementBuilder.setValue( indicator.getSortOrder() );
     }
 }

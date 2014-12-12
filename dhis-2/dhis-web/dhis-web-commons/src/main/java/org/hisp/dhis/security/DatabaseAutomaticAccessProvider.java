@@ -59,6 +59,7 @@ public class DatabaseAutomaticAccessProvider
     // AdminAccessManager implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void initialise()
     {
         // ---------------------------------------------------------------------
@@ -77,19 +78,20 @@ public class DatabaseAutomaticAccessProvider
         UserAuthorityGroup userAuthorityGroup = new UserAuthorityGroup();
         userAuthorityGroup.setName( "Superuser" );
 
-        userAuthorityGroup.setAuthorities( new HashSet<String>( getAuthorities() ) );
+        userAuthorityGroup.setAuthorities( new HashSet<>( getAuthorities() ) );
 
         userService.addUserAuthorityGroup( userAuthorityGroup );
 
         UserCredentials userCredentials = new UserCredentials();
         userCredentials.setUsername( username );
-        userCredentials.setPassword( passwordManager.encodePassword( username, password ) );
+        userCredentials.setPassword( passwordManager.encode( password ) );
         userCredentials.setUser( user );
         userCredentials.getUserAuthorityGroups().add( userAuthorityGroup );
 
         userService.addUserCredentials( userCredentials );
     }
 
+    @Override
     public void access()
     {
     }

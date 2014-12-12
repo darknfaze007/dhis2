@@ -84,11 +84,12 @@ public class GetSectionListSortOrderAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         DataSet dataSet = dataSetService.getDataSet( dataSetId );
 
-        sections = new ArrayList<Section>( dataSet.getSections() );
+        sections = new ArrayList<>( dataSet.getSections() );
 
         Collections.sort( sections, new SectionOrderComparator() );
 

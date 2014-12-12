@@ -96,19 +96,19 @@ public class UserCredentials
      * Set of user roles.
      */
     @Scanned
-    private Set<UserAuthorityGroup> userAuthorityGroups = new HashSet<UserAuthorityGroup>();
+    private Set<UserAuthorityGroup> userAuthorityGroups = new HashSet<>();
 
     /**
      * Category option group set dimensions to constrain data analytics aggregation.
      */
     @Scanned
-    private Set<CategoryOptionGroupSet> cogsDimensionConstraints = new HashSet<CategoryOptionGroupSet>();
+    private Set<CategoryOptionGroupSet> cogsDimensionConstraints = new HashSet<>();
 
     /**
      * Category dimensions to constrain data analytics aggregation.
      */
     @Scanned
-    private Set<DataElementCategory> catDimensionConstraints = new HashSet<DataElementCategory>();
+    private Set<DataElementCategory> catDimensionConstraints = new HashSet<>();
 
     /**
      * Date of the user's last login.
@@ -172,7 +172,7 @@ public class UserCredentials
      */
     public Set<String> getAllAuthorities()
     {
-        Set<String> authorities = new HashSet<String>();
+        Set<String> authorities = new HashSet<>();
 
         for ( UserAuthorityGroup group : userAuthorityGroups )
         {
@@ -191,7 +191,7 @@ public class UserCredentials
      */
     public boolean hasAnyAuthority( Collection<String> auths )
     {
-        Set<String> all = new HashSet<String>( getAllAuthorities() );
+        Set<String> all = new HashSet<>( getAllAuthorities() );
         return all.removeAll( auths );
     }
 
@@ -235,7 +235,7 @@ public class UserCredentials
      */
     public Set<DataSet> getAllDataSets()
     {
-        Set<DataSet> dataSets = new HashSet<DataSet>();
+        Set<DataSet> dataSets = new HashSet<>();
 
         for ( UserAuthorityGroup group : userAuthorityGroups )
         {
@@ -331,47 +331,43 @@ public class UserCredentials
      *
      * @return the name.
      */
+    @Override
     public String getName()
     {
         return user != null ? user.getName() : username;
     }
 
+    @Override
     public String getCode()
     {
         return username;
     }
 
     /**
-     * Tests whether the given input arguments can perform a valid restore of the
-     * user account for these credentials. Returns false if any of the input arguments
-     * are null, or any of the properties on the credentials are null. Returns false
-     * if the expiry date arguement is after the expiry date of the credentials.
-     * Returns false if any of the given token or code arguments are not equal to
-     * the respective properties the the credentials. Returns true otherwise.
+     * Tests whether the credentials contain all needed parameters to
+     * perform an account restore.
+     * If a parameter is missing a descriptive error string is returned.
      *
-     * @param token the restore token.
-     * @param code  the restore code.
-     * @param date  the expiry date.
-     * @return true or false.
+     * @return null on success, a descriptive error string on failure.
      */
-    public boolean canRestore( String token, String code, Date date )
+    public String isRestorable()
     {
-        if ( this.restoreToken == null || this.restoreCode == null || this.restoreExpiry == null )
+        if ( restoreToken == null )
         {
-            return false;
+            return "account_restoreToken_is_null";
         }
 
-        if ( token == null || code == null || date == null )
+        if ( restoreCode == null )
         {
-            return false;
+            return "account_restoreCode_is_null";
         }
 
-        if ( date.after( this.restoreExpiry ) )
+        if ( restoreExpiry == null )
         {
-            return false;
+            return "account_restoreExpiry_is_null";
         }
 
-        return token.equals( this.restoreToken ) && code.equals( this.restoreCode );
+        return null; // Success.
     }
 
     /**
@@ -380,7 +376,7 @@ public class UserCredentials
      */
     public Set<DimensionalObject> getDimensionConstraints()
     {
-        Set<DimensionalObject> constraints = new HashSet<DimensionalObject>();
+        Set<DimensionalObject> constraints = new HashSet<>();
 
         for ( CategoryOptionGroupSet cogs : cogsDimensionConstraints )
         {
@@ -449,7 +445,6 @@ public class UserCredentials
     // Getters and setters
     // -------------------------------------------------------------------------
 
-    @JsonIgnore
     public String getPassword()
     {
         return password;
@@ -475,11 +470,11 @@ public class UserCredentials
         this.passwordLastUpdated = passwordLastUpdated;
     }
 
-    @JsonProperty
+    @JsonProperty( "userRoles" )
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
     @JsonView( { DetailedView.class, ExportView.class } )
-    @JacksonXmlElementWrapper( localName = "userAuthorityGroups", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "userAuthorityGroup", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlElementWrapper( localName = "userRoles", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "userRole", namespace = DxfNamespaces.DXF_2_0 )
     public Set<UserAuthorityGroup> getUserAuthorityGroups()
     {
         return userAuthorityGroups;

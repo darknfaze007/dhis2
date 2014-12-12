@@ -165,12 +165,31 @@ public class DefaultDimensionService
         
         return null;
     }
-
+    
+    @Override
+    public DimensionalObject getDimension( String uid, DimensionType dimensionType )
+    {
+        if ( uid == null || dimensionType == null )
+        {
+            return null;
+        }
+        
+        Class<? extends DimensionalObject> clazz = DimensionalObject.DYNAMIC_DIMENSION_TYPE_CLASS_MAP.get( dimensionType );
+        
+        if ( clazz == null )
+        {
+            return null;
+        }
+        
+        return identifiableObjectManager.get( clazz, uid );
+    }
+    
+    @Override
     public List<NameableObject> getCanReadDimensionItems( String uid )
     {
         DimensionalObject dimension = getDimension( uid );
 
-        List<NameableObject> items = new ArrayList<NameableObject>();
+        List<NameableObject> items = new ArrayList<>();
 
         if ( dimension != null && dimension.getItems() != null )
         {            
@@ -182,6 +201,7 @@ public class DefaultDimensionService
         return items;
     }
     
+    @Override
     public <T extends IdentifiableObject> List<T> getCanReadObjects( List<T> objects )
     {
         User user = currentUserService.getCurrentUser();
@@ -189,9 +209,10 @@ public class DefaultDimensionService
         return getCanReadObjects( user, objects );
     }
     
+    @Override
     public <T extends IdentifiableObject> List<T> getCanReadObjects( User user, List<T> objects )
     {        
-        List<T> list = new ArrayList<T>( objects );
+        List<T> list = new ArrayList<>( objects );
         Iterator<T> iterator = list.iterator();
         
         while ( iterator.hasNext() )
@@ -207,6 +228,7 @@ public class DefaultDimensionService
         return list;
     }
         
+    @Override
     public DimensionType getDimensionType( String uid )
     {
         DataElementCategory cat = identifiableObjectManager.get( DataElementCategory.class, uid );
@@ -251,7 +273,7 @@ public class DefaultDimensionService
             return DimensionType.TRACKED_ENTITY_DATAELEMENT;
         }
 
-        final Map<String, DimensionType> dimObjectTypeMap = new HashMap<String, DimensionType>();
+        final Map<String, DimensionType> dimObjectTypeMap = new HashMap<>();
 
         dimObjectTypeMap.put( DimensionalObject.DATA_X_DIM_ID, DimensionType.DATA_X );
         dimObjectTypeMap.put( DimensionalObject.INDICATOR_DIM_ID, DimensionType.INDICATOR );
@@ -272,7 +294,7 @@ public class DefaultDimensionService
         Collection<DataElementGroupSet> degs = dataElementService.getDataDimensionDataElementGroupSets();
         Collection<OrganisationUnitGroupSet> ougs = organisationUnitGroupService.getDataDimensionOrganisationUnitGroupSets();
 
-        final List<DimensionalObject> dimensions = new ArrayList<DimensionalObject>();
+        final List<DimensionalObject> dimensions = new ArrayList<>();
 
         dimensions.addAll( dcs );
         dimensions.addAll( cogs );
@@ -284,19 +306,20 @@ public class DefaultDimensionService
         return getCanReadObjects( user, dimensions );
     }
     
+    @Override
     public List<DimensionalObject> getDimensionConstraints()
     {
         Collection<CategoryOptionGroupSet> cogs = categoryService.getDataDimensionCategoryOptionGroupSets();
         Collection<DataElementCategory> cs = categoryService.getAttributeCategories();
 
-        final List<DimensionalObject> dimensions = new ArrayList<DimensionalObject>();
+        final List<DimensionalObject> dimensions = new ArrayList<>();
 
         dimensions.addAll( cogs );
         dimensions.addAll( cs );
         
-        return dimensions;        
+        return dimensions;
     }
-
+    
     @Override
     public void mergeAnalyticalObject( BaseAnalyticalObject object )
     {
@@ -319,6 +342,7 @@ public class DefaultDimensionService
         }
     }
     
+    @Override
     public DimensionalObject getDimensionalObjectCopy( String uid, boolean filterCanRead )
     {
         DimensionalObject dimension = getDimension( uid );
@@ -389,8 +413,8 @@ public class DefaultDimensionService
                 }
                 else if ( PERIOD.equals( type ) )
                 {
-                    List<RelativePeriodEnum> enums = new ArrayList<RelativePeriodEnum>();
-                    List<Period> periods = new UniqueArrayList<Period>();
+                    List<RelativePeriodEnum> enums = new ArrayList<>();
+                    List<Period> periods = new UniqueArrayList<>();
 
                     for ( String isoPeriod : uids )
                     {
@@ -410,7 +434,7 @@ public class DefaultDimensionService
                     }
 
                     object.setRelatives( new RelativePeriods().setRelativePeriodsFromEnums( enums ) );
-                    object.setPeriods( periodService.reloadPeriods( new ArrayList<Period>( periods ) ) );
+                    object.setPeriods( periodService.reloadPeriods( new ArrayList<>( periods ) ) );
                 }
                 else if ( ORGANISATIONUNIT.equals( type ) )
                 {

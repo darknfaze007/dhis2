@@ -33,23 +33,13 @@
 			<table width="100%">
 				<tr>
 					<td>#filterDiv( "indicator" )</td>
-					<td>
-						<div style="inline">
-							<select id="dataDictionaryList" name="dataDictionaryList" onchange="criteriaChanged()" style="width:160px">
-								<option value="-1">[ $i18n.getString( "select_data_dictionary" ) ]</option>
-								#foreach( $dictionary in $dataDictionaries )
-								<option value="$dictionary.id"#if ( $dictionary.id == $dataDictionaryId ) selected="selected"#end>$dictionary.displayName</option>
-								#end
-							</select>
-						</div>
-					</td>
+					<td></td>
 					<td style="text-align:right">
-              <input type="button" value="$i18n.getString( 'sort' )" onclick="window.location.href='showSortIndicatorForm.action'" style="width:80px"/>
-					    #if ( $dataDictionaryMode == "extended" )
-							<input type="button" value="$i18n.getString( 'add_new' )" onclick="window.location.href='showAddExtendedIndicatorForm.action'" style="width:80px"/>
-						#else
-							<input type="button" value="$i18n.getString( 'add_new' )" onclick="window.location.href='showAddIndicatorForm.action'" style="width:80px"/>
-						#end
+          		    #if ( $dataDictionaryMode == "extended" )
+						<input type="button" value="$i18n.getString( 'add_new' )" onclick="window.location.href='showAddExtendedIndicatorForm.action'" style="width:80px"/>
+					#else
+						<input type="button" value="$i18n.getString( 'add_new' )" onclick="window.location.href='showAddIndicatorForm.action'" style="width:80px"/>
+					#end
 					</td>						
 				</tr>
 			</table>

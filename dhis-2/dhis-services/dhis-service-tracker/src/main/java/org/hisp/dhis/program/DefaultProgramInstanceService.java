@@ -28,15 +28,7 @@ package org.hisp.dhis.program;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
+import org.hisp.dhis.common.CodeGenerator;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.common.GridHeader;
 import org.hisp.dhis.dataelement.DataElement;
@@ -65,6 +57,15 @@ import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValue;
 import org.hisp.dhis.trackedentitydatavalue.TrackedEntityDataValueService;
 import org.hisp.dhis.user.CurrentUserService;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Abyot Asalefew
@@ -141,14 +142,14 @@ public class DefaultProgramInstanceService
     }
 
     private TrackedEntityInstanceService trackedEntityInstanceService;
-    
+
     public void setTrackedEntityInstanceService( TrackedEntityInstanceService trackedEntityInstanceService )
     {
         this.trackedEntityInstanceService = trackedEntityInstanceService;
     }
 
     private I18nManager i18nManager;
-    
+
     public void setI18nManager( I18nManager i18nManager )
     {
         this.i18nManager = i18nManager;
@@ -158,16 +159,19 @@ public class DefaultProgramInstanceService
     // Implementation methods
     // -------------------------------------------------------------------------
 
+    @Override
     public int addProgramInstance( ProgramInstance programInstance )
     {
         return programInstanceStore.save( programInstance );
     }
 
+    @Override
     public void deleteProgramInstance( ProgramInstance programInstance )
     {
         programInstanceStore.delete( programInstance );
     }
 
+    @Override
     public ProgramInstance getProgramInstance( int id )
     {
         return programInstanceStore.get( id );
@@ -179,85 +183,94 @@ public class DefaultProgramInstanceService
         return programInstanceStore.getByUid( id );
     }
 
+    @Override
     public void updateProgramInstance( ProgramInstance programInstance )
     {
         programInstanceStore.update( programInstance );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( Program program )
     {
         return programInstanceStore.get( program );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( Collection<Program> programs )
     {
         return programInstanceStore.get( programs );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( Collection<Program> programs,
         OrganisationUnit organisationUnit )
     {
         return programInstanceStore.get( programs, organisationUnit );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( Collection<Program> programs,
         OrganisationUnit organisationUnit, int status )
     {
         return programInstanceStore.get( programs, organisationUnit, status );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( Collection<Program> programs, Integer status )
     {
         return programInstanceStore.get( programs, status );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( Program program, Integer status )
     {
         return programInstanceStore.get( program, status );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( TrackedEntityInstance entityInstance, Integer status )
     {
         return programInstanceStore.get( entityInstance, status );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( TrackedEntityInstance entityInstance, Program program )
     {
         return programInstanceStore.get( entityInstance, program );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( TrackedEntityInstance entityInstance, Program program,
         Integer status )
     {
         return programInstanceStore.get( entityInstance, program, status );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( Program program, OrganisationUnit organisationUnit,
         Integer min, Integer max )
     {
         return programInstanceStore.get( program, organisationUnit, min, max );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstances( Program program, Collection<Integer> orgunitIds,
         Date startDate, Date endDate, Integer min, Integer max )
     {
         return programInstanceStore.get( program, orgunitIds, startDate, endDate, min, max );
     }
 
-    public int countProgramInstances( Program program, OrganisationUnit organisationUnit )
-    {
-        return programInstanceStore.count( program, organisationUnit );
-    }
-
+    @Override
     public int countProgramInstances( Program program, Collection<Integer> orgunitIds, Date startDate, Date endDate )
     {
         return programInstanceStore.count( program, orgunitIds, startDate, endDate );
     }
 
+    @Override
     public List<Grid> getProgramInstanceReport( TrackedEntityInstance instance, I18n i18n )
     {
-        
-        List<Grid> grids = new ArrayList<Grid>();
+
+        List<Grid> grids = new ArrayList<>();
 
         // ---------------------------------------------------------------------
         // Dynamic attributes
@@ -321,10 +334,11 @@ public class DefaultProgramInstanceService
         return grids;
     }
 
+    @Override
     public Grid getProgramInstanceReport( ProgramInstance programInstance, I18n i18n )
     {
         I18nFormat format = i18nManager.getI18nFormat();
-        
+
         Grid grid = new ListGrid();
 
         // ---------------------------------------------------------------------
@@ -369,8 +383,9 @@ public class DefaultProgramInstanceService
 
         // Get entityInstance comments for the program instance
 
-        TrackedEntityComment comment = programInstance.getComment();
-        if ( comment != null )
+        List<TrackedEntityComment> comments = programInstance.getComments();
+
+        for ( TrackedEntityComment comment : comments )
         {
             grid.addRow();
             grid.addValue( i18n.getString( "comment" ) + " " + i18n.getString( "on" ) + " "
@@ -417,18 +432,28 @@ public class DefaultProgramInstanceService
         return grid;
     }
 
+    @Override
     public int countProgramInstancesByStatus( Integer status, Program program, Collection<Integer> orgunitIds,
         Date startDate, Date endDate )
     {
         return programInstanceStore.countByStatus( status, program, orgunitIds, startDate, endDate );
     }
 
+    @Override
     public Collection<ProgramInstance> getProgramInstancesByStatus( Integer status, Program program,
         Collection<Integer> orgunitIds, Date startDate, Date endDate )
     {
         return programInstanceStore.getByStatus( status, program, orgunitIds, startDate, endDate );
     }
 
+    @Override
+    public Collection<ProgramInstance> getProgramInstancesByStatus( Integer status, Program program,
+        Collection<Integer> orgunitIds, Date startDate, Date endDate, Integer min, Integer max )
+    {
+        return programInstanceStore.getByStatus( status, program, orgunitIds, startDate, endDate, min, max );
+    }
+
+    @Override
     public Collection<SchedulingProgramObject> getScheduleMesssages()
     {
         Collection<SchedulingProgramObject> result = programInstanceStore
@@ -439,16 +464,24 @@ public class DefaultProgramInstanceService
 
         return result;
     }
-    
+
     @Override
     public ProgramInstance enrollTrackedEntityInstance( TrackedEntityInstance entityInstance, Program program,
         Date enrollmentDate, Date dateOfIncident, OrganisationUnit organisationUnit )
+    {
+        return enrollTrackedEntityInstance( CodeGenerator.generateCode(), entityInstance, program, enrollmentDate, dateOfIncident, organisationUnit );
+    }
+
+    @Override
+    public ProgramInstance enrollTrackedEntityInstance( String uid, TrackedEntityInstance entityInstance,
+        Program program, Date enrollmentDate, Date dateOfIncident, OrganisationUnit organisationUnit )
     {
         // ---------------------------------------------------------------------
         // Add program instance
         // ---------------------------------------------------------------------
 
         ProgramInstance programInstance = new ProgramInstance();
+        programInstance.setUid( CodeGenerator.isValidCode( uid ) ? uid : CodeGenerator.generateCode() );
 
         programInstance.enrollTrackedEntityInstance( entityInstance, program );
 
@@ -499,7 +532,7 @@ public class DefaultProgramInstanceService
 
         if ( outboundSms == null )
         {
-            outboundSms = new ArrayList<OutboundSms>();
+            outboundSms = new ArrayList<>();
         }
 
         outboundSms.addAll( sendMessages( programInstance, TrackedEntityInstanceReminder.SEND_WHEN_TO_EMROLLEMENT ) );
@@ -512,10 +545,11 @@ public class DefaultProgramInstanceService
 
         if ( messages == null )
         {
-            messages = new ArrayList<MessageConversation>();
+            messages = new ArrayList<>();
         }
 
-        messages.addAll( sendMessageConversations( programInstance, TrackedEntityInstanceReminder.SEND_WHEN_TO_EMROLLEMENT ) );
+        messages.addAll( sendMessageConversations( programInstance,
+            TrackedEntityInstanceReminder.SEND_WHEN_TO_EMROLLEMENT ) );
 
         updateProgramInstance( programInstance );
         trackedEntityInstanceService.updateTrackedEntityInstance( entityInstance );
@@ -530,7 +564,7 @@ public class DefaultProgramInstanceService
 
         for ( ProgramStageInstance stageInstance : stageInstances )
         {
-            if ( (!stageInstance.isCompleted() && stageInstance.getStatus()!= EventStatus.SKIPPED )
+            if ( (!stageInstance.isCompleted() && stageInstance.getStatus() != EventStatus.SKIPPED)
                 || stageInstance.getProgramStage().getIrregular() )
             {
                 return false;
@@ -551,11 +585,11 @@ public class DefaultProgramInstanceService
 
         if ( outboundSms == null )
         {
-            outboundSms = new ArrayList<OutboundSms>();
+            outboundSms = new ArrayList<>();
         }
 
-        outboundSms.addAll( sendMessages( programInstance,
-            TrackedEntityInstanceReminder.SEND_WHEN_TO_C0MPLETED_PROGRAM ) );
+        outboundSms
+            .addAll( sendMessages( programInstance, TrackedEntityInstanceReminder.SEND_WHEN_TO_C0MPLETED_PROGRAM ) );
 
         // -----------------------------------------------------------------
         // Send DHIS message when to completed the program
@@ -565,7 +599,7 @@ public class DefaultProgramInstanceService
 
         if ( messageConversations == null )
         {
-            messageConversations = new ArrayList<MessageConversation>();
+            messageConversations = new ArrayList<>();
         }
 
         messageConversations.addAll( sendMessageConversations( programInstance,
@@ -581,6 +615,7 @@ public class DefaultProgramInstanceService
         updateProgramInstance( programInstance );
     }
 
+    @Override
     public void cancelProgramInstanceStatus( ProgramInstance programInstance )
     {
         // ---------------------------------------------------------------------
@@ -666,7 +701,7 @@ public class DefaultProgramInstanceService
     private void getProgramStageInstancesReport( Grid grid, ProgramInstance programInstance, I18n i18n )
     {
         I18nFormat format = i18nManager.getI18nFormat();
-        
+
         Collection<ProgramStageInstance> programStageInstances = programInstance.getProgramStageInstances();
 
         for ( ProgramStageInstance programStageInstance : programStageInstances )
@@ -734,7 +769,7 @@ public class DefaultProgramInstanceService
         TrackedEntityInstance entityInstance )
     {
         I18nFormat format = i18nManager.getI18nFormat();
-        
+
         Set<String> phoneNumbers = reminderService.getPhonenumbers( reminder, entityInstance );
         OutboundSms outboundSms = null;
 
@@ -762,7 +797,7 @@ public class DefaultProgramInstanceService
     private Collection<OutboundSms> sendMessages( ProgramInstance programInstance, int status )
     {
         TrackedEntityInstance entityInstance = programInstance.getEntityInstance();
-        Collection<OutboundSms> outboundSmsList = new HashSet<OutboundSms>();
+        Collection<OutboundSms> outboundSmsList = new HashSet<>();
 
         Collection<TrackedEntityInstanceReminder> reminders = programInstance.getProgram().getInstanceReminders();
 
@@ -788,8 +823,8 @@ public class DefaultProgramInstanceService
     private Collection<MessageConversation> sendMessageConversations( ProgramInstance programInstance, int status )
     {
         I18nFormat format = i18nManager.getI18nFormat();
-        
-        Collection<MessageConversation> messageConversations = new HashSet<MessageConversation>();
+
+        Collection<MessageConversation> messageConversations = new HashSet<>();
 
         Collection<TrackedEntityInstanceReminder> reminders = programInstance.getProgram().getInstanceReminders();
         for ( TrackedEntityInstanceReminder rm : reminders )
@@ -798,7 +833,7 @@ public class DefaultProgramInstanceService
                 && rm.getWhenToSend() != null
                 && rm.getWhenToSend() == status
                 && (rm.getMessageType() == TrackedEntityInstanceReminder.MESSAGE_TYPE_DHIS_MESSAGE || rm
-                    .getMessageType() == TrackedEntityInstanceReminder.MESSAGE_TYPE_BOTH) )
+                .getMessageType() == TrackedEntityInstanceReminder.MESSAGE_TYPE_BOTH) )
             {
                 int id = messageService.sendMessage( programInstance.getProgram().getDisplayName(),
                     reminderService.getMessageFromTemplate( rm, programInstance, format ), null,

@@ -73,6 +73,7 @@ public class HibernateDbmsManager
     // DbmsManager implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void emptyDatabase()
     {
         emptyTable( "translation" );
@@ -82,8 +83,12 @@ public class HibernateDbmsManager
         emptyTable( "sqlview" );
 
         emptyTable( "datavalue_audit" );
+        emptyTable( "datavalueaudit" );
         emptyTable( "datavalue" );
         emptyTable( "completedatasetregistration" );
+        
+        emptyTable( "dataapproval" );
+        emptyTable( "dataapprovallevel" );
 
         emptyTable( "reporttable_categorydimensions" );
         emptyTable( "reporttable_categoryoptiongroups" );
@@ -128,10 +133,6 @@ public class HibernateDbmsManager
         emptyTable( "orgunitgroupset" );
         emptyTable( "orgunitgroupmembers" );
         emptyTable( "orgunitgroup" );
-
-        emptyTable( "datadictionarydataelements" );
-        emptyTable( "datadictionaryindicators" );
-        emptyTable( "datadictionary" );
 
         emptyTable( "validationrulegroupusergroupstoalert" );
         emptyTable( "validationrulegroupmembers" );
@@ -186,13 +187,18 @@ public class HibernateDbmsManager
         emptyTable( "indicator" );
         emptyTable( "indicatortype" );
 
+        emptyTable( "categoryoptiongroupsetmembers" );
+        emptyTable( "categoryoptiongroupset" );
+        emptyTable( "categoryoptiongroupmembers" );
+        emptyTable( "categoryoptiongroup" );
+
         emptyTable( "expression" );
         emptyTable( "categoryoptioncombo" );
         emptyTable( "categorycombo" );
         emptyTable( "dataelementcategory" );
         emptyTable( "dataelementcategoryoption" );
 
-        emptyTable( "optionsetmembers" );
+        emptyTable( "optionvalue" );
         emptyTable( "optionset" );
 
         dropTable( "aggregateddatavalue" );
@@ -210,11 +216,13 @@ public class HibernateDbmsManager
         log.debug( "Cleared Hibernate cache" );
     }
 
+    @Override
     public void clearSession()
     {
         sessionFactory.getCurrentSession().clear();
     }
 
+    @Override
     public void emptyTable( String table )
     {
         try

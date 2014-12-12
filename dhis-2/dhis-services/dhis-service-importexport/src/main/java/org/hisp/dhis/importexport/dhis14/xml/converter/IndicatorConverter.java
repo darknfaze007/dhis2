@@ -31,7 +31,6 @@ package org.hisp.dhis.importexport.dhis14.xml.converter;
 import static org.hisp.dhis.importexport.dhis14.util.Dhis14ExpressionConverter.convertExpressionFromDhis14;
 import static org.hisp.dhis.importexport.dhis14.util.Dhis14ExpressionConverter.convertExpressionToDhis14;
 import static org.hisp.dhis.importexport.dhis14.util.Dhis14TypeHandler.convertBooleanFromDhis14;
-import static org.hisp.dhis.system.util.ConversionUtils.parseInt;
 
 import java.util.Collection;
 import java.util.Map;
@@ -64,7 +63,6 @@ public class IndicatorConverter
     public static final String ELEMENT_NAME = "Indicator";
     
     private static final String FIELD_ID = "IndicatorID";
-    private static final String FIELD_SORT_ORDER = "SortOrder";
     private static final String FIELD_NAME = "IndicatorName";
     private static final String FIELD_SHORT_NAME = "IndicatorShort";
     private static final String FIELD_DOS = "IndicatorDOS";
@@ -123,8 +121,8 @@ public class IndicatorConverter
         DataElementCategoryOptionCombo categoryOptionCombo )
     {
         this.importObjectService = importObjectService;
-        this.indicatorTypeMapping = new MimicingHashMap<Object, Integer>();
-        this.dataElementMapping = new MimicingHashMap<Object, Integer>();
+        this.indicatorTypeMapping = new MimicingHashMap<>();
+        this.dataElementMapping = new MimicingHashMap<>();
         this.indicatorService = indicatorService;
         this.importAnalyser = importAnalyser;
         this.categoryOptionCombo = categoryOptionCombo;
@@ -134,6 +132,7 @@ public class IndicatorConverter
     // XMLConverter implementation
     // -------------------------------------------------------------------------
     
+    @Override
     public void write( XMLWriter writer, ExportParams params )
     {
         Map<Object, String> mapping = NameMappingUtil.getDataElementAggregationOperatorMap();
@@ -147,7 +146,6 @@ public class IndicatorConverter
                 writer.openElement( ELEMENT_NAME );
                 
                 writer.writeElement( FIELD_ID, String.valueOf( object.getId() ) );
-                writer.writeElement( FIELD_SORT_ORDER, object.getSortOrder() != null ? String.valueOf( object.getSortOrder() ) : EMPTY );
                 writer.writeElement( FIELD_NAME, object.getName() );
                 writer.writeElement( FIELD_SHORT_NAME, object.getShortName() );
                 writer.writeElement( FIELD_DOS, TextUtils.subString( object.getShortName(), 0, 8 ) );
@@ -174,6 +172,7 @@ public class IndicatorConverter
         }
     }
     
+    @Override
     public void read( XMLReader reader, ImportParams params )
     {
         final Indicator indicator = new Indicator();
@@ -195,7 +194,6 @@ public class IndicatorConverter
         indicator.setNumerator( convertExpressionFromDhis14( values.get( FIELD_NUMERATOR ), dataElementMapping, categoryOptionCombo.getId(), indicator.getName() ) );
         indicator.setDenominator( convertExpressionFromDhis14( values.get( FIELD_DENOMINATOR ), dataElementMapping, categoryOptionCombo.getId(), indicator.getName() ) );
 
-        indicator.setSortOrder( parseInt( values.get( FIELD_SORT_ORDER ) ) );
         indicator.setLastUpdated( Dhis14DateUtil.getDate( values.get( FIELD_LAST_UPDATED ) ) );
         
         importObject( indicator, params );

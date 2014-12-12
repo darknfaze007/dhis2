@@ -28,6 +28,16 @@ package org.hisp.dhis.trackedentitydatavalue;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementService;
@@ -43,16 +53,9 @@ import org.hisp.dhis.program.ProgramStageInstanceService;
 import org.hisp.dhis.program.ProgramStageService;
 import org.hisp.dhis.trackedentity.TrackedEntityInstance;
 import org.hisp.dhis.trackedentity.TrackedEntityInstanceService;
+import org.joda.time.DateTime;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.junit.Assert.*;
 
 /**
  * @author Chau Thu Tran
@@ -135,19 +138,22 @@ public class TrackedEntityDataValueServiceTest
         stageB.setProgram( program );
         programStageService.saveProgramStage( stageB );
 
-        Set<ProgramStage> programStages = new HashSet<ProgramStage>();
+        Set<ProgramStage> programStages = new HashSet<>();
         programStages.add( stageA );
         programStages.add( stageB );
         program.setProgramStages( programStages );
         programService.updateProgram( program );
+        
+        DateTime yesterDate = DateTime.now();
+        yesterDate.withTimeAtStartOfDay();
+        yesterDate.minusDays( 1 );
+        yesterday = yesterDate.toDate();
 
-        Calendar calYesterday = Calendar.getInstance();
-        calYesterday.add( Calendar.DATE, -1 );
-        yesterday = calYesterday.getTime();
-        Calendar calTomorrow = Calendar.getInstance();
-        calTomorrow.add( Calendar.DATE, 1 );
-        tomorrow = calTomorrow.getTime();
-
+        DateTime tomorrowDate = DateTime.now();
+        tomorrowDate.withTimeAtStartOfDay();
+        tomorrowDate.plusDays( 1 );
+        tomorrow = tomorrowDate.toDate();
+        
         programInstance = programInstanceService.enrollTrackedEntityInstance( entityInstance, program, yesterday, yesterday,
             organisationUnit );
 
@@ -230,7 +236,7 @@ public class TrackedEntityDataValueServiceTest
         dataValueService.saveTrackedEntityDataValue( dataValueC );
         dataValueService.saveTrackedEntityDataValue( dataValueD );
 
-        Collection<DataElement> dataElements = new HashSet<DataElement>();
+        Collection<DataElement> dataElements = new HashSet<>();
         dataElements.add( dataElementA );
         dataElements.add( dataElementB );
 
@@ -249,7 +255,7 @@ public class TrackedEntityDataValueServiceTest
         dataValueService.saveTrackedEntityDataValue( dataValueC );
         dataValueService.saveTrackedEntityDataValue( dataValueD );
 
-        Collection<ProgramStageInstance> programStageInstances = new HashSet<ProgramStageInstance>();
+        Collection<ProgramStageInstance> programStageInstances = new HashSet<>();
         programStageInstances.add( stageInstanceA );
         programStageInstances.add( stageInstanceB );
 
@@ -288,7 +294,7 @@ public class TrackedEntityDataValueServiceTest
         dataValueService.saveTrackedEntityDataValue( dataValueC );
         dataValueService.saveTrackedEntityDataValue( dataValueD );
 
-        Collection<DataElement> dataElements = new HashSet<DataElement>();
+        Collection<DataElement> dataElements = new HashSet<>();
         dataElements.add( dataElementA );
         dataElements.add( dataElementB );
 

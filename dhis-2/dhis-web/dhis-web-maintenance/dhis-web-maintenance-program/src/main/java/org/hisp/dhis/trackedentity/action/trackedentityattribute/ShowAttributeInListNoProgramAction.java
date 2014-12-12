@@ -62,7 +62,7 @@ public class ShowAttributeInListNoProgramAction
     // Output
     // -------------------------------------------------------------------------
 
-    private List<TrackedEntityAttribute> selectedAttributes = new ArrayList<TrackedEntityAttribute>();
+    private List<TrackedEntityAttribute> selectedAttributes = new ArrayList<>();
 
     public List<TrackedEntityAttribute> getSelectedAttributes()
     {
@@ -73,10 +73,11 @@ public class ShowAttributeInListNoProgramAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        selectedAttributes = new ArrayList<TrackedEntityAttribute>(
+        selectedAttributes = new ArrayList<>(
             attributeService.getTrackedEntityAttributesDisplayInList() );
         
         Collections.sort( selectedAttributes, new TrackedEntityAttributeSortOrderInListNoProgramComparator() );

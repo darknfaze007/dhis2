@@ -75,7 +75,7 @@ public class GetProgramsByOrgunitAction
         return organisationUnit;
     }
 
-    private Collection<Program> programs = new ArrayList<Program>();
+    private Collection<Program> programs = new ArrayList<>();
 
     public Collection<Program> getPrograms()
     {
@@ -86,6 +86,7 @@ public class GetProgramsByOrgunitAction
     // Implementation Action
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {

@@ -17,11 +17,11 @@
     <tbody>
       <tr>
         <td><label for="name">$i18n.getString( "name" ) <em title="$i18n.getString( "required" )" class="required">*</em></label></td>
-        <td><input type="text" id="name" name="name" value="$encoder.htmlEncode( $attribute.name )" class="{validate:{required:true,rangelength:[2,160]}}"></td>
+        <td><input type="text" id="name" name="name" value="$encoder.htmlEncode( $attribute.name )" ></td>
       </tr>     
       <tr>
         <td><label for="shortName">$i18n.getString( "short_name" ) <em title="$i18n.getString( "required" )" class="required">*</em></label></td>
-        <td><input type="text" id="shortName" name="shortName" value="$!encoder.htmlEncode( $attribute.shortName )" class="{validate:{required:true,rangelength:[2,50]}}"></td>
+        <td><input type="text" id="shortName" name="shortName" value="$!encoder.htmlEncode( $attribute.shortName )" ></td>
       </tr>     
       <tr>
         <td><label for="code">$i18n.getString( "code" )</td>
@@ -29,7 +29,7 @@
       </tr>      
       <tr>
         <td><label for="description">$i18n.getString( "description" ) <em title="$i18n.getString( "required" )" class="required">*</em></label></td>
-        <td><input type="text" id="description" name="description" value="$!encoder.htmlEncode( $attribute.description )" class="{validate:{required:true,minlength:2}}"></td>
+        <td><textarea id="description" name="description" >$!encoder.htmlEncode( $attribute.description )</textarea></td>
       </tr>
       
     <tr>
@@ -57,6 +57,14 @@
 		<td></td>				
 	</tr>
 	
+	<tr>
+		<td><label for="confidential">$i18n.getString( "confidential" )</label></td>
+		<td>
+			<input type='checkbox' id="confidential" name="confidential" value='true' #if( $attribute.confidential ) checked #end>
+		</td>		
+		<td></td>				
+	</tr>
+	
     <tr>
         <td><label for="valueType">$i18n.getString( "value_type" ) <em title="$i18n.getString( "required" )" class="required">*</em></label></td>
         <td>
@@ -68,6 +76,7 @@
                 <option value="trueOnly" #if( $attribute.unique=='true' ) style='display:none' #end #if( $attribute.valueType == 'trueOnly' ) selected="selected" #end >$i18n.getString( "yes_only" )</option>
 				<option value="date" #if( $attribute.unique=='true' ) style='display:none' #end #if( $attribute.valueType == 'date' ) selected="selected" #end>$i18n.getString( "date" )</option>
                 <option value="phoneNumber" #if( $attribute.valueType == 'phoneNumber' ) selected="selected" #end>$i18n.getString( "phone_number" )</option>
+                <option value="email" #if( $attribute.valueType == 'email' ) selected="selected" #end>$i18n.getString( "email" )</option>
 				<option value="trackerAssociate" #if( $attribute.unique=='true' ) style='display:none' #end #if( $attribute.valueType == 'trackerAssociate' ) selected="selected" #end>$i18n.getString( "tracker_associate" )</option>
 				<option value="users" #if( $attribute.unique=='true' ) style='display:none' #end #if( $attribute.valueType == 'users' ) selected="selected" #end>$i18n.getString( "users" )</option>
 				<option value="optionSet" #if( $attribute.unique=='true' ) style='display:none' #end #if( $attribute.valueType == 'optionSet' ) selected="selected" #end>$i18n.getString( "option_set" )</option>
@@ -79,7 +88,7 @@
 		<td><label for="optionSetId">$i18n.getString( "option_set" ) <em title="$i18n.getString( 'required' )" class="required">*</em></label></td>
 		<td><select id="optionSetId" name="optionSetId" class="{validate:{required:true}}">
 				#foreach($optionSet in $optionSets)
-					<option value="$optionSet.id" #if($attribute.optionSet.id==$optionSet.id) selected #end>$optionSet.name</option>
+					<option value="$optionSet.id" #if($attribute.optionSet.id==$optionSet.id) selected #end>$encoder.htmlEncode($optionSet.name)</option>
 				#end
 			</select>
 		</td>

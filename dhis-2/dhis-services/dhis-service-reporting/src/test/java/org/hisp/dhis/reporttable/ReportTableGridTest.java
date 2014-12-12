@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Resource;
+
 import org.amplecode.quick.BatchHandler;
 import org.amplecode.quick.BatchHandlerFactory;
 import org.hisp.dhis.DhisSpringTest;
@@ -76,6 +78,7 @@ import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodService;
 import org.hisp.dhis.period.PeriodType;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
@@ -83,13 +86,38 @@ import org.junit.Test;
 public class ReportTableGridTest
     extends DhisSpringTest
 {
+    @Autowired
     private ReportTableService reportTableService;
     
-    private BatchHandlerFactory batchHandlerFactory;
-    
+    @Autowired
     private AnalyticsService analyticsService;
         
-    private Map<String, Double> valueMap;
+    @Autowired
+    private DataElementService dataElementService;
+
+    @Autowired
+    private DataElementCategoryService categoryService;
+
+    @Autowired
+    private IndicatorService indicatorService;
+
+    @Autowired
+    private DataSetService dataSetService;
+
+    @Autowired
+    private PeriodService periodService;
+
+    @Autowired
+    private OrganisationUnitService organisationUnitService;
+
+    @Autowired
+     OrganisationUnitGroupService organisationUnitGroupService;
+
+    @Resource( name = "batchHandlerFactory" )
+    private BatchHandlerFactory batchHandlerFactory;
+    
+    
+    private Map<String, Object> valueMap;
     
     private List<DataElement> dataElements;
     private List<DataElementCategoryOptionCombo> categoryOptionCombos;
@@ -156,26 +184,12 @@ public class ReportTableGridTest
     public void setUpTest()
         throws Exception
     {
-        reportTableService = (ReportTableService) getBean( ReportTableService.ID );
-        
-        dataElementService = (DataElementService) getBean( DataElementService.ID );
-        
-        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );        
-        
-        indicatorService = (IndicatorService) getBean( IndicatorService.ID );
-        dataSetService = (DataSetService) getBean( DataSetService.ID );
-        periodService = (PeriodService) getBean( PeriodService.ID );
-        organisationUnitService = (OrganisationUnitService) getBean( OrganisationUnitService.ID );
-        organisationUnitGroupService = (OrganisationUnitGroupService) getBean( OrganisationUnitGroupService.ID );
-        
-        batchHandlerFactory = (BatchHandlerFactory) getBean( "batchHandlerFactory" );
-        
-        dataElements = new ArrayList<DataElement>();
-        categoryOptionCombos = new ArrayList<DataElementCategoryOptionCombo>();
-        indicators = new ArrayList<Indicator>();
-        dataSets = new ArrayList<DataSet>();
-        periods = new ArrayList<Period>();
-        units = new ArrayList<OrganisationUnit>();
+        dataElements = new ArrayList<>();
+        categoryOptionCombos = new ArrayList<>();
+        indicators = new ArrayList<>();
+        dataSets = new ArrayList<>();
+        periods = new ArrayList<>();
+        units = new ArrayList<>();
         
         montlyPeriodType = PeriodType.getPeriodTypeByName( MonthlyPeriodType.NAME );       
 
@@ -183,7 +197,7 @@ public class ReportTableGridTest
         // Mock injection
         // ---------------------------------------------------------------------
 
-        valueMap = new HashMap<String, Double>();
+        valueMap = new HashMap<>();
         
         analyticsService = new MockAnalyticsService( valueMap );
         
@@ -341,7 +355,7 @@ public class ReportTableGridTest
     
     private Set<DataElementCategoryOptionCombo> getSet( DataElementCategoryOptionCombo c )
     {
-        return new HashSet<DataElementCategoryOptionCombo>( Arrays.asList( c ) );
+        return new HashSet<>( Arrays.asList( c ) );
     }
 
     // -------------------------------------------------------------------------

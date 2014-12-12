@@ -80,12 +80,13 @@ public class GetOrganisationUnitChildrenAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         OrganisationUnit unit = organisationUnitService.getOrganisationUnit( id );
 
-        organisationUnits = new ArrayList<OrganisationUnit>( unit.getChildren() );
+        organisationUnits = new ArrayList<>( unit.getChildren() );
 
         Collections.sort( organisationUnits, new IdentifiableObjectNameComparator() );
 

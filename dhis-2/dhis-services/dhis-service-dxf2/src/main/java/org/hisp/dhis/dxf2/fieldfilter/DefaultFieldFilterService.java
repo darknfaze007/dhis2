@@ -32,8 +32,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.PresetProvider;
 import org.hisp.dhis.dxf2.parser.ParserService;
@@ -44,6 +42,7 @@ import org.hisp.dhis.node.NodeTransformer;
 import org.hisp.dhis.node.types.CollectionNode;
 import org.hisp.dhis.node.types.ComplexNode;
 import org.hisp.dhis.node.types.SimpleNode;
+import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.schema.Property;
 import org.hisp.dhis.schema.Schema;
 import org.hisp.dhis.schema.SchemaService;
@@ -62,21 +61,19 @@ import java.util.regex.Pattern;
  */
 public class DefaultFieldFilterService implements FieldFilterService
 {
-    private static final Log log = LogFactory.getLog( DefaultFieldFilterService.class );
-
     @Autowired
     private ParserService parserService;
 
     @Autowired
     private SchemaService schemaService;
 
-    @Autowired(required = false)
+    @Autowired( required = false )
     private Set<PresetProvider> presetProviders = Sets.newHashSet();
 
-    @Autowired(required = false)
+    @Autowired( required = false )
     private Set<NodePropertyConverter> nodePropertyConverters = Sets.newHashSet();
 
-    @Autowired(required = false)
+    @Autowired( required = false )
     private Set<NodeTransformer> nodeTransformers = Sets.newHashSet();
 
     private ImmutableMap<String, PresetProvider> presets = ImmutableMap.of();
@@ -154,12 +151,17 @@ public class DefaultFieldFilterService implements FieldFilterService
         return collectionNode;
     }
 
-    @SuppressWarnings("unchecked")
     private AbstractNode buildNode( FieldMap fieldMap, Class<?> klass, Object object )
     {
         Schema schema = schemaService.getDynamicSchema( klass );
+        return buildNode( fieldMap, klass, object, schema.getName() );
+    }
 
-        ComplexNode complexNode = new ComplexNode( schema.getName() );
+    private AbstractNode buildNode( FieldMap fieldMap, Class<?> klass, Object object, String nodeName )
+    {
+        Schema schema = schemaService.getDynamicSchema( klass );
+
+        ComplexNode complexNode = new ComplexNode( nodeName );
         complexNode.setNamespace( schema.getNamespace() );
 
         if ( object == null )
@@ -211,7 +213,7 @@ public class DefaultFieldFilterService implements FieldFilterService
                 {
                     Collection<?> collection = (Collection<?>) returnValue;
 
-                    child = complexNode.addChild( new CollectionNode( property.getCollectionName() ) );
+                    child = new CollectionNode( property.getCollectionName() );
                     child.setNamespace( property.getNamespace() );
 
                     if ( property.isIdentifiableObject() )
@@ -267,12 +269,12 @@ public class DefaultFieldFilterService implements FieldFilterService
             {
                 if ( property.isCollection() )
                 {
-                    child = complexNode.addChild( new CollectionNode( property.getCollectionName() ) );
+                    child = new CollectionNode( property.getCollectionName() );
                     child.setNamespace( property.getNamespace() );
 
                     for ( Object collectionObject : (Collection<?>) returnValue )
                     {
-                        Node node = buildNode( fieldValue, property.getItemKlass(), collectionObject );
+                        Node node = buildNode( fieldValue, property.getItemKlass(), collectionObject, property.getName() );
 
                         if ( !node.getChildren().isEmpty() )
                         {
@@ -288,6 +290,14 @@ public class DefaultFieldFilterService implements FieldFilterService
 
             if ( child != null )
             {
+                child.setName( fieldKey );
+
+                // TODO fix ugly hack, will be replaced by custom field serializer/deserializer
+                if ( child.isSimple() && PeriodType.class.isInstance( (((SimpleNode) child).getValue()) ) )
+                {
+                    child = new SimpleNode( child.getName(), ((PeriodType) ((SimpleNode) child).getValue()).getName() );
+                }
+
                 complexNode.addChild( fieldValue.getPipeline().process( child ) );
             }
         }
@@ -318,6 +328,34 @@ public class DefaultFieldFilterService implements FieldFilterService
                     if ( !fieldMap.containsKey( mapKey ) )
                     {
                         fieldMap.put( mapKey, new FieldMap() );
+                    }
+                }
+
+                cleanupFields.add( fieldKey );
+            }
+            else if ( ":persisted".equals( fieldKey ) )
+            {
+                List<Property> properties = schema.getProperties();
+
+                for ( Property property : properties )
+                {
+                    if ( !fieldMap.containsKey( property.key() ) && property.isPersisted() )
+                    {
+                        fieldMap.put( property.key(), new FieldMap() );
+                    }
+                }
+
+                cleanupFields.add( fieldKey );
+            }
+            else if ( ":owner".equals( fieldKey ) )
+            {
+                List<Property> properties = schema.getProperties();
+
+                for ( Property property : properties )
+                {
+                    if ( !fieldMap.containsKey( property.key() ) && property.isPersisted() && property.isOwner() )
+                    {
+                        fieldMap.put( property.key(), new FieldMap() );
                     }
                 }
 

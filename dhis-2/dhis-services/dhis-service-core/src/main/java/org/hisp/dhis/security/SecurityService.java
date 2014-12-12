@@ -45,6 +45,22 @@ public interface SecurityService
      * @return true if the invitation was sent, otherwise false.
      */
     boolean prepareUserForInvite( User user );
+    
+    /**
+     * Indicates whether a restore/invite is allowed for the given user. The
+     * requirements are:</p>
+     * 
+     * <ul>
+     * <li>email_not_configured_for_system</li>
+     * <li>no_user_credentials</li>
+     * <li>user_does_not_have_valid_email</li>
+     * <li>user_has_critical_authorities</li>
+     * </ul>
+     * 
+     * @param credentials
+     * @return a string if restore cannot be performed, null otherwise.
+     */
+    String validateRestore( UserCredentials credentials );
 
     /**
      * Invokes the initRestore method and dispatches email messages with
@@ -111,7 +127,7 @@ public interface SecurityService
      * @param restoreType type of restore operation (e.g. pw recovery, invite).
      * @return true or false.
      */
-    boolean canRestoreNow( UserCredentials credentials, String token, String code, RestoreType restoreType );
+    boolean canRestore( UserCredentials credentials, String token, String code, RestoreType restoreType );
 
     /**
      * Tests whether the given token in combination with the given user name is
@@ -120,11 +136,11 @@ public interface SecurityService
      *
      * @param credentials the user credentials.
      * @param token the token.
-     * @return false if any of the arguments are null or if the user credentials
-     *         identified by the user name does not exist, true if the arguments
-     *         are valid.
+     * @return error message if any of the arguments are null or if the user
+     *         credentials identified by the user name does not exist, null if
+     *         the arguments are valid.
      */
-    boolean verifyToken( UserCredentials credentials, String token, RestoreType restoreType );
+    String verifyToken( UserCredentials credentials, String token, RestoreType restoreType );
 
     /**
      * Checks whether current user has read access to object.

@@ -57,6 +57,7 @@ public class SmsMessageSender
     private static final Log log = LogFactory.getLog( SmsMessageSender.class );
 
     private static int MAX_CHAR = 160;
+
     private static final String GW_BULK = "bulk_gw";
 
     // -------------------------------------------------------------------------
@@ -89,7 +90,8 @@ public class SmsMessageSender
     {
         String message = null;
 
-        Map<String, String> gatewayMap = outboundSmsTransportService != null ? outboundSmsTransportService.getGatewayMap() : null;
+        Map<String, String> gatewayMap = outboundSmsTransportService != null ? outboundSmsTransportService
+            .getGatewayMap() : null;
 
         String gatewayId = StringUtils.trimToNull( outboundSmsTransportService.getDefaultGateway() );
 
@@ -98,15 +100,15 @@ public class SmsMessageSender
             return "No gateway";
         }
 
-        Set<User> toSendList = new HashSet<User>();
+        Set<User> toSendList = new HashSet<>();
 
         User currentUser = currentUserService.getCurrentUser();
-        
+
         if ( !forceSend )
         {
             for ( User user : users )
             {
-                if ( currentUser == null || ( currentUser != null && !currentUser.equals( user ) ) )
+                if ( currentUser == null || (currentUser != null && !currentUser.equals( user )) )
                 {
                     if ( isQualifiedReceiver( user ) )
                     {
@@ -127,11 +129,11 @@ public class SmsMessageSender
         text = createMessage( subject, text, sender );
 
         // Bulk is limited in sending long SMS, need to split in pieces
-                
+
         if ( gatewayId.equals( gatewayMap.get( GW_BULK ) ) )
         {
             // Check if text contain any specific character
-            
+
             for ( char each : text.toCharArray() )
             {
                 if ( !Character.UnicodeBlock.of( each ).equals( UnicodeBlock.BASIC_LATIN ) )
@@ -142,9 +144,9 @@ public class SmsMessageSender
             }
             if ( text.length() > MAX_CHAR )
             {
-                List<String> splitTextList = new ArrayList<String>();
+                List<String> splitTextList = new ArrayList<>();
                 splitTextList = splitLongUnicodeString( text, splitTextList );
-                
+
                 for ( String each : splitTextList )
                 {
                     if ( !phoneNumbers.isEmpty() && phoneNumbers.size() > 0 )
@@ -182,11 +184,13 @@ public class SmsMessageSender
         {
             return true;
         }
-        else // Receiver is user
+        else
+        // Receiver is user
         {
-            UserSetting userSetting = userService.getUserSetting( user, UserSettingService.KEY_MESSAGE_SMS_NOTIFICATION );
+            UserSetting userSetting = userService
+                .getUserSetting( user, UserSettingService.KEY_MESSAGE_SMS_NOTIFICATION );
 
-            return ( userSetting != null && userSetting.getValue() != null ) ? (Boolean) userSetting.getValue() : false;
+            return (userSetting != null && userSetting.getValue() != null) ? (Boolean) userSetting.getValue() : false;
         }
     }
 
@@ -217,7 +221,7 @@ public class SmsMessageSender
 
     private Set<String> getRecipientsPhoneNumber( Set<User> users )
     {
-        Set<String> recipients = new HashSet<String>();
+        Set<String> recipients = new HashSet<>();
 
         for ( User user : users )
         {
@@ -234,7 +238,7 @@ public class SmsMessageSender
     private String sendMessage( String text, Set<String> recipients, String gateWayId )
     {
         String message = null;
-        
+
         OutboundSms sms = new OutboundSms();
         sms.setMessage( text );
         sms.setRecipients( recipients );
@@ -249,7 +253,7 @@ public class SmsMessageSender
 
             log.warn( "Unable to send message through SMS: " + sms, e );
         }
-        
+
         return message;
     }
 
@@ -272,7 +276,7 @@ public class SmsMessageSender
         if ( secondTempString.length() <= MAX_CHAR )
         {
             result.add( secondTempString );
-            
+
             return result;
         }
         else

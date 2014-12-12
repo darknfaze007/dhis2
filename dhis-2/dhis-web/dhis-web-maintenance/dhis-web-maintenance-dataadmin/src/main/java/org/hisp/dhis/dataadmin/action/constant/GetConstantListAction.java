@@ -88,19 +88,20 @@ public class GetConstantListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         if ( isNotBlank( key ) ) // Filter on key only if set
         {
             this.paging = createPaging( constantService.getConstantCountByName( key ) );
             
-            constants = new ArrayList<Constant>( constantService.getConstantsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
+            constants = new ArrayList<>( constantService.getConstantsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( constantService.getConstantCount() );
             
-            constants = new ArrayList<Constant>( constantService.getConstantsBetween( paging.getStartPos(), paging.getPageSize() ) );
+            constants = new ArrayList<>( constantService.getConstantsBetween( paging.getStartPos(), paging.getPageSize() ) );
         }
         
         Collections.sort( constants, IdentifiableObjectNameComparator.INSTANCE );

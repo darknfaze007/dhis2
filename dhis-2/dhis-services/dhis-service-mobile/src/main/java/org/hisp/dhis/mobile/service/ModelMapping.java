@@ -84,7 +84,7 @@ public class ModelMapping
         {
             mobileOptionSet.setId( dhisOptionSet.getId() );
             mobileOptionSet.setName( dhisOptionSet.getName() );
-            mobileOptionSet.setOptions( dhisOptionSet.getOptions() );
+//            mobileOptionSet.setOptions( dhisOptionSet.getOptions() );
         }
         else
         {
@@ -100,7 +100,7 @@ public class ModelMapping
 
         // Client DataElement
         ModelList deCateOptCombo = new ModelList();
-        List<Model> listCateOptCombo = new ArrayList<Model>();
+        List<Model> listCateOptCombo = new ArrayList<>();
         deCateOptCombo.setModels( listCateOptCombo );
 
         for ( DataElementCategoryOptionCombo oneCatOptCombo : categoryCombo.getSortedOptionCombos() )

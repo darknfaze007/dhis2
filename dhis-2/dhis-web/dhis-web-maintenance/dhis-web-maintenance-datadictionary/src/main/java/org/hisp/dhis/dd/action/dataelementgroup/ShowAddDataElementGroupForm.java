@@ -66,9 +66,10 @@ public class ShowAddDataElementGroupForm
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
-        attributes = new ArrayList<Attribute>( attributeService.getDataElementGroupAttributes() );
+        attributes = new ArrayList<>( attributeService.getDataElementGroupAttributes() );
         Collections.sort( attributes, AttributeSortOrderComparator.INSTANCE );
 
         return SUCCESS;

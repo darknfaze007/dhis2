@@ -30,6 +30,7 @@ package org.hisp.dhis.calendar;
 
 import com.google.common.collect.Lists;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.chrono.ISOChronology;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -101,49 +102,59 @@ public abstract class AbstractCalendar implements Calendar
         return dateFormat;
     }
 
+    @Override
     public void setDateFormat( String dateFormat )
     {
         this.dateFormat = dateFormat;
     }
 
     @Override
-    public String formattedDate( DateUnit dateUnit )
+    public String formattedDate( DateTimeUnit dateTimeUnit )
     {
         return getDateFormat()
-            .replace( "yyyy", String.format( "%04d", dateUnit.getYear() ) )
-            .replace( "MM", String.format( "%02d", dateUnit.getMonth() ) )
-            .replace( "dd", String.format( "%02d", dateUnit.getDay() ) );
+            .replace( "yyyy", String.format( "%04d", dateTimeUnit.getYear() ) )
+            .replace( "MM", String.format( "%02d", dateTimeUnit.getMonth() ) )
+            .replace( "dd", String.format( "%02d", dateTimeUnit.getDay() ) );
     }
 
     @Override
-    public String formattedIsoDate( DateUnit dateUnit )
+    public String formattedDate( String dateFormat, DateTimeUnit dateTimeUnit )
     {
-        dateUnit = toIso( dateUnit );
-        DateTime dateTime = dateUnit.toDateTime();
+        return dateFormat
+            .replace( "yyyy", String.format( "%04d", dateTimeUnit.getYear() ) )
+            .replace( "MM", String.format( "%02d", dateTimeUnit.getMonth() ) )
+            .replace( "dd", String.format( "%02d", dateTimeUnit.getDay() ) );
+    }
+
+    @Override
+    public String formattedIsoDate( DateTimeUnit dateTimeUnit )
+    {
+        dateTimeUnit = toIso( dateTimeUnit );
+        DateTime dateTime = dateTimeUnit.toJodaDateTime();
         DateTimeFormatter format = DateTimeFormat.forPattern( getDateFormat() );
 
         return format.print( dateTime );
     }
 
     @Override
-    public DateUnit toIso( int year, int month, int day )
+    public DateTimeUnit toIso( int year, int month, int day )
     {
-        return toIso( new DateUnit( year, month, day ) );
+        return toIso( new DateTimeUnit( year, month, day ) );
     }
 
     @Override
-    public DateUnit toIso( String date )
+    public DateTimeUnit toIso( String date )
     {
         DateTimeFormatter format = DateTimeFormat.forPattern( getDateFormat() );
         DateTime dateTime = format.parseDateTime( date );
 
-        return toIso( DateUnit.fromDateTime( dateTime ) );
+        return toIso( DateTimeUnit.fromJodaDateTime( dateTime ) );
     }
 
     @Override
-    public DateUnit fromIso( int year, int month, int day )
+    public DateTimeUnit fromIso( int year, int month, int day )
     {
-        return fromIso( new DateUnit( year, month, day, true ) );
+        return fromIso( new DateTimeUnit( year, month, day, true ) );
     }
 
     @Override
@@ -153,9 +164,9 @@ public abstract class AbstractCalendar implements Calendar
     }
 
     @Override
-    public DateInterval toInterval( DateUnit dateUnit, DateIntervalType type )
+    public DateInterval toInterval( DateTimeUnit dateTimeUnit, DateIntervalType type )
     {
-        return toInterval( dateUnit, type, 0, 1 );
+        return toInterval( dateTimeUnit, type, 0, 1 );
     }
 
     @Override
@@ -165,24 +176,24 @@ public abstract class AbstractCalendar implements Calendar
     }
 
     @Override
-    public List<DateInterval> toIntervals( DateUnit dateUnit, DateIntervalType type, int offset, int length, int periods )
+    public List<DateInterval> toIntervals( DateTimeUnit dateTimeUnit, DateIntervalType type, int offset, int length, int periods )
     {
         List<DateInterval> dateIntervals = Lists.newArrayList();
 
         for ( int i = offset; i <= (offset + periods - 1); i++ )
         {
-            dateIntervals.add( toInterval( dateUnit, type, i, length ) );
+            dateIntervals.add( toInterval( dateTimeUnit, type, i, length ) );
         }
 
         return dateIntervals;
     }
 
     @Override
-    public DateUnit today()
+    public DateTimeUnit today()
     {
-        DateTime dateTime = DateTime.now( ISOChronology.getInstance() );
-        DateUnit dateUnit = new DateUnit( dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), true );
-        return fromIso( dateUnit );
+        DateTime dateTime = DateTime.now( ISOChronology.getInstance( DateTimeZone.getDefault() ) );
+        DateTimeUnit dateTimeUnit = new DateTimeUnit( dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), true );
+        return fromIso( dateTimeUnit );
     }
 
     @Override
@@ -239,5 +250,11 @@ public abstract class AbstractCalendar implements Calendar
         }
 
         return DEFAULT_I18N_DAY_SHORT_NAMES[day - 1];
+    }
+
+    @Override
+    public boolean isIso8601()
+    {
+        return false;
     }
 }

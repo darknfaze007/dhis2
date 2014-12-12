@@ -41,6 +41,7 @@ import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.mapping.MapLegendSet;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -68,26 +69,24 @@ public class Indicator
 
     private String numeratorDescription;
 
-    private String explodedNumerator;
+    private transient String explodedNumerator;
 
     private String denominator;
 
     private String denominatorDescription;
 
-    private String explodedDenominator;
-
-    private Integer sortOrder;
+    private transient String explodedDenominator;
 
     private String url;
 
-    private Set<IndicatorGroup> groups = new HashSet<IndicatorGroup>();
+    private Set<IndicatorGroup> groups = new HashSet<>();
 
-    private Set<DataSet> dataSets = new HashSet<DataSet>();
+    private Set<DataSet> dataSets = new HashSet<>();
 
     /**
      * Set of the dynamic attributes values that belong to this indicator.
      */
-    private Set<AttributeValue> attributeValues = new HashSet<AttributeValue>();
+    private Set<AttributeValue> attributeValues = new HashSet<>();
 
     /**
      * The legend set for this indicator.
@@ -117,7 +116,7 @@ public class Indicator
 
     public void updateIndicatorGroups( Set<IndicatorGroup> updates )
     {
-        for ( IndicatorGroup group : new HashSet<IndicatorGroup>( groups ) )
+        for ( IndicatorGroup group : new HashSet<>( groups ) )
         {
             if ( !updates.contains( group ) )
             {
@@ -222,9 +221,7 @@ public class Indicator
         this.numeratorDescription = numeratorDescription;
     }
 
-    @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JsonIgnore
     public String getExplodedNumerator()
     {
         return explodedNumerator;
@@ -261,9 +258,7 @@ public class Indicator
         this.denominatorDescription = denominatorDescription;
     }
 
-    @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JsonIgnore
     public String getExplodedDenominator()
     {
         return explodedDenominator;
@@ -272,16 +267,6 @@ public class Indicator
     public void setExplodedDenominator( String explodedDenominator )
     {
         this.explodedDenominator = explodedDenominator;
-    }
-
-    public Integer getSortOrder()
-    {
-        return sortOrder;
-    }
-
-    public void setSortOrder( Integer sortOrder )
-    {
-        this.sortOrder = sortOrder;
     }
 
     @JsonProperty

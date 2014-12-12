@@ -41,7 +41,6 @@ import org.junit.Test;
 
 public class OrgUnitTest
 {
-
     @Test
     public void testSerialization()
         throws IOException
@@ -65,6 +64,9 @@ public class OrgUnitTest
         unit.setDownloadMessageConversationUrl( "downloadMessageConversationUrl" );
         unit.setGetMessageUrl( "getMessageUrl" );
         unit.setReplyMessageUrl( "replyMessageUrl" );
+        unit.setDownloadInterpretationUrl( "downloadInterpretationUrl" );
+        unit.setPostInterpretationUrl( "postInterpretationUrl" );
+        unit.setPostCommentUrl( "postCommentUrl" );
         unit.setUpdateContactUrl( "updateContactUrl" );
         unit.setFindPatientUrl( "findPatientUrl" );
         unit.setUploadProgramStageUrl( "uploadProgramStageUrl" );
@@ -92,6 +94,5 @@ public class OrgUnitTest
 
         assertEquals( unit.getName(), unit2.getName() );
         assertEquals( unit.getId(), unit2.getId() );
-
     }
 }

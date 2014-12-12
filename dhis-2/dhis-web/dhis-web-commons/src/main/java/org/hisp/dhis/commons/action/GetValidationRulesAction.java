@@ -72,9 +72,10 @@ public class GetValidationRulesAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
-        validationRules = new ArrayList<ValidationRule>( validationRuleService.getAllValidationRules() );
+        validationRules = new ArrayList<>( validationRuleService.getAllValidationRules() );
 
         ContextUtils.clearIfNotModified( ServletActionContext.getRequest(), ServletActionContext.getResponse(), validationRules );
         

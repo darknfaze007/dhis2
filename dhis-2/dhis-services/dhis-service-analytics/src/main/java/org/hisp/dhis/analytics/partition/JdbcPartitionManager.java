@@ -53,6 +53,7 @@ public class JdbcPartitionManager
     @Autowired
     private JdbcTemplate jdbcTemplate;
         
+    @Override
     public Set<String> getAnalyticsPartitions()
     {
         if ( ANALYTICS_PARTITIONS != null )
@@ -67,11 +68,12 @@ public class JdbcPartitionManager
         
         log.info( "Information schema analytics SQL: " + sql );
 
-        Set<String> partitions = new HashSet<String>( jdbcTemplate.queryForList( sql, String.class ) );
+        Set<String> partitions = new HashSet<>( jdbcTemplate.queryForList( sql, String.class ) );
         ANALYTICS_PARTITIONS = partitions;
         return partitions;
     }
     
+    @Override
     public Set<String> getEventAnalyticsPartitions()
     {
         if ( ANALYTICS_EVENT_PARTITIONS != null )
@@ -86,11 +88,12 @@ public class JdbcPartitionManager
         
         log.info( "Information schema event analytics SQL: " + sql );
         
-        Set<String> partitions = new HashSet<String>( jdbcTemplate.queryForList( sql, String.class ) );
+        Set<String> partitions = new HashSet<>( jdbcTemplate.queryForList( sql, String.class ) );
         ANALYTICS_EVENT_PARTITIONS = partitions;
         return partitions;
     }
     
+    @Override
     public void clearCaches()
     {
         ANALYTICS_PARTITIONS = null;

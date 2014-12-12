@@ -44,6 +44,7 @@ import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Kristian Nordal
@@ -52,21 +53,18 @@ import org.junit.Test;
 public class MinMaxDataElementStoreTest
     extends DhisSpringTest
 {
-    private MinMaxDataElementStore minMaxDataElementStore;
+    @Autowired
+    private DataElementService dataElementService;
 
-    @Override
-    public void setUpTest()
-        throws Exception
-    {
-        dataElementService = (DataElementService) getBean( DataElementService.ID );
-        
-        organisationUnitService = (OrganisationUnitService) getBean( OrganisationUnitService.ID );
-        
-        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
+    @Autowired
+    private OrganisationUnitService organisationUnitService;
 
-        minMaxDataElementStore = (MinMaxDataElementStore) getBean( MinMaxDataElementStore.ID );
-    }
+    @Autowired
+    private DataElementCategoryService categoryService;
 
+    @Autowired
+    private  MinMaxDataElementStore minMaxDataElementStore;
+    
     @Test
     public void testBasic()
         throws Exception
@@ -137,10 +135,10 @@ public class MinMaxDataElementStoreTest
 
         assertTrue( minMaxDataElementStore.get( mmdeid1 ).getMax() == 100 );
 
-        Collection<DataElement> dataElements1 = new HashSet<DataElement>();
+        Collection<DataElement> dataElements1 = new HashSet<>();
         dataElements1.add( dataElement1 );
 
-        Collection<DataElement> dataElements2 = new HashSet<DataElement>();
+        Collection<DataElement> dataElements2 = new HashSet<>();
         dataElements2.add( dataElement2 );
         dataElements2.add( dataElement3 );
         dataElements2.add( dataElement4 );

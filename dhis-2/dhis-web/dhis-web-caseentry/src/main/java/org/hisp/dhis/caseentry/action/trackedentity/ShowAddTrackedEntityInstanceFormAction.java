@@ -179,7 +179,7 @@ public class ShowAddTrackedEntityInstanceFormAction
         return healthWorkers;
     }
 
-    private Map<String, List<TrackedEntityAttribute>> attributesMap = new HashMap<String, List<TrackedEntityAttribute>>();
+    private Map<String, List<TrackedEntityAttribute>> attributesMap = new HashMap<>();
 
     public Map<String, List<TrackedEntityAttribute>> getAttributesMap()
     {
@@ -193,7 +193,7 @@ public class ShowAddTrackedEntityInstanceFormAction
         return organisationUnit;
     }
 
-    private Map<Integer, Collection<TrackedEntityAttribute>> attributeGroupsMap = new HashMap<Integer, Collection<TrackedEntityAttribute>>();
+    private Map<Integer, Collection<TrackedEntityAttribute>> attributeGroupsMap = new HashMap<>();
 
     public Map<Integer, Collection<TrackedEntityAttribute>> getAttributeGroupsMap()
     {
@@ -263,28 +263,28 @@ public class ShowAddTrackedEntityInstanceFormAction
         return trackedEntities;
     }
 
-    private Map<Integer, String> trackedEntityAttributeValueMap = new HashMap<Integer, String>();
+    private Map<Integer, String> trackedEntityAttributeValueMap = new HashMap<>();
 
     public Map<Integer, String> getTrackedEntityAttributeValueMap()
     {
         return trackedEntityAttributeValueMap;
     }
 
-    private Map<Integer, Boolean> mandatoryMap = new HashMap<Integer, Boolean>();
+    private Map<Integer, Boolean> mandatoryMap = new HashMap<>();
 
     public Map<Integer, Boolean> getMandatoryMap()
     {
         return mandatoryMap;
     }
 
-    private Map<Integer, Boolean> allowFutureDateMap = new HashMap<Integer, Boolean>();
+    private Map<Integer, Boolean> allowFutureDateMap = new HashMap<>();
     
     public void setAllowFutureDateMap( Map<Integer, Boolean> allowFutureDateMap )
     {
         this.allowFutureDateMap = allowFutureDateMap;
     }
 
-    private List<TrackedEntityAttribute> attributes = new ArrayList<TrackedEntityAttribute>();
+    private List<TrackedEntityAttribute> attributes = new ArrayList<>();
 
     public List<TrackedEntityAttribute> getAttributes()
     {
@@ -295,6 +295,7 @@ public class ShowAddTrackedEntityInstanceFormAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         if ( entityInstanceId != null )
@@ -319,7 +320,7 @@ public class ShowAddTrackedEntityInstanceFormAction
             }
         }
 
-        trackedEntities = new ArrayList<TrackedEntity>( trackedEntityService.getAllTrackedEntity() );
+        trackedEntities = new ArrayList<>( trackedEntityService.getAllTrackedEntity() );
 
         organisationUnit = selectionManager.getSelectedOrganisationUnit();
         healthWorkers = organisationUnit.getUsers();
@@ -350,13 +351,13 @@ public class ShowAddTrackedEntityInstanceFormAction
 
         if ( customRegistrationForm == null )
         {
-            attributeGroups = new ArrayList<TrackedEntityAttributeGroup>(
+            attributeGroups = new ArrayList<>(
                 attributeGroupService.getAllTrackedEntityAttributeGroups() );
             Collections.sort( attributeGroups, new TrackedEntityAttributeGroupSortOrderComparator() );
 
             if ( program == null )
             {
-                attributes = new ArrayList<TrackedEntityAttribute>(
+                attributes = new ArrayList<>(
                     attributeService.getTrackedEntityAttributesDisplayInList() );
                 Collections.sort( attributes, new TrackedEntityAttributeSortOrderInListNoProgramComparator() );
 
@@ -369,7 +370,7 @@ public class ShowAddTrackedEntityInstanceFormAction
             else
             {
                 attributes = program.getTrackedEntityAttributes();
-                for ( ProgramTrackedEntityAttribute programAttribute : program.getAttributes() )
+                for ( ProgramTrackedEntityAttribute programAttribute : program.getProgramAttributes() )
                 {
                     mandatoryMap.put( programAttribute.getAttribute().getId(), programAttribute.isMandatory() );
                     allowFutureDateMap.put( programAttribute.getAttribute().getId(), programAttribute.getAllowFutureDate() );
@@ -387,7 +388,7 @@ public class ShowAddTrackedEntityInstanceFormAction
                 }
                 else
                 {
-                    List<TrackedEntityAttribute> attrs = new ArrayList<TrackedEntityAttribute>();
+                    List<TrackedEntityAttribute> attrs = new ArrayList<>();
                     attrs.add( attribute );
                     attributesMap.put( groupName, attrs );
                 }

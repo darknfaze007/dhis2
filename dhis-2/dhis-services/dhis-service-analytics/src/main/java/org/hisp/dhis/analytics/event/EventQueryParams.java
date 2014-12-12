@@ -62,13 +62,13 @@ public class EventQueryParams
     
     private Date endDate;
     
-    private List<QueryItem> items = new ArrayList<QueryItem>();
+    private List<QueryItem> items = new ArrayList<>();
     
-    private List<QueryItem> itemFilters = new ArrayList<QueryItem>();
+    private List<QueryItem> itemFilters = new ArrayList<>();
 
-    private List<String> asc = new ArrayList<String>();
+    private List<String> asc = new ArrayList<>();
     
-    private List<String> desc = new ArrayList<String>();
+    private List<String> desc = new ArrayList<>();
     
     private String organisationUnitMode;
         
@@ -105,9 +105,10 @@ public class EventQueryParams
     {
         EventQueryParams params = new EventQueryParams();
 
-        params.dimensions = new ArrayList<DimensionalObject>( this.dimensions );
-        params.filters = new ArrayList<DimensionalObject>( this.filters );
+        params.dimensions = new ArrayList<>( this.dimensions );
+        params.filters = new ArrayList<>( this.filters );
         params.aggregationType = this.aggregationType;
+        params.displayProperty = this.displayProperty;
 
         params.partitions = new Partitions( this.partitions );
         params.periodType = this.periodType;
@@ -116,10 +117,10 @@ public class EventQueryParams
         params.programStage = this.programStage;
         params.startDate = this.startDate;
         params.endDate = this.endDate;
-        params.items = new ArrayList<QueryItem>( this.items );
-        params.itemFilters = new ArrayList<QueryItem>( this.itemFilters );
-        params.asc = new ArrayList<String>( this.asc );
-        params.desc = new ArrayList<String>( this.desc );
+        params.items = new ArrayList<>( this.items );
+        params.itemFilters = new ArrayList<>( this.itemFilters );
+        params.asc = new ArrayList<>( this.asc );
+        params.desc = new ArrayList<>( this.desc );
         params.organisationUnitMode = this.organisationUnitMode;
         params.page = this.page;
         params.pageSize = this.pageSize;
@@ -171,8 +172,8 @@ public class EventQueryParams
      */
     public List<QueryItem> getDuplicateQueryItems()
     {
-        Set<QueryItem> dims = new HashSet<QueryItem>();
-        List<QueryItem> duplicates = new ArrayList<QueryItem>();
+        Set<QueryItem> dims = new HashSet<>();
+        List<QueryItem> duplicates = new ArrayList<>();
         
         for ( QueryItem dim : items )
         {
@@ -197,7 +198,7 @@ public class EventQueryParams
         
     public Set<OrganisationUnit> getOrganisationUnitChildren()
     {
-        Set<OrganisationUnit> children = new HashSet<OrganisationUnit>();
+        Set<OrganisationUnit> children = new HashSet<>();
         
         for ( NameableObject object : getDimensionOrFilter( DimensionalObject.ORGUNIT_DIM_ID ) )
         {
@@ -270,7 +271,8 @@ public class EventQueryParams
             "End date: " + endDate + ", " +
             "Items " + items + ", " +
             "Item filters: " + itemFilters + ", " +
-            "Dimensions " + dimensions + "]";
+            "Dimensions: " + dimensions + ", " +
+            "Filters: " + filters + "]";
     }
     
     // -------------------------------------------------------------------------
@@ -342,11 +344,13 @@ public class EventQueryParams
         return asc;
     }
 
+    @Override
     public List<DimensionalObject> getDimensions()
     {
         return dimensions;
     }
 
+    @Override
     public void setDimensions( List<DimensionalObject> dimensions )
     {
         this.dimensions = dimensions;
@@ -437,11 +441,13 @@ public class EventQueryParams
         this.coordinatesOnly = coordinatesOnly;
     }
 
+    @Override
     public String getPeriodType()
     {
         return periodType;
     }
 
+    @Override
     public void setPeriodType( String periodType )
     {
         this.periodType = periodType;

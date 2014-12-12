@@ -32,17 +32,21 @@ import org.hisp.dhis.analytics.AggregationType;
 import org.hisp.dhis.analytics.AnalyticsService;
 import org.hisp.dhis.analytics.DataQueryParams;
 import org.hisp.dhis.common.DimensionalObject;
+import org.hisp.dhis.common.DisplayProperty;
 import org.hisp.dhis.common.NameableObjectUtils;
-import org.hisp.dhis.dxf2.utils.JacksonUtils;
+import org.hisp.dhis.dxf2.render.RenderService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 import org.hisp.dhis.system.filter.OrganisationUnitWithValidCoordinatesFilter;
 import org.hisp.dhis.system.util.FilterUtils;
-import org.hisp.dhis.webapi.webdomain.WebOptions;
+import org.hisp.dhis.user.CurrentUserService;
+import org.hisp.dhis.webapi.utils.ContextUtils;
 import org.hisp.dhis.webapi.webdomain.GeoFeature;
+import org.hisp.dhis.webapi.webdomain.WebOptions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -50,6 +54,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,8 +65,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.hisp.dhis.util.ContextUtils.clearIfNotModified;
 
 /**
  * @author Lars Helge Overland
@@ -88,17 +91,53 @@ public class GeoFeatureController
     @Autowired
     private OrganisationUnitGroupService organisationUnitGroupService;
 
-    @RequestMapping( method = RequestMethod.GET, produces = "application/json" )
-    public void getGeoFeatures( @RequestParam String ou, @RequestParam Map<String, String> parameters,
+    @Autowired
+    private RenderService renderService;
+    
+    @Autowired
+    private CurrentUserService currentUserService;
+
+    @RequestMapping( method = RequestMethod.GET, produces = { ContextUtils.CONTENT_TYPE_JSON, ContextUtils.CONTENT_TYPE_HTML } )
+    public void getGeoFeaturesJson(
+        @RequestParam String ou,
+        @RequestParam( required = false ) DisplayProperty displayProperty,
+        @RequestParam Map<String, String> parameters,
         HttpServletRequest request, HttpServletResponse response ) throws IOException
     {
         WebOptions options = new WebOptions( parameters );
         boolean includeGroupSets = "detailed".equals( options.getViewClass() );
 
-        Set<String> set = new HashSet<String>();
+        List<GeoFeature> features = getGeoFeatures( ou, displayProperty, request, response, includeGroupSets );
+        if ( features == null ) return;
+
+        response.setContentType( MediaType.APPLICATION_JSON_VALUE );
+        renderService.toJson( response.getOutputStream(), features );
+    }
+
+    @RequestMapping( method = RequestMethod.GET, produces = { "application/javascript" } )
+    public void getGeoFeaturesJsonP(
+        @RequestParam String ou,
+        @RequestParam( required = false ) DisplayProperty displayProperty,
+        @RequestParam( defaultValue = "callback" ) String callback,
+        @RequestParam Map<String, String> parameters,
+        HttpServletRequest request, HttpServletResponse response ) throws IOException
+    {
+        WebOptions options = new WebOptions( parameters );
+        boolean includeGroupSets = "detailed".equals( options.getViewClass() );
+
+        List<GeoFeature> features = getGeoFeatures( ou, displayProperty, request, response, includeGroupSets );
+        if ( features == null ) return;
+
+        response.setContentType( "application/javascript" );
+        renderService.toJsonP( response.getOutputStream(), features, callback );
+    }
+
+    private List<GeoFeature> getGeoFeatures( String ou, DisplayProperty displayProperty, HttpServletRequest request, HttpServletResponse response, boolean includeGroupSets )
+    {
+        Set<String> set = new HashSet<>();
         set.add( ou );
 
-        DataQueryParams params = analyticsService.getFromUrl( set, null, AggregationType.SUM, null, false, false, false, false, false, false, null );
+        DataQueryParams params = analyticsService.getFromUrl( set, null, AggregationType.SUM, null, false, false, false, false, false, false, displayProperty, null );
 
         DimensionalObject dim = params.getDimension( DimensionalObject.ORGUNIT_DIM_ID );
 
@@ -106,40 +145,51 @@ public class GeoFeatureController
 
         FilterUtils.filter( organisationUnits, new OrganisationUnitWithValidCoordinatesFilter() );
 
-        boolean modified = !clearIfNotModified( request, response, organisationUnits );
+        boolean modified = !ContextUtils.clearIfNotModified( request, response, organisationUnits );
 
         if ( !modified )
         {
-            return;
+            return null;
         }
 
         Collection<OrganisationUnitGroupSet> groupSets = includeGroupSets ? organisationUnitGroupService.getAllOrganisationUnitGroupSets() : null;
 
-        List<GeoFeature> features = new ArrayList<GeoFeature>();
+        List<GeoFeature> features = new ArrayList<>();
 
-        for ( OrganisationUnit unit : organisationUnits )
+        Set<OrganisationUnit> roots = currentUserService.getCurrentUser().getDataViewOrganisationUnitsWithFallback();
+        
+        for ( OrganisationUnit organisationUnit : organisationUnits )
         {
             GeoFeature feature = new GeoFeature();
-            feature.setId( unit.getUid() );
-            feature.setNa( unit.getDisplayName() );
-            feature.setHcd( unit.hasChildrenWithCoordinates() );
-            feature.setHcu( unit.hasCoordinatesUp() );
-            feature.setLe( unit.getLevel() );
-            feature.setPg( unit.getParentGraph() );
-            feature.setPi( unit.getParent() != null ? unit.getParent().getUid() : null );
-            feature.setPn( unit.getParent() != null ? unit.getParent().getDisplayName() : null );
-            feature.setTy( FEATURE_TYPE_MAP.get( unit.getFeatureType() ) );
-            feature.setCo( unit.getCoordinates() );
+            feature.setId( organisationUnit.getUid() );
+            feature.setCode( organisationUnit.getCode() );
+            feature.setHcd( organisationUnit.hasChildrenWithCoordinates() );
+            feature.setHcu( organisationUnit.hasCoordinatesUp() );
+            feature.setLe( organisationUnit.getLevel() );
+            feature.setPg( organisationUnit.getParentGraph( roots ) );
+            feature.setPi( organisationUnit.getParent() != null ? organisationUnit.getParent().getUid() : null );
+            feature.setPn( organisationUnit.getParent() != null ? organisationUnit.getParent().getDisplayName() : null );
+            feature.setTy( FEATURE_TYPE_MAP.get( organisationUnit.getFeatureType() ) );
+            feature.setCo( organisationUnit.getCoordinates() );
+
+            if ( DisplayProperty.SHORTNAME.equals( params.getDisplayProperty() ) )
+            {
+                feature.setNa( organisationUnit.getDisplayShortName() );
+            }
+            else
+            {
+                feature.setNa( organisationUnit.getDisplayName() );
+            }
 
             if ( includeGroupSets )
             {
                 for ( OrganisationUnitGroupSet groupSet : groupSets )
                 {
-                    OrganisationUnitGroup group = unit.getGroupInGroupSet( groupSet );
+                    OrganisationUnitGroup group = organisationUnit.getGroupInGroupSet( groupSet );
 
                     if ( group != null )
                     {
-                        feature.getDimensions().put( groupSet.getUid(), group.getUid() );
+                        feature.getDimensions().put( groupSet.getUid(), group.getName() );
                     }
                 }
             }
@@ -148,8 +198,7 @@ public class GeoFeatureController
         }
 
         Collections.sort( features, GeoFeatureTypeComparator.INSTANCE );
-
-        JacksonUtils.toJson( response.getOutputStream(), features );
+        return features;
     }
 
     static class GeoFeatureTypeComparator

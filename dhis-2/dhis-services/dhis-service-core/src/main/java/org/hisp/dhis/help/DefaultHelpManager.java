@@ -55,6 +55,7 @@ public class DefaultHelpManager
     // HelpManager implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void getHelpContent( OutputStream out, String id, Locale locale )
     {
         try
@@ -77,6 +78,7 @@ public class DefaultHelpManager
         }
     }
 
+    @Override
     public void getHelpItems( OutputStream out, Locale locale )
     {
         try
@@ -109,8 +111,8 @@ public class DefaultHelpManager
 
     private ClassPathResource resolveHelpFileResource( Locale locale )
     {
-
         String helpFile;
+        
         ClassPathResource classPathResource;
 
         if ( locale != null && locale.getDisplayLanguage() != null )
@@ -130,11 +132,11 @@ public class DefaultHelpManager
 
         if ( !classPathResource.exists() )
         {
+            log.warn( "Help file: " + helpFile + " not available on classpath, falling back to defaul" );
+            
             helpFile = "help_content.xml";
 
             classPathResource = new ClassPathResource( helpFile );
-
-            log.warn( "Help file: " + helpFile + " not available on classpath" );
         }
 
         return classPathResource;

@@ -32,13 +32,18 @@ import static org.hisp.dhis.setting.SystemSettingManager.KEY_SCHEDULED_TASKS;
 import static org.hisp.dhis.system.scheduling.Scheduler.STATUS_NOT_STARTED;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.hisp.dhis.common.ListMap;
 import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.system.scheduling.Scheduler;
 
 /**
+ * Cron refers to the cron expression used for scheduling. Key refers to the key
+ * identifying the scheduled tasks.
+ * 
  * @author Lars Helge Overland
  */
 public class DefaultSchedulingManager
@@ -62,7 +67,7 @@ public class DefaultSchedulingManager
         this.scheduler = scheduler;
     }
 
-    private Map<String, Runnable> tasks = new HashMap<String, Runnable>();
+    private Map<String, Runnable> tasks = new HashMap<>();
 
     public void setTasks( Map<String, Runnable> tasks )
     {
@@ -75,6 +80,7 @@ public class DefaultSchedulingManager
     // SchedulingManager implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void scheduleTasks()
     {        
         ListMap<String, String> cronKeyMap = getCronKeyMap();
@@ -90,13 +96,15 @@ public class DefaultSchedulingManager
         }
     }
     
+    @Override
     public void scheduleTasks( ListMap<String, String> cronKeyMap )
     {
-        systemSettingManager.saveSystemSetting( KEY_SCHEDULED_TASKS, new ListMap<String, String>( cronKeyMap ) );
+        systemSettingManager.saveSystemSetting( KEY_SCHEDULED_TASKS, new ListMap<>( cronKeyMap ) );
         
         scheduleTasks();
     }
     
+    @Override
     public void stopTasks()
     {
         systemSettingManager.saveSystemSetting( KEY_SCHEDULED_TASKS, null );
@@ -104,12 +112,29 @@ public class DefaultSchedulingManager
         scheduler.stopAllTasks();
     }
     
+    @Override
     @SuppressWarnings("unchecked")
     public ListMap<String, String> getCronKeyMap()
     {
         return (ListMap<String, String>) systemSettingManager.getSystemSetting( KEY_SCHEDULED_TASKS, new ListMap<String, String>() );
     }
     
+    @Override
+    public Set<String> getScheduledKeys()
+    {
+        ListMap<String, String> cronKeyMap = getCronKeyMap();
+        
+        Set<String> keys = new HashSet<>();
+        
+        for ( String cron : cronKeyMap.keySet() )
+        {
+            keys.addAll( cronKeyMap.get( cron ) );
+        }
+        
+        return keys;
+    }
+    
+    @Override
     public String getTaskStatus()
     {
         ListMap<String, String> cronKeyMap = getCronKeyMap();

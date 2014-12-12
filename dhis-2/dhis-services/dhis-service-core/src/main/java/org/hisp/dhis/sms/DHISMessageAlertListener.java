@@ -37,6 +37,8 @@ import org.apache.commons.lang.StringUtils;
 import org.hisp.dhis.message.MessageService;
 import org.hisp.dhis.sms.incoming.IncomingSms;
 import org.hisp.dhis.sms.incoming.IncomingSmsListener;
+import org.hisp.dhis.sms.incoming.IncomingSmsService;
+import org.hisp.dhis.sms.incoming.SmsMessageStatus;
 import org.hisp.dhis.sms.parse.ParserType;
 import org.hisp.dhis.sms.parse.SMSParserException;
 import org.hisp.dhis.smscommand.SMSCommand;
@@ -57,6 +59,8 @@ public class DHISMessageAlertListener
     private MessageService messageService;
 
     private SmsMessageSender smsMessageSender;
+
+    private IncomingSmsService incomingSmsService;
 
     public SMSCommandService getSmsCommandService()
     {
@@ -137,16 +141,27 @@ public class DHISMessageAlertListener
             {
                 User sender = users.iterator().next();
 
-                Set<User> receivers = new HashSet<User>( userGroup.getMembers() );
+                Set<User> receivers = new HashSet<>( userGroup.getMembers() );
 
                 // forward to user group by SMS,Dhis2 message, Email
                 messageService.sendMessage( smsCommand.getName(), message, null, receivers, sender, false, false );
 
                 // confirm SMS was received and forwarded completely
-                Set<User> feedbackList = new HashSet<User>();
+                Set<User> feedbackList = new HashSet<>();
                 feedbackList.add( sender );
-                smsMessageSender.sendMessage( smsCommand.getName(), smsCommand.getReceivedMessage(), null,
-                    feedbackList, true );
+
+                String confirmMessage = smsCommand.getReceivedMessage();
+
+                if ( confirmMessage == null )
+                {
+                    confirmMessage = SMSCommand.ALERT_FEEDBACK;
+                }
+
+                smsMessageSender.sendMessage( smsCommand.getName(), confirmMessage, null, feedbackList, true );
+
+                sms.setParsed( true );
+                sms.setStatus( SmsMessageStatus.PROCESSED );
+                incomingSmsService.update( sms );
             }
             else if ( users == null || users.size() == 0 )
             {
@@ -184,5 +199,15 @@ public class DHISMessageAlertListener
     public void setSmsMessageSender( SmsMessageSender smsMessageSender )
     {
         this.smsMessageSender = smsMessageSender;
+    }
+
+    public IncomingSmsService getIncomingSmsService()
+    {
+        return incomingSmsService;
+    }
+
+    public void setIncomingSmsService( IncomingSmsService incomingSmsService )
+    {
+        this.incomingSmsService = incomingSmsService;
     }
 }

@@ -29,7 +29,6 @@ package org.hisp.dhis.webapi.utils;
  */
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
@@ -62,7 +61,7 @@ public class InputUtils
      */
     public DataElementCategoryOptionCombo getAttributeOptionCombo( HttpServletResponse response, String cc, String cp )
     {
-        List<String> opts = ContextUtils.getQueryParamValues( cp );
+        Set<String> opts = ContextUtils.getQueryParamValues( cp );
 
         // ---------------------------------------------------------------------
         // Attribute category combo validation
@@ -90,7 +89,7 @@ public class InputUtils
 
         if ( opts != null )
         {
-            Set<DataElementCategoryOption> categoryOptions = new HashSet<DataElementCategoryOption>();
+            Set<DataElementCategoryOption> categoryOptions = new HashSet<>();
 
             for ( String id : opts )
             {
@@ -140,7 +139,7 @@ public class InputUtils
      */
     public Set<CategoryOptionGroup> getAttributeOptionGroup( HttpServletResponse response, String cog )
     {
-        Set<String> groups = new HashSet<String>();
+        Set<String> groups = new HashSet<>();
 
         groups.add(cog);
 
@@ -163,7 +162,7 @@ public class InputUtils
 
         if ( cog != null )
         {
-            groups = new HashSet<CategoryOptionGroup>();
+            groups = new HashSet<>();
 
             for ( String id : cog )
             {
@@ -201,9 +200,9 @@ public class InputUtils
 
         if ( cp != null )
         {
-            List<String> opts = ContextUtils.getQueryParamValues( cp );
+            Set<String> opts = ContextUtils.getQueryParamValues( cp );
 
-            options = new HashSet<DataElementCategoryOption>();
+            options = new HashSet<>();
 
             for ( String id : opts )
             {

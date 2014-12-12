@@ -82,22 +82,23 @@ public class GetDataElementCategoriesAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         if ( type == null )
         {
-            dataElementCategories = new ArrayList<DataElementCategory>(
+            dataElementCategories = new ArrayList<>(
                 dataElementCategoryService.getAllDataElementCategories() );
         }
         else if ( type.equals( DataElementCategoryType.ATTRIBUTE ) )
         {
-            dataElementCategories = new ArrayList<DataElementCategory>(
+            dataElementCategories = new ArrayList<>(
                 dataElementCategoryService.getAttributeCategories() );
         }
         else if ( type.equals( DataElementCategoryType.DISAGGREGATION ) )
         {
-            dataElementCategories = new ArrayList<DataElementCategory>(
+            dataElementCategories = new ArrayList<>(
                 dataElementCategoryService.getDisaggregationCategories() );
         }
 

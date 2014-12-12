@@ -183,7 +183,7 @@ public class TrackedEntityAttributeValueStoreTest
         attributeValueStore.saveVoid( attributeValueB );
         attributeValueStore.saveVoid( attributeValueC );
 
-        Collection<TrackedEntityInstance> entityInstances = new HashSet<TrackedEntityInstance>();
+        Collection<TrackedEntityInstance> entityInstances = new HashSet<>();
         entityInstances.add( entityInstanceA );
         entityInstances.add( entityInstanceB );
 
@@ -202,17 +202,4 @@ public class TrackedEntityAttributeValueStoreTest
         Collection<TrackedEntityAttributeValue> attributeValues = attributeValueStore.searchByValue( attributeA, "A" );
         assertTrue( equals( attributeValues, attributeValueA ) );
     }
-
-    @Test
-    public void testGetEntityInstances()
-    {
-        attributeValueStore.saveVoid( attributeValueA );
-        attributeValueStore.saveVoid( attributeValueB );
-        attributeValueStore.saveVoid( attributeValueC );
-
-        Collection<TrackedEntityInstance> entityInstances = attributeValueStore.getTrackedEntityInstances( attributeA, "A" );
-        assertEquals( 1, entityInstances.size() );
-        assertTrue( entityInstances.contains( entityInstanceA ) );
-    }
-
 }

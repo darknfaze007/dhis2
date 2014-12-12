@@ -64,6 +64,7 @@ public class DefaultExportService
     implements ExportService
 {
     private static final Log log = LogFactory.getLog( DefaultExportService.class );
+    
     //-------------------------------------------------------------------------------------------------------
     // Dependencies
     //-------------------------------------------------------------------------------------------------------
@@ -143,7 +144,7 @@ public class DefaultExportService
                 notifier.notify( taskId, message );
             }
 
-            ReflectionUtils.invokeSetterMethod( schema.getPlural(), metaData, new ArrayList<IdentifiableObject>( idObjects ) );
+            ReflectionUtils.invokeSetterMethod( schema.getPlural(), metaData, new ArrayList<>( idObjects ) );
         }
 
         log.info( "Export done at " + new Date() );

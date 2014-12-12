@@ -28,15 +28,14 @@ package org.hisp.dhis.trackedentity.action.trackedentityattributegroup;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.opensymphony.xwork2.Action;
 import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
 import org.hisp.dhis.trackedentity.TrackedEntityAttributeGroup;
 import org.hisp.dhis.trackedentity.TrackedEntityAttributeGroupService;
 import org.hisp.dhis.trackedentity.TrackedEntityAttributeService;
 
-import com.opensymphony.xwork2.Action;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Chau Thu Tran
@@ -73,8 +72,6 @@ public class UpdateAttributeGroupAction
 
     private String description;
 
-    private String[] selectedAttributes;
-
     // -------------------------------------------------------------------------
     // Getters && Setters
     // -------------------------------------------------------------------------
@@ -94,15 +91,18 @@ public class UpdateAttributeGroupAction
         this.description = description;
     }
 
-    public void setSelectedAttributes( String[] selectedAttributes )
+    private List<String> teaSelected = new ArrayList<>();
+
+    public void setTeaSelected( List<String> teaSelected )
     {
-        this.selectedAttributes = selectedAttributes;
+        this.teaSelected = teaSelected;
     }
 
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -111,15 +111,13 @@ public class UpdateAttributeGroupAction
         attributeGroup.setName( name );
         attributeGroup.setDescription( description );
 
-        List<TrackedEntityAttribute> attributes = new ArrayList<TrackedEntityAttribute>();
-        
-        for ( String attributeId : selectedAttributes )
+        List<TrackedEntityAttribute> attributes = new ArrayList<>();
+
+        for ( String attributeId : teaSelected )
         {
-            TrackedEntityAttribute attribute = attributeService.getTrackedEntityAttribute( Integer
-                .parseInt( attributeId ) );
-            attributes.add( attribute );
+            attributes.add( attributeService.getTrackedEntityAttribute( attributeId ) );
         }
-        
+
         attributeGroup.setAttributes( attributes );
 
         attributeGroupService.updateTrackedEntityAttributeGroup( attributeGroup );

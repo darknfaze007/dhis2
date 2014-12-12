@@ -67,10 +67,11 @@ public class GetSystemAuthoritiesAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        systemAuthorities = new ArrayList<String>( authoritiesProvider.getSystemAuthorities() );
+        systemAuthorities = new ArrayList<>( authoritiesProvider.getSystemAuthorities() );
 
         Collections.sort( systemAuthorities );
 

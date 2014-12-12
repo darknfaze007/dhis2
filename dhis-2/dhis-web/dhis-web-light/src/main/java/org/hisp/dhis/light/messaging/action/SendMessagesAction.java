@@ -120,6 +120,7 @@ public class SendMessagesAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         log.info( "SendMessagesAction.execute() called" );        
@@ -147,7 +148,7 @@ public class SendMessagesAction
      */
     private void updateRecipients(String recipientCheckBox)
     {
-        recipient = new HashSet<User>();
+        recipient = new HashSet<>();
         
         if ( recipientCheckBox != null )
         {

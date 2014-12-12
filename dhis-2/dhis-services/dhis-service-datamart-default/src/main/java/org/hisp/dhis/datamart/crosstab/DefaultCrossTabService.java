@@ -99,6 +99,7 @@ public class DefaultCrossTabService
     // CrossTabService implementation
     // -------------------------------------------------------------------------
     
+    @Override
     public String createCrossTabTable( List<DataElementOperand> operands )
     {
         final String key = RandomStringUtils.randomAlphanumeric( 8 );
@@ -109,6 +110,7 @@ public class DefaultCrossTabService
         return key;
     }
     
+    @Override
     @Async
     public Future<?> populateCrossTabTable( List<DataElementOperand> operands,
         Collection<Integer> periodIds, Collection<Integer> organisationUnitIds, String key )
@@ -126,7 +128,7 @@ public class DefaultCrossTabService
             {
                 final Map<DataElementOperand, String> map = dataMartManager.getDataValueMap( periodId, sourceId );
 
-                final List<String> valueList = new ArrayList<String>( operands.size() + 2 );
+                final List<String> valueList = new ArrayList<>( operands.size() + 2 );
 
                 valueList.add( String.valueOf( periodId ) );
                 valueList.add( String.valueOf( sourceId ) );
@@ -182,38 +184,45 @@ public class DefaultCrossTabService
         return null;
     }
 
+    @Override
     public void dropCrossTabTable( String key )
     {
         crossTabStore.dropCrossTabTable( key );
     }
 
+    @Override
     public void createAggregatedDataCache( List<DataElementOperand> operands, String key )
     {
         crossTabStore.createAggregatedDataCache( operands, key );
     }
     
+    @Override
     public void dropAggregatedDataCache( String key )
     {
         crossTabStore.dropAggregatedDataCache( key );
     }
     
+    @Override
     public void createAggregatedOrgUnitDataCache( List<DataElementOperand> operands, String key )
     {
         crossTabStore.createAggregatedOrgUnitDataCache( operands, key );
     }
     
+    @Override
     public void dropAggregatedOrgUnitDataCache( String key )
     {
         crossTabStore.dropAggregatedOrgUnitDataCache( key );
     }
     
+    @Override
     public Collection<CrossTabDataValue> getCrossTabDataValues( Collection<DataElementOperand> operands,
         Collection<Integer> periodIds, Collection<Integer> sourceIds, String key )
     {
         return crossTabStore.getCrossTabDataValues( operands, periodIds, sourceIds, key );
     }
 
-    public Map<DataElementOperand, Double> getAggregatedDataCacheValue( Collection<DataElementOperand> operands, 
+    @Override
+    public Map<DataElementOperand, Double> getAggregatedDataCacheValue( Collection<DataElementOperand> operands,
         Period period, OrganisationUnit unit, OrganisationUnitGroup group, String key )
     {
         if ( group != null && group.getId() > 0 )

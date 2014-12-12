@@ -28,7 +28,7 @@ package org.hisp.dhis.datamart.aggregation.dataelement;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import static org.hisp.dhis.dataelement.DataElement.AGGREGATION_OPERATOR_AVERAGE;
+import static org.hisp.dhis.dataelement.DataElement.AGGREGATION_OPERATOR_AVERAGE_SUM;
 import static org.hisp.dhis.dataelement.DataElement.VALUE_TYPE_BOOL;
 import static org.hisp.dhis.system.util.DateUtils.getDaysInclusive;
 
@@ -75,7 +75,8 @@ public class AverageBoolAggregator
     // DataElementAggregator implementation
     // -------------------------------------------------------------------------
 
-    public Map<DataElementOperand, Double> getAggregatedValues( final Collection<DataElementOperand> operands, 
+    @Override
+    public Map<DataElementOperand, Double> getAggregatedValues( final Collection<DataElementOperand> operands,
         final Period period, int unitLevel, final Collection<Integer> organisationUnits, String key )
     {
         if ( CollectionUtils.isEmpty( operands ) )
@@ -89,7 +90,7 @@ public class AverageBoolAggregator
         final Map<DataElementOperand, double[]> entries = getAggregate( crossTabValues, period.getStartDate(), 
             period.getEndDate(), period.getStartDate(), period.getEndDate(), unitLevel ); // <Operand, [total value, total days]>
 
-        final Map<DataElementOperand, Double> values = new HashMap<DataElementOperand, Double>(); // <Operand, average value>
+        final Map<DataElementOperand, Double> values = new HashMap<>(); // <Operand, average value>
 
         double average = 0.0;
         
@@ -109,7 +110,7 @@ public class AverageBoolAggregator
     private Map<DataElementOperand, double[]> getAggregate( final Collection<CrossTabDataValue> crossTabValues, 
         final Date startDate, final Date endDate, final Date aggregationStartDate, final Date aggregationEndDate, int unitLevel )
     {
-        final Map<DataElementOperand, double[]> totalSums = new HashMap<DataElementOperand, double[]>(); // <Operand, [total value, total days]>
+        final Map<DataElementOperand, double[]> totalSums = new HashMap<>(); // <Operand, [total value, total days]>
 
         for ( final CrossTabDataValue crossTabValue : crossTabValues )
         {
@@ -170,13 +171,14 @@ public class AverageBoolAggregator
         return totalSums;
     }
 
+    @Override
     public Collection<DataElementOperand> filterOperands( final Collection<DataElementOperand> operands, final PeriodType periodType )
     {
-        final Collection<DataElementOperand> filteredOperands = new HashSet<DataElementOperand>();
+        final Collection<DataElementOperand> filteredOperands = new HashSet<>();
         
         for ( final DataElementOperand operand : operands )
         {
-            if ( operand.getValueType().equals( VALUE_TYPE_BOOL ) && operand.getAggregationOperator().equals( AGGREGATION_OPERATOR_AVERAGE ) )
+            if ( operand.getValueType().equals( VALUE_TYPE_BOOL ) && operand.getAggregationOperator().equals( AGGREGATION_OPERATOR_AVERAGE_SUM ) )
             {
                 filteredOperands.add( operand );
             }

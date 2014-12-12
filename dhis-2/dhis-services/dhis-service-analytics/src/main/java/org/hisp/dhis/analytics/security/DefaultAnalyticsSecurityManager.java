@@ -78,6 +78,7 @@ public class DefaultAnalyticsSecurityManager
     // AnalyticsSecurityManager implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void decideAccess( DataQueryParams params )
     {
         // ---------------------------------------------------------------------
@@ -99,13 +100,14 @@ public class DefaultAnalyticsSecurityManager
         {
             OrganisationUnit queryOrgUnit = (OrganisationUnit) object;
             
-            if ( !queryOrgUnit.isEqualOrChildOf( viewOrgUnits ) )
+            if ( !queryOrgUnit.isDescendant( viewOrgUnits ) )
             {
                 throw new IllegalQueryException( "User: " + user.getUsername() + " is not allowed to view org unit: " + queryOrgUnit.getUid() );
             }
         }
     }
     
+    @Override
     public void applyDataApprovalConstraints( DataQueryParams params )
     {
         boolean approval = (Boolean) systemSettingManager.getSystemSetting( SystemSettingManager.KEY_HIDE_UNAPPROVED_DATA_IN_ANALYTICS, false );
@@ -130,6 +132,7 @@ public class DefaultAnalyticsSecurityManager
         }
     }
     
+    @Override
     public void applyDimensionConstraints( DataQueryParams params )
     {
         applyOrganisationUnitConstraint( params );
@@ -164,7 +167,7 @@ public class DefaultAnalyticsSecurityManager
 
         params.removeDimensionOrFilter( DimensionalObject.ORGUNIT_DIM_ID );
 
-        List<OrganisationUnit> orgUnits = new ArrayList<OrganisationUnit>( user.getDataViewOrganisationUnits() );
+        List<OrganisationUnit> orgUnits = new ArrayList<>( user.getDataViewOrganisationUnits() );
 
         DimensionalObject constraint = new BaseDimensionalObject( DimensionalObject.ORGUNIT_DIM_ID, DimensionType.ORGANISATIONUNIT, orgUnits );
         

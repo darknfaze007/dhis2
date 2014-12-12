@@ -64,10 +64,10 @@ public class MessageConversation
     private Date lastMessage;
 
     @Scanned
-    private Set<UserMessage> userMessages = new HashSet<UserMessage>();
+    private Set<UserMessage> userMessages = new HashSet<>();
 
     @Scanned
-    private List<Message> messages = new ArrayList<Message>();
+    private List<Message> messages = new ArrayList<>();
 
     // --------------------------------------------------------------------------
     // Transient fields
@@ -102,10 +102,22 @@ public class MessageConversation
     // Logic
     // --------------------------------------------------------------------------
 
+
     @Override
     public String toString()
     {
-        return "[" + subject + "]";
+        return "MessageConversation{" +
+            "subject='" + subject + '\'' +
+            ", lastSender=" + lastSender +
+            ", lastMessage=" + lastMessage +
+            ", userMessages=" + userMessages +
+            ", messages=" + messages +
+            ", read=" + read +
+            ", followUp=" + followUp +
+            ", lastSenderSurname='" + lastSenderSurname + '\'' +
+            ", lastSenderFirstname='" + lastSenderFirstname + '\'' +
+            ", messageCount=" + messageCount +
+            "} " + super.toString();
     }
 
     public void addUserMessage( UserMessage userMessage )
@@ -145,6 +157,19 @@ public class MessageConversation
             if ( userMessage.getUser() != null && userMessage.getUser().equals( user ) )
             {
                 return userMessage.isFollowUp();
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isRead( User user )
+    {
+        for( UserMessage userMessage : userMessages )
+        {
+            if( userMessage.getUser() != null && userMessage.getUser().equals( user ) )
+            {
+                return userMessage.isRead();
             }
         }
 
@@ -201,7 +226,7 @@ public class MessageConversation
         this.setLastMessage( new Date() );
     }
 
-    public void remove( User user )
+    public boolean remove( User user )
     {
         Iterator<UserMessage> iterator = userMessages.iterator();
 
@@ -213,14 +238,15 @@ public class MessageConversation
             {
                 iterator.remove();
 
-                return;
+                return true;
             }
         }
+        return false;
     }
 
     public Set<User> getUsers()
     {
-        Set<User> users = new HashSet<User>();
+        Set<User> users = new HashSet<>();
 
         for ( UserMessage userMessage : userMessages )
         {
@@ -249,7 +275,7 @@ public class MessageConversation
     
     public Set<User> getTopRecipients()
     {
-        Set<User> recipients = new HashSet<User>();
+        Set<User> recipients = new HashSet<>();
         
         for ( UserMessage userMessage : userMessages )
         {

@@ -29,7 +29,7 @@ package org.hisp.dhis.period;
  */
 
 import org.hisp.dhis.calendar.CalendarService;
-import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.calendar.DateTimeUnit;
 import org.hisp.dhis.calendar.impl.Iso8601Calendar;
 
 import java.util.Calendar;
@@ -61,11 +61,11 @@ public class Cal
         return Iso8601Calendar.getInstance();
     }
 
-    private DateUnit dateUnit = new DateUnit( 1, 1, 1 );
+    private DateTimeUnit dateTimeUnit = new DateTimeUnit( 1, 1, 1 );
 
     public Cal()
     {
-        dateUnit = getCalendar().today();
+        dateTimeUnit = getCalendar().today();
     }
 
     /**
@@ -75,7 +75,18 @@ public class Cal
      */
     public Cal( int year, int month, int day )
     {
-        dateUnit = new DateUnit( year, month, day );
+        dateTimeUnit = new DateTimeUnit( year, month, day );
+    }
+
+    /**
+     * @param year    the year starting at AD 1.
+     * @param month   the month starting at 1.
+     * @param day     the day of the month starting at 1.
+     * @param iso8601 is this period an iso period
+     */
+    public Cal( int year, int month, int day, boolean iso8601 )
+    {
+        dateTimeUnit = new DateTimeUnit( year, month, day, iso8601 );
     }
 
     /**
@@ -83,7 +94,7 @@ public class Cal
      */
     public Cal( Date date )
     {
-        dateUnit = DateUnit.fromJdkDate( date );
+        dateTimeUnit = DateTimeUnit.fromJdkDate( date );
     }
 
     /**
@@ -91,12 +102,13 @@ public class Cal
      */
     public Cal now()
     {
-        dateUnit = getCalendar().today();
+        dateTimeUnit = getCalendar().today();
         return this;
     }
 
     /**
      * Adds the given amount of time to the given calendar field.
+     *
      * @param field  the calendar field.
      * @param amount the amount of time.
      */
@@ -105,11 +117,15 @@ public class Cal
         switch ( field )
         {
             case Calendar.YEAR:
-                getCalendar().plusYears( dateUnit, amount );
+                dateTimeUnit = getCalendar().plusYears( dateTimeUnit, amount );
             case Calendar.MONTH:
-                getCalendar().plusMonths( dateUnit, amount );
+                dateTimeUnit = getCalendar().plusMonths( dateTimeUnit, amount );
             case Calendar.DAY_OF_MONTH:
-                getCalendar().plusDays( dateUnit, amount );
+            case Calendar.DAY_OF_YEAR:
+                dateTimeUnit = getCalendar().plusDays( dateTimeUnit, amount );
+            break;
+            default:
+                throw new UnsupportedOperationException();
         }
 
         return this;
@@ -117,6 +133,7 @@ public class Cal
 
     /**
      * Subtracts the given amount of time to the given calendar field.
+     *
      * @param field  the calendar field.
      * @param amount the amount of time.
      */
@@ -125,11 +142,15 @@ public class Cal
         switch ( field )
         {
             case Calendar.YEAR:
-                getCalendar().minusYears( dateUnit, amount );
+                dateTimeUnit = getCalendar().minusYears( dateTimeUnit, amount );
             case Calendar.MONTH:
-                getCalendar().minusMonths( dateUnit, amount );
+                dateTimeUnit = getCalendar().minusMonths( dateTimeUnit, amount );
             case Calendar.DAY_OF_MONTH:
-                getCalendar().minusDays( dateUnit, amount );
+            case Calendar.DAY_OF_YEAR:
+                dateTimeUnit = getCalendar().minusDays( dateTimeUnit, amount );
+            break;
+            default:
+                throw new UnsupportedOperationException();
         }
 
         return this;
@@ -137,53 +158,58 @@ public class Cal
 
     /**
      * Returns the value of the given calendar field.
+     *
      * @param field the field.
      */
     public int get( int field )
     {
-        return getCalendar().toIso( dateUnit ).toJdkCalendar().get( field );
+        return getCalendar().toIso( dateTimeUnit ).toJdkCalendar().get( field );
     }
 
     /**
      * Returns the current year.
+     *
      * @return current year
      */
     public int getYear()
     {
-        return getCalendar().toIso( dateUnit ).toJdkCalendar().get( Calendar.YEAR );
+        return getCalendar().toIso( dateTimeUnit ).toJdkCalendar().get( Calendar.YEAR );
     }
 
     /**
      * Sets the current time.
+     *
      * @param year  the year starting at AD 1.
      * @param month the month starting at 1.
      * @param day   the day of the month starting at 1.
      */
     public Cal set( int year, int month, int day )
     {
-        dateUnit = new DateUnit( year, month, day );
+        dateTimeUnit = new DateTimeUnit( year, month, day );
         return this;
     }
 
     /**
      * Sets the current month and day.
+     *
      * @param month the month starting at 1.
      * @param day   the day of the month starting at 1.
      */
     public Cal set( int month, int day )
     {
-        dateUnit.setMonth( month );
-        dateUnit.setDay( day );
+        dateTimeUnit.setMonth( month );
+        dateTimeUnit.setDay( day );
         return this;
     }
 
     /**
      * Sets the current time.
+     *
      * @param date the date to base time on.
      */
     public Cal set( Date date )
     {
-        dateUnit = getCalendar().fromIso( DateUnit.fromJdkDate( date ) );
+        dateTimeUnit = getCalendar().fromIso( DateTimeUnit.fromJdkDate( date ) );
         return this;
     }
 
@@ -192,6 +218,6 @@ public class Cal
      */
     public Date time()
     {
-        return getCalendar().toIso( dateUnit ).toJdkDate();
+        return getCalendar().toIso( dateTimeUnit ).toJdkDate();
     }
 }

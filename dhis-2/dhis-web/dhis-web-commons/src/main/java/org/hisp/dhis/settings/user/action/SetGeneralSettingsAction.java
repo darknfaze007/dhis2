@@ -31,6 +31,7 @@ package org.hisp.dhis.settings.user.action;
 import static org.hisp.dhis.user.UserSettingService.KEY_DB_LOCALE;
 import static org.hisp.dhis.user.UserSettingService.KEY_MESSAGE_EMAIL_NOTIFICATION;
 import static org.hisp.dhis.user.UserSettingService.KEY_MESSAGE_SMS_NOTIFICATION;
+import static org.hisp.dhis.user.UserSettingService.KEY_ANALYSIS_DISPLAY_PROPERTY;
 
 import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.i18n.locale.LocaleManager;
@@ -96,6 +97,13 @@ public class SetGeneralSettingsAction
     {
         this.currentStyle = style;
     }
+    
+    private String analysisDisplayProperty;
+
+    public void setAnalysisDisplayProperty( String analysisDisplayProperty )
+    {
+        this.analysisDisplayProperty = analysisDisplayProperty;
+    }
 
     private Boolean messageEmailNotification;
 
@@ -129,6 +137,7 @@ public class SetGeneralSettingsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -141,6 +150,8 @@ public class SetGeneralSettingsAction
         userSettingService.saveUserSetting( KEY_MESSAGE_EMAIL_NOTIFICATION, messageEmailNotification );
 
         userSettingService.saveUserSetting( KEY_MESSAGE_SMS_NOTIFICATION, messageSmsNotification );
+
+        userSettingService.saveUserSetting( KEY_ANALYSIS_DISPLAY_PROPERTY, analysisDisplayProperty );
 
         message = i18n.getString( "settings_updated" );
 

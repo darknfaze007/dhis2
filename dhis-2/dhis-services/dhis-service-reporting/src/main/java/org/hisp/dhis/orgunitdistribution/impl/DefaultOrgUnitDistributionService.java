@@ -84,9 +84,10 @@ public class DefaultOrgUnitDistributionService
     // OrgUnitDistributionService implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public JFreeChart getOrganisationUnitDistributionChart( OrganisationUnitGroupSet groupSet, OrganisationUnit organisationUnit )
     {
-        Map<String, Double> categoryValues = new HashMap<String, Double>();
+        Map<String, Double> categoryValues = new HashMap<>();
         
         Grid grid = getOrganisationUnitDistribution( groupSet, organisationUnit, true );
         
@@ -115,8 +116,8 @@ public class DefaultOrgUnitDistributionService
         Grid grid = new ListGrid();
         grid.setTitle( groupSet.getName() + TITLE_SEP + organisationUnit.getName() );
         
-        List<OrganisationUnit> units = organisationUnitOnly ? Arrays.asList( organisationUnit ) : new ArrayList<OrganisationUnit>( organisationUnit.getChildren() );
-        List<OrganisationUnitGroup> groups = new ArrayList<OrganisationUnitGroup>( groupSet.getOrganisationUnitGroups() );
+        List<OrganisationUnit> units = organisationUnitOnly ? Arrays.asList( organisationUnit ) : new ArrayList<>( organisationUnit.getChildren() );
+        List<OrganisationUnitGroup> groups = new ArrayList<>( groupSet.getOrganisationUnitGroups() );
         
         Collections.sort( units, IdentifiableObjectNameComparator.INSTANCE );
         Collections.sort( groups, IdentifiableObjectNameComparator.INSTANCE );

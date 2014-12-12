@@ -28,6 +28,8 @@ package org.hisp.dhis.i18n.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.hisp.dhis.common.IdentifiableObjectUtils.CLASS_ALIAS;
+
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -59,13 +61,13 @@ public class I18nAction
 
     private Locale currentLocale;
     
-    private List<Locale> availableLocales = new ArrayList<Locale>();
+    private List<Locale> availableLocales = new ArrayList<>();
     
-    private Map<String, String> translations = new Hashtable<String, String>();
+    private Map<String, String> translations = new Hashtable<>();
 
-    private Map<String, String> referenceTranslations = new Hashtable<String, String>();
+    private Map<String, String> referenceTranslations = new Hashtable<>();
     
-    private List<String> propertyNames = new ArrayList<String>();
+    private List<String> propertyNames = new ArrayList<>();
 
     // -------------------------------------------------------------------------
     // Dependencies
@@ -162,9 +164,12 @@ public class I18nAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
+        className = className != null && CLASS_ALIAS.containsKey( className ) ? CLASS_ALIAS.get( className ) : className;
+        
         currentLocale = i18nService.getCurrentLocale();
         
         availableLocales = i18nService.getAvailableLocales();

@@ -65,9 +65,10 @@ public class GetCategoryOptionGroupsAction
     // Action
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
-        categoryOptionGroups = new ArrayList<CategoryOptionGroup>(
+        categoryOptionGroups = new ArrayList<>(
             dataElementCategoryService.getAllCategoryOptionGroups() );
 
         Collections.sort( categoryOptionGroups, IdentifiableObjectNameComparator.INSTANCE );

@@ -125,7 +125,7 @@ public class DefaultSqlViewService
     @Override
     public Collection<SqlView> getSqlViewsBetweenByName( String name, int first, int max )
     {
-        return sqlViewStore.getAllLikeNameOrderedName( name, first, max );
+        return sqlViewStore.getAllLikeName( name, first, max );
     }
 
     @Override
@@ -134,6 +134,12 @@ public class DefaultSqlViewService
         return query.replaceAll( "\\s*;\\s+", ";" ).replaceAll( ";+", ";" ).replaceAll( "\\s+", " " ).trim();
     }
 
+    @Override
+    public int getSqlViewCountByName( String name )
+    {
+        return sqlViewStore.getCountLikeName( name );
+    }
+    
     // -------------------------------------------------------------------------
     // SqlView expanded
     // -------------------------------------------------------------------------
@@ -153,11 +159,12 @@ public class DefaultSqlViewService
     @Override
     public Grid getSqlViewGrid( SqlView sqlView, Map<String, String> criteria )
     {
-        Grid sqlViewGrid = new ListGrid();
+        Grid grid = new ListGrid();
+        grid.setTitle( sqlView.getName() );
 
-        sqlViewExpandStore.setUpDataSqlViewTable( sqlViewGrid, sqlView.getViewName(), criteria );
+        sqlViewExpandStore.setUpDataSqlViewTable( grid, sqlView.getViewName(), criteria );
 
-        return sqlViewGrid;
+        return grid;
     }
 
     @Override

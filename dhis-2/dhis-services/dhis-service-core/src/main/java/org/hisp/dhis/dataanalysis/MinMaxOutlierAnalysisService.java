@@ -92,14 +92,15 @@ public class MinMaxOutlierAnalysisService
     // DataAnalysisService implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public Collection<DeflatedDataValue> analyse( Collection<OrganisationUnit> organisationUnits,
         Collection<DataElement> dataElements, Collection<Period> periods, Double stdDevFactor )
     {
-        Set<DataElement> elements = new HashSet<DataElement>( dataElements );
+        Set<DataElement> elements = new HashSet<>( dataElements );
         
         FilterUtils.filter( elements, DATALEMENT_INT_FILTER );
         
-        Set<DataElementCategoryOptionCombo> categoryOptionCombos = new HashSet<DataElementCategoryOptionCombo>();
+        Set<DataElementCategoryOptionCombo> categoryOptionCombos = new HashSet<>();
         
         for ( DataElement dataElement : elements )
         {
@@ -111,12 +112,13 @@ public class MinMaxOutlierAnalysisService
         return dataAnalysisStore.getMinMaxViolations( elements, categoryOptionCombos, periods, organisationUnits, MAX_OUTLIERS );
     }
     
+    @Override
     public void generateMinMaxValues( Collection<OrganisationUnit> organisationUnits,
         Collection<DataElement> dataElements, Double stdDevFactor )
     {
         log.info( "Starting min-max value generation, no of data elements: " + dataElements.size() + ", no of org units: " + organisationUnits.size() );
 
-        Set<Integer> orgUnitIds = new HashSet<Integer>( ConversionUtils.getIdentifiers( OrganisationUnit.class, organisationUnits ) ); 
+        Set<Integer> orgUnitIds = new HashSet<>( ConversionUtils.getIdentifiers( OrganisationUnit.class, organisationUnits ) );
 
         minMaxDataElementService.removeMinMaxDataElements( dataElements, organisationUnits );
 

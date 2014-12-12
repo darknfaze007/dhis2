@@ -105,18 +105,6 @@ public class UpdateProgramAction
         this.description = description;
     }
 
-    private Integer version;
-
-    public Integer getVersion()
-    {
-        return version;
-    }
-
-    public void setVersion( Integer version )
-    {
-        this.version = version;
-    }
-
     private String dateOfEnrollmentDescription;
 
     public void setDateOfEnrollmentDescription( String dateOfEnrollmentDescription )
@@ -152,21 +140,21 @@ public class UpdateProgramAction
         this.displayIncidentDate = displayIncidentDate;
     }
 
-    private List<String> selectedPropertyIds = new ArrayList<String>();
+    private List<String> selectedPropertyIds = new ArrayList<>();
 
     public void setSelectedPropertyIds( List<String> selectedPropertyIds )
     {
         this.selectedPropertyIds = selectedPropertyIds;
     }
 
-    private List<Boolean> personDisplayNames = new ArrayList<Boolean>();
+    private List<Boolean> personDisplayNames = new ArrayList<>();
 
     public void setPersonDisplayNames( List<Boolean> personDisplayNames )
     {
         this.personDisplayNames = personDisplayNames;
     }
 
-    private List<Boolean> mandatory = new ArrayList<Boolean>();
+    private List<Boolean> mandatory = new ArrayList<>();
 
     public void setMandatory( List<Boolean> mandatory )
     {
@@ -206,13 +194,6 @@ public class UpdateProgramAction
     public void setRemindCompleted( Boolean remindCompleted )
     {
         this.remindCompleted = remindCompleted;
-    }
-
-    private Boolean displayOnAllOrgunit;
-
-    public void setDisplayOnAllOrgunit( Boolean displayOnAllOrgunit )
-    {
-        this.displayOnAllOrgunit = displayOnAllOrgunit;
     }
 
     private Boolean selectEnrollmentDatesInFuture;
@@ -271,7 +252,7 @@ public class UpdateProgramAction
         this.trackedEntityId = trackedEntityId;
     }
 
-    private List<Boolean> allowFutureDate = new ArrayList<Boolean>();
+    private List<Boolean> allowFutureDate = new ArrayList<>();
 
     public void setAllowFutureDate( List<Boolean> allowFutureDate )
     {
@@ -282,6 +263,7 @@ public class UpdateProgramAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -291,7 +273,6 @@ public class UpdateProgramAction
         ignoreOverdueEvents = (ignoreOverdueEvents == null) ? false : ignoreOverdueEvents;
         blockEntryForm = (blockEntryForm == null) ? false : blockEntryForm;
         remindCompleted = (remindCompleted == null) ? false : remindCompleted;
-        displayOnAllOrgunit = (displayOnAllOrgunit == null) ? false : displayOnAllOrgunit;
         selectEnrollmentDatesInFuture = (selectEnrollmentDatesInFuture == null) ? false : selectEnrollmentDatesInFuture;
         selectIncidentDatesInFuture = (selectIncidentDatesInFuture == null) ? false : selectIncidentDatesInFuture;
         dataEntryMethod = (dataEntryMethod == null) ? false : dataEntryMethod;
@@ -299,13 +280,11 @@ public class UpdateProgramAction
         Program program = programService.getProgram( id );
         program.setName( name );
         program.setDescription( description );
-        program.setVersion( version );
         program.setDateOfEnrollmentDescription( dateOfEnrollmentDescription );
         program.setDateOfIncidentDescription( dateOfIncidentDescription );
         program.setType( type );
         program.setDisplayIncidentDate( displayIncidentDate );
         program.setOnlyEnrollOnce( onlyEnrollOnce );
-        program.setDisplayOnAllOrgunit( displayOnAllOrgunit );
         program.setSelectEnrollmentDatesInFuture( selectEnrollmentDatesInFuture );
         program.setSelectIncidentDatesInFuture( selectIncidentDatesInFuture );
         program.setDataEntryMethod( dataEntryMethod );
@@ -344,9 +323,9 @@ public class UpdateProgramAction
             program.setTrackedEntity( null );
         }
 
-        if ( program.getAttributes() != null )
+        if ( program.getProgramAttributes() != null )
         {
-            program.getAttributes().clear();
+            program.getProgramAttributes().clear();
         }
 
         int index = 0;
@@ -360,8 +339,8 @@ public class UpdateProgramAction
                 TrackedEntityAttribute attribute = attributeService.getTrackedEntityAttribute( Integer
                     .parseInt( ids[1] ) );
                 ProgramTrackedEntityAttribute programAttribute = new ProgramTrackedEntityAttribute( attribute,
-                    index + 1, personDisplayNames.get( index ), mandatory.get( index ), allowFutureDate.get( index ) );
-                program.getAttributes().add( programAttribute );
+                    personDisplayNames.get( index ), mandatory.get( index ), allowFutureDate.get( index ) );
+                program.getProgramAttributes().add( programAttribute );
             }
 
             index++;
@@ -373,6 +352,8 @@ public class UpdateProgramAction
             program.setRelatedProgram( relatedProgram );
         }
 
+        program.increaseVersion(); //TODO make more fine-grained
+        
         programService.updateProgram( program );
 
         return SUCCESS;

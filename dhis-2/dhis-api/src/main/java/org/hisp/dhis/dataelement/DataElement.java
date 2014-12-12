@@ -89,6 +89,7 @@ public class DataElement
     public static final String VALUE_TYPE_TRUE_ONLY = "trueOnly";
     public static final String VALUE_TYPE_DATE = "date";
     public static final String VALUE_TYPE_UNIT_INTERVAL = "unitInterval";
+    public static final String VALUE_TYPE_PERCENTAGE = "percentage";
 
     public static final String VALUE_TYPE_NUMBER = "number";
     public static final String VALUE_TYPE_POSITIVE_INT = "posInt";
@@ -98,11 +99,15 @@ public class DataElement
     public static final String VALUE_TYPE_LONG_TEXT = "longText";
 
     public static final String AGGREGATION_OPERATOR_SUM = "sum";
-    public static final String AGGREGATION_OPERATOR_AVERAGE = "average";
+    public static final String AGGREGATION_OPERATOR_AVERAGE_SUM = "average"; // Sum in organisation unit
+    public static final String AGGREGATION_OPERATOR_AVERAGE = "avg";
     public static final String AGGREGATION_OPERATOR_COUNT = "count";
     public static final String AGGREGATION_OPERATOR_STDDEV = "stddev";
     public static final String AGGREGATION_OPERATOR_VARIANCE = "variance";
-
+    public static final String AGGREGATION_OPERATOR_MIN = "min";
+    public static final String AGGREGATION_OPERATOR_MAX = "max";
+    public static final String AGGREGATION_OPERATOR_NONE = "none";
+    
     /**
      * The name to appear in forms.
      */
@@ -147,11 +152,6 @@ public class DataElement
     private DataElementCategoryCombo categoryCombo;
 
     /**
-     * Defines a custom sort order.
-     */
-    private Integer sortOrder;
-
-    /**
      * URL for lookup of additional information on the web.
      */
     private String url;
@@ -159,17 +159,17 @@ public class DataElement
     /**
      * The data element groups which this
      */
-    private Set<DataElementGroup> groups = new HashSet<DataElementGroup>();
+    private Set<DataElementGroup> groups = new HashSet<>();
 
     /**
      * The data sets which this data element is a member of.
      */
-    private Set<DataSet> dataSets = new HashSet<DataSet>();
+    private Set<DataSet> dataSets = new HashSet<>();
 
     /**
      * The lower organisation unit levels for aggregation.
      */
-    private List<Integer> aggregationLevels = new ArrayList<Integer>();
+    private List<Integer> aggregationLevels = new ArrayList<>();
 
     /**
      * There is no point of saving 0's for this data element default is false
@@ -180,7 +180,7 @@ public class DataElement
     /**
      * Set of the dynamic attributes values that belong to this data element.
      */
-    private Set<AttributeValue> attributeValues = new HashSet<AttributeValue>();
+    private Set<AttributeValue> attributeValues = new HashSet<>();
 
     /**
      * The option set for data values linked to this data element.
@@ -230,7 +230,7 @@ public class DataElement
 
     public void updateDataElementGroups( Set<DataElementGroup> updates )
     {
-        for ( DataElementGroup group : new HashSet<DataElementGroup>( groups ) )
+        for ( DataElementGroup group : new HashSet<>( groups ) )
         {
             if ( !updates.contains( group ) )
             {
@@ -284,6 +284,27 @@ public class DataElement
     }
 
     /**
+     * Returns the detailed data element type. If value type is int, the number
+     * type is returned. If value type is string, the text type is returned.
+     * Otherwise the type is returned.
+     */
+    public String getDetailedType()
+    {
+        if ( VALUE_TYPE_INT.equals( type ) )
+        {
+            return numberType;
+        }
+        else if ( VALUE_TYPE_STRING.equals( type ) )
+        {
+            return textType;
+        }
+        else
+        {
+            return type;
+        }
+    }
+    
+    /**
      * Returns whether aggregation should be skipped for this data element, based
      * on the setting of the data set which this data element is a members of,
      * if any.
@@ -300,7 +321,7 @@ public class DataElement
      */
     public DataSet getDataSet()
     {
-        List<DataSet> list = new ArrayList<DataSet>( dataSets );
+        List<DataSet> list = new ArrayList<>( dataSets );
         Collections.sort( list, DataSetFrequencyComparator.INSTANCE );
         return !list.isEmpty() ? list.get( 0 ) : null;
     }
@@ -316,6 +337,24 @@ public class DataElement
         DataSet dataSet = getDataSet();
 
         return dataSet != null ? dataSet.getPeriodType() : null;
+    }
+    
+    /**
+     * Indicates whether this data element requires approval of data. Returns true
+     * if only one of the data sets associated with this data element requires
+     * approval.
+     */
+    public boolean isApproveData()
+    {
+        for ( DataSet dataSet : dataSets )
+        {
+            if ( dataSet != null && dataSet.isApproveData() )
+            {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /**
@@ -403,7 +442,7 @@ public class DataElement
 
     public String getDisplayFormName()
     {
-        return (displayFormName != null && !displayFormName.trim().isEmpty()) ? displayFormName : formName;
+        return displayFormName != null && !displayFormName.trim().isEmpty() ? displayFormName : formName;
     }
 
     public void setDisplayFormName( String displayFormName )
@@ -526,16 +565,6 @@ public class DataElement
     public void setCategoryCombo( DataElementCategoryCombo categoryCombo )
     {
         this.categoryCombo = categoryCombo;
-    }
-
-    public Integer getSortOrder()
-    {
-        return sortOrder;
-    }
-
-    public void setSortOrder( Integer sortOrder )
-    {
-        this.sortOrder = sortOrder;
     }
 
     @JsonProperty
@@ -692,7 +721,6 @@ public class DataElement
             aggregationOperator = dataElement.getAggregationOperator() == null ? aggregationOperator : dataElement
                 .getAggregationOperator();
             categoryCombo = dataElement.getCategoryCombo() == null ? categoryCombo : dataElement.getCategoryCombo();
-            sortOrder = dataElement.getSortOrder() == null ? sortOrder : dataElement.getSortOrder();
             url = dataElement.getUrl() == null ? url : dataElement.getUrl();
             optionSet = dataElement.getOptionSet() == null ? optionSet : dataElement.getOptionSet();
 

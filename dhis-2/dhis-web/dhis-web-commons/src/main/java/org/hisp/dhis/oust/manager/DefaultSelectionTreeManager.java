@@ -65,6 +65,7 @@ public class DefaultSelectionTreeManager
     // SelectionTreeManager implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void setRootOrganisationUnits( Collection<OrganisationUnit> organisationUnits )
     {
         if ( organisationUnits == null )
@@ -72,11 +73,12 @@ public class DefaultSelectionTreeManager
             throw new IllegalArgumentException( "Root OrganisationUnit cannot be null" );
         }
 
-        saveToSession( SESSION_KEY_ROOT_ORG_UNITS, new HashSet<OrganisationUnit>( organisationUnits ) );
+        saveToSession( SESSION_KEY_ROOT_ORG_UNITS, new HashSet<>( organisationUnits ) );
 
         clearSelectedOrganisationUnits();
     }
 
+    @Override
     public void setRootOrganisationUnitsParent( OrganisationUnit rootUnitsParent )
     {
         if ( rootUnitsParent == null )
@@ -91,6 +93,7 @@ public class DefaultSelectionTreeManager
         clearSelectedOrganisationUnits();
     }
 
+    @Override
     public Collection<OrganisationUnit> getRootOrganisationUnits()
     {
         Collection<OrganisationUnit> rootUnits = getCollectionFromSession( SESSION_KEY_ROOT_ORG_UNITS );
@@ -103,6 +106,7 @@ public class DefaultSelectionTreeManager
         return reloadOrganisationUnits( rootUnits );
     }
 
+    @Override
     public OrganisationUnit getRootOrganisationUnitsParent()
     {
         Collection<OrganisationUnit> rootUnits = getCollectionFromSession( SESSION_KEY_ROOT_ORG_UNITS );
@@ -119,11 +123,13 @@ public class DefaultSelectionTreeManager
         return reloadedRootUnit.getParent();
     }
 
+    @Override
     public void resetRootOrganisationUnits()
     {
         removeFromSession( SESSION_KEY_ROOT_ORG_UNITS );
     }
 
+    @Override
     public void setSelectedOrganisationUnits( Collection<OrganisationUnit> selectedUnits )
     {
         if ( selectedUnits == null )
@@ -145,33 +151,38 @@ public class DefaultSelectionTreeManager
         }
     }
 
+    @Override
     public Collection<OrganisationUnit> getSelectedOrganisationUnits()
     {
         Collection<OrganisationUnit> selectedUnits = getCollectionFromSession( SESSION_KEY_SELECTED_ORG_UNITS );
 
         if ( selectedUnits == null )
         {
-            return new HashSet<OrganisationUnit>();
+            return new HashSet<>();
         }
 
         return selectedUnits;
     }
 
+    @Override
     public Collection<OrganisationUnit> getReloadedSelectedOrganisationUnits()
     {
         return reloadOrganisationUnits( getSelectedOrganisationUnits() );
     }
 
+    @Override
     public OrganisationUnit getReloadedSelectedOrganisationUnit()
     {
         return reloadOrganisationUnit( getSelectedOrganisationUnit() );
     }
 
+    @Override
     public void clearSelectedOrganisationUnits()
     {
         removeFromSession( SESSION_KEY_SELECTED_ORG_UNITS );
     }
 
+    @Override
     public OrganisationUnit getSelectedOrganisationUnit()
     {
         Collection<OrganisationUnit> selectedUnits = getSelectedOrganisationUnits();
@@ -184,6 +195,7 @@ public class DefaultSelectionTreeManager
         return selectedUnits.iterator().next();
     }
 
+    @Override
     public void setSelectedOrganisationUnit( OrganisationUnit selectedUnit )
     {
         if ( selectedUnit == null )
@@ -191,7 +203,7 @@ public class DefaultSelectionTreeManager
             throw new IllegalArgumentException( "Selected OrganisationUnit cannot be null" );
         }
 
-        Set<OrganisationUnit> set = new HashSet<OrganisationUnit>( 1 );
+        Set<OrganisationUnit> set = new HashSet<>( 1 );
         set.add( selectedUnit );
         setSelectedOrganisationUnits( set );
     }
@@ -232,7 +244,7 @@ public class DefaultSelectionTreeManager
 
     private Collection<OrganisationUnit> reloadOrganisationUnits( Collection<OrganisationUnit> units )
     {
-        Set<OrganisationUnit> reloadedUnits = new HashSet<OrganisationUnit>();
+        Set<OrganisationUnit> reloadedUnits = new HashSet<>();
 
         int noTotal = organisationUnitService.getNumberOfOrganisationUnits();
 
@@ -271,7 +283,7 @@ public class DefaultSelectionTreeManager
 
     private Collection<OrganisationUnit> getUnitsInTree( Collection<OrganisationUnit> rootUnits, Collection<OrganisationUnit> selectedUnits )
     {
-        Collection<OrganisationUnit> unitsInTree = new ArrayList<OrganisationUnit>();
+        Collection<OrganisationUnit> unitsInTree = new ArrayList<>();
 
         for ( OrganisationUnit selectedUnit : selectedUnits )
         {

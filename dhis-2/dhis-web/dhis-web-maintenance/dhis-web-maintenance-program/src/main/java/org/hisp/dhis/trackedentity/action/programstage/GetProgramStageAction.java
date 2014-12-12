@@ -32,11 +32,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.hisp.dhis.program.ProgramIndicator;
+import org.hisp.dhis.program.ProgramIndicatorService;
 import org.hisp.dhis.program.ProgramStage;
 import org.hisp.dhis.program.ProgramStageDataElement;
 import org.hisp.dhis.program.ProgramStageService;
 import org.hisp.dhis.user.UserGroup;
 import org.hisp.dhis.user.UserGroupService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.opensymphony.xwork2.Action;
 
@@ -66,6 +69,9 @@ public class GetProgramStageAction
         this.userGroupService = userGroupService;
     }
 
+    @Autowired
+    private ProgramIndicatorService programIndicatorService;
+    
     // -------------------------------------------------------------------------
     // Input/Output
     // -------------------------------------------------------------------------
@@ -107,11 +113,19 @@ public class GetProgramStageAction
     {
         this.userGroups = userGroups;
     }
+
+    private List<ProgramIndicator> programIndicators;
+
+    public List<ProgramIndicator> getProgramIndicators()
+    {
+        return programIndicators;
+    }
     
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -119,8 +133,11 @@ public class GetProgramStageAction
 
         programStageDataElements = programStage.getProgramStageDataElements();
         
-        userGroups = new ArrayList<UserGroup>( userGroupService.getAllUserGroups() );
-
+        userGroups = new ArrayList<>( userGroupService.getAllUserGroups() );
+        
+        programIndicators = new ArrayList<>( programIndicatorService.getProgramIndicators( programStage.getProgram() ) );
+        programIndicators.removeAll( programStage.getProgramIndicators() );
+        
         return SUCCESS;
     }
 }

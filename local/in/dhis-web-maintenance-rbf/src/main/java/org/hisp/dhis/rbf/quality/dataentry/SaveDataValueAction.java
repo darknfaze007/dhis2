@@ -139,6 +139,20 @@ public class SaveDataValueAction
         this.overAllScoreDeId = overAllScoreDeId;
     }
     
+    private String overHeadPaymentDeId;
+    
+    public void setOverHeadPaymentDeId( String overHeadPaymentDeId )
+    {
+        this.overHeadPaymentDeId = overHeadPaymentDeId;
+    }
+    
+    private String overHeadPaymentValue;
+    
+    public void setOverHeadPaymentValue( String overHeadPaymentValue )
+    {
+        this.overHeadPaymentValue = overHeadPaymentValue;
+    }
+    
     // -------------------------------------------------------------------------
     // Output
     // -------------------------------------------------------------------------
@@ -216,21 +230,30 @@ public class SaveDataValueAction
                 dataValue.setCategoryOptionCombo(optionCombo);
                 
                 dataValue.setValue( value.trim() );
-                dataValue.setTimestamp( now );
+                //dataValue.setTimestamp( now );
+                dataValue.setLastUpdated( now );
                 dataValue.setStoredBy( storedBy );
                 
                 dataValueService.addDataValue( dataValue );
             }
         }
         else
-        {
+        {   /*    
             if( !(value.trim().equalsIgnoreCase( dataValue.getValue() ) ) )
             {
                 dataValue.setValue( value.trim() );
-                dataValue.setTimestamp( now );
+                //dataValue.setTimestamp( now );
+                dataValue.setLastUpdated( now );
                 dataValue.setStoredBy( storedBy );                
                 dataValueService.updateDataValue( dataValue );
-          }            
+            }
+            */
+            
+            dataValue.setValue( value );
+            dataValue.setLastUpdated( now );
+            dataValue.setStoredBy( storedBy );
+
+            dataValueService.updateDataValue( dataValue );  
         }
         
         // for saving Over All Score
@@ -260,7 +283,9 @@ public class SaveDataValueAction
                     overAllScoreDataValue.setCategoryOptionCombo( optionCombo );
                     
                     overAllScoreDataValue.setValue( overAllScoreValue.trim() );
-                    overAllScoreDataValue.setTimestamp( now );
+                    //overAllScoreDataValue.setTimestamp( now );
+                    overAllScoreDataValue.setLastUpdated( now );
+                    
                     overAllScoreDataValue.setStoredBy( storedBy );
                     
                     dataValueService.addDataValue( overAllScoreDataValue );
@@ -271,7 +296,8 @@ public class SaveDataValueAction
                 if( !(overAllScoreValue.trim().equalsIgnoreCase( overAllScoreDataValue.getValue() ) ) )
                 {
                     overAllScoreDataValue.setValue( overAllScoreValue.trim() );
-                    overAllScoreDataValue.setTimestamp( now );
+                    //overAllScoreDataValue.setTimestamp( now );
+                    overAllScoreDataValue.setLastUpdated( now );
                     overAllScoreDataValue.setStoredBy( storedBy );                
                     dataValueService.updateDataValue( overAllScoreDataValue );
               }            
@@ -279,6 +305,51 @@ public class SaveDataValueAction
             
         }
         
+        // Save Quality overhead payment in dataValue
+        if ( overHeadPaymentValue != null && overHeadPaymentDeId != null )
+        {
+            overHeadPaymentValue = overHeadPaymentValue.trim();
+            
+            DataElement overHeadPaymentDataElement = dataElementService.getDataElement( Integer.parseInt( overHeadPaymentDeId ) );
+
+            if ( overHeadPaymentDataElement == null )
+            {
+                return logError( "Invalid dataelement identifier: " + overHeadPaymentDeId );
+            }
+            
+            DataValue overHeadPaymentDataValue = dataValueService.getDataValue( overHeadPaymentDataElement, period, organisationUnit, optionCombo );
+            
+            if ( overHeadPaymentDataValue == null )
+            {
+                if ( overHeadPaymentValue != null && (!overHeadPaymentValue.trim().equals( "" ) )  )
+                {
+                    overHeadPaymentDataValue = new DataValue();
+                    
+                    overHeadPaymentDataValue.setPeriod( period );
+                    overHeadPaymentDataValue.setDataElement( overHeadPaymentDataElement );
+                    overHeadPaymentDataValue.setSource(organisationUnit);
+                    overHeadPaymentDataValue.setCategoryOptionCombo( optionCombo );
+                    
+                    overHeadPaymentDataValue.setValue( overHeadPaymentValue.trim() );
+                    overHeadPaymentDataValue.setLastUpdated( now );
+                    
+                    overHeadPaymentDataValue.setStoredBy( storedBy );
+                    
+                    dataValueService.addDataValue( overHeadPaymentDataValue );
+                }
+            }
+            else
+            {
+                if( !( overHeadPaymentValue.trim().equalsIgnoreCase( overHeadPaymentDataValue.getValue() ) ) )
+                {
+                    overHeadPaymentDataValue.setValue( overHeadPaymentValue.trim() );
+                    overHeadPaymentDataValue.setLastUpdated( now );
+                    overHeadPaymentDataValue.setStoredBy( storedBy );                
+                    dataValueService.updateDataValue( overHeadPaymentDataValue );
+              }            
+            }
+            
+        }
         
         return SUCCESS;
     }

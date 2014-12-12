@@ -33,8 +33,12 @@ import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.acl.AclService;
 import org.hisp.dhis.common.CodeGenerator;
 import org.hisp.dhis.common.IdentifiableObject;
+import org.hisp.dhis.i18n.I18n;
+import org.hisp.dhis.i18n.I18nManager;
+import org.hisp.dhis.i18n.locale.LocaleManager;
 import org.hisp.dhis.message.MessageSender;
 import org.hisp.dhis.period.Cal;
+import org.hisp.dhis.security.migration.MigrationPasswordManager;
 import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.system.util.ValidationUtils;
 import org.hisp.dhis.system.velocity.VelocityManager;
@@ -43,12 +47,15 @@ import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserAuthorityGroup;
 import org.hisp.dhis.user.UserCredentials;
 import org.hisp.dhis.user.UserService;
+import org.hisp.dhis.user.UserSettingService;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,7 +69,8 @@ public class DefaultSecurityService
 
     private static final String RESTORE_PATH = "/dhis-web-commons/security/";
 
-    private static final int INVITED_USERNAME_UNIQUE_LENGTH = 15;
+    private static final String DEFAULT_APPLICATION_TITLE = "DHIS 2";
+
     private static final int INVITED_USER_PASSWORD_LENGTH = 40;
 
     private static final int RESTORE_TOKEN_LENGTH = 50;
@@ -72,9 +80,9 @@ public class DefaultSecurityService
     // Dependencies
     // -------------------------------------------------------------------------
 
-    private PasswordManager passwordManager;
+    private MigrationPasswordManager passwordManager;
 
-    public void setPasswordManager( PasswordManager passwordManager )
+    public void setPasswordManager( MigrationPasswordManager passwordManager )
     {
         this.passwordManager = passwordManager;
     }
@@ -100,6 +108,13 @@ public class DefaultSecurityService
         this.systemSettingManager = systemSettingManager;
     }
 
+    private I18nManager i18nManager;
+
+    public void setI18nManager( I18nManager i18nManager )
+    {
+        this.i18nManager = i18nManager;
+    }
+
     @Autowired
     private CurrentUserService currentUserService;
 
@@ -110,6 +125,7 @@ public class DefaultSecurityService
     // SecurityService implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public boolean prepareUserForInvite( User user )
     {
         if ( user == null || user.getUserCredentials() == null )
@@ -119,7 +135,7 @@ public class DefaultSecurityService
 
         if ( user.getUsername() == null || user.getUsername().isEmpty() )
         {
-            String username = "user_invitation_" + CodeGenerator.generateCode( INVITED_USERNAME_UNIQUE_LENGTH );
+            String username = "invite-" + user.getEmail() + "-" + CodeGenerator.generateCode();
 
             user.getUserCredentials().setUsername( username );
         }
@@ -128,72 +144,113 @@ public class DefaultSecurityService
 
         user.setSurname( "(TBD)" );
         user.setFirstName( "(TBD)" );
-        user.getUserCredentials().setPassword( passwordManager.encodePassword( user.getUsername(), rawPassword ) );
+        user.getUserCredentials().setPassword( passwordManager.encode( rawPassword ) );
 
         return true;
     }
 
-    public boolean sendRestoreMessage( UserCredentials credentials, String rootPath, RestoreOptions restoreOptions )
+    @Override
+    public String validateRestore( UserCredentials credentials )
     {
-        if ( credentials == null || rootPath == null )
-        {
-            return false;
-        }
-
-        RestoreType restoreType = restoreOptions.getRestoreType();
-
-        if ( credentials.getUser() == null || credentials.getUser().getEmail() == null )
-        {
-            log.info( "Could not send " + restoreType.name() + " message as user does not exist or has no email: " + credentials );
-            return false;
-        }
-
-        if ( !ValidationUtils.emailIsValid( credentials.getUser().getEmail() ) )
-        {
-            log.info( "Could not send " + restoreType.name() + " message as email is invalid" );
-            return false;
-        }
-
         if ( !systemSettingManager.emailEnabled() )
         {
-            log.info( "Could not send " + restoreType.name() + " message as email is not configured" );
-            return false;
+            log.info( "Could not send restore/invite message as email is not configured" );
+            return "email_not_configured_for_system";
+        }
+
+        if ( credentials == null || credentials.getUser() == null )
+        {
+            log.info( "Could not send restore/invite message as user does not exist: " + credentials );
+            return "no_user_credentials";
+        }
+
+        if ( credentials.getUser().getEmail() == null || !ValidationUtils.emailIsValid( credentials.getUser().getEmail() ) )
+        {
+            log.info( "Could not send restore/invite message as user has no email or email is invalid" );
+            return "user_does_not_have_valid_email";
         }
 
         if ( credentials.hasAnyAuthority( Arrays.asList( UserAuthorityGroup.CRITICAL_AUTHS ) ) )
         {
-            log.info( "Not allowed to  " + restoreType.name() + " users with critical authorities" );
+            log.info( "Not allowed to restore/invite users with critical authorities" );
+            return "user_has_critical_authorities";
+        }
+
+        return null;
+    }
+
+    @Override
+    public boolean sendRestoreMessage( UserCredentials credentials, String rootPath, RestoreOptions restoreOptions )
+    {
+        if ( credentials == null || restoreOptions == null )
+        {
             return false;
+        }
+
+        if ( validateRestore( credentials ) != null )
+        {
+            return false;
+        }
+        
+        RestoreType restoreType = restoreOptions.getRestoreType();
+
+        String applicationTitle = (String) systemSettingManager.getSystemSetting( SystemSettingManager.KEY_APPLICATION_TITLE );
+
+        if ( applicationTitle == null || applicationTitle.isEmpty() )
+        {
+            applicationTitle = DEFAULT_APPLICATION_TITLE;
         }
 
         String[] result = initRestore( credentials, restoreOptions );
 
-        Set<User> users = new HashSet<User>();
+        Set<User> users = new HashSet<>();
         users.add( credentials.getUser() );
 
-        Map<String, String> vars = new HashMap<String, String>();
-        vars.put( "rootPath", rootPath );
+        Map<String, Object> vars = new HashMap<>();
+        vars.put( "applicationTitle", applicationTitle );
         vars.put( "restorePath", rootPath + RESTORE_PATH + restoreType.getAction() );
         vars.put( "token", result[0] );
         vars.put( "code", result[1] );
         vars.put( "username", credentials.getUsername() );
 
-        String text1 = new VelocityManager().render( vars, restoreType.getEmailTemplate() + "1" );
-        String text2 = new VelocityManager().render( vars, restoreType.getEmailTemplate() + "2" );
+        User user = credentials.getUser();
+        Locale locale = (Locale) userService.getUserSettingValue( user, UserSettingService.KEY_UI_LOCALE, LocaleManager.DHIS_STANDARD_LOCALE );
 
-        emailMessageSender.sendMessage( restoreType.getEmailSubject() + " (message 1 of 2)", text1, null, users, true );
-        emailMessageSender.sendMessage( restoreType.getEmailSubject() + " (message 2 of 2)", text2, null, users, true );
+        I18n i18n = i18nManager.getI18n( locale );
+        vars.put( "i18n" , i18n );
+
+        rootPath = rootPath.replace( "http://", "" ).replace( "https://", "" );
+
+        // -------------------------------------------------------------------------
+        // Render emails
+        // -------------------------------------------------------------------------
+
+        VelocityManager vm = new VelocityManager();
+
+        String text1 = vm.render( vars, restoreType.getEmailTemplate() + "1" ),
+               text2 = vm.render( vars, restoreType.getEmailTemplate() + "2" );
+
+        String subject1 = i18n.getString( restoreType.getEmailSubject() ) + " " + rootPath + " (" + i18n.getString( "message" ).toLowerCase() + " 1 / 2)",
+               subject2 = i18n.getString( restoreType.getEmailSubject() ) + " " + rootPath + " (" + i18n.getString( "message" ).toLowerCase() + " 2 / 2)";
+
+        // -------------------------------------------------------------------------
+        // Send emails
+        // -------------------------------------------------------------------------
+
+        emailMessageSender.sendMessage( subject1, text1, null, users, true );
+        emailMessageSender.sendMessage( subject2, text2, null, users, true );
 
         return true;
     }
 
+    @Override
     public String[] initRestore( UserCredentials credentials, RestoreOptions restoreOptions )
     {
         String token = restoreOptions.getTokenPrefix() + CodeGenerator.generateCode( RESTORE_TOKEN_LENGTH );
         String code = CodeGenerator.generateCode( RESTORE_CODE_LENGTH );
 
-        String hashedToken = passwordManager.encodePassword( credentials.getUsername(), token );
-        String hashedCode = passwordManager.encodePassword( credentials.getUsername(), code );
+        String hashedToken = passwordManager.encode( token );
+        String hashedCode = passwordManager.encode( code );
 
         RestoreType restoreType = restoreOptions.getRestoreType();
 
@@ -205,26 +262,25 @@ public class DefaultSecurityService
 
         userService.updateUserCredentials( credentials );
 
-        String[] result = { token, code };
-        return result;
+        return new String[] { token, code };
     }
 
+    @Override
     public RestoreOptions getRestoreOptions( String token )
     {
         return RestoreOptions.getRestoreOptions( token );
     }
 
+    @Override
     public boolean restore( UserCredentials credentials, String token, String code, String newPassword, RestoreType restoreType )
     {
         if ( credentials == null || token == null || code == null || newPassword == null
-            || !canRestoreNow( credentials, token, code, restoreType ) )
+            || !canRestore( credentials, token, code, restoreType ) )
         {
             return false;
         }
 
-        String username = credentials.getUsername();
-
-        newPassword = passwordManager.encodePassword( username, newPassword );
+        newPassword = passwordManager.encode( newPassword );
 
         credentials.setPassword( newPassword );
 
@@ -237,53 +293,153 @@ public class DefaultSecurityService
         return true;
     }
 
-    public boolean canRestoreNow( UserCredentials credentials, String token, String code, RestoreType restoreType )
+    @Override
+    public boolean canRestore( UserCredentials credentials, String token, String code, RestoreType restoreType )
     {
-        if ( !verifyToken( credentials, token, restoreType ) )
+        String logPrefix = "Restore user: " + credentials.getUid() + ", username: " + credentials.getUsername() + " ";
+
+        String errorMessage = verifyRestore( credentials, token, code, restoreType );
+
+        if ( errorMessage != null )
         {
+            log.info( logPrefix + "Failed to verify restore: " + errorMessage );
             return false;
         }
 
-        String username = credentials.getUsername();
-
-        String encodedToken = passwordManager.encodePassword( username, token );
-        String encodedCode = passwordManager.encodePassword( username, code );
-
-        Date date = new Cal().now().time();
-
-        return credentials.canRestore( encodedToken, encodedCode, date );
+        log.info( logPrefix + " success" );
+        return true;
     }
 
-    public boolean verifyToken( UserCredentials credentials, String token, RestoreType restoreType )
+    /**
+     * Verifies all parameters needed for account restore and checks validity of the
+     * user supplied token and code. If the restore cannot be verified a descriptive
+     * error string is returned.
+     * @param credentials the user credentials.
+     * @param token the user supplied token.
+     * @param code the user supplied code.
+     * @param restoreType the restore type.
+     * @return null if restore is valid, a descriptive error string otherwise.
+     */
+    private String verifyRestore( UserCredentials credentials, String token, String code, RestoreType restoreType )
     {
-        if ( credentials == null || token == null || restoreType == null )
+        String errorMessage = credentials.isRestorable();
+
+        if ( errorMessage != null )
         {
-            return false;
+            return errorMessage;
+        }
+
+        errorMessage = verifyToken( credentials, token, restoreType );
+
+        if ( errorMessage != null )
+        {
+            return errorMessage;
+        }
+
+        errorMessage = verifyRestoreCode( credentials, code );
+
+        if ( errorMessage != null )
+        {
+            return errorMessage;
+        }
+
+        Date currentTime = new DateTime().toDate();
+        Date restoreExpiry = credentials.getRestoreExpiry();
+
+        if ( currentTime.after( restoreExpiry ) )
+        {
+            return "date_is_after_expiry";
+        }
+
+        return null; // Success;
+    }
+
+    /**
+     * Verifies a user supplied restore code against the stored restore code.
+     * If the code cannot be verified a descriptive error string is returned.
+     * @param credentials the user credentials.
+     * @param code the user supplied code.
+     * @return null on success, a descriptive error string otherwise.
+     */
+    private String verifyRestoreCode( UserCredentials credentials, String code )
+    {
+        String restoreCode = credentials.getRestoreCode();
+
+        if( code == null )
+        {
+            return "code_parameter_is_null";
+        }
+
+        if ( restoreCode == null )
+        {
+            return "account_restore_code_is_null";
+        }
+
+        boolean validCode = passwordManager.legacyOrCurrentMatches( code, restoreCode, credentials.getUsername() );
+
+        return validCode ? null : "code_does_not_match_restoreCode - code: '"+ code + "' restoreCode: '" + restoreCode + "'" ;
+    }
+
+    /**
+     * Verify the token given for a user invite or password restore operation.
+     * <p>
+     * If error, returns one of the following strings:
+     *
+     * <ul>
+     *     <li>credentials_parameter_is_null</li>
+     *     <li>token_parameter_is_null</li>
+     *     <li>restore_type_parameter_is_null</li>
+     *     <li>cannot_parse_restore_options</li>
+     *     <li>wrong_prefix_for_restore_type</li>
+     *     <li>could_not_verify_token</li>
+     *     <li>restore_token_does_not_match_supplied_token</li>
+     * </ul>
+     *
+     * @param credentials the user credentials.
+     * @param token the token.
+     * @param restoreType type of restore operation.
+     * @return null if success, otherwise error string.
+     */
+    @Override
+    public String verifyToken( UserCredentials credentials, String token, RestoreType restoreType )
+    {
+        if ( credentials == null )
+        {
+            return "credentials_parameter_is_null";
+        }
+
+        if ( token == null )
+        {
+            return "token_parameter_is_null";
+        }
+
+        if ( restoreType == null )
+        {
+            return "restore_type_parameter_is_null";
         }
 
         RestoreOptions restoreOptions = RestoreOptions.getRestoreOptions( token );
 
         if ( restoreOptions == null )
         {
-            log.info( "Can't parse restore options for " + restoreType.name() + " from token " + token + " for user " + credentials );
-            return false;
+            return "cannot_parse_restore_options";
         }
 
         if ( restoreType != restoreOptions.getRestoreType() )
         {
-            log.info( "Wrong prefix for restore type " + restoreType.name() + " on token " + token + " for user " + credentials );
-            return false;
+            return "wrong_prefix_for_restore_type";
         }
 
-        if ( credentials.getRestoreToken() == null )
+        String restoreToken = credentials.getRestoreToken();
+
+        if ( restoreToken == null )
         {
-            log.info( "Could not verify token for " + restoreType.name() + " as user has no token: " + credentials );
-            return false;
+            return "could_not_verify_token";
         }
 
-        token = passwordManager.encodePassword( credentials.getUsername(), token );
+        boolean validToken = passwordManager.legacyOrCurrentMatches( token, restoreToken, credentials.getUsername() );
 
-        return credentials.getRestoreToken().equals( token );
+        return validToken ? null : "restore_token_does_not_match_supplied_token";
     }
 
     @Override

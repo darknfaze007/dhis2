@@ -45,7 +45,6 @@ import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.datavalue.DataValueService;
 import org.hisp.dhis.expression.Expression;
-import org.hisp.dhis.expression.ExpressionService;
 import org.hisp.dhis.indicator.Indicator;
 import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.indicator.IndicatorType;
@@ -57,6 +56,7 @@ import org.hisp.dhis.period.PeriodService;
 import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.period.QuarterlyPeriodType;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
@@ -68,10 +68,33 @@ public class DataMartServiceTest
     private final String T = "true";
     private final String F = "false";
     
+    @Autowired
     private DataMartEngine dataMartEngine;
     
+    @Autowired
     private AggregatedDataValueService aggregatedDataValueService;
+
+    @Autowired
+    private DataElementService dataElementService;
+
+    @Autowired
+    private IndicatorService indicatorService;
+
+    @Autowired
+    private DataSetService dataSetService;
+
+    @Autowired
+    private PeriodService periodService;
+
+    @Autowired
+    private OrganisationUnitService organisationUnitService;
+
+    @Autowired
+    private DataValueService dataValueService;
     
+    @Autowired
+    private DataElementCategoryService categoryService;
+
     private DataElementCategoryCombo categoryCombo;
     
     private DataElementCategoryOptionCombo categoryOptionCombo;
@@ -104,38 +127,18 @@ public class DataMartServiceTest
     @Override
     public void setUpTest()
     {
-        dataMartEngine = (DataMartEngine) getBean( DataMartEngine.ID );
-        
-        aggregatedDataValueService = (AggregatedDataValueService) getBean( AggregatedDataValueService.ID );
-        
-        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
-        
-        dataElementService = (DataElementService) getBean( DataElementService.ID );
-        
-        indicatorService = (IndicatorService) getBean( IndicatorService.ID );
-
-        dataSetService = (DataSetService) getBean( DataSetService.ID );
-        
-        periodService = (PeriodService) getBean( PeriodService.ID );
-
-        organisationUnitService = (OrganisationUnitService) getBean( OrganisationUnitService.ID );
-
-        dataValueService = (DataValueService) getBean( DataValueService.ID );
-
-        expressionService = (ExpressionService) getBean( ExpressionService.ID );
-        
         categoryCombo = categoryService.getDataElementCategoryComboByName( DataElementCategoryCombo.DEFAULT_CATEGORY_COMBO_NAME );
         
         categoryOptionCombo = categoryService.getDefaultDataElementCategoryOptionCombo();
-        
+       
         // ---------------------------------------------------------------------
         // Setup identifier Collections
         // ---------------------------------------------------------------------
 
-        dataElementIds = new HashSet<Integer>();
-        indicatorIds = new HashSet<Integer>();
-        periodIds = new HashSet<Integer>();
-        organisationUnitIds = new HashSet<Integer>();
+        dataElementIds = new HashSet<>();
+        indicatorIds = new HashSet<>();
+        periodIds = new HashSet<>();
+        organisationUnitIds = new HashSet<>();
         
         // ---------------------------------------------------------------------
         // Setup DataElements
@@ -292,7 +295,7 @@ public class DataMartServiceTest
     @Test
     public void testAverageIntDataElementDataMart()
     {
-        dataElementA.setAggregationOperator( DataElement.AGGREGATION_OPERATOR_AVERAGE );
+        dataElementA.setAggregationOperator( DataElement.AGGREGATION_OPERATOR_AVERAGE_SUM );
         
         dataElementService.updateDataElement( dataElementA );
         
@@ -348,7 +351,7 @@ public class DataMartServiceTest
     @Test
     public void testAverageBoolDataElementDataMart()
     {
-        dataElementB.setAggregationOperator( DataElement.AGGREGATION_OPERATOR_AVERAGE );
+        dataElementB.setAggregationOperator( DataElement.AGGREGATION_OPERATOR_AVERAGE_SUM );
         
         dataElementService.updateDataElement( dataElementB );
         
@@ -382,8 +385,8 @@ public class DataMartServiceTest
 
         DataElement dataElementC = createDataElement( 'C', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_SUM, categoryCombo );
         DataElement dataElementD = createDataElement( 'D', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_SUM, categoryCombo );
-        DataElement dataElementE = createDataElement( 'E', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_AVERAGE, categoryCombo );
-        DataElement dataElementF = createDataElement( 'F', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_AVERAGE, categoryCombo );
+        DataElement dataElementE = createDataElement( 'E', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_AVERAGE_SUM, categoryCombo );
+        DataElement dataElementF = createDataElement( 'F', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_AVERAGE_SUM, categoryCombo );
         
         dataElementService.addDataElement( dataElementC );
         dataElementService.addDataElement( dataElementD );
@@ -490,8 +493,8 @@ public class DataMartServiceTest
 
         DataElement dataElementC = createDataElement( 'C', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_SUM, categoryCombo );
         DataElement dataElementD = createDataElement( 'D', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_SUM, categoryCombo );
-        DataElement dataElementE = createDataElement( 'E', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_AVERAGE, categoryCombo );
-        DataElement dataElementF = createDataElement( 'F', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_AVERAGE, categoryCombo );
+        DataElement dataElementE = createDataElement( 'E', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_AVERAGE_SUM, categoryCombo );
+        DataElement dataElementF = createDataElement( 'F', DataElement.VALUE_TYPE_INT, DataElement.AGGREGATION_OPERATOR_AVERAGE_SUM, categoryCombo );
         
         dataElementService.addDataElement( dataElementC );
         dataElementService.addDataElement( dataElementD );

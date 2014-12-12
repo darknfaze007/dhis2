@@ -28,9 +28,23 @@ package org.hisp.dhis.settings.action.system;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.opensymphony.xwork2.Action;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_ANALYTICS_MAINTENANCE_MODE;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_ANALYTICS_MAX_LIMIT;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_CACHE_STRATEGY;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_DATABASE_SERVER_CPUS;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_FACTOR_OF_DEVIATION;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_GOOGLE_ANALYTICS_UA;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_HELP_PAGE_LINK;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_MULTI_ORGANISATION_UNIT_FORMS;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_OMIT_INDICATORS_ZERO_NUMERATOR_DATAMART;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_PHONE_NUMBER_AREA_CODE;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_SYSTEM_NOTIFICATIONS_EMAIL;
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_ANALYSIS_RELATIVE_PERIOD;
+
+import org.apache.commons.lang3.StringUtils;
 import org.hisp.dhis.configuration.Configuration;
 import org.hisp.dhis.configuration.ConfigurationService;
+import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.i18n.I18n;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
@@ -39,11 +53,10 @@ import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.user.UserGroupService;
 
-import static org.hisp.dhis.setting.SystemSettingManager.*;
+import com.opensymphony.xwork2.Action;
 
 /**
  * @author Lars Helge Overland
- * @version $Id$
  */
 public class SetGeneralSettingsAction
     implements Action
@@ -72,6 +85,13 @@ public class SetGeneralSettingsAction
     {
         this.configurationService = configurationService;
     }
+    
+    private IndicatorService indicatorService;
+    
+    public void setIndicatorService( IndicatorService indicatorService )
+    {
+        this.indicatorService = indicatorService;
+    }
 
     private DataElementService dataElementService;
 
@@ -93,7 +113,7 @@ public class SetGeneralSettingsAction
     {
         this.organisationUnitService = organisationUnitService;
     }
-
+    
     // -------------------------------------------------------------------------
     // Output
     // -------------------------------------------------------------------------
@@ -111,6 +131,20 @@ public class SetGeneralSettingsAction
     {
         this.analyticsMaxLimit = analyticsMaxLimit;
     }
+    
+    private Integer databaseServerCpus;
+    
+    public void setDatabaseServerCpus( Integer databaseServerCpus )
+    {
+        this.databaseServerCpus = databaseServerCpus;
+    }
+
+    private Integer infrastructuralIndicators;
+
+    public void setInfrastructuralIndicators( Integer infrastructuralIndicators )
+    {
+        this.infrastructuralIndicators = infrastructuralIndicators;
+    }
 
     private Integer infrastructuralDataElements;
 
@@ -124,6 +158,13 @@ public class SetGeneralSettingsAction
     public void setInfrastructuralPeriodType( String infrastructuralPeriodType )
     {
         this.infrastructuralPeriodType = infrastructuralPeriodType;
+    }
+    
+    private String analysisRelativePeriod;
+    
+    public void setAnalysisRelativePeriod( String analysisRelativePeriod )
+    {
+        this.analysisRelativePeriod = analysisRelativePeriod;
     }
 
     private Boolean omitIndicatorsZeroNumeratorDataMart;
@@ -153,6 +194,13 @@ public class SetGeneralSettingsAction
     {
         this.offlineOrganisationUnitLevel = offlineOrganisationUnitLevel;
     }
+    
+    private String systemNotificationsEmail;
+
+    public void setSystemNotificationsEmail( String systemNotificationsEmail )
+    {
+        this.systemNotificationsEmail = systemNotificationsEmail;
+    }
 
     private String phoneNumberAreaCode;
 
@@ -175,18 +223,18 @@ public class SetGeneralSettingsAction
         this.multiOrganisationUnitForms = multiOrganisationUnitForms;
     }
 
-    private String calendar;
-
-    public void setCalendar( String calendar )
+    private boolean analyticsMaintenanceMode;
+    
+    public void setAnalyticsMaintenanceMode( boolean analyticsMaintenanceMode )
     {
-        this.calendar = calendar;
+        this.analyticsMaintenanceMode = analyticsMaintenanceMode;
     }
-
-    private String dateFormat;
-
-    public void setDateFormat( String dateFormat )
+    
+    private String helpPageLink;
+    
+    public void setHelpPageLink( String helpPageLink )
     {
-        this.dateFormat = dateFormat;
+        this.helpPageLink = helpPageLink;
     }
 
     private String message;
@@ -207,17 +255,21 @@ public class SetGeneralSettingsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
-    {
+    { 
         systemSettingManager.saveSystemSetting( KEY_CACHE_STRATEGY, cacheStrategy );
         systemSettingManager.saveSystemSetting( KEY_ANALYTICS_MAX_LIMIT, analyticsMaxLimit );
+        systemSettingManager.saveSystemSetting( KEY_DATABASE_SERVER_CPUS, databaseServerCpus );
         systemSettingManager.saveSystemSetting( KEY_OMIT_INDICATORS_ZERO_NUMERATOR_DATAMART, omitIndicatorsZeroNumeratorDataMart );
         systemSettingManager.saveSystemSetting( KEY_FACTOR_OF_DEVIATION, factorDeviation );
         systemSettingManager.saveSystemSetting( KEY_PHONE_NUMBER_AREA_CODE, phoneNumberAreaCode );
         systemSettingManager.saveSystemSetting( KEY_MULTI_ORGANISATION_UNIT_FORMS, multiOrganisationUnitForms );
         systemSettingManager.saveSystemSetting( KEY_GOOGLE_ANALYTICS_UA, googleAnalyticsUA );
-        systemSettingManager.saveSystemSetting( KEY_CALENDAR, calendar );
-        systemSettingManager.saveSystemSetting( KEY_DATE_FORMAT, dateFormat );
+        systemSettingManager.saveSystemSetting( KEY_ANALYTICS_MAINTENANCE_MODE, analyticsMaintenanceMode );
+        systemSettingManager.saveSystemSetting( KEY_HELP_PAGE_LINK, StringUtils.trimToNull( helpPageLink ) );
+        systemSettingManager.saveSystemSetting( KEY_SYSTEM_NOTIFICATIONS_EMAIL, systemNotificationsEmail );
+        systemSettingManager.saveSystemSetting( KEY_ANALYSIS_RELATIVE_PERIOD, analysisRelativePeriod );
 
         Configuration configuration = configurationService.getConfiguration();
 
@@ -234,6 +286,11 @@ public class SetGeneralSettingsAction
             organisationUnitService.updateVersion();
         }
 
+        if ( infrastructuralIndicators != null )
+        {
+            configuration.setInfrastructuralIndicators( indicatorService.getIndicatorGroup( infrastructuralIndicators ) );
+        }
+
         if ( infrastructuralDataElements != null )
         {
             configuration.setInfrastructuralDataElements( dataElementService
@@ -245,7 +302,7 @@ public class SetGeneralSettingsAction
             configuration.setInfrastructuralPeriodType( periodService.getPeriodTypeByClass( PeriodType
                 .getPeriodTypeByName( infrastructuralPeriodType ).getClass() ) );
         }
-
+        
         configurationService.setConfiguration( configuration );
 
         message = i18n.getString( "settings_updated" );

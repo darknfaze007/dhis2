@@ -28,15 +28,16 @@ package org.hisp.dhis.option;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.i18n.I18nService;
-import org.springframework.transaction.annotation.Transactional;
+import static org.hisp.dhis.i18n.I18nUtils.i18n;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.hisp.dhis.i18n.I18nUtils.i18n;
+import org.hisp.dhis.common.GenericIdentifiableObjectStore;
+import org.hisp.dhis.i18n.I18nService;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Lars Helge Overland
@@ -48,6 +49,13 @@ public class DefaultOptionService
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
+
+    private GenericIdentifiableObjectStore<OptionSet> optionSetStore;
+
+    public void setOptionSetStore( GenericIdentifiableObjectStore<OptionSet> optionSetStore )
+    {
+        this.optionSetStore = optionSetStore;
+    }
 
     private OptionStore optionStore;
 
@@ -64,54 +72,95 @@ public class DefaultOptionService
     }
 
     // -------------------------------------------------------------------------
-    // Implementation methods
+    // OptionService implementation
     // -------------------------------------------------------------------------
 
+    // -------------------------------------------------------------------------
+    // Option Set
+    // -------------------------------------------------------------------------
+
+    @Override
     public int saveOptionSet( OptionSet optionSet )
     {
-        return optionStore.save( optionSet );
+        return optionSetStore.save( optionSet );
     }
 
+    @Override
     public void updateOptionSet( OptionSet optionSet )
     {
-        optionStore.update( optionSet );
+        optionSetStore.update( optionSet );
     }
 
+    @Override
     public OptionSet getOptionSet( int id )
     {
-        return i18n( i18nService, optionStore.get( id ) );
+        return i18n( i18nService, optionSetStore.get( id ) );
     }
 
+    @Override
     public OptionSet getOptionSet( String uid )
     {
-        return i18n( i18nService, optionStore.getByUid( uid ) );
+        return i18n( i18nService, optionSetStore.getByUid( uid ) );
     }
 
+    @Override
     public OptionSet getOptionSetByName( String name )
     {
-        return i18n( i18nService, optionStore.getByName( name ) );
+        return i18n( i18nService, optionSetStore.getByName( name ) );
     }
 
+    @Override
     public void deleteOptionSet( OptionSet optionSet )
     {
-        optionStore.delete( optionSet );
+        optionSetStore.delete( optionSet );
     }
 
+    @Override
     public Collection<OptionSet> getAllOptionSets()
     {
-        return i18n( i18nService, optionStore.getAll() );
+        return i18n( i18nService, optionSetStore.getAll() );
     }
 
-    public List<String> getOptions( String optionSetUid, String key, Integer max )
+    @Override
+    public Integer getOptionSetsCountByName( String name )
+    {
+        return optionStore.getCountLikeName( name );
+    }
+
+    @Override
+    public Collection<OptionSet> getOptionSetsBetweenByName( String name, int first, int max )
+    {
+        return new HashSet<>( i18n( i18nService, optionSetStore.getAllLikeName( name, first, max ) ) );
+    }
+
+    @Override
+    public Collection<OptionSet> getOptionSetsBetween( int first, int max )
+    {
+        return new HashSet<>( i18n( i18nService, optionSetStore.getAllOrderedName( first, max ) ) );
+    }
+
+    @Override
+    public Integer getOptionSetCount()
+    {
+        return optionSetStore.getCount();
+    }
+
+    // -------------------------------------------------------------------------
+    // Option
+    // -------------------------------------------------------------------------
+
+    @Override
+    public List<Option> getOptions( String optionSetUid, String key, Integer max )
     {
         OptionSet optionSet = getOptionSet( optionSetUid );
-        
+
         return getOptions( optionSet.getId(), key, max );
     }
-    
-    public List<String> getOptions( int optionSetId, String key, Integer max )
+
+    @Override
+    public List<Option> getOptions( int optionSetId, String key, Integer max )
     {
-        List<String> options = null;
+        List<Option> options = null;
 
         if ( key != null || max != null )
         {
@@ -125,29 +174,52 @@ public class DefaultOptionService
 
             OptionSet optionSet = getOptionSet( optionSetId );
 
-            options = new ArrayList<String>( optionSet.getOptions() );
+            options = new ArrayList<>( optionSet.getOptions() );
         }
 
         return options;
     }
 
-    public Integer getOptionSetsCountByName( String name )
+    @Override
+    public void updateOption( Option option )
     {
-        return optionStore.getCountLikeName( name );
+        optionStore.update( option ); 
+    }
+    
+    @Override
+    public Option getOption( int id )
+    {
+        return i18n( i18nService, optionStore.get( id ) );
     }
 
-    public Collection<OptionSet> getOptionSetsBetweenByName( String name, int first, int max )
+    @Override
+    public Option getOptionByCode( String code )
     {
-        return new HashSet<OptionSet>( i18n( i18nService, optionStore.getAllLikeNameOrderedName( name, first, max ) ) );
+        return i18n( i18nService, optionStore.getByCode( code ) );
     }
 
-    public Collection<OptionSet> getOptionSetsBetween( int first, int max )
+    @Override
+    public Option getOptionByName( OptionSet optionSet, String name )
     {
-        return new HashSet<OptionSet>( i18n( i18nService, optionStore.getAllOrderedName( first, max ) ) );
+        return i18n( i18nService, optionStore.getOptionByName( optionSet, name ) );
     }
 
-    public Integer getOptionSetCount()
+    @Override
+    public Option getOptionByCode( OptionSet optionSet, String name )
     {
-        return optionStore.getCount();
+        return i18n( i18nService, optionStore.getOptionByName( optionSet, name ) );
     }
+    
+    @Override
+    public Collection<Option> getOptions( OptionSet optionSet, String option, Integer min, Integer max )
+    {
+        return i18n( i18nService, optionStore.getOptions( optionSet, option, min, max ) );
+    }
+    
+    @Override
+    public void deleteOption( Option option  )
+    {
+        optionStore.delete( option );
+    }
+    
 }

@@ -31,6 +31,7 @@ package org.hisp.dhis.email;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.hisp.dhis.message.MessageSender;
 import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.user.CurrentUserService;
@@ -46,6 +47,7 @@ public class DefaultEmailService
 {
     private static final String TEST_EMAIL_SUBJECT = "Test email from DHIS 2";
     private static final String TEST_EMAIL_TEXT = "This is an automatically generated email from ";
+    private static final String TEST_DEFAULT_SENDER = "DHIS 2";
 
     // -------------------------------------------------------------------------
     // Dependencies
@@ -85,22 +87,24 @@ public class DefaultEmailService
     @Override
     public void sendEmail( String subject, String text, User sender, User recipient, boolean forceSend )
     {
-        Set<User> recipients = new HashSet<User>();
+        Set<User> recipients = new HashSet<>();
         recipients.add( recipient );
 
-        emailMessageSender.sendMessage( subject, text, sender, new HashSet<User>( recipients ), forceSend );
+        emailMessageSender.sendMessage( subject, text, sender, new HashSet<>( recipients ), forceSend );
     }
 
     @Override
     public void sendEmail( String subject, String text, User sender, Set<User> recipients, boolean forceSend )
     {
-        emailMessageSender.sendMessage( subject, text, sender, new HashSet<User>( recipients ), forceSend );
+        emailMessageSender.sendMessage( subject, text, sender, new HashSet<>( recipients ), forceSend );
     }
 
     @Override
     public void sendTestEmail( )
     {
-        String instanceName = systemSettingManager.getSystemSetting( SystemSettingManager.KEY_APPLICATION_TITLE ).toString();
+        String instanceName = StringUtils.defaultIfBlank( (String) systemSettingManager.getSystemSetting( 
+            SystemSettingManager.KEY_APPLICATION_TITLE ), TEST_DEFAULT_SENDER );
+        
         sendEmail( TEST_EMAIL_SUBJECT, TEST_EMAIL_TEXT + instanceName, null, currentUserService.getCurrentUser(), true );
     }
 }

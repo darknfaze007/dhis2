@@ -76,14 +76,14 @@ public class GetExpandedTreeAction
         return roots;
     }
 
-    private List<OrganisationUnit> parents = new ArrayList<OrganisationUnit>();
+    private List<OrganisationUnit> parents = new ArrayList<>();
 
     public List<OrganisationUnit> getParents()
     {
         return parents;
     }
 
-    private Map<OrganisationUnit, List<OrganisationUnit>> childrenMap = new HashMap<OrganisationUnit, List<OrganisationUnit>>();
+    private Map<OrganisationUnit, List<OrganisationUnit>> childrenMap = new HashMap<>();
 
     public Map<OrganisationUnit, List<OrganisationUnit>> getChildrenMap()
     {
@@ -101,6 +101,7 @@ public class GetExpandedTreeAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -108,7 +109,7 @@ public class GetExpandedTreeAction
         // Get the roots
         // ---------------------------------------------------------------------
 
-        roots = new ArrayList<OrganisationUnit>( selectionManager.getRootOrganisationUnits() );
+        roots = new ArrayList<>( selectionManager.getRootOrganisationUnits() );
 
         Collections.sort( roots, IdentifiableObjectNameComparator.INSTANCE );
 

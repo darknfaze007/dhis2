@@ -122,14 +122,14 @@ public class LoadFormAction
     // Output
     // -------------------------------------------------------------------------
 
-    private List<OrganisationUnit> organisationUnits = new ArrayList<OrganisationUnit>();
+    private List<OrganisationUnit> organisationUnits = new ArrayList<>();
 
     public List<OrganisationUnit> getOrganisationUnits()
     {
         return organisationUnits;
     }
 
-    private Map<DataElementCategoryCombo, List<DataElement>> orderedDataElements = new HashMap<DataElementCategoryCombo, List<DataElement>>();
+    private Map<DataElementCategoryCombo, List<DataElement>> orderedDataElements = new HashMap<>();
 
     public Map<DataElementCategoryCombo, List<DataElement>> getOrderedDataElements()
     {
@@ -150,70 +150,70 @@ public class LoadFormAction
         return dataEntryForm;
     }
 
-    private List<Section> sections = new ArrayList<Section>();
+    private List<Section> sections = new ArrayList<>();
 
     public List<Section> getSections()
     {
         return sections;
     }
 
-    private Map<Integer, Map<Integer, Collection<DataElementCategoryOption>>> orderedOptionsMap = new HashMap<Integer, Map<Integer, Collection<DataElementCategoryOption>>>();
+    private Map<Integer, Map<Integer, Collection<DataElementCategoryOption>>> orderedOptionsMap = new HashMap<>();
 
     public Map<Integer, Map<Integer, Collection<DataElementCategoryOption>>> getOrderedOptionsMap()
     {
         return orderedOptionsMap;
     }
 
-    private Map<Integer, Collection<DataElementCategory>> orderedCategories = new HashMap<Integer, Collection<DataElementCategory>>();
+    private Map<Integer, Collection<DataElementCategory>> orderedCategories = new HashMap<>();
 
     public Map<Integer, Collection<DataElementCategory>> getOrderedCategories()
     {
         return orderedCategories;
     }
 
-    private Map<Integer, Integer> numberOfTotalColumns = new HashMap<Integer, Integer>();
+    private Map<Integer, Integer> numberOfTotalColumns = new HashMap<>();
 
     public Map<Integer, Integer> getNumberOfTotalColumns()
     {
         return numberOfTotalColumns;
     }
 
-    private Map<Integer, Map<Integer, Collection<Integer>>> catColRepeat = new HashMap<Integer, Map<Integer, Collection<Integer>>>();
+    private Map<Integer, Map<Integer, Collection<Integer>>> catColRepeat = new HashMap<>();
 
     public Map<Integer, Map<Integer, Collection<Integer>>> getCatColRepeat()
     {
         return catColRepeat;
     }
 
-    private Map<Integer, Collection<DataElementCategoryOptionCombo>> orderedCategoryOptionCombos = new HashMap<Integer, Collection<DataElementCategoryOptionCombo>>();
+    private Map<Integer, Collection<DataElementCategoryOptionCombo>> orderedCategoryOptionCombos = new HashMap<>();
 
     public Map<Integer, Collection<DataElementCategoryOptionCombo>> getOrderedCategoryOptionCombos()
     {
         return orderedCategoryOptionCombos;
     }
 
-    private List<DataElementCategoryCombo> orderedCategoryCombos = new ArrayList<DataElementCategoryCombo>();
+    private List<DataElementCategoryCombo> orderedCategoryCombos = new ArrayList<>();
 
     public List<DataElementCategoryCombo> getOrderedCategoryCombos()
     {
         return orderedCategoryCombos;
     }
 
-    private Map<Integer, Integer> sectionCombos = new HashMap<Integer, Integer>();
+    private Map<Integer, Integer> sectionCombos = new HashMap<>();
 
     public Map<Integer, Integer> getSectionCombos()
     {
         return sectionCombos;
     }
 
-    private Map<String, Boolean> greyedFields = new HashMap<String, Boolean>();
+    private Map<String, Boolean> greyedFields = new HashMap<>();
 
     public Map<String, Boolean> getGreyedFields()
     {
         return greyedFields;
     }
 
-    private List<DataElement> dataElementsNotInForm = new ArrayList<DataElement>();
+    private List<DataElement> dataElementsNotInForm = new ArrayList<>();
 
     public List<DataElement> getDataElementsNotInForm()
     {
@@ -231,12 +231,13 @@ public class LoadFormAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         dataSet = dataSetService.getDataSet( dataSetId, true, false, false, true );
 
-        List<DataElement> dataElements = new ArrayList<DataElement>( dataElementService.getDataElements( dataSet, null,
+        List<DataElement> dataElements = new ArrayList<>( dataElementService.getDataElements( dataSet, null,
             null ) );
 
         if ( dataElements.isEmpty() )
@@ -267,7 +268,7 @@ public class LoadFormAction
 
             orderedCategories.put( categoryCombo.getId(), categoryCombo.getCategories() );
 
-            Map<Integer, Collection<DataElementCategoryOption>> optionsMap = new HashMap<Integer, Collection<DataElementCategoryOption>>();
+            Map<Integer, Collection<DataElementCategoryOption>> optionsMap = new HashMap<>();
 
             for ( DataElementCategory dec : categoryCombo.getCategories() )
             {
@@ -280,9 +281,9 @@ public class LoadFormAction
             // Calculating the number of times each category should be repeated
             // -----------------------------------------------------------------
 
-            Map<Integer, Integer> catRepeat = new HashMap<Integer, Integer>();
+            Map<Integer, Integer> catRepeat = new HashMap<>();
 
-            Map<Integer, Collection<Integer>> colRepeat = new HashMap<Integer, Collection<Integer>>();
+            Map<Integer, Collection<Integer>> colRepeat = new HashMap<>();
 
             int catColSpan = optionCombos.size();
 
@@ -294,7 +295,7 @@ public class LoadFormAction
                 {
                     catColSpan = catColSpan / categoryOptionSize;
                     int total = optionCombos.size() / (catColSpan * categoryOptionSize);
-                    Collection<Integer> cols = new ArrayList<Integer>( total );
+                    Collection<Integer> cols = new ArrayList<>( total );
 
                     for ( int i = 0; i < total; i++ )
                     {
@@ -323,6 +324,7 @@ public class LoadFormAction
             dataSetCopy.setShortName( dataSet.getShortName() );
             dataSetCopy.setRenderAsTabs( dataSet.isRenderAsTabs() );
             dataSetCopy.setRenderHorizontally( dataSet.isRenderHorizontally() );
+            dataSetCopy.setDataElementDecoration( dataSet.isDataElementDecoration() );
             dataSet = dataSetCopy;
 
             for ( int i = 0; i < orderedCategoryCombos.size(); i++ )
@@ -336,19 +338,20 @@ public class LoadFormAction
                 dataSet.getSections().add( section );
 
                 section.getDataElements().addAll( orderedDataElements.get( orderedCategoryCombos.get( i ) ) );
+                section.setIndicators( new ArrayList<>( dataSet.getIndicators() ) );
             }
 
             displayMode = DataSet.TYPE_SECTION;
         }
 
         // ---------------------------------------------------------------------
-        // For multi-org unit we only support section forms
+        // For multi-org unit only section forms supported
         // ---------------------------------------------------------------------
 
         if ( CodeGenerator.isValidCode( multiOrganisationUnit ) )
         {
             OrganisationUnit organisationUnit = organisationUnitService.getOrganisationUnit( multiOrganisationUnit );
-            List<OrganisationUnit> organisationUnitChildren = new ArrayList<OrganisationUnit>();
+            List<OrganisationUnit> organisationUnitChildren = new ArrayList<>();
 
             for ( OrganisationUnit child : organisationUnit.getChildren() )
             {
@@ -371,7 +374,7 @@ public class LoadFormAction
 
             displayMode = DataSet.TYPE_SECTION_MULTIORG;
         }
-
+        
         if ( displayMode.equals( DataSet.TYPE_SECTION ) )
         {
             getSectionForm( dataElements, dataSet );
@@ -390,12 +393,12 @@ public class LoadFormAction
 
     private void getSectionForm( Collection<DataElement> dataElements, DataSet dataSet )
     {
-        sections = new ArrayList<Section>( dataSet.getSections() );
+        sections = new ArrayList<>( dataSet.getSections() );
 
         Collections.sort( sections, new SectionOrderComparator() );
 
         for ( Section section : sections )
-        {
+        {            
             DataElementCategoryCombo sectionCategoryCombo = section.getCategoryCombo();
 
             if ( sectionCategoryCombo != null )
@@ -424,7 +427,7 @@ public class LoadFormAction
             customDataEntryFormCode = dataEntryFormService.prepareDataEntryFormForEntry( dataEntryForm.getHtmlCode(),
                 i18n, dataSet );
 
-            dataElementsNotInForm = new ArrayList<DataElement>( dataSet.getDataElements() );
+            dataElementsNotInForm = new ArrayList<>( dataSet.getDataElements() );
             dataElementsNotInForm.removeAll( dataEntryFormService.getDataElementsInDataEntryForm( dataSet ) );
             Collections.sort( dataElementsNotInForm, IdentifiableObjectNameComparator.INSTANCE );
         }

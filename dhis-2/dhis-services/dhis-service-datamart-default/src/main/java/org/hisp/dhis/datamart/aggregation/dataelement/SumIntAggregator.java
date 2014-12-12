@@ -77,7 +77,8 @@ public class SumIntAggregator
     // DataElementAggregator implementation
     // -------------------------------------------------------------------------
 
-    public Map<DataElementOperand, Double> getAggregatedValues( final Collection<DataElementOperand> operands, 
+    @Override
+    public Map<DataElementOperand, Double> getAggregatedValues( final Collection<DataElementOperand> operands,
         final Period period, int unitLevel, final Collection<Integer> organisationUnits, String key )
     {
         if ( CollectionUtils.isEmpty( operands ) )
@@ -88,7 +89,7 @@ public class SumIntAggregator
         final Collection<CrossTabDataValue> crossTabValues = crossTabService.getCrossTabDataValues( operands, 
             aggregationCache.getPeriodsBetweenDates( period.getStartDate(), period.getEndDate() ), organisationUnits, key );
         
-        final Map<DataElementOperand, Double> values = new HashMap<DataElementOperand, Double>(); // <Operand, total value>
+        final Map<DataElementOperand, Double> values = new HashMap<>(); // <Operand, total value>
 
         for ( final CrossTabDataValue crossTabValue : crossTabValues )
         {
@@ -120,9 +121,10 @@ public class SumIntAggregator
         return values;
     }
     
+    @Override
     public Collection<DataElementOperand> filterOperands( final Collection<DataElementOperand> operands, final PeriodType periodType )
     {
-        final Collection<DataElementOperand> filteredOperands = new HashSet<DataElementOperand>();
+        final Collection<DataElementOperand> filteredOperands = new HashSet<>();
         
         for ( final DataElementOperand operand : operands )
         {

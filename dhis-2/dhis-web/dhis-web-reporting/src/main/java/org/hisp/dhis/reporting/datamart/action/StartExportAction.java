@@ -38,7 +38,6 @@ import org.hisp.dhis.analytics.scheduling.AnalyticsTableTask;
 import org.hisp.dhis.period.CalendarPeriodType;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
-import org.hisp.dhis.resourcetable.scheduling.ResourceTableTask;
 import org.hisp.dhis.scheduling.DataMartTask;
 import org.hisp.dhis.scheduling.ScheduledTasks;
 import org.hisp.dhis.scheduling.TaskCategory;
@@ -75,13 +74,6 @@ public class StartExportAction
         this.scheduler = scheduler;
     }
 
-    private ResourceTableTask resourceTableTask;
-        
-    public void setResourceTableTask( ResourceTableTask resourceTableTask )
-    {
-        this.resourceTableTask = resourceTableTask;
-    }
-
     private AnalyticsTableTask analyticsTableTask;
     
     public void setAnalyticsTableTask( AnalyticsTableTask analyticsTableTask )
@@ -103,7 +95,7 @@ public class StartExportAction
     // Input
     // -------------------------------------------------------------------------
 
-    private Set<String> periodTypes = new HashSet<String>();
+    private Set<String> periodTypes = new HashSet<>();
     
     public void setPeriodTypes( Set<String> periodTypes )
     {
@@ -160,7 +152,6 @@ public class StartExportAction
         {        
             analyticsTableTask.setTaskId( taskId );
             
-            tasks.addTask( resourceTableTask );
             tasks.addTask( analyticsTableTask );
         }        
 
@@ -173,7 +164,7 @@ public class StartExportAction
             Date start = DateUtils.getMediumDate( startDate );
             Date end = DateUtils.getMediumDate( endDate );
             
-            List<Period> periods = new ArrayList<Period>();
+            List<Period> periods = new ArrayList<>();
             
             for ( String type : periodTypes )
             {

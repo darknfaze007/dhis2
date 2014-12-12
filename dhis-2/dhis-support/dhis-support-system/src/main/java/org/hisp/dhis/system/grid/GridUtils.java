@@ -28,6 +28,7 @@ package org.hisp.dhis.system.grid;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.hisp.dhis.common.DimensionalObject.DIMENSION_SEP;
 import static org.hisp.dhis.system.util.CsvUtils.NEWLINE;
 import static org.hisp.dhis.system.util.CsvUtils.SEPARATOR_B;
 import static org.hisp.dhis.system.util.CsvUtils.csvEncode;
@@ -45,6 +46,7 @@ import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -69,12 +71,15 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.velocity.VelocityContext;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.common.GridHeader;
+import org.hisp.dhis.common.NameableObjectUtils;
 import org.hisp.dhis.system.util.CodecUtils;
 import org.hisp.dhis.system.util.DateUtils;
 import org.hisp.dhis.system.util.Encoder;
 import org.hisp.dhis.system.util.ExcelUtils;
+import org.hisp.dhis.system.util.ListUtils;
 import org.hisp.dhis.system.util.MathUtils;
 import org.hisp.dhis.system.util.StreamUtils;
+import org.hisp.dhis.system.util.TextUtils;
 import org.hisp.dhis.system.velocity.VelocityManager;
 import org.htmlparser.Node;
 import org.htmlparser.NodeFilter;
@@ -97,8 +102,7 @@ public class GridUtils
 {
     private static final Log log = LogFactory.getLog( GridUtils.class );
     
-    private static final String EMPTY = "";
-    
+    private static final String EMPTY = "";    
     private static final String XLS_SHEET_PREFIX = "Sheet ";
     
     private static final NodeFilter HTML_ROW_FILTER = new OrFilter( new TagNameFilter( "td" ), new TagNameFilter( "th" ) );    
@@ -119,6 +123,7 @@ public class GridUtils
     private static final String KEY_PARAMS = "params";
     private static final String JASPER_TEMPLATE = "grid.vm";
     private static final String HTML_TEMPLATE = "grid-html.vm";
+    private static final String HTML_CSS_TEMPLATE = "grid-html-css.vm";
 
     private static final String ATTR_GRID = "grid";
     private static final String ATTR_TITLE = "title";
@@ -390,12 +395,21 @@ public class GridUtils
     }
 
     /**
-     * Writes a JRXML (Jasper Reports XML) representation of the given Grid to the given Writer.
+     * Writes a HTML representation of the given Grid to the given Writer.
      */
     public static void toHtml( Grid grid, Writer writer )
         throws Exception
     {
         render( grid, null, writer, HTML_TEMPLATE );
+    }
+
+    /**
+     * Writes a HTML representation of the given Grid to the given Writer.
+     */
+    public static void toHtmlCss( Grid grid, Writer writer )
+        throws Exception
+    {
+        render( grid, null, writer, HTML_CSS_TEMPLATE );
     }
     
     /**
@@ -471,7 +485,7 @@ public class GridUtils
             return null;
         }
         
-        List<Grid> grids = new ArrayList<Grid>();
+        List<Grid> grids = new ArrayList<>();
         
         Parser parser = Parser.createParser( html, "UTF-8" );
         
@@ -590,6 +604,35 @@ public class GridUtils
         }
         
         return value.trim().replaceAll( "&nbsp;", EMPTY );
+    }
+    
+    /**
+     * Returns a mapping based on the given grid where the key is a joined string
+     * of the string value of each value for meta columns. The value is the object
+     * at the given value index. The map contains at maximum one entry per row in
+     * the given grid, less if the joined key string are duplicates. The object
+     * at the value index must be numeric.
+     * 
+     * @param grid the grid.
+     * @param valueIndex the index of the column holding the value, must be numeric.
+     * @return a meta string to value object mapping.
+     */
+    public static Map<String, Object> getMetaValueMapping( Grid grid, int valueIndex )
+    {
+        Map<String, Object> map = new HashMap<>();
+        
+        List<Integer> metaIndexes = grid.getMetaColumnIndexes();
+
+        for ( List<Object> row : grid.getRows() )
+        {
+            List<Object> metaDataRowItems = ListUtils.getAtIndexes( row, metaIndexes );
+            
+            String key = TextUtils.join( metaDataRowItems, DIMENSION_SEP, NameableObjectUtils.NULL_REPLACEMENT );
+            
+            map.put( key, row.get( valueIndex ) );
+        }
+        
+        return map;
     }
     
     // -------------------------------------------------------------------------

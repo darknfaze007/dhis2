@@ -80,12 +80,13 @@ public class GetAllProgramsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         OrganisationUnit organisationUnit = selectionManager.getSelectedOrganisationUnit();
 
-        programs = new ArrayList<Program>( programService.getProgramsByCurrentUser( organisationUnit ) );
+        programs = new ArrayList<>( programService.getProgramsByCurrentUser( organisationUnit ) );
         programs.removeAll( programService.getPrograms( Program.SINGLE_EVENT_WITHOUT_REGISTRATION ) );
 
         Collections.sort( programs, IdentifiableObjectNameComparator.INSTANCE );

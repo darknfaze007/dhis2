@@ -149,34 +149,34 @@ public class AddProgramAction
         this.displayIncidentDate = displayIncidentDate;
     }
 
-    private List<String> selectedPropertyIds = new ArrayList<String>();
+    private List<String> selectedPropertyIds = new ArrayList<>();
 
     public void setSelectedPropertyIds( List<String> selectedPropertyIds )
     {
         this.selectedPropertyIds = selectedPropertyIds;
     }
 
-    private List<Boolean> personDisplayNames = new ArrayList<Boolean>();
+    private List<Boolean> personDisplayNames = new ArrayList<>();
 
     public void setPersonDisplayNames( List<Boolean> personDisplayNames )
     {
         this.personDisplayNames = personDisplayNames;
     }
 
-    private List<Boolean> allowFutureDate = new ArrayList<Boolean>();
+    private List<Boolean> allowFutureDate = new ArrayList<>();
 
     public void setAllowFutureDate( List<Boolean> allowFutureDate )
     {
         this.allowFutureDate = allowFutureDate;
     }
 
-    private List<Boolean> mandatory = new ArrayList<Boolean>();
+    private List<Boolean> mandatory = new ArrayList<>();
 
     public void setMandatory( List<Boolean> mandatory )
     {
         this.mandatory = mandatory;
     }
-    
+
     private Boolean ignoreOverdueEvents;
 
     public void setIgnoreOverdueEvents( Boolean ignoreOverdueEvents )
@@ -189,13 +189,6 @@ public class AddProgramAction
     public void setOnlyEnrollOnce( Boolean onlyEnrollOnce )
     {
         this.onlyEnrollOnce = onlyEnrollOnce;
-    }
-
-    private Boolean displayOnAllOrgunit;
-
-    public void setDisplayOnAllOrgunit( Boolean displayOnAllOrgunit )
-    {
-        this.displayOnAllOrgunit = displayOnAllOrgunit;
     }
 
     private Boolean selectEnrollmentDatesInFuture;
@@ -258,13 +251,13 @@ public class AddProgramAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         displayIncidentDate = (displayIncidentDate == null) ? false : displayIncidentDate;
         ignoreOverdueEvents = (ignoreOverdueEvents == null) ? false : ignoreOverdueEvents;
         onlyEnrollOnce = (onlyEnrollOnce == null) ? false : onlyEnrollOnce;
-        displayOnAllOrgunit = (displayOnAllOrgunit == null) ? false : displayOnAllOrgunit;
         selectEnrollmentDatesInFuture = (selectEnrollmentDatesInFuture == null) ? false : selectEnrollmentDatesInFuture;
         selectIncidentDatesInFuture = (selectIncidentDatesInFuture == null) ? false : selectIncidentDatesInFuture;
         dataEntryMethod = (dataEntryMethod == null) ? false : dataEntryMethod;
@@ -279,7 +272,6 @@ public class AddProgramAction
         program.setType( type );
         program.setDisplayIncidentDate( displayIncidentDate );
         program.setOnlyEnrollOnce( onlyEnrollOnce );
-        program.setDisplayOnAllOrgunit( displayOnAllOrgunit );
         program.setSelectEnrollmentDatesInFuture( selectEnrollmentDatesInFuture );
         program.setSelectIncidentDatesInFuture( selectIncidentDatesInFuture );
         program.setDataEntryMethod( dataEntryMethod );
@@ -304,6 +296,7 @@ public class AddProgramAction
             RelationshipType relationshipType = relationshipTypeService.getRelationshipType( relationshipTypeId );
             program.setRelationshipType( relationshipType );
         }
+
         program.setRelationshipFromA( relationshipFromA );
         program.setRelationshipText( relationshipText );
 
@@ -312,6 +305,7 @@ public class AddProgramAction
             TrackedEntity trackedEntity = trackedEntityService.getTrackedEntity( trackedEntityId );
             program.setTrackedEntity( trackedEntity );
         }
+
         programService.addProgram( program );
 
         int index = 0;
@@ -325,9 +319,9 @@ public class AddProgramAction
                     .parseInt( ids[1] ) );
 
                 ProgramTrackedEntityAttribute programAttribute = new ProgramTrackedEntityAttribute( attribute,
-                    index + 1, personDisplayNames.get( index ), mandatory.get( index ), allowFutureDate.get( index ) );
+                    personDisplayNames.get( index ), mandatory.get( index ), allowFutureDate.get( index ) );
 
-                program.getAttributes().add( programAttribute );
+                program.getProgramAttributes().add( programAttribute );
             }
 
             index++;

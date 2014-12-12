@@ -5,7 +5,7 @@ var MAX_DROPDOWN_DISPLAYED = 30;
 // Save value
 //------------------------------------------------------------------------------
 
-function saveVal( dataElementUid )
+function saveVal( dataElementUid, fieldValue )
 {
     var programStageUid = getProgramStageUid();
     var fieldId = programStageUid + '-' + dataElementUid + '-val';
@@ -13,7 +13,6 @@ function saveVal( dataElementUid )
 
     if( field == null) return;
 
-    var fieldValue = jQuery.trim( field.value );
     var arrData = jQuery( "#" + fieldId ).attr( 'data' ).replace( '{', '' ).replace( '}', '' ).replace( /'/g, "" ).split( ',' );
     var data = [];
 
@@ -257,7 +256,7 @@ function ValueSaver( dataElementId_, value_, dataElementType_, resultColor_  )
 			params += byId( providedElsewhereId ).checked;
 		
 		params += '&value=';
-
+		
         if ( value != '' )
             params += htmlEncode( value );
 
@@ -508,15 +507,16 @@ function doComplete( isCreateEvent ) {
 		});
 
 		$("#loading-bar").siblings(".ui-dialog-titlebar").hide();
-
+		
 		$.get( 'validateProgram.action', 
 			{
 				programStageInstanceId: jQuery('.stage-object-selected').attr('id').split('_')[1]
 			}).done(function(html){
             $("#loading-bar").dialog("close");
             $('#validateProgramDiv').html(html);
+ 
             if( getFieldValue('violateValidation') == 'true' ) {
-                $('#validateProgramDiv').dialog({
+				$('#validateProgramDiv').dialog({
                     title: i18n_violate_validation,
                     maximize: true,
                     closable: true,
@@ -537,14 +537,15 @@ function doComplete( isCreateEvent ) {
         });
     }
     else {
-        runCompleteEvent(isCreateEvent);
+		runCompleteEvent(isCreateEvent);
     }
 }
 
 function runCompleteEvent( isCreateEvent ) {
     var flag = false;
 
-    $("#dataEntryFormDiv input[name='entryfield'],select[name='entryselect']").each(function() {
+    $("#dataEntryFormDiv .optionset").parent().removeClass("errorCell");
+    $("#dataEntryFormDiv input[name='entryfield'],select[name='entryselect'],.optionset:checked").each(function() {
         $(this).parent().removeClass("errorCell");
 
         var arrData = $(this).attr('data').replace('{', '').replace('}', '').replace(/'/g, "").split(',');
@@ -868,9 +869,13 @@ function loadProgramStageFromServer( programStageInstanceId ) {
 
 			$( "input[id='dueDate']" ).val( data.dueDate );
 			$( "input[id='executionDate']" ).val( data.executionDate );
-			$( "#commentInput" ).val( data.comment );
-			$( "#commentInput" ).height(data.comment.split('\n').length * 15  + 12);
-
+			
+			for( var i in data.comments ){
+				var date = data.comments[i].date.substring(0,16);
+				var tr = "<tr><td>" + date + "</td><td>" + data.comments[i].creator + "</td><td>"+ i18n_comment + "</td><td>" + data.comments[i].text + "</td></tr>";
+				$( "#commentTB" ).append(tr);
+			}
+			
 			if ( data.program.type != '1' ) {
 				hideById( 'newEncounterBtn' );
 			}
@@ -882,6 +887,8 @@ function loadProgramStageFromServer( programStageInstanceId ) {
 				}
 			}
 
+			disableCompletedButton(eval(data.completed));
+			
 			if(data.executionDate) {
 				$( '#executionDate' ).val(data.executionDate);
 				$( '#entryForm' ).removeClass( 'hidden' ).addClass( 'visible' );
@@ -950,31 +957,60 @@ function entryFormContainerOnReady()
 
 function runValidation()
 {
-	$('#loading-bar').show();
-	$('#loading-bar').dialog({
-		modal:true,
-		width: 330
-	});
-	$("#loading-bar").siblings(".ui-dialog-titlebar").hide(); 
-	
-	var programStageInstanceId = jQuery('.stage-object-selected').attr('id').split('_')[1];
-	$('#validateProgramDiv' ).load( 'validateProgram.action',
-		{
-			programStageInstanceId: programStageInstanceId
-		},
-		function(){
-			$( "#loading-bar" ).dialog( "close" );
-			
-			$('#validateProgramDiv' ).dialog({
-				title: i18n_violate_validation,
-				maximize: true, 
-				closable: true,
-				modal:true,
-				overlay:{background:'#000000', opacity:0.1},
-				width: 800,
-				height: 450
-			});
+	$("#dataEntryFormDiv .optionset").parent().removeClass("errorCell");
+	var flag = false;
+	$("#dataEntryFormDiv input[name='entryfield'],select[name='entryselect'],.optionset:checked").each(function() {
+        $(this).parent().removeClass("errorCell");
+  
+        var arrData = $(this).attr('data').replace('{', '').replace('}', '').replace(/'/g, "").split(',');
+        var data = [];
+  
+        $.each(arrData, function() {
+            var values = this.split(':');
+            values = $.trimArray(values);
+            data[values[0]] = values[1];
+        });
+  
+        var compulsory = data['compulsory'];
+  
+        if( compulsory == 'true' && ( !$(this).val() || $(this).val() == "undefined" ) ) {
+            flag = true;
+            $(this).parent().addClass("errorCell");
+        }
+    });
+ 
+	if( flag ) {
+         alert(i18n_error_required_field);
+         return;
+    }
+    else
+    {
+		$('#loading-bar').show();
+		$('#loading-bar').dialog({
+			modal:true,
+			width: 330
 		});
+		$("#loading-bar").siblings(".ui-dialog-titlebar").hide(); 
+		
+		var programStageInstanceId = jQuery('.stage-object-selected').attr('id').split('_')[1];
+		$('#validateProgramDiv' ).load( 'validateProgram.action',
+			{
+				programStageInstanceId: programStageInstanceId
+			},
+			function(){
+				$( "#loading-bar" ).dialog( "close" );
+				
+				$('#validateProgramDiv' ).dialog({
+					title: i18n_violate_validation,
+					maximize: true, 
+					closable: true,
+					modal:true,
+					overlay:{background:'#000000', opacity:0.1},
+					width: 800,
+					height: 450
+				});
+			});
+	}
 }
 
 function searchOptionSet( uid, query, success ) {
@@ -1024,8 +1060,8 @@ function getOptions( uid, query, success ) {
         success: function ( data ) {
             success( $.map( data.options, function ( item ) {
                 return {
-                    label: item.o,
-                    id: item.o
+                    label: item.n,
+                    id: item.c
                 };
             } ) );
         }
@@ -1052,6 +1088,10 @@ function autocompletedField( idField )
 		minLength: 0,
 		select: function( event, ui ) {
 			var fieldValue = ui.item.value;
+			var fieldCode = "";
+			if(ui.item.id!=null){
+				fieldCode = ui.item.id; 
+			}
 
 			if ( !dhis2.trigger.invoke( "caseentry-value-selected", [dataElementUid, fieldValue] ) ) {
 				input.val( "" );
@@ -1060,7 +1100,7 @@ function autocompletedField( idField )
 
 			input.val( fieldValue );
 			if ( !unSave ) {
-				saveVal( dataElementUid );
+				saveVal( dataElementUid, fieldCode );
 			}
 			input.autocomplete( "close" );
 		},
@@ -1070,8 +1110,10 @@ function autocompletedField( idField )
 					valid = false;
 				if ( !valid ) {
 					$( this ).val( "" );
-					if(!unSave)
-						saveVal( dataElementUid );
+					if(!unSave){
+						var fieldCode = ui.item.id;
+						saveVal( dataElementUid, fieldCode );
+					}
 					input.data( "uiAutocomplete" ).term = "";
 					return false;
 				}
@@ -1187,7 +1229,7 @@ function autocompletedUsernameField( idField )
 			
 			input.val( fieldValue );			
 			if ( !unSave ) {
-				saveVal( dataElementUid );
+				saveVal( dataElementUid, fieldValue );
 			}
 			input.autocomplete( "close" );
 		},
@@ -1198,7 +1240,7 @@ function autocompletedUsernameField( idField )
 				if ( !valid ) {
 					$( this ).val( "" );
 					if(!unSave)
-						saveVal( dataElementUid );
+						saveVal( dataElementUid, fieldValue );
 					input.data( "uiAutocomplete" ).term = "";
 					return false;
 				}

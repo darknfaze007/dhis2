@@ -29,7 +29,6 @@ package org.hisp.dhis.importexport.action.util;
  */
 
 import static org.hisp.dhis.common.Objects.CONSTANT;
-import static org.hisp.dhis.common.Objects.DATADICTIONARY;
 import static org.hisp.dhis.common.Objects.DATAELEMENT;
 import static org.hisp.dhis.common.Objects.DATAELEMENTGROUP;
 import static org.hisp.dhis.common.Objects.DATAELEMENTGROUPSET;
@@ -52,7 +51,6 @@ import java.util.Map;
 
 import org.hisp.dhis.common.Objects;
 import org.hisp.dhis.constant.Constant;
-import org.hisp.dhis.datadictionary.DataDictionary;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.dataelement.DataElementGroupSet;
@@ -79,7 +77,7 @@ public class ClassMapUtil
     
     static
     {
-        classMap = new HashMap<Objects, Class<?>>();
+        classMap = new HashMap<>();
         
         classMap.put( CONSTANT, Constant.class );
         classMap.put( DATAELEMENT, DataElement.class );
@@ -89,7 +87,6 @@ public class ClassMapUtil
         classMap.put( INDICATOR, Indicator.class );
         classMap.put( INDICATORGROUP, IndicatorGroup.class );
         classMap.put( INDICATORGROUPSET, IndicatorGroupSet.class );
-        classMap.put( DATADICTIONARY, DataDictionary.class );
         classMap.put( DATASET, DataSet.class );
         classMap.put( ORGANISATIONUNIT, OrganisationUnit.class );
         classMap.put( ORGANISATIONUNITGROUP, OrganisationUnitGroup.class );

@@ -44,33 +44,6 @@ function addProgramStage()
 	}
 }
 
-function sortProgramStages()
-{
-	var programId = getFieldValue('id');
-	if( programId == "null"  || programId == "" )
-	{
-		showWarningMessage( i18n_please_select_program );
-	}
-	else
-	{
-		jQuery.getJSON( 'saveProgramStageSortOder.action', { id: programId }, 
-			function ( json ) {
-				showSuccessMessage( i18n_success );
-				loadProgramStageList( programId );
-			});
-	}
-}
-
-function loadProgramStageList( programId )
-{
-	jQuery('#programStageListDiv').load('programStageList.action',{
-			id: programId
-		},
-		function( html ){
-			setInnerHTML('programStageListDiv', html );
-		});
-}
-
 // -----------------------------------------------------------------------------
 // View details
 // -----------------------------------------------------------------------------
@@ -118,7 +91,10 @@ function showProgramStageDetails( context )
 		setInnerHTML( 'allowGenerateNextVisitField', allowGenerateNextVisit );   	
 		
 		var openAfterEnrollment = ( json.programStage.openAfterEnrollment == 'true') ? i18n_yes : i18n_no;
-		setInnerHTML( 'openAfterEnrollmentField', openAfterEnrollment );   	
+		setInnerHTML( 'openAfterEnrollmentField', openAfterEnrollment );
+		
+		var preGenerateUID = ( json.programStage.preGeneateUID == 'true') ? i18n_yes : i18n_no;
+		setInnerHTML( 'preGenerateUIDField', preGenerateUID );    	
 		
 		setInnerHTML( 'reportDateToUseField', json.programStage.reportDateToUse );   	
 		

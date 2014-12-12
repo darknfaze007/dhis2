@@ -94,6 +94,7 @@ public class UpdateGenericHTTPGateWayConfigAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -117,7 +118,7 @@ public class UpdateGenericHTTPGateWayConfigAction
                     index = config.getGateways().indexOf( gatewayConfig );
                 }
 
-                Map<String, String> map = new HashMap<String, String>();
+                Map<String, String> map = new HashMap<>();
 
                 map.put( "username", username );
                 map.put( "password", password );

@@ -44,8 +44,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.analytics.event.EventAnalyticsManager;
-import org.hisp.dhis.analytics.event.EventAnalyticsService;
 import org.hisp.dhis.analytics.event.EventQueryParams;
+import org.hisp.dhis.common.DimensionType;
 import org.hisp.dhis.common.DimensionalObject;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.common.IdentifiableObject;
@@ -54,7 +54,6 @@ import org.hisp.dhis.common.QueryFilter;
 import org.hisp.dhis.common.QueryItem;
 import org.hisp.dhis.jdbc.StatementBuilder;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
-import org.hisp.dhis.system.util.Timer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -77,12 +76,13 @@ public class JdbcEventAnalyticsManager
     
     @Autowired
     private StatementBuilder statementBuilder;
-
+    
     // -------------------------------------------------------------------------
     // EventAnalyticsManager implementation
     // -------------------------------------------------------------------------
 
-    public Grid getAggregatedEventData( EventQueryParams params, Grid grid )
+    @Override
+    public Grid getAggregatedEventData( EventQueryParams params, Grid grid, int maxLimit )
     {
         String countClause = ( params.isProgramRegistration() && params.isUniqueInstances() ) ? "count(distinct tei)" : "count(psi)";
         
@@ -124,9 +124,9 @@ public class JdbcEventAnalyticsManager
         {
             sql += "limit " + params.getLimit();
         }
-        else
+        else if ( maxLimit > 0 )
         {
-            sql += "limit " + ( EventAnalyticsService.MAX_ROWS_LIMIT + 1 );
+            sql += "limit " + ( maxLimit + 1 );
         }
         
         // ---------------------------------------------------------------------
@@ -147,11 +147,9 @@ public class JdbcEventAnalyticsManager
     
     private void getAggregatedEventData( Grid grid, EventQueryParams params, String sql )
     {
-        Timer t = new Timer().start();
-                
         SqlRowSet rowSet = jdbcTemplate.queryForRowSet( sql );
 
-        t.getTime( "Analytics event aggregate SQL: " + sql );
+        log.debug( "Analytics event aggregate SQL: " + sql );
         
         while ( rowSet.next() )
         {
@@ -175,7 +173,8 @@ public class JdbcEventAnalyticsManager
         }
     }
     
-    public Grid getEvents( EventQueryParams params, Grid grid )
+    @Override
+    public Grid getEvents( EventQueryParams params, Grid grid, int maxLimit )
     {
         List<String> fixedCols = Arrays.asList( "psi", "ps", "executiondate", "longitude", "latitude", "ouname", "oucode" );
         
@@ -223,9 +222,9 @@ public class JdbcEventAnalyticsManager
         {
             sql += "limit " + params.getPageSizeWithDefault() + " offset " + params.getOffset();
         }
-        else
+        else if ( maxLimit > 0 )
         {
-            sql += "limit " + ( EventAnalyticsService.MAX_ROWS_LIMIT + 1 );
+            sql += "limit " + ( maxLimit + 1 );
         }
 
         // ---------------------------------------------------------------------
@@ -246,13 +245,11 @@ public class JdbcEventAnalyticsManager
 
     private void getEvents( Grid grid, EventQueryParams params, String sql )
     {
-        Timer t = new Timer().start();
-
         int rowLength = grid.getHeaders().size();
 
         SqlRowSet rowSet = jdbcTemplate.queryForRowSet( sql );
 
-        t.getTime( "Analytics event query SQL: " + sql );
+        log.debug( "Analytics event query SQL: " + sql );
         
         while ( rowSet.next() )
         {
@@ -267,6 +264,7 @@ public class JdbcEventAnalyticsManager
         }
     }
     
+    @Override
     public int getEventCount( EventQueryParams params )
     {
         String sql = "select count(psi) ";
@@ -296,15 +294,13 @@ public class JdbcEventAnalyticsManager
     
     private int getEventCount( String sql )
     {
-        Timer t = new Timer().start();
-        
         int count = jdbcTemplate.queryForObject( sql, Integer.class );
 
-        t.getTime( "Analytics event count SQL: " + sql );
+        log.debug( "Analytics event count SQL: " + sql );
         
         return count;
     }
-        
+    
     // -------------------------------------------------------------------------
     // Supportive methods
     // -------------------------------------------------------------------------
@@ -353,7 +349,11 @@ public class JdbcEventAnalyticsManager
     private String getFromWhereClause( EventQueryParams params, String partition )
     {
         String sql = "from " + partition + " ";
-        
+
+        // ---------------------------------------------------------------------
+        // Periods
+        // ---------------------------------------------------------------------
+
         if ( params.hasStartEndDate() )
         {        
             sql += "where executiondate >= '" + getMediumDateString( params.getStartDate() ) + "' ";
@@ -363,7 +363,11 @@ public class JdbcEventAnalyticsManager
         {
             sql += "where " + params.getPeriodType() + " in (" + getQuotedCommaDelimitedString( getUids( params.getDimensionOrFilter( PERIOD_DIM_ID ) ) ) + ") ";
         }
-        
+
+        // ---------------------------------------------------------------------
+        // Organisation units
+        // ---------------------------------------------------------------------
+
         if ( params.isOrganisationUnitMode( DimensionalObject.OU_MODE_SELECTED ) )
         {
             sql += "and ou in (" + getQuotedCommaDelimitedString( getUids( params.getDimensionOrFilter( ORGUNIT_DIM_ID ) ) ) + ") ";
@@ -384,11 +388,33 @@ public class JdbcEventAnalyticsManager
             
             sql = removeLastOr( sql ) + ") ";
         }
-        
+
+        // ---------------------------------------------------------------------
+        // Organisation unit group sets
+        // ---------------------------------------------------------------------
+
+        for ( DimensionalObject dim : params.getDimensionsAndFilters( DimensionType.ORGANISATIONUNIT_GROUPSET ) )
+        {
+            if ( !dim.isAllItems() )
+            {
+                String col = statementBuilder.columnQuote( dim.getDimensionName() );
+                
+                sql += "and " + col + " in (" + getQuotedCommaDelimitedString( getUids( dim.getItems() ) ) + ") ";
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Program stage
+        // ---------------------------------------------------------------------
+
         if ( params.getProgramStage() != null )
         {
             sql += "and ps = '" + params.getProgramStage().getUid() + "' ";
         }
+
+        // ---------------------------------------------------------------------
+        // Query items and filters
+        // ---------------------------------------------------------------------
 
         for ( QueryItem item : params.getItems() )
         {

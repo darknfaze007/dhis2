@@ -51,6 +51,7 @@ public class DefaultIncomingSmsService
 
     private MessageQueue incomingSmsQueue;
 
+    @Override
     public void setIncomingSmsQueue( MessageQueue incomingSmsQueue )
     {
         this.incomingSmsQueue = incomingSmsQueue;
@@ -65,7 +66,7 @@ public class DefaultIncomingSmsService
     // Input & Output
     // -------------------------------------------------------------------------
 
-    private List<InboundMessage> msgList = new ArrayList<InboundMessage>();
+    private List<InboundMessage> msgList = new ArrayList<>();
 
     public void setMsgList( List<InboundMessage> msgList )
     {
@@ -79,7 +80,7 @@ public class DefaultIncomingSmsService
     @Override
     public List<IncomingSms> listAllMessageFromModem()
     {
-        List<IncomingSms> result = new ArrayList<IncomingSms>();
+        List<IncomingSms> result = new ArrayList<>();
 
         try
         {

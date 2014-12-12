@@ -48,6 +48,7 @@ public class GetStringsFromLocaleAction
     // -------------------------------------------------------------------------
     // Dependency
     // -------------------------------------------------------------------------
+    
     @Autowired
     private I18nManager manager;
 
@@ -68,7 +69,7 @@ public class GetStringsFromLocaleAction
     // Output
     // -------------------------------------------------------------------------
 
-    private Map<String, String> translations = new Hashtable<String, String>();
+    private Map<String, String> translations = new Hashtable<>();
 
     public Map<String, String> getTranslations()
     {
@@ -86,6 +87,7 @@ public class GetStringsFromLocaleAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {

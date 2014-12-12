@@ -36,10 +36,12 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.hisp.dhis.common.ListMap;
 import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
 import org.hisp.dhis.constant.ConstantService;
 import org.hisp.dhis.dataelement.DataElement;
@@ -62,6 +64,8 @@ import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
+import org.hisp.dhis.period.Period;
+import org.hisp.dhis.period.PeriodService;
 import org.hisp.dhis.period.PeriodType;
 import org.hisp.dhis.system.filter.OrganisationUnitGroupWithoutGroupSetFilter;
 import org.hisp.dhis.system.util.Filter;
@@ -160,6 +164,13 @@ public class DefaultDataIntegrityService
         this.constantService = constantService;
     }
 
+    private PeriodService periodService;
+
+    public void setPeriodService( PeriodService periodService )
+    {
+        this.periodService = periodService;
+    }    
+    
     // -------------------------------------------------------------------------
     // DataIntegrityService implementation
     // -------------------------------------------------------------------------
@@ -168,28 +179,31 @@ public class DefaultDataIntegrityService
     // DataElement
     // -------------------------------------------------------------------------
 
+    @Override
     public Collection<DataElement> getDataElementsWithoutDataSet()
     {
         return dataElementService.getDataElementsWithoutDataSets();
     }
 
+    @Override
     public Collection<DataElement> getDataElementsWithoutGroups()
     {
         return dataElementService.getDataElementsWithoutGroups();
     }
 
+    @Override
     public SortedMap<DataElement, Collection<DataSet>> getDataElementsAssignedToDataSetsWithDifferentPeriodTypes()
     {
         Collection<DataElement> dataElements = dataElementService.getAllDataElements();
 
         Collection<DataSet> dataSets = dataSetService.getAllDataSets();
 
-        SortedMap<DataElement, Collection<DataSet>> targets = new TreeMap<DataElement, Collection<DataSet>>( IdentifiableObjectNameComparator.INSTANCE );
+        SortedMap<DataElement, Collection<DataSet>> targets = new TreeMap<>( IdentifiableObjectNameComparator.INSTANCE );
 
         for ( DataElement element : dataElements )
         {
-            final Set<PeriodType> targetPeriodTypes = new HashSet<PeriodType>();
-            final Collection<DataSet> targetDataSets = new HashSet<DataSet>();
+            final Set<PeriodType> targetPeriodTypes = new HashSet<>();
+            final Collection<DataSet> targetDataSets = new HashSet<>();
 
             for ( DataSet dataSet : dataSets )
             {
@@ -209,17 +223,19 @@ public class DefaultDataIntegrityService
         return targets;
     }
 
+    @Override
     public SortedMap<DataElement, Collection<DataElementGroup>> getDataElementsViolatingExclusiveGroupSets()
     {
         Collection<DataElementGroupSet> groupSets = dataElementService.getAllDataElementGroupSets();
 
-        SortedMap<DataElement, Collection<DataElementGroup>> targets = new TreeMap<DataElement, Collection<DataElementGroup>>( IdentifiableObjectNameComparator.INSTANCE );
+        SortedMap<DataElement, Collection<DataElementGroup>> targets = new TreeMap<>( IdentifiableObjectNameComparator.INSTANCE );
 
         for ( DataElementGroupSet groupSet : groupSets )
         {
             Collection<DataElement> duplicates = getDuplicates(  
-                new ArrayList<DataElement>( groupSet.getDataElements() ), new Comparator<DataElement>()
+                new ArrayList<>( groupSet.getDataElements() ), new Comparator<DataElement>()
                 {
+                    @Override
                     public int compare( DataElement d1, DataElement d2 )
                     {
                         return d1.getName().compareTo( d2.getName() );
@@ -235,9 +251,10 @@ public class DefaultDataIntegrityService
         return targets;
     }
     
+    @Override
     public SortedMap<DataSet, Collection<DataElement>> getDataElementsInDataSetNotInForm()
     {
-        SortedMap<DataSet, Collection<DataElement>> map = new TreeMap<DataSet, Collection<DataElement>>( IdentifiableObjectNameComparator.INSTANCE );
+        SortedMap<DataSet, Collection<DataElement>> map = new TreeMap<>( IdentifiableObjectNameComparator.INSTANCE );
         
         Collection<DataSet> dataSets = dataSetService.getAllDataSets();
         
@@ -245,7 +262,7 @@ public class DefaultDataIntegrityService
         {
             if ( !DataSet.TYPE_DEFAULT.equals( dataSet.getDataSetType() ) )
             {
-                Set<DataElement> formElements = new HashSet<DataElement>();
+                Set<DataElement> formElements = new HashSet<>();
                 
                 if ( dataSet.hasDataEntryForm() )
                 {
@@ -256,7 +273,7 @@ public class DefaultDataIntegrityService
                     formElements.addAll( dataSet.getDataElementsInSections() );
                 }
                 
-                Set<DataElement> dataSetElements = new HashSet<DataElement>( dataSet.getDataElements() );
+                Set<DataElement> dataSetElements = new HashSet<>( dataSet.getDataElements() );
                 
                 dataSetElements.removeAll( formElements );
                 
@@ -274,12 +291,14 @@ public class DefaultDataIntegrityService
     // DataSet
     // -------------------------------------------------------------------------
 
+    @Override
     public Collection<DataSet> getDataSetsNotAssignedToOrganisationUnits()
     {
         Collection<DataSet> dataSets = dataSetService.getAllDataSets();
 
         return FilterUtils.filter( dataSets, new Filter<DataSet>()
         {
+            @Override
             public boolean retain( DataSet object )
             {
                 return object.getSources() == null || object.getSources().size() == 0;
@@ -291,13 +310,14 @@ public class DefaultDataIntegrityService
     // Section
     // -------------------------------------------------------------------------
 
+    @Override
     public Collection<Section> getSectionsWithInvalidCategoryCombinations()
     {
-        Collection<Section> sections = new HashSet<Section>();
+        Collection<Section> sections = new HashSet<>();
         
         for ( Section section : sectionService.getAllSections() )
         {
-            if ( section.categorComboIsInvalid() )
+            if ( section != null && section.categorComboIsInvalid() )
             {
                 sections.add( section );
             }
@@ -310,11 +330,12 @@ public class DefaultDataIntegrityService
     // Indicator
     // -------------------------------------------------------------------------
 
+    @Override
     public Collection<Collection<Indicator>> getIndicatorsWithIdenticalFormulas()
     {
-        Hashtable<String, Indicator> formulas = new Hashtable<String, Indicator>();
+        Hashtable<String, Indicator> formulas = new Hashtable<>();
 
-        Hashtable<String, Collection<Indicator>> targets = new Hashtable<String, Collection<Indicator>>();
+        Hashtable<String, Collection<Indicator>> targets = new Hashtable<>();
 
         Collection<Indicator> indicators = indicatorService.getAllIndicators();
 
@@ -330,7 +351,7 @@ public class DefaultDataIntegrityService
                 }
                 else
                 {
-                    Set<Indicator> elements = new HashSet<Indicator>();
+                    Set<Indicator> elements = new HashSet<>();
 
                     elements.add( indicator );
                     elements.add( formulas.get( formula ) );
@@ -348,19 +369,21 @@ public class DefaultDataIntegrityService
         return targets.values();
     }
 
+    @Override
     public Collection<Indicator> getIndicatorsWithoutGroups()
     {
         return indicatorService.getIndicatorsWithoutGroups();
     }
 
+    @Override
     public SortedMap<Indicator, String> getInvalidIndicatorNumerators()
     {
-        SortedMap<Indicator, String> invalids = new TreeMap<Indicator, String>( IdentifiableObjectNameComparator.INSTANCE );
+        SortedMap<Indicator, String> invalids = new TreeMap<>( IdentifiableObjectNameComparator.INSTANCE );
 
-        Set<String> dataElements = new HashSet<String>( getUids( dataElementService.getAllDataElements() ) );
-        Set<String> categoryOptionCombos = new HashSet<String>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
-        Set<String> constants = new HashSet<String>( getUids( constantService.getAllConstants() ) );
-        Set<String> orgUnitGroups = new HashSet<String>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
+        Set<String> dataElements = new HashSet<>( getUids( dataElementService.getAllDataElements() ) );
+        Set<String> categoryOptionCombos = new HashSet<>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
+        Set<String> constants = new HashSet<>( getUids( constantService.getAllConstants() ) );
+        Set<String> orgUnitGroups = new HashSet<>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
         
         for ( Indicator indicator : indicatorService.getAllIndicators() )
         {
@@ -375,14 +398,15 @@ public class DefaultDataIntegrityService
         return invalids;
     }
 
+    @Override
     public SortedMap<Indicator, String> getInvalidIndicatorDenominators()
     {
-        SortedMap<Indicator, String> invalids = new TreeMap<Indicator, String>( IdentifiableObjectNameComparator.INSTANCE );
+        SortedMap<Indicator, String> invalids = new TreeMap<>( IdentifiableObjectNameComparator.INSTANCE );
 
-        Set<String> dataElements = new HashSet<String>( getUids( dataElementService.getAllDataElements() ) );
-        Set<String> categoryOptionCombos = new HashSet<String>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
-        Set<String> constants = new HashSet<String>( getUids( constantService.getAllConstants() ) );
-        Set<String> orgUnitGroups = new HashSet<String>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
+        Set<String> dataElements = new HashSet<>( getUids( dataElementService.getAllDataElements() ) );
+        Set<String> categoryOptionCombos = new HashSet<>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
+        Set<String> constants = new HashSet<>( getUids( constantService.getAllConstants() ) );
+        Set<String> orgUnitGroups = new HashSet<>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
         
         for ( Indicator indicator : indicatorService.getAllIndicators() )
         {
@@ -402,13 +426,14 @@ public class DefaultDataIntegrityService
     {
         Collection<IndicatorGroupSet> groupSets = indicatorService.getAllIndicatorGroupSets();
 
-        SortedMap<Indicator, Collection<IndicatorGroup>> targets = new TreeMap<Indicator, Collection<IndicatorGroup>>( IdentifiableObjectNameComparator.INSTANCE );
+        SortedMap<Indicator, Collection<IndicatorGroup>> targets = new TreeMap<>( IdentifiableObjectNameComparator.INSTANCE );
 
         for ( IndicatorGroupSet groupSet : groupSets )
         {
             Collection<Indicator> duplicates = getDuplicates( 
-                new ArrayList<Indicator>( groupSet.getIndicators() ), new Comparator<Indicator>()
+                new ArrayList<>( groupSet.getIndicators() ), new Comparator<Indicator>()
                 {
+                    @Override
                     public int compare( Indicator o1, Indicator o2 )
                     {
                         return o1.getName().compareTo( o2.getName() );
@@ -425,16 +450,52 @@ public class DefaultDataIntegrityService
     }
 
     // -------------------------------------------------------------------------
+    // Period
+    // -------------------------------------------------------------------------
+
+    @Override
+    public List<Period> getDuplicatePeriods()
+    {
+        Collection<Period> periods = periodService.getAllPeriods();
+        
+        List<Period> duplicates = new ArrayList<>();
+        
+        ListMap<String, Period> map = new ListMap<>();
+        
+        for ( Period period : periods )
+        {
+            String key = period.getPeriodType().getName() + period.getStartDate().toString();
+            
+            period.setName( period.toString() );
+            
+            map.putValue( key, period );
+        }
+        
+        for ( String key : map.keySet() )
+        {
+            List<Period> values = map.get( key );
+            
+            if ( values != null && values.size() > 1 )
+            {
+                duplicates.addAll( values );
+            }
+        }
+        
+        return duplicates;
+    }
+    
+    // -------------------------------------------------------------------------
     // OrganisationUnit
     // -------------------------------------------------------------------------
 
+    @Override
     public Collection<OrganisationUnit> getOrganisationUnitsWithCyclicReferences()
     {
         Collection<OrganisationUnit> organisationUnits = organisationUnitService.getAllOrganisationUnits();
 
-        Set<OrganisationUnit> cyclic = new HashSet<OrganisationUnit>();
+        Set<OrganisationUnit> cyclic = new HashSet<>();
 
-        Set<OrganisationUnit> visited = new HashSet<OrganisationUnit>();
+        Set<OrganisationUnit> visited = new HashSet<>();
 
         OrganisationUnit parent = null;
 
@@ -466,12 +527,14 @@ public class DefaultDataIntegrityService
         return cyclic;
     }
 
+    @Override
     public Collection<OrganisationUnit> getOrphanedOrganisationUnits()
     {
         Collection<OrganisationUnit> organisationUnits = organisationUnitService.getAllOrganisationUnits();
 
         return FilterUtils.filter( organisationUnits, new Filter<OrganisationUnit>()
         {
+            @Override
             public boolean retain( OrganisationUnit object )
             {
                 return object.getParent() == null && (object.getChildren() == null || object.getChildren().size() == 0);
@@ -479,23 +542,26 @@ public class DefaultDataIntegrityService
         } );
     }
 
+    @Override
     public Collection<OrganisationUnit> getOrganisationUnitsWithoutGroups()
     {
         return organisationUnitService.getOrganisationUnitsWithoutGroups();
     }
 
+    @Override
     public SortedMap<OrganisationUnit, Collection<OrganisationUnitGroup>> getOrganisationUnitsViolatingExclusiveGroupSets()
     {
         Collection<OrganisationUnitGroupSet> groupSets = organisationUnitGroupService.getAllOrganisationUnitGroupSets();
 
         TreeMap<OrganisationUnit, Collection<OrganisationUnitGroup>> targets = 
-            new TreeMap<OrganisationUnit, Collection<OrganisationUnitGroup>>( IdentifiableObjectNameComparator.INSTANCE );
+            new TreeMap<>( IdentifiableObjectNameComparator.INSTANCE );
 
         for ( OrganisationUnitGroupSet groupSet : groupSets )
         {
             Collection<OrganisationUnit> duplicates = getDuplicates( 
-                new ArrayList<OrganisationUnit>( groupSet.getOrganisationUnits() ), new Comparator<OrganisationUnit>()
+                new ArrayList<>( groupSet.getOrganisationUnits() ), new Comparator<OrganisationUnit>()
                 {
+                    @Override
                     public int compare( OrganisationUnit o1, OrganisationUnit o2 )
                     {
                         return o1.getName().compareTo( o2.getName() );
@@ -511,6 +577,7 @@ public class DefaultDataIntegrityService
         return targets;
     }
 
+    @Override
     public Collection<OrganisationUnitGroup> getOrganisationUnitGroupsWithoutGroupSets()
     {
         Collection<OrganisationUnitGroup> groups = organisationUnitGroupService.getAllOrganisationUnitGroups();
@@ -522,12 +589,14 @@ public class DefaultDataIntegrityService
     // ValidationRule
     // -------------------------------------------------------------------------
 
+    @Override
     public Collection<ValidationRule> getValidationRulesWithoutGroups()
     {
         Collection<ValidationRule> validationRules = validationRuleService.getAllValidationRules();
 
         return FilterUtils.filter( validationRules, new Filter<ValidationRule>()
         {
+            @Override
             public boolean retain( ValidationRule object )
             {
                 return object.getGroups() == null || object.getGroups().size() == 0;
@@ -535,15 +604,16 @@ public class DefaultDataIntegrityService
         } );
     }
 
+    @Override
     public SortedMap<ValidationRule, String> getInvalidValidationRuleLeftSideExpressions()
     {
-        SortedMap<ValidationRule, String> invalids = new TreeMap<ValidationRule, String>(
+        SortedMap<ValidationRule, String> invalids = new TreeMap<>(
             IdentifiableObjectNameComparator.INSTANCE );
 
-        Set<String> dataElements = new HashSet<String>( getUids( dataElementService.getAllDataElements() ) );
-        Set<String> categoryOptionCombos = new HashSet<String>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
-        Set<String> constants = new HashSet<String>( getUids( constantService.getAllConstants() ) );
-        Set<String> orgUnitGroups = new HashSet<String>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
+        Set<String> dataElements = new HashSet<>( getUids( dataElementService.getAllDataElements() ) );
+        Set<String> categoryOptionCombos = new HashSet<>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
+        Set<String> constants = new HashSet<>( getUids( constantService.getAllConstants() ) );
+        Set<String> orgUnitGroups = new HashSet<>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
         
         for ( ValidationRule rule : validationRuleService.getAllValidationRules() )
         {
@@ -558,15 +628,16 @@ public class DefaultDataIntegrityService
         return invalids;
     }
 
+    @Override
     public SortedMap<ValidationRule, String> getInvalidValidationRuleRightSideExpressions()
     {
-        SortedMap<ValidationRule, String> invalids = new TreeMap<ValidationRule, String>(
+        SortedMap<ValidationRule, String> invalids = new TreeMap<>(
             IdentifiableObjectNameComparator.INSTANCE );
 
-        Set<String> dataElements = new HashSet<String>( getUids( dataElementService.getAllDataElements() ) );
-        Set<String> categoryOptionCombos = new HashSet<String>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
-        Set<String> constants = new HashSet<String>( getUids( constantService.getAllConstants() ) );
-        Set<String> orgUnitGroups = new HashSet<String>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
+        Set<String> dataElements = new HashSet<>( getUids( dataElementService.getAllDataElements() ) );
+        Set<String> categoryOptionCombos = new HashSet<>( getUids( categoryService.getAllDataElementCategoryOptionCombos() ) );
+        Set<String> constants = new HashSet<>( getUids( constantService.getAllConstants() ) );
+        Set<String> orgUnitGroups = new HashSet<>( getUids( organisationUnitGroupService.getAllOrganisationUnitGroups() ) );
         
         for ( ValidationRule rule : validationRuleService.getAllValidationRules() )
         {
@@ -580,5 +651,4 @@ public class DefaultDataIntegrityService
 
         return invalids;
     }
-
 }

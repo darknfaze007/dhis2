@@ -28,6 +28,8 @@ package org.hisp.dhis.i18n.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.hisp.dhis.common.IdentifiableObjectUtils.CLASS_ALIAS;
+
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
@@ -139,9 +141,12 @@ public class TranslateAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
+        className = className != null && CLASS_ALIAS.containsKey( className ) ? CLASS_ALIAS.get( className ) : className;
+        
         log.info( "Classname: " + className + ", uid: " + uid + ", loc: " + loc );
 
         IdentifiableObject object = identifiableObjectManager.getObject( uid , className );
@@ -152,7 +157,7 @@ public class TranslateAction
 
         HttpServletRequest request = ServletActionContext.getRequest();
 
-        Map<String, String> translations = new Hashtable<String, String>();
+        Map<String, String> translations = new Hashtable<>();
         
         for ( String propertyName : propertyNames )
         {

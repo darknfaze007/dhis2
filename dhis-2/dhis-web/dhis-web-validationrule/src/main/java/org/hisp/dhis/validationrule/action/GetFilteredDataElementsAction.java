@@ -42,7 +42,6 @@ import org.hisp.dhis.dataelement.DataElementCategoryService;
 import org.hisp.dhis.dataelement.DataElementOperand;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
-import org.hisp.dhis.dataset.comparator.DataSetSortOrderComparator;
 import org.hisp.dhis.period.PeriodService;
 import org.hisp.dhis.period.PeriodType;
 
@@ -120,7 +119,7 @@ public class GetFilteredDataElementsAction
         return dataElements;
     }
 
-    private List<DataElementOperand> operands = new ArrayList<DataElementOperand>();
+    private List<DataElementOperand> operands = new ArrayList<>();
 
     public List<DataElementOperand> getOperands()
     {
@@ -131,6 +130,7 @@ public class GetFilteredDataElementsAction
     // Execute
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -151,28 +151,28 @@ public class GetFilteredDataElementsAction
             // Get datasets with the periodType
             // -----------------------------------------------------------------
 
-            List<DataSet> dataSets = new ArrayList<DataSet>( dataSetService.getDataSetsByPeriodType( periodType ) );
+            List<DataSet> dataSets = new ArrayList<>( dataSetService.getDataSetsByPeriodType( periodType ) );
 
-            Collections.sort( dataSets, new DataSetSortOrderComparator() );
-
+            Collections.sort( dataSets, IdentifiableObjectNameComparator.INSTANCE );
+            
             // -----------------------------------------------------------------
             // Get available dataelements into the dataSets
             // -----------------------------------------------------------------
 
-            Set<DataElement> members = new HashSet<DataElement>();
+            Set<DataElement> members = new HashSet<>();
 
             for ( DataSet dataSet : dataSets )
             {
                  members.addAll( dataSet.getDataElements() );
             }
 
-            dataElements = new ArrayList<DataElement>(getIntegerDataElements( members ));
+            dataElements = new ArrayList<>(getIntegerDataElements( members ));
         }
         else
         {
             Collection<DataElement> members = dataSetService.getDataSet( dataSetId ).getDataElements();
 
-            dataElements = new ArrayList<DataElement>( getIntegerDataElements( members ) );
+            dataElements = new ArrayList<>( getIntegerDataElements( members ) );
         }
 
         Collections.sort( dataElements, new IdentifiableObjectNameComparator() );
@@ -181,7 +181,7 @@ public class GetFilteredDataElementsAction
         // Create Operands
         // ---------------------------------------------------------------------
 
-        operands = new ArrayList<DataElementOperand>( categoryService.getOperands( dataElements ) );
+        operands = new ArrayList<>( categoryService.getOperands( dataElements ) );
 
         // ---------------------------------------------------------------------
         // String filter

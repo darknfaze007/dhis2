@@ -108,7 +108,7 @@ public class ValidateTrackedEntityInstanceAction
 
     private String message;
 
-    private Map<String, String> attributeValueMap = new HashMap<String, String>();
+    private Map<String, String> attributeValueMap = new HashMap<>();
 
     private Collection<TrackedEntityInstance> entityInstances;
 
@@ -116,6 +116,7 @@ public class ValidateTrackedEntityInstanceAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         OrganisationUnit orgunit = selectionManager.getSelectedOrganisationUnit();
@@ -145,7 +146,7 @@ public class ValidateTrackedEntityInstanceAction
         {
             String value = null;
 
-            Set<TrackedEntityAttributeValue> attributeValues = new HashSet<TrackedEntityAttributeValue>();
+            Set<TrackedEntityAttributeValue> attributeValues = new HashSet<>();
 
             for ( TrackedEntityAttribute attribute : attributes )
             {

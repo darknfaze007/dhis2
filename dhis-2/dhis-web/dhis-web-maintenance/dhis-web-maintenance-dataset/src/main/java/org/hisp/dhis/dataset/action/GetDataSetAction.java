@@ -91,14 +91,14 @@ public class GetDataSetAction
         return dataSet;
     }
 
-    private List<DataElement> dataSetDataElements = new ArrayList<DataElement>();
+    private List<DataElement> dataSetDataElements = new ArrayList<>();
 
     public List<DataElement> getDataSetDataElements()
     {
         return dataSetDataElements;
     }
 
-    private List<Indicator> dataSetIndicators = new ArrayList<Indicator>();
+    private List<Indicator> dataSetIndicators = new ArrayList<>();
 
     public List<Indicator> getDataSetIndicators()
     {
@@ -123,16 +123,17 @@ public class GetDataSetAction
     // Action
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         dataSet = dataSetService.getDataSet( dataSetId );
 
-        dataSetDataElements = new ArrayList<DataElement>( dataSet.getDataElements() );
+        dataSetDataElements = new ArrayList<>( dataSet.getDataElements() );
 
         Collections.sort( dataSetDataElements, IdentifiableObjectNameComparator.INSTANCE );
 
-        dataSetIndicators = new ArrayList<Indicator>( dataSet.getIndicators() );
+        dataSetIndicators = new ArrayList<>( dataSet.getIndicators() );
 
         Collections.sort( dataSetIndicators, IdentifiableObjectNameComparator.INSTANCE );
 

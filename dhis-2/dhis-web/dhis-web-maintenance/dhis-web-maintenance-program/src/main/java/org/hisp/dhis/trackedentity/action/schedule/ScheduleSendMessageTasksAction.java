@@ -134,6 +134,7 @@ public class ScheduleSendMessageTasksAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         TaskId taskId = new TaskId( TaskCategory.SENDING_REMINDER_MESSAGE, currentUserService.getCurrentUser() );
@@ -154,7 +155,7 @@ public class ScheduleSendMessageTasksAction
             }
             else
             {
-                Map<String, String> keyCronMap = new HashMap<String, String>();
+                Map<String, String> keyCronMap = new HashMap<>();
                 String time = (String) systemSettingManager.getSystemSetting( KEY_TIME_FOR_SENDING_MESSAGE,
                     DEFAULT_TIME_FOR_SENDING_MESSAGE );
 

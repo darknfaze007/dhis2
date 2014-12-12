@@ -28,22 +28,11 @@ package org.hisp.dhis.webapi.controller;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.lowagie.text.Document;
+import com.lowagie.text.pdf.PdfWriter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hisp.dhis.webapi.utils.ContextUtils;
-import org.hisp.dhis.webapi.utils.ContextUtils.CacheStrategy;
-import org.hisp.dhis.webapi.utils.PdfDataEntryFormImportUtil;
-import org.hisp.dhis.common.IdentifiableObject.IdentifiableProperty;
+import org.hisp.dhis.common.IdentifiableProperty;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.dxf2.datavalueset.DataValueSetService;
 import org.hisp.dhis.dxf2.metadata.ImportOptions;
@@ -51,7 +40,6 @@ import org.hisp.dhis.dxf2.pdfform.PdfDataEntryFormService;
 import org.hisp.dhis.dxf2.pdfform.PdfDataEntryFormUtil;
 import org.hisp.dhis.dxf2.pdfform.PdfFormFontSettings;
 import org.hisp.dhis.i18n.I18nManager;
-import org.hisp.dhis.i18n.I18nManagerException;
 import org.hisp.dhis.importexport.ImportStrategy;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.program.ProgramStageService;
@@ -60,6 +48,9 @@ import org.hisp.dhis.scheduling.TaskId;
 import org.hisp.dhis.system.notification.Notifier;
 import org.hisp.dhis.system.util.StreamUtils;
 import org.hisp.dhis.user.CurrentUserService;
+import org.hisp.dhis.webapi.utils.ContextUtils;
+import org.hisp.dhis.webapi.utils.ContextUtils.CacheStrategy;
+import org.hisp.dhis.webapi.utils.PdfDataEntryFormImportUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -67,20 +58,22 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.pdf.PdfWriter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @author James Chang <jamesbchang@gmail.com>
  */
 @Controller
-@RequestMapping(value = "/pdfForm")
-public class PDFFormController
+@RequestMapping( value = "/pdfForm" )
+public class PdfFormController
 {
-    private static final Log log = LogFactory.getLog( PDFFormController.class );
-
-    //private static final String DATEFORMAT_DEFAULT = "MMMM dd, yyyy";
+    private static final Log log = LogFactory.getLog( PdfFormController.class );
 
     // -------------------------------------------------------------------------
     // Dependencies
@@ -114,20 +107,19 @@ public class PDFFormController
     // DataSet
     //--------------------------------------------------------------------------
 
-    @RequestMapping(value = "/dataSet/{dataSetUid}", method = RequestMethod.GET)
-    public void getFormPDF_DataSet( HttpServletRequest request, HttpServletResponse response,
-        @PathVariable String dataSetUid )
-        throws Exception
+    @RequestMapping( value = "/dataSet/{dataSetUid}", method = RequestMethod.GET )
+    public void getFormPdfDataSet( @PathVariable String dataSetUid, HttpServletRequest request,
+        HttpServletResponse response, OutputStream out ) throws Exception
     {
         // 1. - Create Document and PdfWriter
-        
+
         Document document = new Document();
-        
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = PdfWriter.getInstance( document, baos );
 
         // 2. Generate PDF Document Content
-        
+
         PdfFormFontSettings pdfFormFontSettings = new PdfFormFontSettings();
 
         PdfDataEntryFormUtil.setDefaultFooterOnDocument( document, request.getServerName(),
@@ -141,49 +133,49 @@ public class PDFFormController
         // 3. - Response Header/Content Type Set
 
         String fileName = dataSetService.getDataSet( dataSetUid ).getName() + " " + (new SimpleDateFormat(
-            Period.DEFAULT_DATE_FORMAT )).format( new Date() ) ;
-        
+            Period.DEFAULT_DATE_FORMAT )).format( new Date() );
+
         contextUtils.configureResponse( response, ContextUtils.CONTENT_TYPE_PDF, CacheStrategy.NO_CACHE, fileName, false );
-        response.setContentLength( baos.size() );        
-        
+        response.setContentLength( baos.size() );
+
         // 4. - Output the data into Stream and close the stream.
-        
-        writeToOutputStream( baos, response );
+
+        baos.writeTo( out );
     }
 
-    @RequestMapping(value = "/dataSet", method = RequestMethod.POST)
+    @RequestMapping( value = "/dataSet", method = RequestMethod.POST )
     @PreAuthorize( "hasRole('ALL') or hasRole('F_DATAVALUE_ADD')" )
-    public void sendFormPDF_DataSet( HttpServletRequest request, HttpServletResponse response )
+    public void sendFormPdfDataSet( HttpServletRequest request, HttpServletResponse response )
         throws Exception
     {
         // 1. Set up Import Option
-        
+
         ImportStrategy strategy = ImportStrategy.NEW_AND_UPDATES;
         IdentifiableProperty dataElementIdScheme = IdentifiableProperty.UID;
         IdentifiableProperty orgUnitIdScheme = IdentifiableProperty.UID;
 
         ImportOptions options = new ImportOptions( dataElementIdScheme, orgUnitIdScheme, false, true, strategy, false );
-                
+
         log.info( options );
 
         // 2. Generate Task ID
-        
+
         TaskId taskId = new TaskId( TaskCategory.DATAVALUE_IMPORT, currentUserService.getCurrentUser() );
 
         notifier.clear( taskId );
 
         // 3. Input Stream Check
-        
+
         InputStream in = request.getInputStream();
 
         in = StreamUtils.wrapAndCheckCompressionFormat( in );
 
         // 4. Save (Import) the data values.
-        
+
         dataValueSetService.saveDataValueSetPdf( in, options, taskId );
 
         // Step 5. Set the response - just simple OK response.
-        
+
         ContextUtils.okResponse( response, "" );
     }
 
@@ -191,19 +183,18 @@ public class PDFFormController
     // Program Stage
     //--------------------------------------------------------------------------
 
-    @RequestMapping(value = "/programStage/{programStageUid}", method = RequestMethod.GET)
-    public void getFormPDF_ProgramStage( HttpServletRequest request, HttpServletResponse response,
-        @PathVariable String programStageUid )
-        throws IOException, DocumentException, I18nManagerException
+    @RequestMapping( value = "/programStage/{programStageUid}", method = RequestMethod.GET )
+    public void getFormPdfProgramStage( @PathVariable String programStageUid, HttpServletRequest request,
+        HttpServletResponse response, OutputStream out ) throws Exception
     {
         // 1. - Create Document and PdfWriter
-        
+
         Document document = new Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = PdfWriter.getInstance( document, baos );
 
         // 2. Generate PDF Document Contents
-        
+
         PdfFormFontSettings pdfFormFontSettings = new PdfFormFontSettings();
 
         PdfDataEntryFormUtil.setDefaultFooterOnDocument( document, request.getServerName(),
@@ -211,61 +202,37 @@ public class PDFFormController
 
         pdfDataEntryFormService.generatePDFDataEntryForm( document, writer, programStageUid,
             PdfDataEntryFormUtil.DATATYPE_PROGRAMSTAGE,
-            PdfDataEntryFormUtil.getDefaultPageSize( PdfDataEntryFormUtil.DATATYPE_PROGRAMSTAGE ), 
+            PdfDataEntryFormUtil.getDefaultPageSize( PdfDataEntryFormUtil.DATATYPE_PROGRAMSTAGE ),
             pdfFormFontSettings, i18nManager.getI18nFormat() );
 
         // 3. - Response Header/Content Type Set
-        
-        String fileName = programStageService.getProgramStage( programStageUid ).getName() + " " 
-            + (new SimpleDateFormat(Period.DEFAULT_DATE_FORMAT )).format( new Date() ) ;
+
+        String fileName = programStageService.getProgramStage( programStageUid ).getName() + " "
+            + (new SimpleDateFormat( Period.DEFAULT_DATE_FORMAT )).format( new Date() );
 
         contextUtils.configureResponse( response, ContextUtils.CONTENT_TYPE_PDF, CacheStrategy.NO_CACHE, fileName, false );
         response.setContentLength( baos.size() );
 
         // 4. - write ByteArrayOutputStream to the ServletOutputStream
-        
-        writeToOutputStream( baos, response );
+
+        baos.writeTo( out );
     }
 
     @RequestMapping( value = "/programStage", method = RequestMethod.POST )
-    @PreAuthorize("hasRole('ALL') or hasRole('F_PATIENT_DATAVALUE_ADD')")
-    public void sendFormPDF_ProgramStage( HttpServletRequest request, HttpServletResponse response )
+    @PreAuthorize( "hasRole('ALL') or hasRole('F_PATIENT_DATAVALUE_ADD')" )
+    public void sendFormPdfProgramStage( HttpServletRequest request, HttpServletResponse response )
         throws Exception
     {
         InputStream in = request.getInputStream();
 
         // Temporarily using Util class from same project.
-        
+
         PdfDataEntryFormImportUtil pdfDataEntryFormImportUtil = new PdfDataEntryFormImportUtil();
 
         pdfDataEntryFormImportUtil.ImportProgramStage( in, i18nManager.getI18nFormat() );
 
         // Step 5. Set the response - just simple OK response.
-        
+
         ContextUtils.okResponse( response, "" );
-    }
-
-    //--------------------------------------------------------------------------
-    // Helpers
-    //--------------------------------------------------------------------------
-
-    private void writeToOutputStream( ByteArrayOutputStream baos, HttpServletResponse response )
-        throws IOException
-    {
-        OutputStream os = null;
-
-        try
-        {
-            os = response.getOutputStream();
-            baos.writeTo( os );
-        }
-        finally
-        {
-            if ( os != null )
-            {
-                os.flush();
-                os.close();
-            }
-        }
     }
 }

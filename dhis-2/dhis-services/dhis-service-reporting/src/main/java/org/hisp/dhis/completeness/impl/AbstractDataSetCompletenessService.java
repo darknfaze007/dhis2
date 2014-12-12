@@ -138,6 +138,7 @@ public abstract class AbstractDataSetCompletenessService
     // DataSetCompleteness
     // -------------------------------------------------------------------------
 
+    @Override
     @Async
     public Future<?> exportDataSetCompleteness( Collection<DataSet> dataSets, Collection<Period> periods,
         Collection<OrganisationUnit> units )
@@ -185,6 +186,7 @@ public abstract class AbstractDataSetCompletenessService
         return null;
     }
 
+    @Override
     @Transactional
     public Collection<DataSetCompletenessResult> getDataSetCompleteness( int periodId, int organisationUnitId, Set<Integer> groupIds )
     {
@@ -195,7 +197,7 @@ public abstract class AbstractDataSetCompletenessService
 
         final Collection<DataSet> dataSets = dataSetService.getAllDataSets();
 
-        final Collection<DataSetCompletenessResult> results = new ArrayList<DataSetCompletenessResult>();
+        final Collection<DataSetCompletenessResult> results = new ArrayList<>();
 
         for ( final DataSet dataSet : dataSets )
         {
@@ -225,6 +227,7 @@ public abstract class AbstractDataSetCompletenessService
         return results;
     }
 
+    @Override
     @Transactional
     public Collection<DataSetCompletenessResult> getDataSetCompleteness( int periodId,
         Collection<Integer> organisationUnitIds, int dataSetId, Set<Integer> groupIds )
@@ -235,7 +238,7 @@ public abstract class AbstractDataSetCompletenessService
 
         final Collection<Integer> periodsBetweenDates = getIdentifiers( Period.class, periodService.getPeriodsBetweenDates( dataSet.getPeriodType(), period.getStartDate(), period.getEndDate() ) );
 
-        final Collection<DataSetCompletenessResult> results = new ArrayList<DataSetCompletenessResult>();
+        final Collection<DataSetCompletenessResult> results = new ArrayList<>();
 
         for ( final Integer unitId : organisationUnitIds )
         {
@@ -257,6 +260,7 @@ public abstract class AbstractDataSetCompletenessService
         return results;
     }
 
+    @Override
     @Transactional
     public void deleteDataSetCompleteness()
     {
@@ -267,12 +271,14 @@ public abstract class AbstractDataSetCompletenessService
     // Index
     // -------------------------------------------------------------------------
 
+    @Override
     @Transactional
     public void createIndex()
     {
         completenessStore.createIndex();
     }
 
+    @Override
     @Transactional
     public void dropIndex()
     {
@@ -309,7 +315,7 @@ public abstract class AbstractDataSetCompletenessService
     private Collection<Integer> getRelevantSources( DataSet dataSet, Collection<Integer> sources, Set<Integer> groupIds )
     {
         Collection<Integer> dataSetSources = ConversionUtils.getIdentifiers( OrganisationUnit.class,
-            new HashSet<OrganisationUnit>( dataSet.getSources() ) );
+            new HashSet<>( dataSet.getSources() ) );
 
         if ( groupIds != null )
         {

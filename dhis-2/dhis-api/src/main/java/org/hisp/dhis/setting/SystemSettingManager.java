@@ -28,6 +28,7 @@ package org.hisp.dhis.setting;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import org.hisp.dhis.calendar.CalendarService;
 import org.hisp.dhis.period.MonthlyPeriodType;
 import org.hisp.dhis.period.QuarterlyPeriodType;
 import org.hisp.dhis.period.YearlyPeriodType;
@@ -37,11 +38,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 
 /**
  * @author Stian Strandli
- * @version $Id: SystemSettingManager.java 4910 2008-04-15 17:55:02Z larshelg $
  */
 public interface SystemSettingManager
 {
@@ -51,8 +52,6 @@ public interface SystemSettingManager
     final String KEY_APPLICATION_INTRO = "keyApplicationIntro";
     final String KEY_APPLICATION_NOTIFICATION = "keyApplicationNotification";
     final String KEY_APPLICATION_FOOTER = "keyApplicationFooter";
-    final String KEY_CALENDAR = "keyCalendar";
-    final String KEY_DATE_FORMAT = "keyDateFormat";
     final String KEY_FLAG = "keyFlag";
     final String KEY_FLAG_IMAGE = "keyFlagImage";
     final String KEY_START_MODULE = "startModule";
@@ -92,16 +91,22 @@ public interface SystemSettingManager
     final String KEY_OPENID_PROVIDER = "keyOpenIdProvider";
     final String KEY_OPENID_PROVIDER_LABEL = "keyOpenIdProviderLabel";
     final String KEY_CAN_GRANT_OWN_USER_AUTHORITY_GROUPS = "keyCanGrantOwnUserAuthorityGroups";
-    final String KEY_ONLY_MANAGE_WITHIN_USER_GROUPS = "keyOnlyManageWithinUserGroups";
     final String KEY_HIDE_UNAPPROVED_DATA_IN_ANALYTICS = "keyHideUnapprovedDataInAnalytics";
     final String KEY_ANALYTICS_MAX_LIMIT = "keyAnalyticsMaxLimit";
     final String KEY_CUSTOM_LOGIN_PAGE_LOGO = "keyCustomLoginPageLogo";
     final String KEY_CUSTOM_TOP_MENU_LOGO = "keyCustomTopMenuLogo";
-
+    final String KEY_ANALYTICS_MAINTENANCE_MODE = "keyAnalyticsMaintenanceMode";
+    final String KEY_DATABASE_SERVER_CPUS = "keyDatabaseServerCpus";
+    final String KEY_LAST_SUCCESSFUL_DATA_SYNC = "keyLastSuccessfulDataSynch";
+    final String KEY_LAST_SUCCESSFUL_ANALYTICS_TABLES_UPDATE = "keyLastSuccessfulAnalyticsTablesUpdate";
+    final String KEY_LAST_SUCCESSFUL_RESOURCE_TABLES_UPDATE = "keyLastSuccessfulResourceTablesUpdate";
+    final String KEY_HELP_PAGE_LINK = "helpPageLink";
+    final String KEY_ACCEPTANCE_REQUIRED_FOR_APPROVAL = "keyAcceptanceRequiredForApproval";
+    final String KEY_SYSTEM_NOTIFICATIONS_EMAIL = "keySystemNotificationsEmail";
+    final String KEY_ANALYSIS_RELATIVE_PERIOD = "keyAnalysisRelativePeriod";
+    
     final String DEFAULT_SCHEDULE_AGGREGATE_QUERY_BUILDER_TASK_STRATEGY = "lastMonth";
     final String DEFAULT_FLAG = "dhis2";
-    final String DEFAULT_CALENDAR = "iso8601";
-    final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd"; // ISO 8601
     final int DEFAULT_MAX_NUMBER_OF_ATTEMPTS = 20;
     final int DEFAULT_TIMEFRAME_MINUTES = 1;
     final double DEFAULT_FACTOR_OF_DEVIATION = 2.0;
@@ -114,6 +119,28 @@ public interface SystemSettingManager
     final String DEFAULT_TIME_FOR_SENDING_MESSAGE = "08:00";
     final String DEFAULT_CACHE_STRATEGY = "CACHE_6AM_TOMORROW";
     final int DEFAULT_ANALYTICS_MAX_LIMIT = 50000;
+    final int DEFAULT_DATABASE_SERVER_CPUS = 0; // Detect automatically
+    final String DEFAULT_HELP_PAGE_LINK = "../dhis-web-commons-about/help.action";
+    final String DEFAULT_ANALYSIS_RELATIVE_PERIOD = "LAST_12_MONTHS";
+	
+    final Map<String, Serializable> DEFAULT_SETTINGS_VALUES = new HashMap<String, Serializable>()
+    {
+        {
+            put( KEY_SCHEDULE_AGGREGATE_QUERY_BUILDER_TASK_STRATEGY, DEFAULT_SCHEDULE_AGGREGATE_QUERY_BUILDER_TASK_STRATEGY );
+            put( KEY_FLAG, DEFAULT_FLAG );
+            put( CalendarService.KEY_CALENDAR, CalendarService.DEFAULT_CALENDAR );
+            put( CalendarService.KEY_DATE_FORMAT, CalendarService.DEFAULT_DATE_FORMAT );
+            put( KEY_FACTOR_OF_DEVIATION, DEFAULT_FACTOR_OF_DEVIATION );
+            put( KEY_ORGUNITGROUPSET_AGG_LEVEL, DEFAULT_ORGUNITGROUPSET_AGG_LEVEL );
+            put( KEY_START_MODULE, DEFAULT_START_MODULE );
+            put( KEY_APPLICATION_TITLE, DEFAULT_APPLICATION_TITLE );
+            put( KEY_EMAIL_PORT, DEFAULT_EMAIL_PORT );
+            put( KEY_TIME_FOR_SENDING_MESSAGE, DEFAULT_TIME_FOR_SENDING_MESSAGE );
+            put( KEY_CACHE_STRATEGY, DEFAULT_CACHE_STRATEGY );
+            put( KEY_ANALYTICS_MAX_LIMIT, DEFAULT_ANALYTICS_MAX_LIMIT );
+            put( KEY_ANALYSIS_RELATIVE_PERIOD, DEFAULT_ANALYSIS_RELATIVE_PERIOD );
+        }
+    };
 
     final String SYSPROP_PORTAL = "runningAsPortal";
 
@@ -145,8 +172,6 @@ public interface SystemSettingManager
     int getEmailPort();
 
     String getEmailUsername();
-
-    String getEmailPassword();
 
     boolean getEmailTls();
     

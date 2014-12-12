@@ -31,7 +31,7 @@ package org.hisp.dhis.importexport.action.datavalue;
 import com.opensymphony.xwork2.Action;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hisp.dhis.common.IdentifiableObject.IdentifiableProperty;
+import org.hisp.dhis.common.IdentifiableProperty;
 import org.hisp.dhis.dxf2.datavalueset.DataValueSetService;
 import org.hisp.dhis.dxf2.metadata.ImportOptions;
 import org.hisp.dhis.importexport.ImportStrategy;
@@ -92,6 +92,13 @@ public class ImportDataValueAction
     {
         this.strategy = ImportStrategy.valueOf( stgy );
     }
+    
+    private IdentifiableProperty idScheme;
+
+    public void setIdScheme( IdentifiableProperty idScheme )
+    {
+        this.idScheme = idScheme;
+    }
 
     private IdentifiableProperty dataElementIdScheme;
 
@@ -121,21 +128,15 @@ public class ImportDataValueAction
         this.importFormat = importFormat;
     }
 
-    public String getImportFormat()
-    {
-        return importFormat;
-    }
-
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         strategy = strategy != null ? strategy : ImportStrategy.NEW_AND_UPDATES;
-        dataElementIdScheme = dataElementIdScheme != null ? dataElementIdScheme : IdentifiableProperty.UID;
-        orgUnitIdScheme = orgUnitIdScheme != null ? orgUnitIdScheme : IdentifiableProperty.UID;
 
         TaskId taskId = new TaskId( TaskCategory.DATAVALUE_IMPORT, currentUserService.getCurrentUser() );
 
@@ -145,7 +146,7 @@ public class ImportDataValueAction
 
         in = StreamUtils.wrapAndCheckCompressionFormat( in );
 
-        ImportOptions options = new ImportOptions( dataElementIdScheme, orgUnitIdScheme, dryRun, true, strategy, skipExistingCheck );
+        ImportOptions options = new ImportOptions( idScheme, dataElementIdScheme, orgUnitIdScheme, dryRun, true, strategy, skipExistingCheck );
 
         log.info( options );
 

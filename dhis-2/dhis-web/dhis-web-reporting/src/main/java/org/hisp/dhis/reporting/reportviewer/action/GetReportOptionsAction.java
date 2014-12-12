@@ -105,9 +105,10 @@ public class GetReportOptionsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
-        reportTables = new ArrayList<ReportTable>( reportTableService.getAllReportTables() );
+        reportTables = new ArrayList<>( reportTableService.getAllReportTables() );
         
         Collections.sort( reportTables, IdentifiableObjectNameComparator.INSTANCE );
         

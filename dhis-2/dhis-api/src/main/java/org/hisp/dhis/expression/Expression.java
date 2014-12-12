@@ -28,12 +28,10 @@ package org.hisp.dhis.expression;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.commons.lang.Validate;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
@@ -41,11 +39,14 @@ import org.hisp.dhis.common.annotation.Scanned;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
 /**
  * An Expression is the expression of e.g. a validation rule. It consist of a
@@ -95,23 +96,23 @@ public class Expression
     private String description;
 
     /**
-     * Indicates whether the expression should evaluate to null if there are
-     * missing data values in the expression.
+     * Indicates whether the expression should evaluate to null if all or any
+     * data values are missing in the expression.
      */
-    private boolean nullIfBlank;
+    private MissingValueStrategy missingValueStrategy = MissingValueStrategy.SKIP_IF_ALL_VALUES_MISSING;
 
     /**
      * A reference to the DataElements in the Expression.
      */
     @Scanned
-    private Set<DataElement> dataElementsInExpression = new HashSet<DataElement>();
+    private Set<DataElement> dataElementsInExpression = new HashSet<>();
 
-    /**
-     * A reference to the optionCombos in the Expression.
-     */
-    @Scanned
-    private Set<DataElementCategoryOptionCombo> optionCombosInExpression = new HashSet<DataElementCategoryOptionCombo>();
+    // -------------------------------------------------------------------------
+    // Transient properties
+    // -------------------------------------------------------------------------
 
+    private transient String explodedExpression;
+    
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
@@ -130,15 +131,25 @@ public class Expression
      * @param description              A description of the Expression.
      * @param dataElementsInExpression A reference to the DataElements in the Expression.
      */
-    public Expression( String expression, String description, Set<DataElement> dataElementsInExpression,
-        Set<DataElementCategoryOptionCombo> optionCombosInExpression )
+    public Expression( String expression, String description, Set<DataElement> dataElementsInExpression )
     {
         this.expression = expression;
         this.description = description;
         this.dataElementsInExpression = dataElementsInExpression;
-        this.optionCombosInExpression = optionCombosInExpression;
     }
 
+    // -------------------------------------------------------------------------
+    // Logic
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns exploded expression, if null returns expression.
+     */
+    public String getExplodedExpressionFallback()
+    {
+        return explodedExpression != null ? explodedExpression : expression;
+    }
+    
     // -------------------------------------------------------------------------
     // Equals and hashCode
     // -------------------------------------------------------------------------
@@ -195,8 +206,8 @@ public class Expression
     {
         final int PRIME = 31;
         int result = 1;
-        result = PRIME * result + ((description == null) ? 0 : description.hashCode());
-        result = PRIME * result + ((expression == null) ? 0 : expression.hashCode());
+        result = PRIME * result + ( ( description == null ) ? 0 : description.hashCode() );
+        result = PRIME * result + ( ( expression == null ) ? 0 : expression.hashCode() );
 
         return result;
     }
@@ -207,9 +218,9 @@ public class Expression
         return "Expression{" +
             "id=" + id +
             ", expression='" + expression + '\'' +
+            ", explodedExpression='" + explodedExpression + '\'' +
             ", description='" + description + '\'' +
             ", dataElementsInExpression=" + dataElementsInExpression.size() +
-            ", optionCombosInExpression=" + optionCombosInExpression.size() +
             '}';
     }
 
@@ -255,23 +266,8 @@ public class Expression
         this.dataElementsInExpression = dataElementsInExpression;
     }
 
-    @JsonProperty(value = "categoryOptionCombos")
-    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlElementWrapper(localName = "categoryOptionCombos", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty(localName = "categoryOptionCombo", namespace = DxfNamespaces.DXF_2_0)
-    public Set<DataElementCategoryOptionCombo> getOptionCombosInExpression()
-    {
-        return optionCombosInExpression;
-    }
-
-    public void setOptionCombosInExpression( Set<DataElementCategoryOptionCombo> optionCombosInExpression )
-    {
-        this.optionCombosInExpression = optionCombosInExpression;
-    }
-
     @JsonProperty
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView({ DetailedView.class, ExportView.class })
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getDescription()
     {
@@ -286,28 +282,36 @@ public class Expression
     @JsonProperty
     @JsonView({ DetailedView.class, ExportView.class })
     @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
-    public boolean isNullIfBlank()
+    public MissingValueStrategy getMissingValueStrategy()
     {
-        return nullIfBlank;
+        return missingValueStrategy;
     }
 
-    public void setNullIfBlank( boolean nullIfBlank )
+    public void setMissingValueStrategy( MissingValueStrategy missingValueStrategy )
     {
-        this.nullIfBlank = nullIfBlank;
-    }
+        this.missingValueStrategy = missingValueStrategy;
+    }    
 
+    @JsonIgnore
+    public String getExplodedExpression()
+    {
+        return explodedExpression;
+    }
+    
+    public void setExplodedExpression( String explodedExpression )
+    {
+        this.explodedExpression = explodedExpression;
+    }
+    
     public void mergeWith( Expression other )
     {
         Validate.notNull( other );
 
         expression = other.getExpression() == null ? expression : other.getExpression();
         description = other.getDescription() == null ? description : other.getDescription();
-        nullIfBlank = other.isNullIfBlank();
+        missingValueStrategy = other.getMissingValueStrategy() == null ? missingValueStrategy : other.getMissingValueStrategy();
 
         dataElementsInExpression = other.getDataElementsInExpression() == null ?
-            dataElementsInExpression : new HashSet<DataElement>( other.getDataElementsInExpression() );
-
-        optionCombosInExpression = other.getOptionCombosInExpression() == null ?
-            optionCombosInExpression : new HashSet<DataElementCategoryOptionCombo>( other.getOptionCombosInExpression() );
+            dataElementsInExpression : new HashSet<>( other.getDataElementsInExpression() );
     }
 }

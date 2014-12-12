@@ -247,6 +247,21 @@ public interface ProgramInstanceService
         Collection<Integer> orgunitIds, Date startDate, Date endDate );
 
     /**
+     * Retrieve program instances with a certain status on a program and an
+     * orgunit ids list for a period
+     *
+     * @param status     of program-instance, include STATUS_ACTIVE,
+     *                   STATUS_COMPLETED and STATUS_CANCELLED
+     * @param program    ProgramInstance
+     * @param orgunitIds A list of orgunit ids
+     * @param startDate  The start date for retrieving on enrollment-date
+     * @param endDate    The end date for retrieving on enrollment-date
+     * @return ProgramInstance list
+     */
+    Collection<ProgramInstance> getProgramInstancesByStatus( Integer status, Program program,
+        Collection<Integer> orgunitIds, Date startDate, Date endDate, Integer min, Integer max );
+
+    /**
      * Get the number of program instances of a program which have a certain
      * status and an orgunit ids list for a period
      *
@@ -268,6 +283,20 @@ public interface ProgramInstanceService
      * @return A SchedulingProgramObject list
      */
     Collection<SchedulingProgramObject> getScheduleMesssages();
+
+    /**
+     * Enroll a TrackedEntityInstance into a program. Must be run inside a transaction.
+     *
+     * @param uid UID to use for new instance
+     * @param entityInstance TrackedEntityInstance
+     * @param program        Program
+     * @param enrollmentDate The date of enrollment
+     * @param dateOfIncident The date of incident
+     * @param orgunit        Organisation Unit
+     * @return ProgramInsance
+     */
+    ProgramInstance enrollTrackedEntityInstance( String uid, TrackedEntityInstance entityInstance, Program program, Date enrollmentDate, Date dateOfIncident,
+        OrganisationUnit orgunit );
 
     /**
      * Enroll a TrackedEntityInstance into a program. Must be run inside a transaction.

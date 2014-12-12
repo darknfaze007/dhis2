@@ -67,9 +67,6 @@ public class ContextUtils
     public static final String HEADER_IF_NONE_MATCH = "If-None-Match";
     public static final String HEADER_ETAG = "ETag";
 
-    private static final String SEPARATOR = "/";
-    private static final String PORT_SEPARATOR = ":";
-    private static final String PROTOCOL = "http://";
     private static final String QUOTE = "\"";
     
     private static final Map<String, String> CONTENT_TYPE_MAP = new HashMap<String, String>() 
@@ -96,7 +93,7 @@ public class ContextUtils
     {
         Enumeration<String> enumeration = request.getParameterNames();
 
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
 
         while ( enumeration.hasMoreElements() )
         {
@@ -106,17 +103,6 @@ public class ContextUtils
         }
 
         return params;
-    }
-
-    public static String getBaseUrl( HttpServletRequest request )
-    {
-        String server = request.getServerName();
-
-        int port = request.getServerPort();
-
-        String baseUrl = PROTOCOL + server + PORT_SEPARATOR + port + SEPARATOR;
-
-        return baseUrl;
     }
 
     public static void configureResponse( HttpServletResponse response, String contentType, boolean disallowCache,
@@ -129,12 +115,7 @@ public class ContextUtils
 
         if ( disallowCache )
         {
-            // -----------------------------------------------------------------
-            // Cache set to expire after 1 second as IE 8 will not save cached
-            // responses to disk over SSL, was "no-cache".
-            // -----------------------------------------------------------------
-
-            response.setHeader( "Cache-Control", "max-age=1" );
+            response.setHeader( "Cache-Control", "no-cache, no-store" );
             response.setHeader( "Expires", DateUtils.getExpiredHttpDateString() );
         }
 

@@ -33,9 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hisp.dhis.common.BaseAnalyticalObject;
+import org.hisp.dhis.common.AnalyticalObject;
 import org.hisp.dhis.common.DimensionalObject;
+import org.hisp.dhis.common.DisplayProperty;
 import org.hisp.dhis.common.Grid;
+import org.hisp.dhis.common.IllegalQueryException;
 import org.hisp.dhis.i18n.I18nFormat;
 
 /**
@@ -128,18 +130,18 @@ public interface AnalyticsService
      * @param params the DataQueryParams.
      * @return a mapping of dimensional items and aggregated data values.
      */
-    Map<String, Double> getAggregatedDataValueMapping( DataQueryParams params );
+    Map<String, Object> getAggregatedDataValueMapping( DataQueryParams params );
 
     /**
      * Generates a mapping where the key represents the dimensional item identifiers
      * concatenated by "-" and the value is the corresponding aggregated data value
-     * based on the given BaseAnalyticalObject.
+     * based on the given AnalyticalObject.
      * 
      * @param object the BaseAnalyticalObject.
      * @param format the I18nFormat, can be null.
      * @return a mapping of dimensional items and aggregated data values.
      */
-    Map<String, Double> getAggregatedDataValueMapping( BaseAnalyticalObject object, I18nFormat format );
+    Map<String, Object> getAggregatedDataValueMapping( AnalyticalObject object, I18nFormat format );
 
     /**
      * Creates a data query parameter object from the given URL.
@@ -155,11 +157,12 @@ public interface AnalyticsService
      * @param ignoreLimit whether to ignore the max number of cells limit.
      * @param hideEmptyRows whether to hide rows without data values, applis to table layout.
      * @param showHierarchy whether to show the org unit hierarchy together with the name.
+     * @param displayProperty the property to display for meta-data.
      * @param format the i18n format.
      * @return a data query parameter object created based on the given URL info.
      */
     DataQueryParams getFromUrl( Set<String> dimensionParams, Set<String> filterParams, AggregationType aggregationType, String measureCriteria, 
-        boolean skipMeta, boolean skipRounding, boolean hierarchyMeta, boolean ignoreLimit, boolean hideEmptyRows, boolean showHierarchy, I18nFormat format );
+        boolean skipMeta, boolean skipRounding, boolean hierarchyMeta, boolean ignoreLimit, boolean hideEmptyRows, boolean showHierarchy, DisplayProperty displayProperty, I18nFormat format );
     
     /**
      * Creates a data query parameter object from the given BaseAnalyticalObject.
@@ -168,7 +171,16 @@ public interface AnalyticsService
      * @param format the i18n format.
      * @return a data query parameter object created based on the given BaseAnalyticalObject.
      */
-    DataQueryParams getFromAnalyticalObject( BaseAnalyticalObject object, I18nFormat format );
+    DataQueryParams getFromAnalyticalObject( AnalyticalObject object, I18nFormat format );
+    
+    /**
+     * Creates a list of DimensionalObject from the given set of dimension params.
+     * 
+     * @param dimensionParams the dimension URL params.
+     * @param format the i18n format.
+     * @return a list of DimensionalObject.
+     */
+    List<DimensionalObject> getDimensionalObjects( Set<String> dimensionParams, I18nFormat format );
     
     /**
      * Returns a list of persisted DimensionalObjects generated from the given 
@@ -185,8 +197,10 @@ public interface AnalyticsService
      * @param dimension the dimension identifier.
      * @param items the dimension items.
      * @param relativePeriodDate the date to use for generating relative periods, can be null.
-     * @parma format the I18nFormat, can be null.
+     * @param format the I18nFormat, can be null.
+     * @param allowNull return null if no dimension was found.
+     * @throws IllegalQueryException if no dimensions was found.
      * @return list of DimensionalObjects.
      */
-    List<DimensionalObject> getDimension( String dimension, List<String> items, Date relativePeriodDate, I18nFormat format );
+    List<DimensionalObject> getDimension( String dimension, List<String> items, Date relativePeriodDate, I18nFormat format, boolean allowNull );
 }

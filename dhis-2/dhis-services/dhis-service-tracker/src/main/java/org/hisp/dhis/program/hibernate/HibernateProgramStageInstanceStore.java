@@ -56,6 +56,8 @@ import org.hisp.dhis.system.grid.ListGrid;
 import org.hisp.dhis.system.util.TextUtils;
 import org.hisp.dhis.trackedentity.TrackedEntityInstance;
 import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminder;
+import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminderService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 /**
@@ -76,6 +78,9 @@ public class HibernateProgramStageInstanceStore
         this.programInstanceService = programInstanceService;
     }
 
+    @Autowired
+    private TrackedEntityInstanceReminderService reminderService;
+    
     // -------------------------------------------------------------------------
     // Implemented methods
     // -------------------------------------------------------------------------
@@ -127,31 +132,44 @@ public class HibernateProgramStageInstanceStore
 
         SqlRowSet rs = jdbcTemplate.queryForRowSet( sql );
 
-        int cols = rs.getMetaData().getColumnCount();
-
-        Collection<SchedulingProgramObject> schedulingProgramObjects = new HashSet<SchedulingProgramObject>();
+        Collection<SchedulingProgramObject> schedulingProgramObjects = new HashSet<>();
 
         while ( rs.next() )
         {
-            String message = "";
-            for ( int i = 1; i <= cols; i++ )
+            String message = rs.getString( "templatemessage" );
+            
+            List<String> attributeUids = reminderService.getAttributeUids( message );
+            int programstageinstanceid = rs.getInt( "programstageinstanceid" );
+            SqlRowSet attributeValueRow = jdbcTemplate
+                .queryForRowSet( "select tea.uid ,teav.value from trackedentityattributevalue teav "
+                    + " INNER JOIN trackedentityattribute tea on tea.trackedentityattributeid=teav.trackedentityattributeid "
+                    + " INNER JOIN programinstance ps on teav.trackedentityinstanceid=ps.trackedentityinstanceid "
+                    + " INNER JOIN programstageinstance psi on ps.programinstanceid=psi.programinstanceid "
+                    + " where tea.uid in ( " + TextUtils.getQuotedCommaDelimitedString( attributeUids ) + ")  "
+                    + " and psi.programstageinstanceid=" + programstageinstanceid );
+
+            while ( attributeValueRow.next() )
             {
-                message = rs.getString( "templatemessage" );
-                String organisationunitName = rs.getString( "orgunitName" );
-                String programName = rs.getString( "programName" );
-                String programStageName = rs.getString( "programStageName" );
-                String daysSinceDueDate = rs.getString( "days_since_due_date" );
-                String dueDate = rs.getString( "duedate" ).split( " " )[0];
+                String uid = attributeValueRow.getString( "uid" );
+                String value = attributeValueRow.getString( "value" );
+                String key = "\\{(" + TrackedEntityInstanceReminder.ATTRIBUTE + ")=(" + uid + ")\\}";
+                message = message.replaceAll( key, value );
+            }  
+            
+            String organisationunitName = rs.getString( "orgunitName" );
+            String programName = rs.getString( "programName" );
+            String programStageName = rs.getString( "programStageName" );
+            String daysSinceDueDate = rs.getString( "days_since_due_date" );
+            String dueDate = rs.getString( "duedate" ).split( " " )[0];
 
-                message = message.replace( TrackedEntityInstanceReminder.TEMPLATE_MESSSAGE_PROGRAM_NAME, programName );
-                message = message.replace( TrackedEntityInstanceReminder.TEMPLATE_MESSSAGE_PROGAM_STAGE_NAME, programStageName );
-                message = message.replace( TrackedEntityInstanceReminder.TEMPLATE_MESSSAGE_DUE_DATE, dueDate );
-                message = message.replace( TrackedEntityInstanceReminder.TEMPLATE_MESSSAGE_ORGUNIT_NAME, organisationunitName );
-                message = message.replace( TrackedEntityInstanceReminder.TEMPLATE_MESSSAGE_DAYS_SINCE_DUE_DATE, daysSinceDueDate );
-            }
-
+            message = message.replace( TrackedEntityInstanceReminder.TEMPLATE_MESSSAGE_PROGRAM_NAME, programName );
+            message = message.replace( TrackedEntityInstanceReminder.TEMPLATE_MESSSAGE_PROGAM_STAGE_NAME, programStageName );
+            message = message.replace( TrackedEntityInstanceReminder.TEMPLATE_MESSSAGE_DUE_DATE, dueDate );
+            message = message.replace( TrackedEntityInstanceReminder.TEMPLATE_MESSSAGE_ORGUNIT_NAME, organisationunitName );
+            message = message.replace( TrackedEntityInstanceReminder.TEMPLATE_MESSSAGE_DAYS_SINCE_DUE_DATE, daysSinceDueDate );
+            
             SchedulingProgramObject schedulingProgramObject = new SchedulingProgramObject();
-            schedulingProgramObject.setProgramStageInstanceId( rs.getInt( "programstageinstanceid" ) );
+            schedulingProgramObject.setProgramStageInstanceId( programstageinstanceid );
             schedulingProgramObject.setPhoneNumber( rs.getString( "phonenumber" ) );
             schedulingProgramObject.setMessage( message );
 
@@ -210,7 +228,7 @@ public class HibernateProgramStageInstanceStore
             + "inner join organisationunit ou on ou.organisationunitid=psi.organisationunitid "
             + "inner join program pg on pg.programid = ps.programid "
             + "where ou.organisationunitid in ( " + TextUtils.getCommaDelimitedString( orgunitIds ) + " ) "
-            + "and pg.programid = " + program.getId()
+            + "and pg.programid = " + program.getId() + " "
             + "group by ou.name, ps.name, psi.completeduser, psi.completeddate, psi.status "
             + "having psi.completeddate >= '" + startDate + "' AND psi.completeddate <= '" + endDate + "' "
             + "and psi.status='" + EventStatus.COMPLETED.name()  + "' "

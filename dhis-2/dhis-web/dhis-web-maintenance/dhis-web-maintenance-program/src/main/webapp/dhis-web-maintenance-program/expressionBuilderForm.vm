@@ -19,14 +19,14 @@
 			</tr>
 			<tr>
 				<td>
-					<input type="text" id="description" name="description" class="{validate:{required:true}}"/><br>
+					<input type="text" id="description" name="description" /><br>
 					<span id="exp-descriptionInfo" generated="true" class="error"></span>
 				</td>
 				<td>
 					<select id='leftStage' name='leftStage' onchange="getLeftPrgramStageDataElements();" style='width:320px;'>
 						<option value=''>[$i18n.getString( "please_select" )]</option>
 						#foreach($stage in $program.programStages)
-						<option value='$stage.id'>$stage.name</option>
+						<option value='$stage.id'>$encoder.htmlEncode($stage.name)</option>
 						#end
 					</select>
 				</td>
@@ -40,7 +40,7 @@
 			</tr>
 			<tr>
 				<td>
-					<textarea id="expression" name="expression" style="width:316px;height:138px" wrap="virtual" onchange="getExpressionText()" class="{validate:{required:true}}"></textarea><br/>
+					<textarea id="expression" name="expression" style="width:316px;height:138px" wrap="virtual" onchange="getExpressionText()" ></textarea><br/>
 					<span id="exp-expressionInfo" generated="true" class="error"></span>
 				</td>
 				<td valign="top">

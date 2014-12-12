@@ -64,11 +64,12 @@ public class SaveOrganisationUnitLevelsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {        
         Map<String, String> params = ContextUtils.getParameterMap( ServletActionContext.getRequest() );
         
-        Set<Integer> levels = new HashSet<Integer>(); 
+        Set<Integer> levels = new HashSet<>();
         
         for ( Entry<String, String> param : params.entrySet() )
         {

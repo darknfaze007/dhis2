@@ -39,7 +39,7 @@ import java.util.List;
  */
 public interface AclService
 {
-    public static final List<String> ACL_OVERRIDE_AUTHORITIES = Arrays.asList( "ALL", "F_METADATA_IMPORT" );
+    public static final List<String> ACL_OVERRIDE_AUTHORITIES = Arrays.asList( "ALL" );
 
     /**
      * Is type supported for acl?
@@ -140,12 +140,11 @@ public interface AclService
     boolean canManage( User user, IdentifiableObject object );
 
     /**
-     * Can create
+     * Can create an object of this type.
      *
-     * @param user
-     * @param klass
-     * @param <T>
-     * @return
+     * @param user  User to User to check against
+     * @param klass Type to check against
+     * @return Result of test
      */
     <T extends IdentifiableObject> boolean canCreate( User user, Class<T> klass );
 
@@ -182,7 +181,30 @@ public interface AclService
      */
     <T extends IdentifiableObject> boolean canExternalize( User user, Class<T> klass );
 
+    /**
+     * Is the default for this type to be public?
+     *
+     * @param klass Type to check
+     * @return Result of test
+     */
     <T extends IdentifiableObject> boolean defaultPublic( Class<T> klass );
 
     Class<? extends IdentifiableObject> classForType( String type );
+
+    /**
+     * Return the access object for a object.
+     *
+     * @param object Object to check for access
+     * @return Populated access instance
+     */
+    <T extends IdentifiableObject> Access getAccess( T object );
+
+    /**
+     * Return the access object for a object for a specific user.
+     *
+     * @param object Object to check for access
+     * @param user   User to check against
+     * @return Populated access instance
+     */
+    <T extends IdentifiableObject> Access getAccess( T object, User user );
 }

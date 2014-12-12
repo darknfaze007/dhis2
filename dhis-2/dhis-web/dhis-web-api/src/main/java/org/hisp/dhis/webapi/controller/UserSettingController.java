@@ -28,6 +28,7 @@ package org.hisp.dhis.webapi.controller;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import org.hisp.dhis.system.util.LocaleUtils;
 import org.hisp.dhis.user.UserSettingService;
 import org.hisp.dhis.webapi.utils.ContextUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.Serializable;
+import java.util.Locale;
 
 /**
  * @author Lars Helge Overland
@@ -74,11 +77,12 @@ public class UserSettingController
 
         if ( username == null )
         {
-            userSettingService.saveUserSetting( key, value );
+            userSettingService.saveUserSetting( key, valueToSet( key, value ) );
+
         }
         else
         {
-            userSettingService.saveUserSetting( key, value, username );
+            userSettingService.saveUserSetting( key, valueToSet( key, value ), username );
         }
 
         ContextUtils.okResponse( response, "User setting saved" );
@@ -87,12 +91,32 @@ public class UserSettingController
     @RequestMapping( value = "/{key}", method = RequestMethod.GET, produces = ContextUtils.CONTENT_TYPE_TEXT )
     public @ResponseBody String getSystemSetting( @PathVariable( "key" ) String key, @RequestParam( value = "user", required = false ) String username )
     {
-        return (String) (username == null ? userSettingService.getUserSetting( key ) : userSettingService.getUserSetting( key, username ));
+        return username == null ? getStringValue( key, userSettingService.getUserSetting( key ) ) : getStringValue( key, userSettingService.getUserSetting( key, username ) );
     }
 
     @RequestMapping( value = "/{key}", method = RequestMethod.DELETE )
     public void removeSystemSetting( @PathVariable( "key" ) String key )
     {
         userSettingService.deleteUserSetting( key );
+    }
+
+    private Serializable valueToSet( String key, String value )
+    {
+        if ( key.equals( UserSettingService.KEY_UI_LOCALE ) || key.equals( UserSettingService.KEY_DB_LOCALE ) )
+        {
+            return LocaleUtils.getLocale( value );
+        }
+        else
+        {
+            return value;
+        }
+    }
+
+    private String getStringValue( String key, Serializable value )
+    {
+        if ( key.equals( UserSettingService.KEY_UI_LOCALE ) || key.equals( UserSettingService.KEY_DB_LOCALE ) )
+            return ((Locale) value).getLanguage();
+        else
+            return (String) value;
     }
 }

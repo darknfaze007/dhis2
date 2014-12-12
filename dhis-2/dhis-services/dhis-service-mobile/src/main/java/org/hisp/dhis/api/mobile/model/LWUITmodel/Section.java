@@ -56,11 +56,13 @@ public class Section
         this.dataElementIds = dataElementIds;
     }
 
+    @Override
     public String getClientVersion()
     {
         return clientVersion;
     }
 
+    @Override
     public void setClientVersion( String clientVersion )
     {
         this.clientVersion = clientVersion;
@@ -80,9 +82,9 @@ public class Section
         else
         {
             dout.writeInt( dataElementIds.size() );
-            for ( int i = 0; i < dataElementIds.size(); i++ )
+            for ( Integer dataElementId : dataElementIds )
             {
-                dout.writeInt( dataElementIds.get( i ) );
+                dout.writeInt( dataElementId );
             }
         }
     }
@@ -98,7 +100,7 @@ public class Section
         
         if ( numbOfDataElement > 0 )
         {
-            dataElementIds = new ArrayList<Integer>();
+            dataElementIds = new ArrayList<>();
             for ( int i = 0; i < numbOfDataElement; i++ )
             {
                 dataElementIds.add( dint.readInt() );

@@ -79,29 +79,33 @@ public class DefaultRequiredAuthoritiesProvider
     // RequiredAuthoritiesProvider implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public SecurityMetadataSource createSecurityMetadataSource( ActionConfig actionConfig )
     {
         return createSecurityMetadataSource( actionConfig, actionConfig );
     }
 
+    @Override
     public SecurityMetadataSource createSecurityMetadataSource( ActionConfig actionConfig, Object object )
     {
-        Collection<ConfigAttribute> attributes = new ArrayList<ConfigAttribute>();
+        Collection<ConfigAttribute> attributes = new ArrayList<>();
         attributes.addAll( StrutsAuthorityUtils.getConfigAttributes( getRequiredAuthorities( actionConfig ) ) );
         attributes.addAll( StrutsAuthorityUtils.getConfigAttributes( globalAttributes ) );
 
         return new SingleSecurityMetadataSource( object, attributes );
     }
 
+    @Override
     public Collection<String> getAllAuthorities( ActionConfig actionConfig )
     {
-        Collection<String> authorities = new HashSet<String>();
+        Collection<String> authorities = new HashSet<>();
         authorities.addAll( getRequiredAuthorities( actionConfig ) );
         authorities.addAll( getAnyAuthorities( actionConfig ) );
 
         return authorities;
     }
 
+    @Override
     public Collection<String> getRequiredAuthorities( ActionConfig actionConfig )
     {
         return StrutsAuthorityUtils.getAuthorities( actionConfig, requiredAuthoritiesKey );

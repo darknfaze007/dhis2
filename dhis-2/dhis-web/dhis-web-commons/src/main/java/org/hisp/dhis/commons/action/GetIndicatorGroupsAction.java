@@ -86,9 +86,10 @@ public class GetIndicatorGroupsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
-        indicatorGroups = new ArrayList<IndicatorGroup>( indicatorService.getAllIndicatorGroups() );
+        indicatorGroups = new ArrayList<>( indicatorService.getAllIndicatorGroups() );
 
         if ( filterNoGroupSet )
         {

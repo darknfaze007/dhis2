@@ -28,16 +28,14 @@ package org.hisp.dhis.webapi.controller;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.dxf2.utils.JacksonUtils;
+import org.hisp.dhis.dxf2.render.RenderService;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.io.InputStream;
 import java.util.List;
@@ -54,17 +52,20 @@ public class MenuController
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private RenderService renderService;
+
+    @SuppressWarnings("unchecked")
     @RequestMapping( method = RequestMethod.POST, consumes = "application/json" )
-    @ResponseStatus( value = HttpStatus.NO_CONTENT )
     public void saveMenuOrder( InputStream input )
         throws Exception
     {
-        List<String> apps = JacksonUtils.fromJson( input, List.class );
+        List<String> apps = renderService.fromJson( input, List.class );
 
         User user = currentUserService.getCurrentUser();
 
         if ( apps != null && !apps.isEmpty() && user != null )
-        {        
+        {
             user.getApps().clear();
             user.getApps().addAll( apps );
 

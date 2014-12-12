@@ -77,7 +77,7 @@ public class GetSmsConfigurationAction
         this.index = index;
     }
 
-    private Map<Integer, SmsGatewayConfig> gatewayConfigMap = new HashMap<Integer, SmsGatewayConfig>();
+    private Map<Integer, SmsGatewayConfig> gatewayConfigMap = new HashMap<>();
 
     public Map<Integer, SmsGatewayConfig> getGatewayConfigMap()
     {
@@ -137,6 +137,7 @@ public class GetSmsConfigurationAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {

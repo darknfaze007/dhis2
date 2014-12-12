@@ -81,6 +81,7 @@ public class DefaultDataBrowserGridService
     // DataBrowserGridService implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public Grid getDataSetsInPeriod( String startDate, String endDate, PeriodType periodType, I18nFormat format, boolean isZeroAdded )
     {
         List<Integer> betweenPeriodIds = getAllPeriodIdsBetweenDatesOnPeriodType( startDate, endDate, periodType, format );
@@ -88,6 +89,7 @@ public class DefaultDataBrowserGridService
         return dataBrowserGridStore.getDataSetsBetweenPeriods( betweenPeriodIds, periodType, isZeroAdded );
     }
 
+    @Override
     public Grid getDataElementGroupsInPeriod( String startDate, String endDate, PeriodType periodType,
         I18nFormat format, boolean isZeroAdded )
     {
@@ -96,6 +98,7 @@ public class DefaultDataBrowserGridService
         return dataBrowserGridStore.getDataElementGroupsBetweenPeriods( betweenPeriodIds, isZeroAdded );
     }
 
+    @Override
     public Grid getOrgUnitGroupsInPeriod( String startDate, String endDate, PeriodType periodType, I18nFormat format,
         boolean isZeroAdded )
     {
@@ -108,6 +111,7 @@ public class DefaultDataBrowserGridService
     // Advance
     // -------------------------------------------------------------------------
 
+    @Override
     public Grid getOrgUnitsInPeriod( Integer orgUnitParent, String startDate, String endDate, PeriodType periodType,
         Integer maxLevel, I18nFormat format, boolean isZeroAdded )
     {
@@ -115,7 +119,7 @@ public class DefaultDataBrowserGridService
             format );
 
         Grid grid = new ListGrid();
-        List<Integer> metaIds = new ArrayList<Integer>();
+        List<Integer> metaIds = new ArrayList<>();
 
         dataBrowserGridStore.setStructureForOrgUnit( grid, orgUnitParent, metaIds );
 
@@ -125,6 +129,7 @@ public class DefaultDataBrowserGridService
         return grid;
     }
 
+    @Override
     public Grid getCountDataElementsForDataSetInPeriod( Integer dataSetId, String startDate, String endDate,
         PeriodType periodType, I18nFormat format, boolean isZeroAdded )
     {
@@ -132,7 +137,7 @@ public class DefaultDataBrowserGridService
             format );
 
         Grid grid = new ListGrid();
-        List<Integer> metaIds = new ArrayList<Integer>();
+        List<Integer> metaIds = new ArrayList<>();
 
         dataBrowserGridStore.setDataElementStructureForDataSet( grid, dataSetId, metaIds );
 
@@ -142,6 +147,7 @@ public class DefaultDataBrowserGridService
         return grid;
     }
 
+    @Override
     public Grid getCountDataElementsForDataElementGroupInPeriod( Integer dataElementGroupId, String startDate,
         String endDate, PeriodType periodType, I18nFormat format, boolean isZeroAdded )
     {
@@ -149,7 +155,7 @@ public class DefaultDataBrowserGridService
             format );
 
         Grid grid = new ListGrid();
-        List<Integer> metaIds = new ArrayList<Integer>();
+        List<Integer> metaIds = new ArrayList<>();
 
         dataBrowserGridStore.setDataElementStructureForDataElementGroup( grid, dataElementGroupId, metaIds );
 
@@ -159,6 +165,7 @@ public class DefaultDataBrowserGridService
         return grid;
     }
 
+    @Override
     public Grid getCountDataElementGroupsForOrgUnitGroupInPeriod( Integer orgUnitGroupId, String startDate,
         String endDate, PeriodType periodType, I18nFormat format, boolean isZeroAdded )
     {
@@ -166,7 +173,7 @@ public class DefaultDataBrowserGridService
             format );
 
         Grid grid = new ListGrid();
-        List<Integer> metaIds = new ArrayList<Integer>();
+        List<Integer> metaIds = new ArrayList<>();
 
         dataBrowserGridStore.setDataElementGroupStructureForOrgUnitGroup( grid, orgUnitGroupId, metaIds );
 
@@ -180,11 +187,12 @@ public class DefaultDataBrowserGridService
     // Advance - Raw data
     // -------------------------------------------------------------------------
 
+    @Override
     public Grid getRawDataElementsForOrgUnitInPeriod( Integer orgUnitId, String startDate, String endDate,
         PeriodType periodType, I18nFormat format, boolean isZeroAdded )
     {
         Grid grid = new ListGrid();
-        List<Integer> metaIds = new ArrayList<Integer>();
+        List<Integer> metaIds = new ArrayList<>();
 
         List<Integer> betweenPeriodIds = getAllPeriodIdsBetweenDatesOnPeriodType( startDate, endDate, periodType,
             format );
@@ -201,6 +209,7 @@ public class DefaultDataBrowserGridService
     // Others
     // -------------------------------------------------------------------------
 
+    @Override
     public String convertDate( PeriodType periodType, String dateString, I18n i18n, I18nFormat format )
     {
         if ( !DateUtils.dateIsValid( dateString ) )
@@ -223,10 +232,11 @@ public class DefaultDataBrowserGridService
         }
     }
 
+    @Override
     public String getFromToDateFormat( PeriodType periodType, String fromDate, String toDate, I18nFormat format )
     {
         String stringFormatDate = "";
-        List<Period> periods = new ArrayList<Period>( this.getPeriodsList( periodType, fromDate, toDate ) );
+        List<Period> periods = new ArrayList<>( this.getPeriodsList( periodType, fromDate, toDate ) );
 
         for ( Period period : periods )
         {
@@ -272,7 +282,7 @@ public class DefaultDataBrowserGridService
 
         Collection<Period> periods = periodService.getPeriodsBetweenDates( periodType, date1, date2 );
 
-        List<Integer> betweenPeriodIds = new ArrayList<Integer>();
+        List<Integer> betweenPeriodIds = new ArrayList<>();
 
         for ( Period period : periods )
         {
@@ -305,7 +315,7 @@ public class DefaultDataBrowserGridService
             Date date1 = sdf.parse( fromDate );
             Date date2 = sdf.parse( toDate );
 
-            List<Period> periods = new ArrayList<Period>( periodService.getPeriodsBetweenDates( 
+            List<Period> periods = new ArrayList<>( periodService.getPeriodsBetweenDates(
                 periodType, date1, date2 ) );
 
             if ( periods.isEmpty() )

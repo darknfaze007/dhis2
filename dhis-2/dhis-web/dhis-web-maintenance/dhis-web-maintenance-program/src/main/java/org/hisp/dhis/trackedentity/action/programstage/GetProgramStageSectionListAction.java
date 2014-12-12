@@ -80,7 +80,7 @@ public class GetProgramStageSectionListAction
         return programStage;
     }
 
-    private List<ProgramStageSection> sections = new ArrayList<ProgramStageSection>();
+    private List<ProgramStageSection> sections = new ArrayList<>();
 
     public List<ProgramStageSection> getSections()
     {
@@ -91,12 +91,13 @@ public class GetProgramStageSectionListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         programStage = programStageService.getProgramStage( id );
 
-        sections = new ArrayList<ProgramStageSection>( programStage.getProgramStageSections() );
+        sections = new ArrayList<>( programStage.getProgramStageSections() );
 
         Collections.sort( sections, new ProgramStageSectionSortOrderComparator() );
 

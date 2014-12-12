@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.IdentifiableObject;
@@ -43,7 +44,9 @@ import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.dataentryform.DataEntryForm;
 import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminder;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -73,6 +76,8 @@ public class ProgramStage
     private Program program;
 
     private Set<ProgramStageDataElement> programStageDataElements = new HashSet<>();
+    
+    private List<ProgramIndicator> programIndicators = new ArrayList<>();
 
     @Scanned
     private Set<ProgramStageSection> programStageSections = new HashSet<>();
@@ -94,6 +99,8 @@ public class ProgramStage
     private Boolean captureCoordinates = false;
 
     private Boolean blockEntryForm = false;
+    
+    private Boolean preGenerateUID = false;
 
     /**
      * Enabled this property to show a pop-up for confirming Complete a program
@@ -108,6 +115,8 @@ public class ProgramStage
     private Boolean openAfterEnrollment = false;
 
     private String reportDateToUse;
+    
+    private Integer sortOrder;
 
     // -------------------------------------------------------------------------
     // Constructors
@@ -120,7 +129,7 @@ public class ProgramStage
 
     public ProgramStage( String name, Program program )
     {
-        this();
+        setAutoFields();
         this.name = name;
         this.program = program;
     }
@@ -169,7 +178,7 @@ public class ProgramStage
     }
 
     @JsonProperty( value = "trackedEntityInstanceReminders" )
-    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonView( { DetailedView.class } )
     @JacksonXmlElementWrapper( localName = "trackedEntityInstanceReminders", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "trackedEntityInstanceReminder", namespace = DxfNamespaces.DXF_2_0 )
     public Set<TrackedEntityInstanceReminder> getReminders()
@@ -419,6 +428,46 @@ public class ProgramStage
         this.reportDateToUse = reportDateToUse;
     }
 
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "programIndicators", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "programIndicator", namespace = DxfNamespaces.DXF_2_0 )
+     public List<ProgramIndicator> getProgramIndicators()
+    {
+        return programIndicators;
+    }
+
+    public void setProgramIndicators( List<ProgramIndicator> programIndicators )
+    {
+        this.programIndicators = programIndicators;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Boolean getPreGenerateUID()
+    {
+        return preGenerateUID;
+    }
+
+    public void setPreGenerateUID( Boolean preGenerateUID )
+    {
+        this.preGenerateUID = preGenerateUID;
+    }
+    
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Integer getSortOrder()
+    {
+        return sortOrder;
+    }
+
+    public void setSortOrder( Integer sortOrder )
+    {
+        this.sortOrder = sortOrder;
+    }
+
     @Override
     public void mergeWith( IdentifiableObject other )
     {
@@ -445,6 +494,7 @@ public class ProgramStage
             allowGenerateNextVisit = programStage.getAllowGenerateNextVisit();
             openAfterEnrollment = programStage.getOpenAfterEnrollment();
             reportDateToUse = programStage.getReportDateToUse();
+            preGenerateUID = programStage.getPreGenerateUID();
 
             programStageDataElements.clear();
             programStageDataElements.addAll( programStage.getProgramStageDataElements() );

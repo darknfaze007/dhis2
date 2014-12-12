@@ -28,27 +28,25 @@ package org.hisp.dhis.dxf2.events.event;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.hibernate.SessionFactory;
-import org.hisp.dhis.dxf2.importsummary.ImportSummaries;
-import org.hisp.dhis.dxf2.importsummary.ImportSummary;
-import org.hisp.dhis.dxf2.metadata.ImportOptions;
-import org.hisp.dhis.dxf2.timer.SystemNanoTimer;
-import org.hisp.dhis.dxf2.timer.Timer;
-import org.hisp.dhis.scheduling.TaskId;
-import org.hisp.dhis.system.notification.NotificationLevel;
-import org.hisp.dhis.system.notification.Notifier;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StreamUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hisp.dhis.dxf2.importsummary.ImportSummaries;
+import org.hisp.dhis.dxf2.importsummary.ImportSummary;
+import org.hisp.dhis.dxf2.metadata.ImportOptions;
+import org.hisp.dhis.scheduling.TaskId;
+import org.hisp.dhis.system.notification.NotificationLevel;
+import org.hisp.dhis.system.timer.SystemTimer;
+import org.hisp.dhis.system.timer.Timer;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StreamUtils;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 /**
  * Implementation of EventService that uses Jackson for serialization and deserialization.
@@ -60,12 +58,6 @@ public class JacksonEventService extends AbstractEventService
 {
     private static final Log log = LogFactory.getLog( JacksonEventService.class );
 
-    @Autowired
-    private Notifier notifier;
-
-    @Autowired
-    private SessionFactory sessionFactory;
-
     // -------------------------------------------------------------------------
     // EventService Impl
     // -------------------------------------------------------------------------
@@ -74,25 +66,25 @@ public class JacksonEventService extends AbstractEventService
 
     private final static ObjectMapper jsonMapper = new ObjectMapper();
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     private static <T> T fromXml( InputStream inputStream, Class<?> clazz ) throws IOException
     {
         return (T) xmlMapper.readValue( inputStream, clazz );
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     private static <T> T fromXml( String input, Class<?> clazz ) throws IOException
     {
         return (T) xmlMapper.readValue( input, clazz );
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     private static <T> T fromJson( InputStream inputStream, Class<?> clazz ) throws IOException
     {
         return (T) jsonMapper.readValue( inputStream, clazz );
     }
 
-    @SuppressWarnings( "unchecked" )
+    @SuppressWarnings("unchecked")
     private static <T> T fromJson( String input, Class<?> clazz ) throws IOException
     {
         return (T) jsonMapper.readValue( input, clazz );
@@ -129,26 +121,12 @@ public class JacksonEventService extends AbstractEventService
 
         notifier.clear( taskId ).notify( taskId, "Importing events" );
 
-        Timer<Long> timer = new SystemNanoTimer().start();
+        Timer timer = new SystemTimer().start();
 
         try
         {
             Events events = fromXml( input, Events.class );
-
-            int counter = 0;
-
-            for ( Event event : events.getEvents() )
-            {
-                importSummaries.addImportSummary( addEvent( event, importOptions ) );
-
-                if ( counter % 100 == 0 )
-                {
-                    sessionFactory.getCurrentSession().flush();
-                    sessionFactory.getCurrentSession().clear();
-                }
-
-                counter++;
-            }
+            importSummaries = addEvents( events.getEvents(), importOptions );
         }
         catch ( Exception ex )
         {
@@ -205,29 +183,17 @@ public class JacksonEventService extends AbstractEventService
 
         notifier.clear( taskId ).notify( taskId, "Importing events" );
 
-        Timer<Long> timer = new SystemNanoTimer().start();
+        Timer timer = new SystemTimer().start();
 
         try
         {
             Events events = fromJson( input, Events.class );
-
-            int counter = 0;
-
-            for ( Event event : events.getEvents() )
-            {
-                importSummaries.addImportSummary( addEvent( event, importOptions ) );
-
-                if ( counter % 100 == 0 )
-                {
-                    sessionFactory.getCurrentSession().flush();
-                    sessionFactory.getCurrentSession().clear();
-                }
-
-                counter++;
-            }
+            importSummaries = addEvents( events.getEvents(), importOptions );
         }
         catch ( Exception ex )
         {
+            log.debug( ex );
+            
             Event event = fromJson( input, Event.class );
             importSummaries.addImportSummary( addEvent( event, importOptions ) );
         }

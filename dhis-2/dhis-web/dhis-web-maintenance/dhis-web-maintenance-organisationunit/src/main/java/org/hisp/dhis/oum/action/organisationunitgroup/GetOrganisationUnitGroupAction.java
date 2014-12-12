@@ -107,7 +107,7 @@ public class GetOrganisationUnitGroupAction
         return attributes;
     }
 
-    public Map<Integer, String> attributeValues = new HashMap<Integer, String>();
+    public Map<Integer, String> attributeValues = new HashMap<>();
 
     public Map<Integer, String> getAttributeValues()
     {
@@ -118,6 +118,7 @@ public class GetOrganisationUnitGroupAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -129,7 +130,7 @@ public class GetOrganisationUnitGroupAction
 
         selectionTreeManager.setSelectedOrganisationUnits( organisationUnitGroup.getMembers() );
 
-        attributes = new ArrayList<Attribute>( attributeService.getOrganisationUnitGroupAttributes() );
+        attributes = new ArrayList<>( attributeService.getOrganisationUnitGroupAttributes() );
 
         attributeValues = AttributeUtils.getAttributeValueMap( organisationUnitGroup.getAttributeValues() );
 

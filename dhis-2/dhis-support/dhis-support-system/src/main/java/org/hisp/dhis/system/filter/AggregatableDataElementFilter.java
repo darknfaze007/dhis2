@@ -46,11 +46,12 @@ public class AggregatableDataElementFilter
     
     static
     {
-        types = new HashSet<String>();        
+        types = new HashSet<>();
         types.add( DataElement.VALUE_TYPE_BOOL );
         types.add( DataElement.VALUE_TYPE_INT );
     }
 
+    @Override
     public boolean retain( DataElement object )
     {
         return object != null && types.contains( object.getType() ) && DataElementDomain.AGGREGATE.equals( object.getDomainType() );

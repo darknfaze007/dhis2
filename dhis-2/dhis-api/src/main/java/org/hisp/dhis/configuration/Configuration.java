@@ -30,6 +30,7 @@ package org.hisp.dhis.configuration;
 
 import java.io.Serializable;
 
+import org.hisp.dhis.indicator.IndicatorGroup;
 import org.hisp.dhis.dataelement.DataElementGroup;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitLevel;
@@ -52,12 +53,18 @@ public class Configuration
     private static final PeriodType DEFAULT_INFRASTRUCTURAL_PERIODTYPE = new YearlyPeriodType();
     
     private int id;
-    
+
+    // -------------------------------------------------------------------------
+    // Various
+    // -------------------------------------------------------------------------
+
     private String systemId;
     
     private UserGroup feedbackRecipients;
     
     private OrganisationUnitLevel offlineOrganisationUnitLevel;
+
+    private IndicatorGroup infrastructuralIndicators;
 
     private DataElementGroup infrastructuralDataElements;
     
@@ -66,7 +73,27 @@ public class Configuration
     private UserAuthorityGroup selfRegistrationRole;
     
     private OrganisationUnit selfRegistrationOrgUnit;
+
+    // -------------------------------------------------------------------------
+    // Remote synch
+    // -------------------------------------------------------------------------
+
+    private String remoteServerUrl;
     
+    private String remoteServerUsername;
+    
+    private String remoteServerPassword;
+
+    // -------------------------------------------------------------------------
+    // SMTP
+    // -------------------------------------------------------------------------
+    
+    private String smtpPassword;
+    
+    // -------------------------------------------------------------------------
+    // Constructor
+    // -------------------------------------------------------------------------
+
     public Configuration()
     {
     }
@@ -129,6 +156,16 @@ public class Configuration
         return offlineOrganisationUnitLevel;
     }
 
+    public IndicatorGroup getInfrastructuralIndicators()
+    {
+        return infrastructuralIndicators;
+    }
+
+    public void setInfrastructuralIndicators( IndicatorGroup infrastructuralIndicators )
+    {
+        this.infrastructuralIndicators = infrastructuralIndicators;
+    }
+
     public DataElementGroup getInfrastructuralDataElements()
     {
         return infrastructuralDataElements;
@@ -167,5 +204,51 @@ public class Configuration
     public void setSelfRegistrationOrgUnit( OrganisationUnit selfRegistrationOrgUnit )
     {
         this.selfRegistrationOrgUnit = selfRegistrationOrgUnit;
+    }
+
+    public String getRemoteServerUrl()
+    {
+        return remoteServerUrl;
+    }
+
+    public void setRemoteServerUrl( String remoteServerUrl )
+    {
+        this.remoteServerUrl = remoteServerUrl;
+    }
+
+    public String getRemoteServerUsername()
+    {
+        return remoteServerUsername;
+    }
+
+    public void setRemoteServerUsername( String remoteServerUsername )
+    {
+        this.remoteServerUsername = remoteServerUsername;
+    }
+
+    /**
+     * Do not serialize.
+     */
+    public String getRemoteServerPassword()
+    {
+        return remoteServerPassword;
+    }
+
+    public void setRemoteServerPassword( String remoteServerPassword )
+    {
+        this.remoteServerPassword = remoteServerPassword;
+    }
+
+    /**
+     * Do not serialize.
+     */
+    public String getSmtpPassword()
+    {
+        return smtpPassword;
+    }
+    
+    public void setSmtpPassword( String smtpPassword )
+    {
+        this.smtpPassword = smtpPassword;
     }
 }

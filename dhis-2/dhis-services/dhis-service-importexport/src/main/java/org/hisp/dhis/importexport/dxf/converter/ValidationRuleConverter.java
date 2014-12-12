@@ -63,7 +63,6 @@ public class ValidationRuleConverter
     private static final String FIELD_CODE = "code";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_DESCRIPTION = "description";
-    private static final String FIELD_TYPE = "type";
     private static final String FIELD_OPERATOR = "operator";
     private static final String FIELD_LEFTSIDE_EXPRESSION = "leftSideExpression";
     private static final String FIELD_LEFTSIDE_DESCRIPTION = "leftSideDescription";
@@ -111,6 +110,7 @@ public class ValidationRuleConverter
     // XMLConverter implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void write( XMLWriter writer, ExportParams params )
     {
         Collection<ValidationRule> validationRules = validationRuleService.getValidationRules( params
@@ -130,7 +130,6 @@ public class ValidationRuleConverter
 
                 writer.writeElement( FIELD_NAME, rule.getName() );
                 writer.writeElement( FIELD_DESCRIPTION, rule.getDescription() );
-                writer.writeElement( FIELD_TYPE, rule.getType() );
                 writer.writeElement( FIELD_OPERATOR, rule.getOperator().toString() );
                 writer.writeElement( FIELD_LEFTSIDE_EXPRESSION, rule.getLeftSide().getExpression() );
                 writer.writeElement( FIELD_LEFTSIDE_DESCRIPTION, rule.getLeftSide().getDescription() );
@@ -144,6 +143,7 @@ public class ValidationRuleConverter
         }
     }
 
+    @Override
     public void read( XMLReader reader, ImportParams params )
     {
         while ( reader.moveToStartElement( ELEMENT_NAME, COLLECTION_NAME ) )
@@ -167,7 +167,6 @@ public class ValidationRuleConverter
 
             validationRule.setName( values.get( FIELD_NAME ) );
             validationRule.setDescription( values.get( FIELD_DESCRIPTION ) );
-            validationRule.setType( values.get( FIELD_TYPE ) );
             validationRule.setOperator( Operator.valueOf( values.get( FIELD_OPERATOR ) ) );
 
             validationRule.getLeftSide().setExpression( values.get( FIELD_LEFTSIDE_EXPRESSION ) );
@@ -175,15 +174,11 @@ public class ValidationRuleConverter
             
             validationRule.getLeftSide().setDataElementsInExpression(
                 expressionService.getDataElementsInExpression( validationRule.getLeftSide().getExpression() ) );
-            validationRule.getLeftSide().setOptionCombosInExpression(
-                expressionService.getOptionCombosInExpression( validationRule.getLeftSide().getExpression() ) );
 
             validationRule.getRightSide().setExpression( values.get( FIELD_RIGHTSIDE_EXPRESSION ) );
             validationRule.getRightSide().setDescription( values.get( FIELD_RIGHTSIDE_DESCRIPTION ) );
             validationRule.getRightSide().setDataElementsInExpression(
                 expressionService.getDataElementsInExpression( validationRule.getRightSide().getExpression() ) );
-            validationRule.getRightSide().setOptionCombosInExpression(
-                expressionService.getOptionCombosInExpression( validationRule.getRightSide().getExpression() ) );
 
             validationRule.setPeriodType( PeriodType.getPeriodTypeByName( MonthlyPeriodType.NAME ) );
 

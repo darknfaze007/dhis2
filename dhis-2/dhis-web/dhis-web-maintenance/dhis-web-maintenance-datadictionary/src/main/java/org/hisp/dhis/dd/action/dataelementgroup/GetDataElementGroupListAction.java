@@ -86,19 +86,20 @@ public class GetDataElementGroupListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         if ( isNotBlank( key ) )
         {
             this.paging = createPaging( dataElementService.getDataElementGroupCountByName( key ) );
 
-            dataElementGroups = new ArrayList<DataElementGroup>( dataElementService.getDataElementGroupsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
+            dataElementGroups = new ArrayList<>( dataElementService.getDataElementGroupsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( dataElementService.getDataElementGroupCount() );
 
-            dataElementGroups = new ArrayList<DataElementGroup>( dataElementService.getDataElementGroupsBetween( paging.getStartPos(), paging.getPageSize() ) );
+            dataElementGroups = new ArrayList<>( dataElementService.getDataElementGroupsBetween( paging.getStartPos(), paging.getPageSize() ) );
         }
 
         return SUCCESS;

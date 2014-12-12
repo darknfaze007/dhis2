@@ -42,8 +42,8 @@ import java.util.Set;
 import org.hisp.dhis.analytics.Partitions;
 import org.hisp.dhis.common.ListMap;
 import org.hisp.dhis.common.NameableObject;
-import org.hisp.dhis.period.Cal;
 import org.hisp.dhis.period.Period;
+import org.joda.time.DateTime;
 import org.junit.Test;
 
 /**
@@ -68,7 +68,7 @@ public class PartitionUtilsTest
     @Test
     public void getGetPartitionsMultiplePeriods()
     {
-        List<NameableObject> periods = new ArrayList<NameableObject>();
+        List<NameableObject> periods = new ArrayList<>();
         periods.add( createPeriod( "200011" ) );
         periods.add( createPeriod( "200105" ) );
         periods.add( createPeriod( "200108" ) );
@@ -79,12 +79,12 @@ public class PartitionUtilsTest
     @Test
     public void getGetPartitionsMultiplePeriodsPrune()
     {
-        List<NameableObject> periods = new ArrayList<NameableObject>();
+        List<NameableObject> periods = new ArrayList<>();
         periods.add( createPeriod( "200011" ) );
         periods.add( createPeriod( "200105" ) );
         periods.add( createPeriod( "200108" ) );
 
-        Set<String> validPartitions = new HashSet<String>();
+        Set<String> validPartitions = new HashSet<>();
         validPartitions.add( TBL + "_2000" );
         
         assertEquals( new Partitions().add( TBL + "_2000" ), PartitionUtils.getPartitions( periods, TBL, null, validPartitions ) );
@@ -94,16 +94,16 @@ public class PartitionUtilsTest
     public void getGetPartitionsLongPeriods()
     {
         Period period = new Period();
-        period.setStartDate( new Cal( 2008, 3, 1 ).time() );
-        period.setEndDate( new Cal( 2011, 7, 1 ).time() );
+        period.setStartDate( new DateTime( 2008, 3, 1, 0, 0 ).toDate() );
+        period.setEndDate( new DateTime( 2011, 7, 1, 0, 0 ).toDate() );
         
         Partitions expected = new Partitions().add( TBL + "_2008" ).add( TBL + "_2009" ).add( TBL + "_2010" ).add( TBL + "_2011" );
         
         assertEquals( expected, PartitionUtils.getPartitions( period, TBL, null, null ) );
         
         period = new Period();
-        period.setStartDate( new Cal( 2009, 8, 1 ).time() );
-        period.setEndDate( new Cal( 2010, 2, 1 ).time() );
+        period.setStartDate( new DateTime( 2009, 8, 1, 0, 0 ).toDate() );
+        period.setEndDate( new DateTime( 2010, 2, 1, 0, 0 ).toDate() );
         
         expected = new Partitions().add( TBL + "_2009" ).add( TBL + "_2010" );
         
@@ -114,14 +114,14 @@ public class PartitionUtilsTest
     public void getGetPartitionsLongPeriodsPrune()
     {
         Period period = new Period();
-        period.setStartDate( new Cal( 2008, 3, 1 ).time() );
-        period.setEndDate( new Cal( 2011, 7, 1 ).time() );
+        period.setStartDate( new DateTime( 2008, 3, 1, 0, 0 ).toDate() );
+        period.setEndDate( new DateTime( 2011, 7, 1, 0, 0 ).toDate() );
         
         Partitions expected = new Partitions().add( TBL + "_2008" ).add( TBL + "_2009" ).add( TBL + "_2010" ).add( TBL + "_2011" );
         
         assertEquals( expected, PartitionUtils.getPartitions( period, TBL, null, null ) );
         
-        Set<String> validPartitions = new HashSet<String>();
+        Set<String> validPartitions = new HashSet<>();
         validPartitions.add( TBL + "_2008" );
         validPartitions.add( TBL + "_2010" );
         
@@ -165,7 +165,7 @@ public class PartitionUtilsTest
     @Test
     public void testGetTablePeriodMapPrune()
     {        
-        Set<String> validPartitions = new HashSet<String>();
+        Set<String> validPartitions = new HashSet<>();
         validPartitions.add( TBL + "_2000" );
         validPartitions.add( TBL + "_2002" );
         validPartitions.add( TBL + "_2003" );

@@ -77,7 +77,7 @@ public class ValidateGroupSetAction
         this.name = name;
     }
 
-    private Collection<Integer> selectedGroups = new HashSet<Integer>();
+    private Collection<Integer> selectedGroups = new HashSet<>();
 
     public void setSelectedGroups( Collection<Integer> selectedGroups )
     {
@@ -106,6 +106,7 @@ public class ValidateGroupSetAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         // ---------------------------------------------------------------------
@@ -131,7 +132,7 @@ public class ValidateGroupSetAction
 
         if ( !this.selectedGroups.isEmpty() )
         {
-            List<OrganisationUnit> units = new ArrayList<OrganisationUnit>();
+            List<OrganisationUnit> units = new ArrayList<>();
 
             for ( Integer groupId : selectedGroups )
             {
@@ -140,6 +141,7 @@ public class ValidateGroupSetAction
 
             Collection<OrganisationUnit> duplicates = ListUtils.getDuplicates( units, new Comparator<OrganisationUnit>()
             {
+                @Override
                 public int compare( OrganisationUnit o1, OrganisationUnit o2 )
                 {
                     return o1.getName().compareTo( o2.getName() );

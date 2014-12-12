@@ -28,7 +28,7 @@ package org.hisp.dhis.period;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.calendar.DateTimeUnit;
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.mock.MockI18nFormat;
 import org.junit.Test;
@@ -50,17 +50,17 @@ public class RelativePeriodTest
 
     private static Date getDate( int year, int month, int day )
     {
-        return new DateUnit( year, month, day, true ).toJdkDate();
+        return new DateTimeUnit( year, month, day, true ).toJdkDate();
     }
 
     @Test
     public void getRelativePeriods()
     {
-        RelativePeriods periods = new RelativePeriods( true, true, true, true, true, true, true, true, true, true, true, true, false, true, true, true, true, true, true, true, true, true, true );
+        RelativePeriods periods = new RelativePeriods( true, true, true, true, true, true, true, true, true, true, true, true, true, false, true, true, true, true, true, true, true, true, true, true );
 
         List<Period> relatives = periods.getRelativePeriods( getDate( 2001, 1, 1 ), i18nFormat, false );
 
-        assertEquals( 143, relatives.size() );
+        assertEquals( 149, relatives.size() );
         assertTrue( relatives.contains( new Period( new MonthlyPeriodType(), getDate( 2001, 1, 1 ), getDate( 2001, 1, 31 ) ) ) );
         assertTrue( relatives.contains( new Period( new MonthlyPeriodType(), getDate( 2001, 2, 1 ), getDate( 2001, 2, 28 ) ) ) );
         assertTrue( relatives.contains( new Period( new MonthlyPeriodType(), getDate( 2001, 3, 1 ), getDate( 2001, 3, 31 ) ) ) );
@@ -117,11 +117,11 @@ public class RelativePeriodTest
         assertTrue( relatives.contains( new Period( new YearlyPeriodType(), getDate( 2000, 1, 1 ), getDate( 2000, 12, 31 ) ) ) );
         assertTrue( relatives.contains( new Period( new YearlyPeriodType(), getDate( 2001, 1, 1 ), getDate( 2001, 12, 31 ) ) ) );
 
-        assertTrue( relatives.contains( new Period( new FinancialJulyPeriodType(), getDate( 1996, 7, 1 ), getDate( 1997, 6, 30 ) ) ) );
-        assertTrue( relatives.contains( new Period( new FinancialJulyPeriodType(), getDate( 1997, 7, 1 ), getDate( 1998, 6, 30 ) ) ) );
-        assertTrue( relatives.contains( new Period( new FinancialJulyPeriodType(), getDate( 1998, 7, 1 ), getDate( 1999, 6, 30 ) ) ) );
-        assertTrue( relatives.contains( new Period( new FinancialJulyPeriodType(), getDate( 1999, 7, 1 ), getDate( 2000, 6, 30 ) ) ) );
-        assertTrue( relatives.contains( new Period( new FinancialJulyPeriodType(), getDate( 2000, 7, 1 ), getDate( 2001, 6, 30 ) ) ) );
+        assertTrue( relatives.contains( new Period( new FinancialOctoberPeriodType(), getDate( 1996, 10, 1 ), getDate( 1997, 9, 30 ) ) ) );
+        assertTrue( relatives.contains( new Period( new FinancialOctoberPeriodType(), getDate( 1997, 10, 1 ), getDate( 1998, 9, 30 ) ) ) );
+        assertTrue( relatives.contains( new Period( new FinancialOctoberPeriodType(), getDate( 1998, 10, 1 ), getDate( 1999, 9, 30 ) ) ) );
+        assertTrue( relatives.contains( new Period( new FinancialOctoberPeriodType(), getDate( 1999, 10, 1 ), getDate( 2000, 9, 30 ) ) ) );
+        assertTrue( relatives.contains( new Period( new FinancialOctoberPeriodType(), getDate( 2000, 10, 1 ), getDate( 2001, 9, 30 ) ) ) );
 
         assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2000, 1, 10 ), getDate( 2000, 1, 16 ) ) ) );
         assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2000, 1, 17 ), getDate( 2000, 1, 23 ) ) ) );
@@ -185,6 +185,22 @@ public class RelativePeriodTest
     }
 
     @Test
+    public void testGetLast6Months()
+    {
+        RelativePeriods relativePeriods = new RelativePeriods().setLast6Months( true );
+
+        List<Period> relatives = relativePeriods.getRelativePeriods( getDate( 2001, 7, 1 ), null, false );
+
+        assertEquals( 6, relatives.size() );
+        assertTrue( relatives.contains( new Period( new MonthlyPeriodType(), getDate( 2001, 2, 1 ), getDate( 2001, 2, 28 ) ) ) );
+        assertTrue( relatives.contains( new Period( new MonthlyPeriodType(), getDate( 2001, 3, 1 ), getDate( 2001, 3, 31 ) ) ) );
+        assertTrue( relatives.contains( new Period( new MonthlyPeriodType(), getDate( 2001, 4, 1 ), getDate( 2001, 4, 30 ) ) ) );
+        assertTrue( relatives.contains( new Period( new MonthlyPeriodType(), getDate( 2001, 5, 1 ), getDate( 2001, 5, 31 ) ) ) );
+        assertTrue( relatives.contains( new Period( new MonthlyPeriodType(), getDate( 2001, 6, 1 ), getDate( 2001, 6, 30 ) ) ) );
+        assertTrue( relatives.contains( new Period( new MonthlyPeriodType(), getDate( 2001, 7, 1 ), getDate( 2001, 7, 31 ) ) ) );
+    }
+
+    @Test
     public void testGetLast4Quarters()
     {
         List<Period> relatives = new RelativePeriods().setLast4Quarters( true ).getRelativePeriods( getDate( 2001, 1, 1 ), null, false );
@@ -222,13 +238,13 @@ public class RelativePeriodTest
     @Test
     public void testGetLast52Weeks()
     {
-        List<Period> relatives = new RelativePeriods().setLast52Weeks( true ).getRelativePeriods( getDate( 2001, 1, 1 ), null, false );
+        List<Period> relatives = new RelativePeriods().setLast52Weeks( true ).getRelativePeriods( getDate( 2001, 12, 14 ), null, false );
 
         assertEquals( 52, relatives.size() );
-        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2000, 1, 10 ), getDate( 2000, 1, 16 ) ) ) );
-        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2000, 1, 17 ), getDate( 2000, 1, 23 ) ) ) );
-        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2000, 1, 24 ), getDate( 2000, 1, 30 ) ) ) );
-        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2001, 1, 1 ), getDate( 2001, 1, 7 ) ) ) );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2001, 12, 10 ), getDate( 2001, 12, 16 ) ) ) );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2001, 12, 3 ), getDate( 2001, 12, 9 ) ) ) );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2000, 12, 18 ), getDate( 2000, 12, 24 ) ) ) );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2000, 12, 25 ), getDate( 2000, 12, 31 ) ) ) );
     }
 
     @Test
@@ -261,6 +277,26 @@ public class RelativePeriodTest
     }
 
     @Test
+    public void testGetLast4Weeks()
+    {
+        List<Period> relatives = new RelativePeriods().setLast4Weeks( true ).getRelativePeriods( getDate( 2012, 1, 20 ), null, false );
+
+        assertEquals( 4, relatives.size() );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2012, 1, 16 ), getDate( 2012, 1, 22 ) ) ) );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2012, 1, 9 ), getDate( 2012, 1, 15 ) ) ) );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2012, 1, 2 ), getDate( 2012, 1, 8 ) ) ) );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2011, 12, 26 ), getDate( 2012, 1, 1 ) ) ) );
+
+        relatives = new RelativePeriods().setLast4Weeks( true ).getRelativePeriods( getDate( 2010, 5, 4 ), null, false );
+
+        assertEquals( 4, relatives.size() );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2010, 5, 3 ), getDate( 2010, 5, 9 ) ) ) );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2010, 4, 26 ), getDate( 2010, 5, 2 ) ) ) );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2010, 4, 19 ), getDate( 2010, 4, 25 ) ) ) );
+        assertTrue( relatives.contains( new Period( new WeeklyPeriodType(), getDate( 2010, 4, 12 ), getDate( 2010, 4, 18 ) ) ) );
+    }
+
+    @Test
     public void testGetQuartersThisYear()
     {
         List<Period> relatives = new RelativePeriods().setQuartersThisYear( true ).getRelativePeriods( getDate( 2001, 4, 1 ), null, false );
@@ -286,30 +322,15 @@ public class RelativePeriodTest
     @Test
     public void testGetRelativePeriodsFromPeriodTypes()
     {
-        Set<String> periodTypes = new HashSet<String>();
+        Set<String> periodTypes = new HashSet<>();
         periodTypes.add( MonthlyPeriodType.NAME );
         periodTypes.add( BiMonthlyPeriodType.NAME );
         periodTypes.add( QuarterlyPeriodType.NAME );
         periodTypes.add( SixMonthlyPeriodType.NAME );
         periodTypes.add( YearlyPeriodType.NAME );
-        periodTypes.add( FinancialJulyPeriodType.NAME );
+        periodTypes.add( FinancialOctoberPeriodType.NAME );
 
-        List<Period> periods = new RelativePeriods().getLast6Months( periodTypes );
-
-        assertEquals( 14, periods.size() );
-
-        periods = new RelativePeriods().getLast6To12Months( periodTypes );
-
-        assertEquals( 14, periods.size() );
-
-        periodTypes.clear();
-        periodTypes.add( WeeklyPeriodType.NAME );
-
-        periods = new RelativePeriods().getLast6Months( periodTypes );
-
-        assertEquals( 26, periods.size() );
-
-        periods = new RelativePeriods().getLast6To12Months( periodTypes );
+        List<Period> periods = new RelativePeriods().getLast12Months( periodTypes );
 
         assertEquals( 26, periods.size() );
     }

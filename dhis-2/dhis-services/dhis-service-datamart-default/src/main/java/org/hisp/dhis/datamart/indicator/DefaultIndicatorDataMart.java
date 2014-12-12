@@ -129,6 +129,7 @@ public class DefaultIndicatorDataMart
     // IndicatorDataMart implementation
     // -------------------------------------------------------------------------
 
+    @Override
     @Async
     public Future<?> exportIndicatorValues( Collection<Indicator> indicators, Collection<Period> periods, 
         Collection<OrganisationUnit> organisationUnits, Collection<OrganisationUnitGroup> organisationUnitGroups,
@@ -164,11 +165,11 @@ public class DefaultIndicatorDataMart
                     {                
                         for ( final Indicator indicator : indicators )
                         {
-                            final double denominatorValue = calculateExpression( expressionService.generateExpression( indicator.getExplodedDenominator(), valueMap, constantMap, null, days, false ) );
+                            final double denominatorValue = calculateExpression( expressionService.generateExpression( indicator.getExplodedDenominator(), valueMap, constantMap, null, days, null ) );
     
                             if ( !isEqual( denominatorValue, 0d ) )
                             {
-                                final double numeratorValue = calculateExpression( expressionService.generateExpression( indicator.getExplodedNumerator(), valueMap, constantMap, null, days, false ) );
+                                final double numeratorValue = calculateExpression( expressionService.generateExpression( indicator.getExplodedNumerator(), valueMap, constantMap, null, days, null ) );
                              
                                 if ( !( omitZeroNumerator && isEqual( numeratorValue, 0d ) ) )
                                 {

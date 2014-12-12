@@ -112,7 +112,7 @@ public class SelectAction
         return status;
     }
 
-    private List<TrackedEntity> trackedEntities = new ArrayList<TrackedEntity>();
+    private List<TrackedEntity> trackedEntities = new ArrayList<>();
 
     public List<TrackedEntity> getTrackedEntities()
     {
@@ -123,20 +123,21 @@ public class SelectAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         organisationUnit = selectionManager.getSelectedOrganisationUnit();
 
-        attributes = new ArrayList<TrackedEntityAttribute>( attributeService.getTrackedEntityAttributesDisplayInList()  );
+        attributes = new ArrayList<>( attributeService.getTrackedEntityAttributesDisplayInList()  );
         Collections.sort( attributes, IdentifiableObjectNameComparator.INSTANCE );
 
-        trackedEntities = new ArrayList<TrackedEntity>( trackedEntityService.getAllTrackedEntity() );
+        trackedEntities = new ArrayList<>( trackedEntityService.getAllTrackedEntity() );
         Collections.sort( trackedEntities, IdentifiableObjectNameComparator.INSTANCE );
 
         if ( organisationUnit != null )
         {
-            programs = new ArrayList<Program>( programService.getProgramsByCurrentUser( organisationUnit ) );
+            programs = new ArrayList<>( programService.getProgramsByCurrentUser( organisationUnit ) );
             programs.removeAll( programService.getPrograms( Program.SINGLE_EVENT_WITHOUT_REGISTRATION ) );
 
             Collections.sort( programs, IdentifiableObjectNameComparator.INSTANCE );

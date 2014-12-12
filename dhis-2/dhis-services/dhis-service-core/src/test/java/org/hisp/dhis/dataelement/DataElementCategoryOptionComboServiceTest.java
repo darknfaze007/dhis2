@@ -39,6 +39,7 @@ import java.util.Set;
 
 import org.hisp.dhis.DhisSpringTest;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
@@ -47,6 +48,9 @@ import org.junit.Test;
 public class DataElementCategoryOptionComboServiceTest
     extends DhisSpringTest
 {
+    @Autowired
+    private DataElementCategoryService categoryService;
+  
     private DataElementCategory categoryA;
     private DataElementCategory categoryB;
         
@@ -69,9 +73,7 @@ public class DataElementCategoryOptionComboServiceTest
     @Override
     public void setUpTest()
         throws Exception
-    {
-        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
-        
+    { 
         categoryOptionA = new DataElementCategoryOption( "Male" );
         categoryOptionB = new DataElementCategoryOption( "Female" );
         categoryOptionC = new DataElementCategoryOption( "0-20" );
@@ -113,7 +115,7 @@ public class DataElementCategoryOptionComboServiceTest
     {
         categoryOptionComboA = new DataElementCategoryOptionCombo();
         
-        Set<DataElementCategoryOption> categoryOptions = new HashSet<DataElementCategoryOption>();
+        Set<DataElementCategoryOption> categoryOptions = new HashSet<>();
         
         categoryOptions.add( categoryOptionA );
         categoryOptions.add( categoryOptionB );        
@@ -135,7 +137,7 @@ public class DataElementCategoryOptionComboServiceTest
     {
         categoryService.generateOptionCombos( categoryComboA );
         
-        Collection<DataElementCategoryOption> catopts = new LinkedList<DataElementCategoryOption>();
+        Collection<DataElementCategoryOption> catopts = new LinkedList<>();
         catopts.add( categoryOptionA );
         catopts.add( categoryOptionC );
         
@@ -148,7 +150,7 @@ public class DataElementCategoryOptionComboServiceTest
     {
         categoryOptionComboA = new DataElementCategoryOptionCombo();
         
-        Set<DataElementCategoryOption> categoryOptions = new HashSet<DataElementCategoryOption>();
+        Set<DataElementCategoryOption> categoryOptions = new HashSet<>();
         
         categoryOptions.add( categoryOptionA );
         categoryOptions.add( categoryOptionB );        

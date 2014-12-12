@@ -67,12 +67,12 @@ public class DefaultLinkService implements LinkService
 
         Schema schema = schemaService.getDynamicSchema( klass );
 
-        if ( !schema.haveEndpoint() )
+        if ( !schema.haveApiEndpoint() )
         {
             return;
         }
 
-        String endpoint = contextService.getServletPath() + "/" + schema.getApiEndpoint();
+        String endpoint = contextService.getServletPath() + schema.getApiEndpoint();
 
         if ( pager.getPage() < pager.getPageCount() )
         {
@@ -100,13 +100,13 @@ public class DefaultLinkService implements LinkService
     }
 
     @Override
-    public <T> void generateLinks( T object )
+    public <T> void generateLinks( T object, boolean deepScan )
     {
-        generateLinks( object, contextService.getServletPath() );
+        generateLinks( object, contextService.getServletPath(), deepScan );
     }
 
     @Override
-    public <T> void generateLinks( T object, String hrefBase )
+    public <T> void generateLinks( T object, String hrefBase, boolean deepScan )
     {
         if ( Collection.class.isInstance( object ) )
         {
@@ -114,12 +114,12 @@ public class DefaultLinkService implements LinkService
 
             for ( Object collectionObject : collection )
             {
-                generateLink( collectionObject, hrefBase, false );
+                generateLink( collectionObject, hrefBase, deepScan );
             }
         }
         else
         {
-            generateLink( object, hrefBase, true );
+            generateLink( object, hrefBase, deepScan );
         }
     }
 
@@ -199,19 +199,20 @@ public class DefaultLinkService implements LinkService
 
         Schema schema = schemaService.getDynamicSchema( klass );
 
-        if ( !schema.haveEndpoint() )
+        if ( !schema.haveApiEndpoint() || schema.getProperty( "id" ) == null || schema.getProperty( "id" ).getGetterMethod() == null )
         {
             return;
         }
 
+        Property id = schema.getProperty( "id" );
+
         try
         {
-            Method getUid = object.getClass().getMethod( "getUid" );
-            Object value = getUid.invoke( object );
+            Object value = id.getGetterMethod().invoke( object );
 
             if ( !String.class.isInstance( value ) )
             {
-                log.warn( "getUid on object of type " + object.getClass().getName() + " does not return a String." );
+                log.warn( "id on object of type " + object.getClass().getName() + " does not return a String." );
                 return;
             }
 

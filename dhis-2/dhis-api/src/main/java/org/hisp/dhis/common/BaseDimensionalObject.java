@@ -28,6 +28,12 @@ package org.hisp.dhis.common;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.hisp.dhis.common.view.DimensionalView;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -36,12 +42,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
-import org.hisp.dhis.common.view.DimensionalView;
-
-import java.util.ArrayList;
-import java.util.List;
-
-@JacksonXmlRootElement( localName = "dimensionalObject", namespace = DxfNamespaces.DXF_2_0 )
+@JacksonXmlRootElement( localName = "dimension", namespace = DxfNamespaces.DXF_2_0 )
 public class BaseDimensionalObject
     extends BaseNameableObject implements DimensionalObject
 {
@@ -60,7 +61,7 @@ public class BaseDimensionalObject
     /**
      * The dimensional items for this dimension.
      */
-    private List<NameableObject> items = new ArrayList<NameableObject>();
+    private List<NameableObject> items = new ArrayList<>();
 
     /**
      * Filter. Applicable for events. Contains operator and filter on this format:
@@ -85,14 +86,14 @@ public class BaseDimensionalObject
     public BaseDimensionalObject( String dimension, List<? extends NameableObject> items )
     {
         this.uid = dimension;
-        this.items = new ArrayList<NameableObject>( items );
+        this.items = new ArrayList<>( items );
     }
 
     public BaseDimensionalObject( String dimension, DimensionType dimensionType, List<? extends NameableObject> items )
     {
         this.uid = dimension;
         this.dimensionType = dimensionType;
-        this.items = new ArrayList<NameableObject>( items );
+        this.items = new ArrayList<>( items );
     }
 
     public BaseDimensionalObject( String dimension, DimensionType dimensionType, String dimensionName, List<? extends NameableObject> items )
@@ -100,7 +101,7 @@ public class BaseDimensionalObject
         this.uid = dimension;
         this.dimensionType = dimensionType;
         this.dimensionName = dimensionName;
-        this.items = new ArrayList<NameableObject>( items );
+        this.items = new ArrayList<>( items );
     }
 
     public BaseDimensionalObject( String dimension, DimensionType dimensionType, String dimensionName, String displayName, List<? extends NameableObject> items )
@@ -109,7 +110,7 @@ public class BaseDimensionalObject
         this.dimensionType = dimensionType;
         this.dimensionName = dimensionName;
         this.displayName = displayName;
-        this.items = new ArrayList<NameableObject>( items );
+        this.items = new ArrayList<>( items );
     }
 
     public BaseDimensionalObject( String dimension, DimensionType dimensionType, String dimensionName, String displayName, String filter )
@@ -129,6 +130,7 @@ public class BaseDimensionalObject
      * Indicates whether this dimension should use all dimension items. All
      * dimension options is represented as an option list of zero elements.
      */
+    @Override
     public boolean isAllItems()
     {
         return items != null && items.isEmpty();
@@ -137,6 +139,7 @@ public class BaseDimensionalObject
     /**
      * Indicates whether this dimension has any dimension items.
      */
+    @Override
     public boolean hasItems()
     {
         return items != null && !items.isEmpty();
@@ -145,15 +148,46 @@ public class BaseDimensionalObject
     /**
      * Returns dimension name with fall back to dimension.
      */
+    @Override
     public String getDimensionName()
     {
         return dimensionName != null ? dimensionName : uid;
     }
-
+    
+    @Override
+    public AnalyticsType getAnalyticsType()
+    {
+        return 
+            DimensionType.TRACKED_ENTITY_ATTRIBUTE.equals( dimensionType ) ||
+            DimensionType.TRACKED_ENTITY_DATAELEMENT.equals( dimensionType ) ?
+            AnalyticsType.EVENT : AnalyticsType.AGGREGATE;
+    }
+    
+    /**
+     * Returns the items in the filter as a list. Order of items are preserved.
+     * Requires that the filter has the IN operator and that at least one item
+     * is specified in the filter, returns null if not.
+     */
+    public List<String> getFilterItemsAsList()
+    {
+        final String inOp = QueryOperator.IN.getValue().toLowerCase();
+        final int opLen = inOp.length() + 1;
+        
+        if ( filter == null || !filter.toLowerCase().startsWith( inOp ) || filter.length() < opLen )
+        {
+            return null;
+        }
+        
+        String filterItems = filter.substring( opLen, filter.length() );
+        
+        return new ArrayList<>( Arrays.asList( filterItems.split( DimensionalObjectUtils.OPTION_SEP ) ) );
+    }
+    
     //--------------------------------------------------------------------------
     // Getters and setters
     //--------------------------------------------------------------------------
 
+    @Override
     @JsonProperty
     @JsonView( { DimensionalView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -167,6 +201,7 @@ public class BaseDimensionalObject
         this.uid = dimension;
     }
 
+    @Override
     @JsonProperty
     @JsonView( { DimensionalView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -236,6 +271,6 @@ public class BaseDimensionalObject
     @Override
     public String toString()
     {
-        return "[" + uid + ", type: " + dimensionType + ", " + items + "]";
+        return "[" + uid + ", type: " + dimensionType + ", items: " + items + ", filter: " + filter + "]";
     }
 }

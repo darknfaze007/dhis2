@@ -29,8 +29,6 @@ package org.hisp.dhis.system.util;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.hisp.dhis.system.util.TextUtils.subString;
-import static org.hisp.dhis.system.util.TextUtils.trimEnd;
 import static org.hisp.dhis.system.util.TextUtils.*;
 
 import java.util.ArrayList;
@@ -83,8 +81,8 @@ public class TextUtilsTest
     @Test
     public void testGetTokens()
     {
-        assertEquals( new ArrayList<String>( Arrays.asList( "John", "Doe", "Main", "Road", "25" ) ), TextUtils.getTokens( "John Doe Main Road 25" ) );
-        assertEquals( new ArrayList<String>( Arrays.asList( "Ted,Johnson", "Upper-Road", "45" ) ), TextUtils.getTokens( "Ted,Johnson Upper-Road 45" ) );        
+        assertEquals( new ArrayList<>( Arrays.asList( "John", "Doe", "Main", "Road", "25" ) ), TextUtils.getTokens( "John Doe Main Road 25" ) );
+        assertEquals( new ArrayList<>( Arrays.asList( "Ted,Johnson", "Upper-Road", "45" ) ), TextUtils.getTokens( "Ted,Johnson Upper-Road 45" ) );
     }
 
     @Test
@@ -115,5 +113,15 @@ public class TextUtilsTest
         assertEquals( "tom,john", TextUtils.removeLastComma( "tom,john," ) );
         assertEquals( "tom, john", TextUtils.removeLastComma( "tom, john, " ) );
         assertEquals( "tom, john", TextUtils.removeLastComma( "tom, john,  " ) );
+    }
+    
+    @Test
+    public void testJoinReplaceNull()
+    {
+        assertEquals( "green-red-blue", TextUtils.join( Arrays.asList( "green", "red", "blue" ), "-", "[n/a]" ) );
+        assertEquals( "green-[n/a]-blue", TextUtils.join( Arrays.asList( "green", null, "blue" ), "-", "[n/a]" ) );
+        assertEquals( "green-red-[n/a]", TextUtils.join( Arrays.asList( "green", "red", null ), "-", "[n/a]" ) );
+        assertEquals( "greenred[n/a]", TextUtils.join( Arrays.asList( "green", "red", null ), null, "[n/a]" ) );
+        assertEquals( "greenred", TextUtils.join( Arrays.asList( "green", "red", null ), null, null ) );
     }
 }

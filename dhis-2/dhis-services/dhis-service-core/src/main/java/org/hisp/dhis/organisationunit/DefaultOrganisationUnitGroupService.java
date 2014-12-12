@@ -97,32 +97,38 @@ public class DefaultOrganisationUnitGroupService
     // OrganisationUnitGroup
     // -------------------------------------------------------------------------
 
+    @Override
     public int addOrganisationUnitGroup( OrganisationUnitGroup organisationUnitGroup )
     {
         return organisationUnitGroupStore.save( organisationUnitGroup );
     }
 
+    @Override
     public void updateOrganisationUnitGroup( OrganisationUnitGroup organisationUnitGroup )
     {
         organisationUnitGroupStore.update( organisationUnitGroup );
     }
 
+    @Override
     public void deleteOrganisationUnitGroup( OrganisationUnitGroup organisationUnitGroup )
     {
         organisationUnitGroupStore.delete( organisationUnitGroup );
     }
 
+    @Override
     public OrganisationUnitGroup getOrganisationUnitGroup( int id )
     {
         return i18n( i18nService, organisationUnitGroupStore.get( id ) );
     }
 
+    @Override
     public Collection<OrganisationUnitGroup> getOrganisationUnitGroups( final Collection<Integer> identifiers )
     {
         Collection<OrganisationUnitGroup> objects = getAllOrganisationUnitGroups();
 
         return identifiers == null ? objects : FilterUtils.filter( objects, new Filter<OrganisationUnitGroup>()
         {
+            @Override
             public boolean retain( OrganisationUnitGroup object )
             {
                 return identifiers.contains( object.getId() );
@@ -130,30 +136,35 @@ public class DefaultOrganisationUnitGroupService
         } );
     }
 
+    @Override
     public List<OrganisationUnitGroup> getOrganisationUnitGroupsByUid( Collection<String> uids )
     {
         return organisationUnitGroupStore.getByUid( uids );
     }
 
+    @Override
     public OrganisationUnitGroup getOrganisationUnitGroup( String uid )
     {
         return i18n( i18nService, organisationUnitGroupStore.getByUid( uid ) );
     }
 
+    @Override
     public List<OrganisationUnitGroup> getOrganisationUnitGroupByName( String name )
     {
-        return new ArrayList<OrganisationUnitGroup>(
+        return new ArrayList<>(
             i18n( i18nService, organisationUnitGroupStore.getAllEqName( name ) ) );
     }
 
+    @Override
     public OrganisationUnitGroup getOrganisationUnitGroupByCode( String code )
     {
         return i18n( i18nService, organisationUnitGroupStore.getByCode( code ) );
     }
 
+    @Override
     public OrganisationUnitGroup getOrganisationUnitGroupByShortName( String shortName )
     {
-        List<OrganisationUnitGroup> organisationUnitGroups = new ArrayList<OrganisationUnitGroup>(
+        List<OrganisationUnitGroup> organisationUnitGroups = new ArrayList<>(
             organisationUnitGroupStore.getAllEqShortName( shortName ) );
 
         if ( organisationUnitGroups.isEmpty() )
@@ -164,31 +175,37 @@ public class DefaultOrganisationUnitGroupService
         return i18n( i18nService, organisationUnitGroups.get( 0 ) );
     }
 
+    @Override
     public Collection<OrganisationUnitGroup> getAllOrganisationUnitGroups()
     {
         return i18n( i18nService, organisationUnitGroupStore.getAll() );
     }
 
+    @Override
     public Collection<OrganisationUnitGroup> getOrganisationUnitGroupsWithGroupSets()
     {
         return i18n( i18nService, organisationUnitGroupStore.getOrganisationUnitGroupsWithGroupSets() );
     }
 
+    @Override
     public int getOrganisationUnitGroupCount()
     {
         return organisationUnitGroupStore.getCount();
     }
 
+    @Override
     public int getOrganisationUnitGroupCountByName( String name )
     {
         return getCountByName( i18nService, organisationUnitGroupStore, name );
     }
 
+    @Override
     public Collection<OrganisationUnitGroup> getOrganisationUnitGroupsBetween( int first, int max )
     {
         return getObjectsBetween( i18nService, organisationUnitGroupStore, first, max );
     }
 
+    @Override
     public Collection<OrganisationUnitGroup> getOrganisationUnitGroupsBetweenByName( String name, int first, int max )
     {
         return getObjectsBetweenByName( i18nService, organisationUnitGroupStore, name, first, max );
@@ -198,26 +215,31 @@ public class DefaultOrganisationUnitGroupService
     // OrganisationUnitGroupSet
     // -------------------------------------------------------------------------
 
+    @Override
     public int addOrganisationUnitGroupSet( OrganisationUnitGroupSet organisationUnitGroupSet )
     {
         return organisationUnitGroupSetStore.save( organisationUnitGroupSet );
     }
 
+    @Override
     public void updateOrganisationUnitGroupSet( OrganisationUnitGroupSet organisationUnitGroupSet )
     {
         organisationUnitGroupSetStore.update( organisationUnitGroupSet );
     }
 
+    @Override
     public void deleteOrganisationUnitGroupSet( OrganisationUnitGroupSet organisationUnitGroupSet )
     {
         organisationUnitGroupSetStore.delete( organisationUnitGroupSet );
     }
 
+    @Override
     public OrganisationUnitGroupSet getOrganisationUnitGroupSet( int id )
     {
         return i18n( i18nService, organisationUnitGroupSetStore.get( id ) );
     }
 
+    @Override
     public OrganisationUnitGroupSet getOrganisationUnitGroupSet( int id, boolean i18nGroups )
     {
         OrganisationUnitGroupSet groupSet = getOrganisationUnitGroupSet( id );
@@ -230,17 +252,20 @@ public class DefaultOrganisationUnitGroupService
         return groupSet;
     }
 
+    @Override
     public OrganisationUnitGroupSet getOrganisationUnitGroupSet( String uid )
     {
         return i18n( i18nService, organisationUnitGroupSetStore.getByUid( uid ) );
     }
 
+    @Override
     public Collection<OrganisationUnitGroupSet> getOrganisationUnitGroupSets( final Collection<Integer> identifiers )
     {
         Collection<OrganisationUnitGroupSet> objects = getAllOrganisationUnitGroupSets();
 
         return identifiers == null ? objects : FilterUtils.filter( objects, new Filter<OrganisationUnitGroupSet>()
         {
+            @Override
             public boolean retain( OrganisationUnitGroupSet object )
             {
                 return identifiers.contains( object.getId() );
@@ -248,17 +273,20 @@ public class DefaultOrganisationUnitGroupService
         } );
     }
 
+    @Override
     public List<OrganisationUnitGroupSet> getOrganisationUnitGroupSetsByUid( Collection<String> uids )
     {
         return organisationUnitGroupSetStore.getByUid( uids );
     }
 
+    @Override
     public List<OrganisationUnitGroupSet> getOrganisationUnitGroupSetByName( String name )
     {
-        return new ArrayList<OrganisationUnitGroupSet>( i18n( i18nService,
+        return new ArrayList<>( i18n( i18nService,
             organisationUnitGroupSetStore.getAllEqName( name ) ) );
     }
 
+    @Override
     public Collection<OrganisationUnitGroupSet> getAllOrganisationUnitGroupSets()
     {
         return i18n( i18nService, organisationUnitGroupSetStore.getAll() );
@@ -270,9 +298,10 @@ public class DefaultOrganisationUnitGroupService
         return i18n( i18nService, organisationUnitGroupSetStore.getByDataDimension( true ) );
     }
 
+    @Override
     public Collection<OrganisationUnitGroupSet> getCompulsoryOrganisationUnitGroupSets()
     {
-        Collection<OrganisationUnitGroupSet> groupSets = new ArrayList<OrganisationUnitGroupSet>();
+        Collection<OrganisationUnitGroupSet> groupSets = new ArrayList<>();
 
         for ( OrganisationUnitGroupSet groupSet : getAllOrganisationUnitGroupSets() )
         {
@@ -285,10 +314,12 @@ public class DefaultOrganisationUnitGroupService
         return groupSets;
     }
 
+    @Override
     public Collection<OrganisationUnitGroupSet> getCompulsoryOrganisationUnitGroupSetsWithMembers()
     {
         return FilterUtils.filter( getAllOrganisationUnitGroupSets(), new Filter<OrganisationUnitGroupSet>()
         {
+            @Override
             public boolean retain( OrganisationUnitGroupSet object )
             {
                 return object.isCompulsory() && object.hasOrganisationUnitGroups();
@@ -309,10 +340,11 @@ public class DefaultOrganisationUnitGroupService
         return null;
     }
 
+    @Override
     public Collection<OrganisationUnitGroupSet> getCompulsoryOrganisationUnitGroupSetsNotAssignedTo(
         OrganisationUnit organisationUnit )
     {
-        Collection<OrganisationUnitGroupSet> groupSets = new ArrayList<OrganisationUnitGroupSet>();
+        Collection<OrganisationUnitGroupSet> groupSets = new ArrayList<>();
 
         for ( OrganisationUnitGroupSet groupSet : getCompulsoryOrganisationUnitGroupSets() )
         {
@@ -325,21 +357,25 @@ public class DefaultOrganisationUnitGroupService
         return groupSets;
     }
 
+    @Override
     public int getOrganisationUnitGroupSetCount()
     {
         return organisationUnitGroupSetStore.getCount();
     }
 
+    @Override
     public int getOrganisationUnitGroupSetCountByName( String name )
     {
         return getCountByName( i18nService, organisationUnitGroupSetStore, name );
     }
 
+    @Override
     public Collection<OrganisationUnitGroupSet> getOrganisationUnitGroupSetsBetween( int first, int max )
     {
         return getObjectsBetween( i18nService, organisationUnitGroupSetStore, first, max );
     }
 
+    @Override
     public Collection<OrganisationUnitGroupSet> getOrganisationUnitGroupSetsBetweenByName( String name, int first,
         int max )
     {
@@ -349,13 +385,13 @@ public class DefaultOrganisationUnitGroupService
     @Override
     public void mergeWithCurrentUserOrganisationUnits( OrganisationUnitGroup organisationUnitGroup, Collection<OrganisationUnit> mergeOrganisationUnits )
     {
-        Set<OrganisationUnit> organisationUnits = new HashSet<OrganisationUnit>( organisationUnitGroup.getMembers() );
+        Set<OrganisationUnit> organisationUnits = new HashSet<>( organisationUnitGroup.getMembers() );
 
-        Set<OrganisationUnit> userOrganisationUnits = new HashSet<OrganisationUnit>();
+        Set<OrganisationUnit> userOrganisationUnits = new HashSet<>();
 
         for ( OrganisationUnit organisationUnit : currentUserService.getCurrentUser().getOrganisationUnits() )
         {
-            userOrganisationUnits.addAll( organisationUnitService.getOrganisationUnitsWithChildren( organisationUnit.getUid() ) );
+            userOrganisationUnits.addAll( organisationUnitService.getOrganisationUnitWithChildren( organisationUnit.getUid() ) );
         }
 
         organisationUnits.removeAll( userOrganisationUnits );

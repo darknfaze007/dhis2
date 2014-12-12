@@ -34,6 +34,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.hisp.dhis.common.DxfNamespaces;
+import org.hisp.dhis.common.IdentifiableProperty;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.dxf2.datavalue.DataValue;
@@ -42,12 +43,33 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-@JacksonXmlRootElement(localName = "dataValueSet", namespace = DxfNamespaces.DXF_2_0)
+import static org.apache.commons.lang.StringUtils.defaultIfEmpty;
+
+/**
+ * @author Lars Helge Overland
+ */
+@JacksonXmlRootElement( localName = "dataValueSet", namespace = DxfNamespaces.DXF_2_0 )
 public class DataValueSet
 {
+    protected static final String FIELD_IDSCHEME = "idScheme";
+    protected static final String FIELD_DATAELEMENTIDSCHEME = "dataElementIdScheme";
+    protected static final String FIELD_ORGUNITIDSCHEME = "orgUnitIdScheme";
+    protected static final String FIELD_DRYRUN = "dryRun";
+    protected static final String FIELD_IMPORTSTRATEGY = "importStrategy";
+
+    protected static final String FIELD_DATAVALUESET = "dataValueSet";
+    protected static final String FIELD_DATAVALUE = "dataValue";
+    protected static final String FIELD_DATASET = "dataSet";
+    protected static final String FIELD_COMPLETEDATE = "completeDate";
+    protected static final String FIELD_PERIOD = "period";
+    protected static final String FIELD_ORGUNIT = "orgUnit";
+    protected static final String FIELD_ATTRIBUTE_OPTION_COMBO = "attributeOptionCombo";
+
     //--------------------------------------------------------------------------
     // Options
     //--------------------------------------------------------------------------
+
+    protected String idScheme;
 
     protected String dataElementIdScheme;
 
@@ -69,7 +91,9 @@ public class DataValueSet
 
     protected String orgUnit;
 
-    protected List<DataValue> dataValues = new ArrayList<DataValue>();
+    protected String attributeOptionCombo;
+
+    protected List<DataValue> dataValues = new ArrayList<>();
 
     //--------------------------------------------------------------------------
     // Constructors
@@ -84,8 +108,21 @@ public class DataValueSet
     //--------------------------------------------------------------------------
 
     @JsonProperty
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public String getIdScheme()
+    {
+        return idScheme;
+    }
+
+    public void setIdScheme( String idScheme )
+    {
+        this.idScheme = idScheme;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getDataElementIdScheme()
     {
         return dataElementIdScheme;
@@ -97,8 +134,8 @@ public class DataValueSet
     }
 
     @JsonProperty
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getOrgUnitIdScheme()
     {
         return orgUnitIdScheme;
@@ -110,8 +147,8 @@ public class DataValueSet
     }
 
     @JsonProperty
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Boolean getDryRun()
     {
         return dryRun;
@@ -123,8 +160,8 @@ public class DataValueSet
     }
 
     @JsonProperty
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getStrategy()
     {
         return strategy;
@@ -136,8 +173,8 @@ public class DataValueSet
     }
 
     @JsonProperty
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getDataSet()
     {
         return dataSet;
@@ -149,8 +186,8 @@ public class DataValueSet
     }
 
     @JsonProperty
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getCompleteDate()
     {
         return completeDate;
@@ -162,8 +199,8 @@ public class DataValueSet
     }
 
     @JsonProperty
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getPeriod()
     {
         return period;
@@ -175,8 +212,8 @@ public class DataValueSet
     }
 
     @JsonProperty
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getOrgUnit()
     {
         return orgUnit;
@@ -187,10 +224,23 @@ public class DataValueSet
         this.orgUnit = orgUnit;
     }
 
-    @JsonProperty(value = "dataValues")
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlElementWrapper(localName = "dataValues", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty(localName = "dataValue", namespace = DxfNamespaces.DXF_2_0)
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public String getAttributeOptionCombo()
+    {
+        return attributeOptionCombo;
+    }
+
+    public void setAttributeOptionCombo( String attributeOptionCombo )
+    {
+        this.attributeOptionCombo = attributeOptionCombo;
+    }
+
+    @JsonProperty( value = "dataValues" )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "dataValues", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "dataValue", namespace = DxfNamespaces.DXF_2_0 )
     public List<DataValue> getDataValues()
     {
         return dataValues;
@@ -240,6 +290,34 @@ public class DataValueSet
     public void close()
     {
     }
+
+    public IdentifiableProperty getIdSchemeProperty()
+    {
+        String scheme = getIdScheme();
+        return scheme != null ? IdentifiableProperty.valueOf( scheme.toUpperCase() ) : null;
+    }
+
+    public IdentifiableProperty getDataElementIdSchemeProperty()
+    {
+        String dataElementScheme = getDataElementIdScheme();
+        String scheme = getIdScheme();
+
+        scheme = defaultIfEmpty( dataElementScheme, scheme );
+        return scheme != null ? IdentifiableProperty.valueOf( scheme.toUpperCase() ) : null;
+    }
+
+    public IdentifiableProperty getOrgUnitIdSchemeProperty()
+    {
+        String orgUnitScheme = getOrgUnitIdScheme();
+        String scheme = getIdScheme();
+
+        scheme = defaultIfEmpty( orgUnitScheme, scheme );
+        return scheme != null ? IdentifiableProperty.valueOf( scheme.toUpperCase() ) : null;
+    }
+
+    //--------------------------------------------------------------------------
+    // toString
+    //--------------------------------------------------------------------------
 
     @Override
     public String toString()

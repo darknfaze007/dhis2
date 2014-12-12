@@ -97,12 +97,13 @@ public class ShowAddProgramStageReminderAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         programStage = programStageService.getProgramStage( id );
 
-        userGroups = new ArrayList<UserGroup>( userGroupService.getAllUserGroups() );
+        userGroups = new ArrayList<>( userGroupService.getAllUserGroups() );
 
         attributes = programStage.getProgram().getTrackedEntityAttributes();
 

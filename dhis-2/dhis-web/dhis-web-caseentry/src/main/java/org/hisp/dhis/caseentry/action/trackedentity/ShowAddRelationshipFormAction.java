@@ -142,13 +142,14 @@ public class ShowAddRelationshipFormAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         entityInstance = entityInstanceService.getTrackedEntityInstance(  entityInstanceId );
 
         organisationUnit = selectionManager.getSelectedOrganisationUnit();
         
-        relationshipTypes = new ArrayList<RelationshipType>( relationshipTypeService.getAllRelationshipTypes() );
+        relationshipTypes = new ArrayList<>( relationshipTypeService.getAllRelationshipTypes() );
 
         attributes = attributeService.getAllTrackedEntityAttributes();
         

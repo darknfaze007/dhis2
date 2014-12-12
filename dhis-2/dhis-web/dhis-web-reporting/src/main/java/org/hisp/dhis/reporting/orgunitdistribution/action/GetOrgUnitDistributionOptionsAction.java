@@ -70,9 +70,10 @@ public class GetOrgUnitDistributionOptionsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
-        groupSets = new ArrayList<OrganisationUnitGroupSet>( organisationUnitGroupService.getAllOrganisationUnitGroupSets() );
+        groupSets = new ArrayList<>( organisationUnitGroupService.getAllOrganisationUnitGroupSets() );
         
         Collections.sort( groupSets, IdentifiableObjectNameComparator.INSTANCE );        
         

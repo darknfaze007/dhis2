@@ -81,7 +81,7 @@ public class SaveCompulsoryDataElementsAction
         this.id = id;
     }
 
-    private Collection<String> selectedOperands = new ArrayList<String>();
+    private Collection<String> selectedOperands = new ArrayList<>();
 
     public void setSelectedOperands( Collection<String> selectedOperands )
     {
@@ -92,6 +92,7 @@ public class SaveCompulsoryDataElementsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         DataSet dataSet = dataSetService.getDataSet( id );

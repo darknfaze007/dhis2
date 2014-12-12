@@ -28,9 +28,12 @@ package org.hisp.dhis.period;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.hisp.dhis.common.BaseNameableObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.Weighted;
@@ -38,18 +41,16 @@ import org.hisp.dhis.common.adapter.JacksonPeriodTypeDeserializer;
 import org.hisp.dhis.common.adapter.JacksonPeriodTypeSerializer;
 import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
+import org.joda.time.DateTime;
+import org.joda.time.Days;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @author Kristian Nordal
  */
-@JacksonXmlRootElement( localName = "period", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement( localName = "period", namespace = DxfNamespaces.DXF_2_0 )
 public class Period
     extends BaseNameableObject
     implements Weighted
@@ -76,6 +77,11 @@ public class Period
      */
     private Date endDate;
 
+    /**
+     * Transient string holding the ISO representation of the period.
+     */
+    private transient String isoPeriod;
+
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
@@ -91,6 +97,7 @@ public class Period
         this.startDate = period.getStartDate();
         this.endDate = period.getEndDate();
         this.name = period.getName();
+        this.isoPeriod = period.getIsoDate();
     }
 
     protected Period( PeriodType periodType, Date startDate, Date endDate )
@@ -100,14 +107,33 @@ public class Period
         this.endDate = endDate;
     }
 
+    protected Period( PeriodType periodType, Date startDate, Date endDate, String isoPeriod )
+    {
+        this.periodType = periodType;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.isoPeriod = isoPeriod;
+    }
+
     // -------------------------------------------------------------------------
     // Logic
     // -------------------------------------------------------------------------
 
+
+    @Override
+    public void setAutoFields()
+    {
+    }
+
     @Override
     public String getUid()
     {
-        return getIsoDate();
+        return uid != null ? uid : getIsoDate();
+    }
+
+    public String getRealUid()
+    {
+        return uid;
     }
 
     @Override
@@ -115,7 +141,7 @@ public class Period
     {
         return getIsoDate();
     }
-    
+
     @Override
     public String getName()
     {
@@ -129,13 +155,13 @@ public class Period
     }
 
     /**
-     * Returns an ISO8601 formatted string version of the period
+     * Returns an ISO8601 formatted string version of the period.
      *
      * @return the period string
      */
     public String getIsoDate()
     {
-        return periodType.getIsoDate( this );
+        return isoPeriod != null ? isoPeriod : periodType.getIsoDate( this );
     }
 
     /**
@@ -179,7 +205,7 @@ public class Period
     {
         return getMediumDateString( startDate );
     }
-    
+
     /**
      * Returns end date formatted as string.
      *
@@ -206,18 +232,48 @@ public class Period
     }
 
     /**
-     * Return the potential number of periods of the given period type which is
+     * Returns the potential number of periods of the given period type which is
      * spanned by this period.
      *
      * @param type the period type.
      * @return the potential number of periods of the given period type spanned
-     *         by this period.
+     * by this period.
      */
     public int getPeriodSpan( PeriodType type )
     {
         double no = (double) this.periodType.getFrequencyOrder() / type.getFrequencyOrder();
 
         return (int) Math.floor( no );
+    }
+
+    /**
+     * Returns the number of days in the period, i.e. the days between the start
+     * and end date.
+     *
+     * @return number of days in period.
+     */
+    public int getDaysInPeriod()
+    {
+        Days days = Days.daysBetween( new DateTime( startDate ), new DateTime( endDate ) );
+        return days.getDays() + 1;
+    }
+
+    /**
+     * Validates this period. TODO Make more comprehensive.
+     */
+    public boolean isValid()
+    {
+        if ( startDate == null || endDate == null || periodType == null )
+        {
+            return false;
+        }
+
+        if ( !DailyPeriodType.NAME.equals( periodType.getName() ) && getDaysInPeriod() < 2 )
+        {
+            return false;
+        }
+
+        return true;
     }
 
     // -------------------------------------------------------------------------
@@ -273,7 +329,21 @@ public class Period
     // -------------------------------------------------------------------------
 
     @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Date getStartDate()
+    {
+        return startDate;
+    }
+
+    public void setStartDate( Date startDate )
+    {
+        this.startDate = startDate;
+    }
+
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Date getEndDate()
     {
         return endDate;
@@ -287,8 +357,7 @@ public class Period
     @JsonProperty
     @JsonSerialize( using = JacksonPeriodTypeSerializer.class )
     @JsonDeserialize( using = JacksonPeriodTypeDeserializer.class )
-    @JsonView( {DetailedView.class, ExportView.class} )
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public PeriodType getPeriodType()
     {
         return periodType;
@@ -297,17 +366,5 @@ public class Period
     public void setPeriodType( PeriodType periodType )
     {
         this.periodType = periodType;
-    }
-
-    @JsonProperty
-    @JsonView( {DetailedView.class, ExportView.class} )
-    public Date getStartDate()
-    {
-        return startDate;
-    }
-
-    public void setStartDate( Date startDate )
-    {
-        this.startDate = startDate;
     }
 }

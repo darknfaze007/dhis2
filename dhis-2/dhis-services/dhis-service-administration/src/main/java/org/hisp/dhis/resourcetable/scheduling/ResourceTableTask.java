@@ -28,11 +28,18 @@ package org.hisp.dhis.resourcetable.scheduling;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.hisp.dhis.setting.SystemSettingManager.KEY_LAST_SUCCESSFUL_RESOURCE_TABLES_UPDATE;
+
+import java.util.Date;
+
 import org.hisp.dhis.message.MessageService;
 import org.hisp.dhis.resourcetable.ResourceTableService;
 import org.hisp.dhis.scheduling.TaskId;
+import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.system.notification.NotificationLevel;
 import org.hisp.dhis.system.notification.Notifier;
+import org.hisp.dhis.system.util.Clock;
+import org.hisp.dhis.system.util.DebugUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -50,6 +57,9 @@ public class ResourceTableTask
     @Autowired
     private MessageService messageService;
 
+    @Autowired
+    private SystemSettingManager systemSettingManager;
+    
     private TaskId taskId;
 
     public void setTaskId( TaskId taskId )
@@ -64,22 +74,31 @@ public class ResourceTableTask
     @Override
     public void run()
     {
+        final Date startTime = new Date();
+        final Clock clock = new Clock().startClock();
+        
         notifier.notify( taskId, "Generating resource tables" );
         
         try
         {
             generateAll();
             
-            notifier.notify( taskId, NotificationLevel.INFO, "Resource tables generated", true );
+            notifier.notify( taskId, NotificationLevel.INFO, "Resource tables generated: " + clock.time(), true );
         }
         catch ( RuntimeException ex )
         {
             notifier.notify( taskId, NotificationLevel.ERROR, "Process failed: " + ex.getMessage(), true );
             
-            messageService.sendFeedback( "Resource table process failed", "Resource table process failed, please check the logs.", null );
+            messageService.sendSystemNotification( 
+                "Resource table process failed", 
+                "Resource table process failed, please check the logs. " +
+                "Message: " + ex.getMessage() + " " +
+                "Cause: " + DebugUtils.getStackTrace( ex.getCause() ) );
             
             throw ex;
         }
+
+        systemSettingManager.saveSystemSetting( KEY_LAST_SUCCESSFUL_RESOURCE_TABLES_UPDATE, startTime );
     }    
 
     // -------------------------------------------------------------------------

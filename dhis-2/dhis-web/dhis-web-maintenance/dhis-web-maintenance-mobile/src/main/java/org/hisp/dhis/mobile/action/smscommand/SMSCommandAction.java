@@ -30,21 +30,21 @@ package org.hisp.dhis.mobile.action.smscommand;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.hisp.dhis.dataelement.DataElement;
-import org.hisp.dhis.dataelement.comparator.DataElementSortOrderComparator;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.program.Program;
 import org.hisp.dhis.program.ProgramService;
+import org.hisp.dhis.program.ProgramTrackedEntityAttribute;
 import org.hisp.dhis.sms.parse.ParserType;
 import org.hisp.dhis.smscommand.SMSCode;
 import org.hisp.dhis.smscommand.SMSCommand;
 import org.hisp.dhis.smscommand.SMSCommandService;
+import org.hisp.dhis.trackedentity.TrackedEntityAttribute;
 import org.hisp.dhis.user.UserGroup;
 import org.hisp.dhis.user.UserGroupService;
 
@@ -101,7 +101,19 @@ public class SMSCommandAction
         return userGroupList;
     }
 
-    public List<Program> anonymousProgramList;
+    private List<Program> programList;
+
+    public List<Program> getProgramList()
+    {
+        return programList;
+    }
+
+    public void setProgramList( List<Program> programList )
+    {
+        this.programList = programList;
+    }
+
+    private List<TrackedEntityAttribute> trackedEntityAttributeList;
 
     private int selectedCommandID = -1;
 
@@ -115,7 +127,7 @@ public class SMSCommandAction
         this.selectedCommandID = selectedCommandID;
     }
 
-    private Map<String, String> codes = new HashMap<String, String>();
+    private Map<String, String> codes = new HashMap<>();
 
     public Map<String, String> getCodes()
     {
@@ -127,6 +139,18 @@ public class SMSCommandAction
         this.codes = codes;
     }
 
+    private Map<String, String> formulas = new HashMap<>();
+
+    public Map<String, String> getFormulas()
+    {
+        return formulas;
+    }
+
+    public void setFormulas( Map<String, String> formulas )
+    {
+        this.formulas = formulas;
+    }
+
     public ParserType[] getParserType()
     {
         return ParserType.values();
@@ -136,6 +160,7 @@ public class SMSCommandAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -148,12 +173,24 @@ public class SMSCommandAction
         {
             for ( SMSCode x : smsCommand.getCodes() )
             {
-                codes.put( "" + x.getDataElement().getId() + x.getOptionId(), x.getCode() );
+                if ( smsCommand.getParserType() == ParserType.TRACKED_ENTITY_REGISTRATION_PARSER )
+                {
+                    codes.put( "" + x.getTrackedEntityAttribute().getId(), x.getCode() );
+                }
+                else
+                {
+                    codes.put( "" + x.getDataElement().getId() + x.getOptionId(), x.getCode() );
+                }
+
+                if ( x.getFormula() != null )
+                {
+                    formulas.put( "" + x.getDataElement().getId() + x.getOptionId(), x.getFormula() );
+                }
+
             }
         }
-        userGroupList = new ArrayList<UserGroup>( userGroupService.getAllUserGroups() );
-        anonymousProgramList = new ArrayList<Program>(
-            programService.getPrograms( Program.SINGLE_EVENT_WITHOUT_REGISTRATION ) );
+        userGroupList = new ArrayList<>( userGroupService.getAllUserGroups() );
+        programList = new ArrayList<>( programService.getPrograms( Program.MULTIPLE_EVENTS_WITH_REGISTRATION ) );
         return SUCCESS;
     }
 
@@ -168,8 +205,7 @@ public class SMSCommandAction
             DataSet d = smsCommand.getDataset();
             if ( d != null )
             {
-                dataElements = new ArrayList<DataElement>( d.getDataElements() );
-                Collections.sort( dataElements, new DataElementSortOrderComparator() );
+                dataElements = new ArrayList<>( d.getDataElements() );
                 return dataElements;
             }
         }
@@ -189,5 +225,29 @@ public class SMSCommandAction
     public SMSCommand getSmsCommand()
     {
         return smsCommand;
+    }
+
+    public List<TrackedEntityAttribute> getTrackedEntityAttributeList()
+    {
+        if ( smsCommand != null )
+        {
+            Program program = smsCommand.getProgram();
+            if ( program != null )
+            {
+                trackedEntityAttributeList = new ArrayList<>();
+                for ( ProgramTrackedEntityAttribute programAttribute : program.getProgramAttributes() )
+                {
+                    trackedEntityAttributeList.add( programAttribute.getAttribute() );
+                }
+                return trackedEntityAttributeList;
+            }
+
+        }
+        return null;
+    }
+
+    public void setTrackedEntityAttributeList( List<TrackedEntityAttribute> trackedEntityAttributeList )
+    {
+        this.trackedEntityAttributeList = trackedEntityAttributeList;
     }
 }

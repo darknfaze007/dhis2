@@ -53,8 +53,6 @@ import org.hisp.dhis.constant.ConstantService;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryOptionCombo;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
-import org.hisp.dhis.dataelement.DataElementOperand;
-import org.hisp.dhis.dataentryform.DataEntryFormService;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.datavalue.DataValueService;
 import org.hisp.dhis.expression.ExpressionService;
@@ -110,13 +108,6 @@ public class DefaultValidationRuleService
     public void setExpressionService( ExpressionService expressionService )
     {
         this.expressionService = expressionService;
-    }
-
-    private DataEntryFormService dataEntryFormService;
-
-    public void setDataEntryFormService( DataEntryFormService dataEntryFormService )
-    {
-        this.dataEntryFormService = dataEntryFormService;
     }
 
     private PeriodService periodService;
@@ -209,7 +200,7 @@ public class DefaultValidationRuleService
         
         if ( sendAlerts )
         {
-            Set<ValidationResult> resultsToAlert = new HashSet<ValidationResult>( results );
+            Set<ValidationResult> resultsToAlert = new HashSet<>( results );
             FilterUtils.filter( resultsToAlert, new ValidationResultToAlertFilter() );
             postAlerts( resultsToAlert, new Date() );
         }
@@ -224,11 +215,11 @@ public class DefaultValidationRuleService
     	
         Collection<Period> periods = periodService.getPeriodsBetweenDates( startDate, endDate );
         Collection<ValidationRule> rules = getAllValidationRules();
-        Collection<OrganisationUnit> sources = new HashSet<OrganisationUnit>();
+        Collection<OrganisationUnit> sources = new HashSet<>();
         sources.add( source );
 
         return Validator.validate( sources, periods, rules, null, null,
-                constantService, expressionService, periodService, dataValueService, dataElementCategoryService, userService, currentUserService );
+            constantService, expressionService, periodService, dataValueService, dataElementCategoryService, userService, currentUserService );
     }
 
     @Override
@@ -237,29 +228,20 @@ public class DefaultValidationRuleService
     {
     	log.info( "Validate data set: " + dataSet.getName() + " period: " + period.getPeriodType().getName() + " "
             + period.getStartDate() + " " + period.getEndDate() + " source: " + source.getName()
-            + " attribute combo: " + ( attributeCombo == null ? "(null)" : attributeCombo.getName() ) );
+            + " attribute combo: " + ( attributeCombo == null ? "[none]" : attributeCombo.getName() ) );
 
-        Collection<Period> periods = new ArrayList<Period>();
+        Collection<Period> periods = new ArrayList<>();
         periods.add( period );
 
-        Collection<ValidationRule> rules = null;
-        
-        if ( DataSet.TYPE_CUSTOM.equals( dataSet.getDataSetType() ) )
-        {
-            rules = getRulesForDataSet( dataSet );
-        }
-        else
-        {
-            rules = getValidationTypeRulesForDataElements( dataSet.getDataElements() );
-        }
-        
+        Collection<ValidationRule> rules = getValidationTypeRulesForDataElements( dataSet.getDataElements() );
+                
         log.info( "Using validation rules: " + rules.size() );
-
-        Collection<OrganisationUnit> sources = new HashSet<OrganisationUnit>();
+        
+        Collection<OrganisationUnit> sources = new HashSet<>();
         sources.add( source );
         
         return Validator.validate( sources, periods, rules, attributeCombo, null,
-                constantService, expressionService, periodService, dataValueService, dataElementCategoryService, userService, currentUserService );
+            constantService, expressionService, periodService, dataValueService, dataElementCategoryService, userService, currentUserService );
     }
 
     @Override
@@ -310,7 +292,7 @@ public class DefaultValidationRuleService
      */
     private Set<ValidationRule> getAlertRules()
     {
-        Set<ValidationRule> rules = new HashSet<ValidationRule>();
+        Set<ValidationRule> rules = new HashSet<>();
         
         for ( ValidationRuleGroup validationRuleGroup : getAllValidationRuleGroups() )
         {
@@ -340,7 +322,7 @@ public class DefaultValidationRuleService
      */
     private Set<Period> getAlertPeriodsFromRules( Set<ValidationRule> rules )
     {
-        Set<Period> periods = new HashSet<Period>();
+        Set<Period> periods = new HashSet<>();
 
         Set<PeriodType> rulePeriodTypes = getPeriodTypesFromRules( rules );
 
@@ -377,7 +359,7 @@ public class DefaultValidationRuleService
      */
     private void postAlerts( Collection<ValidationResult> validationResults, Date scheduledRunStart )
     {
-        SortedSet<ValidationResult> results = new TreeSet<ValidationResult>( validationResults );
+        SortedSet<ValidationResult> results = new TreeSet<>( validationResults );
 
         Map<SortedSet<ValidationResult>, Set<User>> messageMap = getMessageMap( results );
 
@@ -398,7 +380,7 @@ public class DefaultValidationRuleService
      */
     private Set<PeriodType> getPeriodTypesFromRules ( Collection<ValidationRule> rules )
     {
-        Set<PeriodType> rulePeriodTypes = new HashSet<PeriodType>();
+        Set<PeriodType> rulePeriodTypes = new HashSet<>();
         
         for ( ValidationRule rule : rules )
         {
@@ -420,18 +402,19 @@ public class DefaultValidationRuleService
     {
         Map<User, SortedSet<ValidationResult>> userResults = getUserResults( results );
 
-        Map<SortedSet<ValidationResult>, Set<User>> messageMap = new HashMap<SortedSet<ValidationResult>, Set<User>>();
+        Map<SortedSet<ValidationResult>, Set<User>> messageMap = new HashMap<>();
 
-        for (Map.Entry<User, SortedSet<ValidationResult>> userResultEntry : userResults.entrySet() )
+        for ( Map.Entry<User, SortedSet<ValidationResult>> userResultEntry : userResults.entrySet() )
         {
             Set<User> users = messageMap.get( userResultEntry.getValue() );
 
             if ( users == null )
             {
-                users = new HashSet<User>();
+                users = new HashSet<>();
 
                 messageMap.put( userResultEntry.getValue(), users );
             }
+            
             users.add( userResultEntry.getKey() );
         }
 
@@ -447,7 +430,7 @@ public class DefaultValidationRuleService
      */
     private Map<User, SortedSet<ValidationResult>> getUserResults( SortedSet<ValidationResult> results )
     {
-        Map<User, SortedSet<ValidationResult>> userResults = new HashMap<User, SortedSet<ValidationResult>>();
+        Map<User, SortedSet<ValidationResult>> userResults = new HashMap<>();
 
         for ( ValidationResult result : results )
         {
@@ -465,10 +448,11 @@ public class DefaultValidationRuleService
 
                                 if ( resultSet == null )
                                 {
-                                    resultSet = new TreeSet<ValidationResult>();
+                                    resultSet = new TreeSet<>();
 
                                     userResults.put( user, resultSet );
                                 }
+                                
                                 resultSet.add( result );
                             }
                         }
@@ -496,6 +480,7 @@ public class DefaultValidationRuleService
                 return true;
             }
         }
+        
         return false;
     }
 
@@ -534,6 +519,7 @@ public class DefaultValidationRuleService
         }
         
         log.info( "Alerting users: " + users.size() + ", subject: " + subject );
+        
         messageService.sendMessage( subject, builder.toString(), null, users );
     }
 
@@ -550,7 +536,7 @@ public class DefaultValidationRuleService
      */
     private Map<String, Integer> countResultsByImportanceType ( Set<ValidationResult> results )
     {
-        Map<String, Integer> importanceCountMap = new HashMap<String, Integer>();
+        Map<String, Integer> importanceCountMap = new HashMap<>();
         
         for ( ValidationResult result : results )
         {
@@ -572,9 +558,9 @@ public class DefaultValidationRuleService
      */
     private Collection<ValidationRule> getValidationTypeRulesForDataElements( Set<DataElement> dataElements )
     {
-        Set<ValidationRule> rulesForDataElements = new HashSet<ValidationRule>();
+        Set<ValidationRule> rulesForDataElements = new HashSet<>();
 
-        Set<DataElement> validationRuleElements = new HashSet<DataElement>();
+        Set<DataElement> validationRuleElements = new HashSet<>();
 
         for ( ValidationRule validationRule : getAllValidationRules() )
         {
@@ -592,39 +578,6 @@ public class DefaultValidationRuleService
         }
 
         return rulesForDataElements;
-    }
-
-    /**
-     * Returns all validation rules which have data elements assigned to them
-     * which are members of the given data set.
-     * 
-     * @param dataSet the data set
-     * @return all validation rules which have data elements assigned to them
-     *         which are members of the given data set
-     */
-    private Collection<ValidationRule> getRulesForDataSet( DataSet dataSet )
-    {
-        Set<ValidationRule> rulesForDataSet = new HashSet<ValidationRule>();
-
-        Set<DataElementOperand> operands = dataEntryFormService.getOperandsInDataEntryForm( dataSet );
-
-        Set<DataElementOperand> validationRuleOperands = new HashSet<DataElementOperand>();
-
-        for ( ValidationRule rule : getAllValidationRules() )
-        {
-            validationRuleOperands.clear();
-            validationRuleOperands.addAll( expressionService.getOperandsInExpression(
-                rule.getLeftSide().getExpression() ) );
-            validationRuleOperands.addAll( expressionService.getOperandsInExpression(
-                rule.getRightSide().getExpression() ) );
-
-            if ( operands.containsAll( validationRuleOperands ) )
-            {
-                rulesForDataSet.add( rule );
-            }
-        }
-
-        return rulesForDataSet;
     }
     
     /**
@@ -651,47 +604,56 @@ public class DefaultValidationRuleService
     // ValidationRule CRUD operations
     // -------------------------------------------------------------------------
 
+    @Override
     public int saveValidationRule( ValidationRule validationRule )
     {
         return validationRuleStore.save( validationRule );
     }
 
+    @Override
     public void updateValidationRule( ValidationRule validationRule )
     {
         validationRuleStore.update( validationRule );
     }
 
+    @Override
     public void deleteValidationRule( ValidationRule validationRule )
     {
         validationRuleStore.delete( validationRule );
     }
 
+    @Override
     public ValidationRule getValidationRule( int id )
     {
         return i18n( i18nService, validationRuleStore.get( id ) );
     }
 
+    @Override
     public ValidationRule getValidationRule( String uid )
     {
         return i18n( i18nService, validationRuleStore.getByUid( uid ) );
     }
 
+    @Override
     public ValidationRule getValidationRuleByName( String name )
     {
         return i18n( i18nService, validationRuleStore.getByName( name ) );
     }
 
+    @Override
     public Collection<ValidationRule> getAllValidationRules()
     {
         return i18n( i18nService, validationRuleStore.getAll() );
     }
 
+    @Override
     public Collection<ValidationRule> getValidationRules( final Collection<Integer> identifiers )
     {
         Collection<ValidationRule> objects = getAllValidationRules();
 
         return identifiers == null ? objects : FilterUtils.filter( objects, new Filter<ValidationRule>()
         {
+            @Override
             public boolean retain( ValidationRule object )
             {
                 return identifiers.contains( object.getId() );
@@ -699,31 +661,37 @@ public class DefaultValidationRuleService
         } );
     }
 
+    @Override
     public Collection<ValidationRule> getValidationRulesByName( String name )
     {
         return getObjectsByName( i18nService, validationRuleStore, name );
     }
 
+    @Override
     public Collection<ValidationRule> getValidationRulesByDataElements( Collection<DataElement> dataElements )
     {
         return i18n( i18nService, validationRuleStore.getValidationRulesByDataElements( dataElements ) );
     }
 
+    @Override
     public int getValidationRuleCount()
     {
         return validationRuleStore.getCount();
     }
 
+    @Override
     public int getValidationRuleCountByName( String name )
     {
         return getCountByName( i18nService, validationRuleStore, name );
     }
 
+    @Override
     public Collection<ValidationRule> getValidationRulesBetween( int first, int max )
     {
         return getObjectsBetween( i18nService, validationRuleStore, first, max );
     }
 
+    @Override
     public Collection<ValidationRule> getValidationRulesBetweenByName( String name, int first, int max )
     {
         return getObjectsBetweenByName( i18nService, validationRuleStore, name, first, max );
@@ -733,26 +701,31 @@ public class DefaultValidationRuleService
     // ValidationRuleGroup CRUD operations
     // -------------------------------------------------------------------------
 
+    @Override
     public int addValidationRuleGroup( ValidationRuleGroup validationRuleGroup )
     {
         return validationRuleGroupStore.save( validationRuleGroup );
     }
 
+    @Override
     public void deleteValidationRuleGroup( ValidationRuleGroup validationRuleGroup )
     {
         validationRuleGroupStore.delete( validationRuleGroup );
     }
 
+    @Override
     public void updateValidationRuleGroup( ValidationRuleGroup validationRuleGroup )
     {
         validationRuleGroupStore.update( validationRuleGroup );
     }
 
+    @Override
     public ValidationRuleGroup getValidationRuleGroup( int id )
     {
         return i18n( i18nService, validationRuleGroupStore.get( id ) );
     }
 
+    @Override
     public ValidationRuleGroup getValidationRuleGroup( int id, boolean i18nValidationRules )
     {
         ValidationRuleGroup group = getValidationRuleGroup( id );
@@ -765,36 +738,43 @@ public class DefaultValidationRuleService
         return group;
     }
 
+    @Override
     public ValidationRuleGroup getValidationRuleGroup( String uid )
     {
         return i18n( i18nService, validationRuleGroupStore.getByUid( uid ) );
     }
 
+    @Override
     public Collection<ValidationRuleGroup> getAllValidationRuleGroups()
     {
         return i18n( i18nService, validationRuleGroupStore.getAll() );
     }
 
+    @Override
     public ValidationRuleGroup getValidationRuleGroupByName( String name )
     {
         return i18n( i18nService, validationRuleGroupStore.getByName( name ) );
     }
 
+    @Override
     public int getValidationRuleGroupCount()
     {
         return validationRuleGroupStore.getCount();
     }
 
+    @Override
     public int getValidationRuleGroupCountByName( String name )
     {
         return getCountByName( i18nService, validationRuleGroupStore, name );
     }
 
+    @Override
     public Collection<ValidationRuleGroup> getValidationRuleGroupsBetween( int first, int max )
     {
         return getObjectsBetween( i18nService, validationRuleGroupStore, first, max );
     }
 
+    @Override
     public Collection<ValidationRuleGroup> getValidationRuleGroupsBetweenByName( String name, int first, int max )
     {
         return getObjectsBetweenByName( i18nService, validationRuleGroupStore, name, first, max );

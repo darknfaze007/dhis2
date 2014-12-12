@@ -31,7 +31,7 @@ package org.hisp.dhis.user.action;
 import com.opensymphony.xwork2.Action;
 import java.util.Collection;
 import org.hisp.dhis.i18n.I18n;
-import org.hisp.dhis.security.PasswordManager;
+import org.hisp.dhis.security.migration.MigrationPasswordManager;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserCredentials;
@@ -48,9 +48,9 @@ public class DeleteCurrentUserAction
         this.currentUserService = currentUserService;
     }
 
-    private PasswordManager passwordManager;
+    private MigrationPasswordManager passwordManager;
 
-    public void setPasswordManager( PasswordManager passwordManager )
+    public void setPasswordManager( MigrationPasswordManager passwordManager )
     {
         this.passwordManager = passwordManager;
     }
@@ -122,10 +122,8 @@ public class DeleteCurrentUserAction
         {
             return INPUT;
         }
-        
-        String oldEncodedPassword = passwordManager.encodePassword( userCredentials.getUsername(), oldPassword ) ;
-        
-        if ( !oldEncodedPassword.equals( oldPasswordFromDB ) )
+
+        if( !passwordManager.legacyOrCurrentMatches( oldPassword, oldPasswordFromDB, username ) )
         {
             message = i18n.getString( "wrong_password" );
             return INPUT;

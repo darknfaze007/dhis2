@@ -84,19 +84,20 @@ public class GetValidationRuleListAction
     // Action implementation
     // -------------------------------------------------------------------------
     
+    @Override
     public String execute() throws Exception
     {
         if ( isNotBlank( key ) ) // Filter on key only if set
         {
             this.paging = createPaging( validationRuleService.getValidationRuleCountByName( key ) );
             
-            validationRulesList = new ArrayList<ValidationRule>( validationRuleService.getValidationRulesBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
+            validationRulesList = new ArrayList<>( validationRuleService.getValidationRulesBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( validationRuleService.getValidationRuleCount() );
             
-            validationRulesList = new ArrayList<ValidationRule>( validationRuleService.getValidationRulesBetween( paging.getStartPos(), paging.getPageSize() ) );
+            validationRulesList = new ArrayList<>( validationRuleService.getValidationRulesBetween( paging.getStartPos(), paging.getPageSize() ) );
         }
 
         Collections.sort( validationRulesList, IdentifiableObjectNameComparator.INSTANCE );

@@ -84,7 +84,7 @@ public class EditUserGroupFormAction
         return userGroupId;
     }
 
-    private List<User> groupMembers = new ArrayList<User>();
+    private List<User> groupMembers = new ArrayList<>();
 
     public List<User> getGroupMembers()
     {
@@ -105,7 +105,7 @@ public class EditUserGroupFormAction
         return attributes;
     }
 
-    public Map<Integer, String> attributeValues = new HashMap<Integer, String>();
+    public Map<Integer, String> attributeValues = new HashMap<>();
 
     public Map<Integer, String> getAttributeValues()
     {
@@ -116,14 +116,15 @@ public class EditUserGroupFormAction
     // Action Implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         group = userGroupService.getUserGroup( userGroupId );
 
-        groupMembers = new ArrayList<User>( group.getMembers() );
+        groupMembers = new ArrayList<>( group.getMembers() );
 
-        attributes = new ArrayList<Attribute>( attributeService.getUserGroupAttributes() );
+        attributes = new ArrayList<>( attributeService.getUserGroupAttributes() );
 
         attributeValues = AttributeUtils.getAttributeValueMap( group.getAttributeValues() );
 

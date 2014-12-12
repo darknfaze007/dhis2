@@ -35,8 +35,6 @@ import com.google.common.base.Objects;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.IdentifiableObject;
 import org.hisp.dhis.common.NameableObject;
-import org.hisp.dhis.node.annotation.NodeRoot;
-import org.hisp.dhis.node.annotation.NodeSimple;
 import org.springframework.core.Ordered;
 
 import java.lang.reflect.Method;
@@ -45,19 +43,16 @@ import java.lang.reflect.Method;
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
 @JacksonXmlRootElement( localName = "property", namespace = DxfNamespaces.DXF_2_0 )
-@NodeRoot( isWritable = false, isPersisted = false )
 public class Property implements Ordered
 {
     /**
      * Class for property.
      */
-    @NodeSimple
     private Class<?> klass;
 
     /**
      * If this property is a collection, this is the class of the items inside the collection.
      */
-    @NodeSimple
     private Class<?> itemKlass;
 
     /**
@@ -74,52 +69,44 @@ public class Property implements Ordered
      * Name for this property, if this class is a collection, it is the name of the items -inside- the collection
      * and not the collection wrapper itself.
      */
-    @NodeSimple
     private String name;
 
     /**
      * Name for actual field, used to persistence operations and getting setter/getter.
      */
-    @NodeSimple
     private String fieldName;
 
     /**
      * Is this property persisted somewhere. This property will be used to create criteria queries
-     * on demand (default: true)
+     * on demand (default: false)
      */
-    @NodeSimple
-    private boolean persisted = true;
+    private boolean persisted;
 
     /**
      * Name of collection wrapper.
      */
-    @NodeSimple
     private String collectionName;
 
     /**
      * If this Property is a collection, should it be wrapped with collectionName?
      */
-    @NodeSimple
-    private boolean collectionWrapping;
+    private Boolean collectionWrapping;
 
     /**
      * Description if provided, will be fetched from @Description annotation.
      *
      * @see org.hisp.dhis.common.annotation.Description
      */
-    @NodeSimple
     private String description;
 
     /**
      * Namespace used for this property.
      */
-    @NodeSimple
     private String namespace;
 
     /**
      * Usually only used for XML. Is this property considered an attribute.
      */
-    @NodeSimple
     private boolean attribute;
 
     /**
@@ -128,7 +115,6 @@ public class Property implements Ordered
      * of the collection, e.g. List<String> would set simple to be true, but List<DataElement> would set it
      * to false.
      */
-    @NodeSimple
     private boolean simple;
 
     /**
@@ -136,14 +122,12 @@ public class Property implements Ordered
      *
      * @see java.util.Collection
      */
-    @NodeSimple
     private boolean collection;
 
     /**
      * If this property is a complex object or a collection, is this property considered
      * the owner of that relationship (important for imports etc).
      */
-    @NodeSimple
     private boolean owner;
 
     /**
@@ -151,7 +135,6 @@ public class Property implements Ordered
      *
      * @see org.hisp.dhis.common.IdentifiableObject
      */
-    @NodeSimple
     private boolean identifiableObject;
 
     /**
@@ -159,8 +142,42 @@ public class Property implements Ordered
      *
      * @see org.hisp.dhis.common.NameableObject
      */
-    @NodeSimple
     private boolean nameableObject;
+
+    /**
+     * Can this property be read.
+     */
+    private boolean readable;
+
+    /**
+     * Can this property be written to.
+     */
+    private boolean writable;
+
+    /**
+     * Are the values for this property required to be unique?
+     */
+    private boolean unique;
+
+    /**
+     * Nullability of this property.
+     */
+    private boolean nullable;
+
+    /**
+     * Maximum length of this property.
+     */
+    private Integer maxLength;
+
+    /**
+     * Minimum length of this property.
+     */
+    private Integer minLength;
+
+    /**
+     * Cascading used when doing CRUD operations.
+     */
+    private String cascade;
 
     public Property()
     {
@@ -168,7 +185,7 @@ public class Property implements Ordered
 
     public Property( Class<?> klass )
     {
-        this.klass = klass;
+        setKlass( klass );
     }
 
     public Property( Class<?> klass, Method getter, Method setter )
@@ -207,6 +224,11 @@ public class Property implements Ordered
     public Method getGetterMethod()
     {
         return getterMethod;
+    }
+
+    public void setGetterMethod( Method getterMethod )
+    {
+        this.getterMethod = getterMethod;
     }
 
     public Method getSetterMethod()
@@ -259,7 +281,7 @@ public class Property implements Ordered
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public String getCollectionName()
     {
-        return collectionName == null ? name : collectionName;
+        return collectionName != null ? collectionName : (isCollection() ? name : null);
     }
 
     public void setCollectionName( String collectionName )
@@ -269,12 +291,12 @@ public class Property implements Ordered
 
     @JsonProperty
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
-    public boolean isCollectionWrapping()
+    public Boolean isCollectionWrapping()
     {
         return collectionWrapping;
     }
 
-    public void setCollectionWrapping( boolean collectionWrapping )
+    public void setCollectionWrapping( Boolean collectionWrapping )
     {
         this.collectionWrapping = collectionWrapping;
     }
@@ -373,6 +395,95 @@ public class Property implements Ordered
     public void setNameableObject( boolean nameableObject )
     {
         this.nameableObject = nameableObject;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isReadable()
+    {
+        return readable;
+    }
+
+    public void setReadable( boolean readable )
+    {
+        this.readable = readable;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isWritable()
+    {
+        return writable;
+    }
+
+    public void setWritable( boolean writable )
+    {
+        this.writable = writable;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isUnique()
+    {
+        return unique;
+    }
+
+    public void setUnique( boolean unique )
+    {
+        this.unique = unique;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isNullable()
+    {
+        return nullable;
+    }
+
+    public void setNullable( boolean nullable )
+    {
+        this.nullable = nullable;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Integer getMaxLength()
+    {
+        return maxLength;
+    }
+
+    public void setMaxLength( Integer maxLength )
+    {
+        this.maxLength = maxLength;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public Integer getMinLength()
+    {
+        return minLength;
+    }
+
+    public void setMinLength( Integer minLength )
+    {
+        this.minLength = minLength;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public String getCascade()
+    {
+        return cascade;
+    }
+
+    public void setCascade( String cascade )
+    {
+        this.cascade = cascade;
+    }
+
+    public String key()
+    {
+        return isCollection() ? collectionName : name;
     }
 
     @Override

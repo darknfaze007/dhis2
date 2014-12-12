@@ -45,9 +45,9 @@ import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupSet;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.oust.manager.SelectionTreeManager;
-import org.hisp.dhis.period.Cal;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodType;
+import org.joda.time.DateTime;
 
 import com.opensymphony.xwork2.Action;
 
@@ -202,6 +202,7 @@ public class GetDataSetReportOptionsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {        
         periodTypes = getAvailablePeriodTypes();
@@ -212,7 +213,7 @@ public class GetDataSetReportOptionsAction
         {
             Period period = getPeriodFromIsoString( pe );
                         
-            offset = new Cal().set( period.getStartDate() ).getYear() - new Cal().now().getYear();
+            offset = new DateTime( period.getStartDate() ).getYear() - new DateTime().getYear();
             
             periodType = period.getPeriodType();
             
@@ -221,10 +222,10 @@ public class GetDataSetReportOptionsAction
 
         defaultCategoryCombo = categoryService.getDefaultDataElementCategoryCombo();
 
-        dataSets = new ArrayList<DataSet>( dataSetService.getAllDataSets() ); 
-        categoryCombos = new ArrayList<DataElementCategoryCombo>( categoryService.getAttributeCategoryCombos() );
-        categoryOptionGroupSets = new ArrayList<CategoryOptionGroupSet>( categoryService.getAllCategoryOptionGroupSets() );
-        organisationUnitGroupSets = new ArrayList<OrganisationUnitGroupSet>( organisationUnitGroupService.getAllOrganisationUnitGroupSets() );
+        dataSets = new ArrayList<>( dataSetService.getAllDataSets() );
+        categoryCombos = new ArrayList<>( categoryService.getAttributeCategoryCombos() );
+        categoryOptionGroupSets = new ArrayList<>( categoryService.getAllCategoryOptionGroupSets() );
+        organisationUnitGroupSets = new ArrayList<>( organisationUnitGroupService.getAllOrganisationUnitGroupSets() );
 
         Collections.sort( dataSets, IdentifiableObjectNameComparator.INSTANCE );   
         Collections.sort( categoryCombos, IdentifiableObjectNameComparator.INSTANCE );

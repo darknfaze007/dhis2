@@ -35,6 +35,9 @@ import java.util.Set;
 
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementService;
+import org.hisp.dhis.program.ProgramIndicator;
+import org.hisp.dhis.program.ProgramIndicatorService;
+import org.hisp.dhis.program.ProgramService;
 import org.hisp.dhis.program.ProgramStage;
 import org.hisp.dhis.program.ProgramStageDataElement;
 import org.hisp.dhis.program.ProgramStageDataElementService;
@@ -42,6 +45,7 @@ import org.hisp.dhis.program.ProgramStageService;
 import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminder;
 import org.hisp.dhis.user.UserGroup;
 import org.hisp.dhis.user.UserGroupService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.opensymphony.xwork2.Action;
 
@@ -85,6 +89,9 @@ public class UpdateProgramStageAction
         this.userGroupService = userGroupService;
     }
 
+    @Autowired
+    private ProgramService programService;
+    
     // -------------------------------------------------------------------------
     // Input/Output
     // -------------------------------------------------------------------------
@@ -117,21 +124,21 @@ public class UpdateProgramStageAction
         this.minDaysFromStart = minDaysFromStart;
     }
 
-    private List<Integer> selectedDataElementsValidator = new ArrayList<Integer>();
+    private List<Integer> selectedDataElementsValidator = new ArrayList<>();
 
     public void setSelectedDataElementsValidator( List<Integer> selectedDataElementsValidator )
     {
         this.selectedDataElementsValidator = selectedDataElementsValidator;
     }
 
-    private List<Boolean> compulsories = new ArrayList<Boolean>();
+    private List<Boolean> compulsories = new ArrayList<>();
 
     public void setCompulsories( List<Boolean> compulsories )
     {
         this.compulsories = compulsories;
     }
 
-    private List<Boolean> allowProvidedElsewhere = new ArrayList<Boolean>();
+    private List<Boolean> allowProvidedElsewhere = new ArrayList<>();
 
     public void setAllowProvidedElsewhere( List<Boolean> allowProvidedElsewhere )
     {
@@ -166,21 +173,21 @@ public class UpdateProgramStageAction
         this.reportDateDescription = reportDateDescription;
     }
 
-    private List<Integer> daysAllowedSendMessages = new ArrayList<Integer>();
+    private List<Integer> daysAllowedSendMessages = new ArrayList<>();
 
     public void setDaysAllowedSendMessages( List<Integer> daysAllowedSendMessages )
     {
         this.daysAllowedSendMessages = daysAllowedSendMessages;
     }
 
-    private List<String> templateMessages = new ArrayList<String>();
+    private List<String> templateMessages = new ArrayList<>();
 
     public void setTemplateMessages( List<String> templateMessages )
     {
         this.templateMessages = templateMessages;
     }
 
-    private List<Integer> sendTo = new ArrayList<Integer>();
+    private List<Integer> sendTo = new ArrayList<>();
 
     public void setSendTo( List<Integer> sendTo )
     {
@@ -194,7 +201,7 @@ public class UpdateProgramStageAction
         this.autoGenerateEvent = autoGenerateEvent;
     }
 
-    private List<Boolean> displayInReports = new ArrayList<Boolean>();
+    private List<Boolean> displayInReports = new ArrayList<>();
 
     public void setDisplayInReports( List<Boolean> displayInReports )
     {
@@ -229,21 +236,21 @@ public class UpdateProgramStageAction
         this.allowFutureDates = allowFutureDates;
     }
 
-    private List<Integer> whenToSend = new ArrayList<Integer>();
+    private List<Integer> whenToSend = new ArrayList<>();
 
     public void setWhenToSend( List<Integer> whenToSend )
     {
         this.whenToSend = whenToSend;
     }
 
-    private List<Integer> messageType = new ArrayList<Integer>();
+    private List<Integer> messageType = new ArrayList<>();
 
     public void setMessageType( List<Integer> messageType )
     {
         this.messageType = messageType;
     }
 
-    private List<Integer> userGroup = new ArrayList<Integer>();
+    private List<Integer> userGroup = new ArrayList<>();
 
     public void setUserGroup( List<Integer> userGroup )
     {
@@ -298,11 +305,29 @@ public class UpdateProgramStageAction
     {
         this.reportDateToUse = reportDateToUse;
     }
+
+    private List<Integer> selectedIndicators = new ArrayList<>();
+
+    public void setSelectedIndicators( List<Integer> selectedIndicators )
+    {
+        this.selectedIndicators = selectedIndicators;
+    }
     
+    private Boolean preGenerateUID;
+
+    public void setPreGenerateUID( Boolean preGenerateUID )
+    {
+        this.preGenerateUID = preGenerateUID;
+    }
+
+    @Autowired
+    private ProgramIndicatorService programIndicatorService;
+
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -318,6 +343,7 @@ public class UpdateProgramStageAction
         remindCompleted = (remindCompleted == null) ? false : remindCompleted;
         allowGenerateNextVisit = (allowGenerateNextVisit == null) ? false : allowGenerateNextVisit;
         openAfterEnrollment = (openAfterEnrollment == null) ? false : openAfterEnrollment;
+        preGenerateUID = (preGenerateUID == null) ? false : preGenerateUID;
 
         ProgramStage programStage = programStageService.getProgramStage( id );
 
@@ -335,6 +361,7 @@ public class UpdateProgramStageAction
         programStage.setAllowGenerateNextVisit( allowGenerateNextVisit );
         programStage.setOpenAfterEnrollment( openAfterEnrollment );
         programStage.setReportDateToUse( reportDateToUse );
+        programStage.setPreGenerateUID( preGenerateUID );
 
         if ( programStage.getProgram().isSingleEvent() )
         {
@@ -348,9 +375,20 @@ public class UpdateProgramStageAction
         programStage.setValidCompleteOnly( validCompleteOnly );
         programStage.setCaptureCoordinates( captureCoordinates );
 
+        // Program indicators
+        
+        List<ProgramIndicator> programIndicators = new ArrayList<>();
+        for ( Integer id : selectedIndicators )
+        {
+            ProgramIndicator indicator = programIndicatorService.getProgramIndicator( id );
+            programIndicators.add( indicator );
+        }
+        programStage.setProgramIndicators( programIndicators );
+        
         // SMS Reminder
+        
         programStage.getReminders().clear();
-        Set<TrackedEntityInstanceReminder> reminders = new HashSet<TrackedEntityInstanceReminder>();
+        Set<TrackedEntityInstanceReminder> reminders = new HashSet<>();
         for ( int i = 0; i < this.daysAllowedSendMessages.size(); i++ )
         {
             TrackedEntityInstanceReminder reminder = new TrackedEntityInstanceReminder( "", daysAllowedSendMessages.get( i ),
@@ -372,10 +410,9 @@ public class UpdateProgramStageAction
             reminders.add( reminder );
         }
         programStage.setReminders( reminders );
-
         programStageService.updateProgramStage( programStage );
-
-        Set<ProgramStageDataElement> programStageDataElements = new HashSet<ProgramStageDataElement>(
+        
+        Set<ProgramStageDataElement> programStageDataElements = new HashSet<>(
             programStage.getProgramStageDataElements() );
 
         for ( int i = 0; i < this.selectedDataElementsValidator.size(); i++ )

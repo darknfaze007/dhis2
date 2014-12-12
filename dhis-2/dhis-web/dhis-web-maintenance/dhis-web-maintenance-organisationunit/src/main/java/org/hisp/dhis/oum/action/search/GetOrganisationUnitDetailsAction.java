@@ -94,6 +94,7 @@ public class GetOrganisationUnitDetailsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -103,7 +104,7 @@ public class GetOrganisationUnitDetailsAction
         // Get group sets
         // ---------------------------------------------------------------------
 
-        groupSets = new ArrayList<OrganisationUnitGroupSet>( organisationUnitGroupService.getCompulsoryOrganisationUnitGroupSets() );
+        groupSets = new ArrayList<>( organisationUnitGroupService.getCompulsoryOrganisationUnitGroupSets() );
         
         Collections.sort( groupSets, IdentifiableObjectNameComparator.INSTANCE );
         

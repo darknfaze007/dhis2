@@ -64,7 +64,7 @@ public class DefaultCaseAggregateConditionSchedulingManager
         this.scheduler = scheduler;
     }
 
-    private Map<String, Runnable> tasks = new HashMap<String, Runnable>();
+    private Map<String, Runnable> tasks = new HashMap<>();
 
     public void setTasks( Map<String, Runnable> tasks )
     {
@@ -75,6 +75,7 @@ public class DefaultCaseAggregateConditionSchedulingManager
     // SchedulingManager implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void scheduleTasks()
     {
         Map<String, String> keyCronMap = getScheduledTasks();
@@ -91,14 +92,16 @@ public class DefaultCaseAggregateConditionSchedulingManager
         }
     }
 
+    @Override
     public void scheduleTasks( Map<String, String> keyCronMap )
     {
         systemSettingManager.saveSystemSetting( KEY_SCHEDULE_AGGREGATE_QUERY_BUILDER_TASKS,
-            new HashMap<String, String>( keyCronMap ) );
+            new HashMap<>( keyCronMap ) );
 
         scheduleTasks();
     }
 
+    @Override
     public void stopTasks()
     {
         systemSettingManager.saveSystemSetting( KEY_SCHEDULE_AGGREGATE_QUERY_BUILDER_TASKS, null );
@@ -106,6 +109,7 @@ public class DefaultCaseAggregateConditionSchedulingManager
         scheduler.stopAllTasks();
     }
 
+    @Override
     public void executeTasks()
     {
         Map<String, String> keyCronMap = getScheduledTasks();
@@ -121,6 +125,7 @@ public class DefaultCaseAggregateConditionSchedulingManager
         }
     }
 
+    @Override
     @SuppressWarnings( "unchecked" )
     public Map<String, String> getScheduledTasks()
     {
@@ -128,6 +133,7 @@ public class DefaultCaseAggregateConditionSchedulingManager
             new HashMap<String, String>() );
     }
 
+    @Override
     public String getTaskStatus()
     {
         Map<String, String> keyCronMap = getScheduledTasks();

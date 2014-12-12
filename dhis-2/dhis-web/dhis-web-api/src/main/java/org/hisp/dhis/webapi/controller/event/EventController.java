@@ -28,19 +28,6 @@ package org.hisp.dhis.webapi.controller.event;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.hisp.dhis.webapi.webdomain.WebOptions;
-import org.hisp.dhis.webapi.utils.ContextUtils;
 import org.hisp.dhis.common.IdentifiableObjectManager;
 import org.hisp.dhis.common.OrganisationUnitSelectionMode;
 import org.hisp.dhis.common.Pager;
@@ -51,6 +38,10 @@ import org.hisp.dhis.dxf2.events.event.Event;
 import org.hisp.dhis.dxf2.events.event.EventService;
 import org.hisp.dhis.dxf2.events.event.Events;
 import org.hisp.dhis.dxf2.events.event.ImportEventTask;
+import org.hisp.dhis.dxf2.events.event.ImportEventsTask;
+import org.hisp.dhis.dxf2.events.event.csv.CsvEventService;
+import org.hisp.dhis.dxf2.events.report.EventRowService;
+import org.hisp.dhis.dxf2.events.report.EventRows;
 import org.hisp.dhis.dxf2.events.trackedentity.TrackedEntityInstance;
 import org.hisp.dhis.dxf2.events.trackedentity.TrackedEntityInstanceService;
 import org.hisp.dhis.dxf2.importsummary.ImportStatus;
@@ -69,17 +60,31 @@ import org.hisp.dhis.scheduling.TaskId;
 import org.hisp.dhis.system.scheduling.Scheduler;
 import org.hisp.dhis.system.util.StreamUtils;
 import org.hisp.dhis.user.CurrentUserService;
+import org.hisp.dhis.webapi.utils.ContextUtils;
+import org.hisp.dhis.webapi.webdomain.WebOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
@@ -109,6 +114,12 @@ public class EventController
     private EventService eventService;
 
     @Autowired
+    private CsvEventService csvEventService;
+
+    @Autowired
+    private EventRowService eventRowService;
+
+    @Autowired
     private TrackedEntityInstanceService trackedEntityInstanceService;
 
     @Autowired
@@ -120,6 +131,99 @@ public class EventController
     // -------------------------------------------------------------------------
     // READ
     // -------------------------------------------------------------------------
+
+    @RequestMapping( value = "", method = RequestMethod.GET, produces = { "application/csv", "application/csv+gzip", "text/csv" } )
+    @PreAuthorize( "hasRole('ALL') or hasRole('F_TRACKED_ENTITY_DATAVALUE_ADD')" )
+    public void getCsvEvents(
+        @RequestParam( required = false ) String program,
+        @RequestParam( required = false ) String programStage,
+        @RequestParam( required = false ) ProgramStatus programStatus,
+        @RequestParam( required = false ) Boolean followUp,
+        @RequestParam( required = false ) String trackedEntityInstance,
+        @RequestParam( required = false ) String orgUnit,
+        @RequestParam( required = false ) OrganisationUnitSelectionMode ouMode,
+        @RequestParam( required = false ) @DateTimeFormat( pattern = "yyyy-MM-dd" ) Date startDate,
+        @RequestParam( required = false ) @DateTimeFormat( pattern = "yyyy-MM-dd" ) Date endDate,
+        @RequestParam( required = false ) EventStatus status,
+        @RequestParam( required = false ) String attachment,
+        @RequestParam( required = false, defaultValue = "false" ) boolean skipHeader,
+        @RequestParam Map<String, String> parameters, Model model, HttpServletResponse response, HttpServletRequest request ) throws IOException
+    {
+        WebOptions options = new WebOptions( parameters );
+
+        Program pr = manager.get( Program.class, program );
+        ProgramStage prs = manager.get( ProgramStage.class, programStage );
+        List<OrganisationUnit> organisationUnits = new ArrayList<>();
+        TrackedEntityInstance tei = null;
+        OrganisationUnit rootOrganisationUnit = null;
+
+        if ( trackedEntityInstance != null )
+        {
+            tei = trackedEntityInstanceService.getTrackedEntityInstance( trackedEntityInstance );
+
+            if ( tei == null )
+            {
+                ContextUtils.conflictResponse( response, "Invalid trackedEntityInstance ID." );
+                return;
+            }
+        }
+
+        if ( orgUnit != null )
+        {
+            rootOrganisationUnit = manager.get( OrganisationUnit.class, orgUnit );
+
+            if ( rootOrganisationUnit == null )
+            {
+                ContextUtils.conflictResponse( response, "Invalid orgUnit ID." );
+                return;
+            }
+        }
+
+        if ( rootOrganisationUnit != null )
+        {
+            if ( OrganisationUnitSelectionMode.DESCENDANTS.equals( ouMode ) )
+            {
+                organisationUnits.addAll( organisationUnitService.getOrganisationUnitWithChildren( rootOrganisationUnit.getUid() ) );
+            }
+            else if ( OrganisationUnitSelectionMode.CHILDREN.equals( ouMode ) )
+            {
+                organisationUnits.add( rootOrganisationUnit );
+                organisationUnits.addAll( rootOrganisationUnit.getChildren() );
+            }
+            else // SELECTED
+            {
+                organisationUnits.add( rootOrganisationUnit );
+            }
+        }
+
+        Events events = eventService.getEvents( pr, prs, programStatus, followUp, organisationUnits, tei, startDate, endDate, status );
+
+        if ( options.hasPaging() )
+        {
+            Pager pager = new Pager( options.getPage(), events.getEvents().size(), options.getPageSize() );
+            events.setPager( pager );
+            events.setEvents( PagerUtils.pageCollection( events.getEvents(), pager ) );
+        }
+
+        OutputStream outputStream = response.getOutputStream();
+        response.setContentType( "application/csv" );
+
+        if ( ContextUtils.isAcceptGzip( request ) )
+        {
+            response.addHeader( ContextUtils.HEADER_CONTENT_TRANSFER_ENCODING, "binary" );
+            outputStream = new GZIPOutputStream( outputStream );
+            response.setContentType( "application/csv+gzip" );
+        }
+
+        if ( !StringUtils.isEmpty( attachment ) )
+        {
+            response.addHeader( "Content-Disposition", "attachment; filename=" + attachment );
+        }
+
+        csvEventService.writeEvents( outputStream, events, !skipHeader );
+        response.getOutputStream().flush();
+        response.getOutputStream().close();
+    }
 
     @RequestMapping( value = "", method = RequestMethod.GET )
     @PreAuthorize( "hasRole('ALL') or hasRole('F_TRACKED_ENTITY_DATAVALUE_ADD')" )
@@ -135,31 +239,44 @@ public class EventController
         @RequestParam( required = false ) @DateTimeFormat( pattern = "yyyy-MM-dd" ) Date endDate,
         @RequestParam( required = false ) EventStatus status,
         @RequestParam( required = false ) boolean skipMeta,
-        @RequestParam Map<String, String> parameters, Model model, HttpServletRequest request )
+        @RequestParam( required = false ) String attachment,
+        @RequestParam Map<String, String> parameters, Model model, HttpServletResponse response, HttpServletRequest request )
     {
         WebOptions options = new WebOptions( parameters );
 
         Program pr = manager.get( Program.class, program );
         ProgramStage prs = manager.get( ProgramStage.class, programStage );
-        List<OrganisationUnit> organisationUnits = new ArrayList<OrganisationUnit>();
+        List<OrganisationUnit> organisationUnits = new ArrayList<>();
         TrackedEntityInstance tei = null;
         OrganisationUnit rootOrganisationUnit = null;
 
         if ( trackedEntityInstance != null )
         {
             tei = trackedEntityInstanceService.getTrackedEntityInstance( trackedEntityInstance );
+
+            if ( tei == null )
+            {
+                ContextUtils.conflictResponse( response, "Invalid trackedEntityInstance ID." );
+                return null;
+            }
         }
 
         if ( orgUnit != null )
         {
             rootOrganisationUnit = manager.get( OrganisationUnit.class, orgUnit );
+
+            if ( rootOrganisationUnit == null )
+            {
+                ContextUtils.conflictResponse( response, "Invalid orgUnit ID." );
+                return null;
+            }
         }
 
         if ( rootOrganisationUnit != null )
         {
             if ( OrganisationUnitSelectionMode.DESCENDANTS.equals( ouMode ) )
             {
-                organisationUnits.addAll( organisationUnitService.getOrganisationUnitsWithChildren( rootOrganisationUnit.getUid() ) );
+                organisationUnits.addAll( organisationUnitService.getOrganisationUnitWithChildren( rootOrganisationUnit.getUid() ) );
             }
             else if ( OrganisationUnitSelectionMode.CHILDREN.equals( ouMode ) )
             {
@@ -197,7 +314,67 @@ public class EventController
         model.addAttribute( "model", events );
         model.addAttribute( "viewClass", options.getViewClass( "detailed" ) );
 
+        if ( !StringUtils.isEmpty( attachment ) )
+        {
+            response.addHeader( "Content-Disposition", "attachment; filename=" + attachment );
+        }
+
         return "events";
+    }
+
+    @RequestMapping( value = "/eventRows", method = RequestMethod.GET )
+    @PreAuthorize( "hasRole('ALL') or hasRole('F_TRACKED_ENTITY_DATAVALUE_ADD')" )
+    public String getEventRows(
+        @RequestParam( required = false ) String program,
+        @RequestParam( required = false ) String orgUnit,
+        @RequestParam( required = false ) OrganisationUnitSelectionMode ouMode,
+        @RequestParam( required = false ) ProgramStatus programStatus,
+        @RequestParam( required = false ) EventStatus eventStatus,
+        @RequestParam( required = false ) @DateTimeFormat( pattern = "yyyy-MM-dd" ) Date startDate,
+        @RequestParam( required = false ) @DateTimeFormat( pattern = "yyyy-MM-dd" ) Date endDate,
+        @RequestParam Map<String, String> parameters, Model model, HttpServletRequest request )
+    {
+        WebOptions options = new WebOptions( parameters );
+
+        Program pr = manager.get( Program.class, program );
+        List<OrganisationUnit> organisationUnits = new ArrayList<>();
+        OrganisationUnit rootOrganisationUnit = null;
+
+        if ( orgUnit != null )
+        {
+            rootOrganisationUnit = manager.get( OrganisationUnit.class, orgUnit );
+        }
+
+        if ( rootOrganisationUnit != null )
+        {
+            if ( OrganisationUnitSelectionMode.DESCENDANTS.equals( ouMode ) )
+            {
+                organisationUnits.addAll( organisationUnitService.getOrganisationUnitWithChildren( rootOrganisationUnit.getUid() ) );
+            }
+            else if ( OrganisationUnitSelectionMode.CHILDREN.equals( ouMode ) )
+            {
+                organisationUnits.add( rootOrganisationUnit );
+                organisationUnits.addAll( rootOrganisationUnit.getChildren() );
+            }
+            else // SELECTED
+            {
+                organisationUnits.add( rootOrganisationUnit );
+            }
+        }
+
+        EventRows eventRows = eventRowService.getEventRows( pr, organisationUnits, programStatus, eventStatus, startDate, endDate );
+
+        if ( options.hasPaging() )
+        {
+            Pager pager = new Pager( options.getPage(), eventRows.getEventRows().size(), options.getPageSize() );
+            eventRows.setPager( pager );
+            eventRows.setEventRows( PagerUtils.pageCollection( eventRows.getEventRows(), pager ) );
+        }
+
+        model.addAttribute( "model", eventRows );
+        model.addAttribute( "viewClass", options.getViewClass( "detailed" ) );
+
+        return "eventRows";
     }
 
     @RequestMapping( value = "/{uid}", method = RequestMethod.GET )
@@ -227,11 +404,11 @@ public class EventController
 
     private Map<Object, Object> getMetaData( Program program )
     {
-        Map<Object, Object> metaData = new HashMap<Object, Object>();
+        Map<Object, Object> metaData = new HashMap<>();
 
         if ( program != null )
         {
-            Map<String, String> dataElements = new HashMap<String, String>();
+            Map<String, String> dataElements = new HashMap<>();
 
             for ( DataElement de : program.getAllDataElements() )
             {
@@ -338,6 +515,31 @@ public class EventController
         }
     }
 
+
+    @RequestMapping( method = RequestMethod.POST, consumes = { "application/csv", "text/csv" } )
+    @PreAuthorize( "hasRole('ALL') or hasRole('F_TRACKED_ENTITY_DATAVALUE_ADD')" )
+    public void postCsvEvents(
+        @RequestParam( required = false, defaultValue = "false" ) boolean skipFirst,
+        HttpServletResponse response, HttpServletRequest request, ImportOptions importOptions ) throws IOException
+    {
+        InputStream inputStream = ContextUtils.isAcceptGzip( request ) ? new GZIPInputStream( request.getInputStream() ) : request.getInputStream();
+
+        Events events = csvEventService.readEvents( inputStream, skipFirst );
+
+        if ( !importOptions.isAsync() )
+        {
+            ImportSummaries importSummaries = eventService.addEvents( events.getEvents(), importOptions, null );
+            JacksonUtils.toJson( response.getOutputStream(), importSummaries );
+        }
+        else
+        {
+            TaskId taskId = new TaskId( TaskCategory.EVENT_IMPORT, currentUserService.getCurrentUser() );
+            scheduler.executeTask( new ImportEventsTask( events.getEvents(), eventService, importOptions, taskId ) );
+            response.setHeader( "Location", ContextUtils.getRootPath( request ) + "/system/tasks/" + TaskCategory.EVENT_IMPORT );
+            response.setStatus( HttpServletResponse.SC_NO_CONTENT );
+        }
+    }
+
     // -------------------------------------------------------------------------
     // UPDATE
     // -------------------------------------------------------------------------
@@ -394,7 +596,7 @@ public class EventController
 
         DataElement dataElement = dataElementService.getDataElement( dataElementUid );
 
-        if( dataElement == null )
+        if ( dataElement == null )
         {
             ContextUtils.notFoundResponse( response, "DataElement not found for uid: " + dataElementUid );
             return;
@@ -408,12 +610,49 @@ public class EventController
 
     }
 
+    @RequestMapping( value = "/{uid}/addNote", method = RequestMethod.PUT, consumes = "application/json" )
+    @PreAuthorize( "hasRole('ALL') or hasRole('F_TRACKED_ENTITY_DATAVALUE_ADD')" )
+    public void putJsonEventForNote( HttpServletResponse response, HttpServletRequest request, @PathVariable( "uid" ) String uid, ImportOptions importOptions ) throws IOException
+    {
+        Event event = eventService.getEvent( uid );
+
+        if ( event == null )
+        {
+            ContextUtils.notFoundResponse( response, "Event not found for uid: " + uid );
+            return;
+        }
+
+        Event updatedEvent = JacksonUtils.fromJson( request.getInputStream(), Event.class );
+        updatedEvent.setEvent( uid );
+
+        eventService.updateEventForNote( updatedEvent );
+        ContextUtils.okResponse( response, "Event updated: " + uid );
+    }
+
+    @RequestMapping( value = "/{uid}/updateEventDate", method = RequestMethod.PUT, consumes = "application/json" )
+    @PreAuthorize( "hasRole('ALL') or hasRole('F_TRACKED_ENTITY_DATAVALUE_ADD')" )
+    public void putJsonEventForEventDate( HttpServletResponse response, HttpServletRequest request, @PathVariable( "uid" ) String uid, ImportOptions importOptions ) throws IOException
+    {
+        Event event = eventService.getEvent( uid );
+
+        if ( event == null )
+        {
+            ContextUtils.notFoundResponse( response, "Event not found for uid: " + uid );
+            return;
+        }
+
+        Event updatedEvent = JacksonUtils.fromJson( request.getInputStream(), Event.class );
+        updatedEvent.setEvent( uid );
+
+        eventService.updateEventForEventDate( updatedEvent );
+        ContextUtils.okResponse( response, "Event updated: " + uid );
+    }
+
     // -------------------------------------------------------------------------
     // DELETE
     // -------------------------------------------------------------------------
 
     @RequestMapping( value = "/{uid}", method = RequestMethod.DELETE )
-    @ResponseStatus( value = HttpStatus.NO_CONTENT )
     @PreAuthorize( "hasRole('ALL') or hasRole('F_TRACKED_ENTITY_DATAVALUE_DELETE')" )
     public void deleteEvent( HttpServletResponse response, @PathVariable( "uid" ) String uid )
     {
@@ -425,6 +664,7 @@ public class EventController
             return;
         }
 
+        response.setStatus( HttpServletResponse.SC_NO_CONTENT );
         eventService.deleteEvent( event );
     }
 }

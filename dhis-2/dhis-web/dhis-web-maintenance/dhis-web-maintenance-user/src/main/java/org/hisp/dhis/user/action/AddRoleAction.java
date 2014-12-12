@@ -28,15 +28,14 @@ package org.hisp.dhis.user.action;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.ArrayList;
-import java.util.Collection;
-
+import com.opensymphony.xwork2.Action;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
 import org.hisp.dhis.user.UserAuthorityGroup;
 import org.hisp.dhis.user.UserService;
 
-import com.opensymphony.xwork2.Action;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Thanh Nguyen
@@ -81,14 +80,14 @@ public class AddRoleAction
         this.description = description;
     }
 
-    private Collection<String> selectedList = new ArrayList<String>();
+    private Collection<String> selectedList = new ArrayList<>();
 
     public void setSelectedList( Collection<String> selectedList )
     {
         this.selectedList = selectedList;
     }
 
-    private Collection<String> selectedListAuthority = new ArrayList<String>();
+    private Collection<String> selectedListAuthority = new ArrayList<>();
 
     public void setSelectedListAuthority( Collection<String> selectedListAuthority )
     {
@@ -99,6 +98,7 @@ public class AddRoleAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -109,8 +109,7 @@ public class AddRoleAction
 
         for ( String id : selectedList )
         {
-            DataSet dataSet = dataSetService.getDataSet( Integer.parseInt( id ) );
-
+            DataSet dataSet = dataSetService.getDataSet( id );
             group.getDataSets().add( dataSet );
         }
 

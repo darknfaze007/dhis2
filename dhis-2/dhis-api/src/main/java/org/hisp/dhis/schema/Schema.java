@@ -28,6 +28,7 @@ package org.hisp.dhis.schema;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
@@ -90,6 +91,11 @@ public class Schema implements Ordered
     private String name;
 
     /**
+     * A beautified (and possibly translated) name that can be used in UI.
+     */
+    private String displayName;
+
+    /**
      * This will normally be set to equal plural, and is normally used as a wrapper for a collection of
      * instances of this klass type.
      */
@@ -109,6 +115,11 @@ public class Schema implements Ordered
      * Is this class considered metadata, this is mainly used for our metadata importer/exporter.
      */
     private boolean metadata;
+
+    /**
+     * Are any properties on this class being persisted, if false, this file does not have any hbm file attached to it.
+     */
+    private boolean persisted;
 
     /**
      * List of authorities required for doing operations on this class.
@@ -226,6 +237,18 @@ public class Schema implements Ordered
 
     @JsonProperty
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public String getDisplayName()
+    {
+        return displayName != null ? displayName : getName();
+    }
+
+    public void setDisplayName( String displayName )
+    {
+        this.displayName = displayName;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public boolean isShareable()
     {
         return shareable;
@@ -248,7 +271,7 @@ public class Schema implements Ordered
         this.apiEndpoint = apiEndpoint;
     }
 
-    public boolean haveEndpoint()
+    public boolean haveApiEndpoint()
     {
         return getApiEndpoint() != null;
     }
@@ -263,6 +286,18 @@ public class Schema implements Ordered
     public void setMetadata( boolean metadata )
     {
         this.metadata = metadata;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public boolean isPersisted()
+    {
+        return persisted;
+    }
+
+    public void setPersisted( boolean persisted )
+    {
+        this.persisted = persisted;
     }
 
     @JsonProperty
@@ -286,6 +321,7 @@ public class Schema implements Ordered
         return Lists.newArrayList( propertyMap.values() );
     }
 
+    @JsonIgnore
     public Map<String, Property> getPropertyMap()
     {
         return propertyMap;
@@ -294,6 +330,17 @@ public class Schema implements Ordered
     public void setPropertyMap( Map<String, Property> propertyMap )
     {
         this.propertyMap = propertyMap;
+    }
+
+    @JsonIgnore
+    public Property getProperty( String name )
+    {
+        if ( propertyMap.containsKey( name ) )
+        {
+            return propertyMap.get( name );
+        }
+
+        return null;
     }
 
     private Map<AuthorityType, List<String>> authorityMap = Maps.newHashMap();

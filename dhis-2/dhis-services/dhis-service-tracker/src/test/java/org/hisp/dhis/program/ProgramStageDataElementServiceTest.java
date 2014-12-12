@@ -96,13 +96,15 @@ public class ProgramStageDataElementServiceTest
         programService.addProgram( program );
 
         stageA = new ProgramStage( "A", program );
+        stageA.setSortOrder( 1 );
         stageA.setUid( "StageA" );
         programStageService.saveProgramStage( stageA );
 
         stageB = new ProgramStage( "B", program );
+        stageB.setSortOrder( 2 );
         programStageService.saveProgramStage( stageB );
 
-        Set<ProgramStage> programStages = new HashSet<ProgramStage>();
+        Set<ProgramStage> programStages = new HashSet<>();
         programStages.add( stageA );
         programStages.add( stageB );
         program.setProgramStages( programStages );

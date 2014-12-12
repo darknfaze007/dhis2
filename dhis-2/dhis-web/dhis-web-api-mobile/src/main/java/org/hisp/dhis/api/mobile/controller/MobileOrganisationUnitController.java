@@ -45,6 +45,8 @@ import org.hisp.dhis.api.mobile.model.DataSetList;
 import org.hisp.dhis.api.mobile.model.DataSetValue;
 import org.hisp.dhis.api.mobile.model.DataSetValueList;
 import org.hisp.dhis.api.mobile.model.DataStreamSerializable;
+import org.hisp.dhis.api.mobile.model.Interpretation;
+import org.hisp.dhis.api.mobile.model.InterpretationComment;
 import org.hisp.dhis.api.mobile.model.Message;
 import org.hisp.dhis.api.mobile.model.MobileModel;
 import org.hisp.dhis.api.mobile.model.ModelList;
@@ -54,8 +56,8 @@ import org.hisp.dhis.api.mobile.model.SMSCommand;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.LostEvent;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.Notification;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.Patient;
-import org.hisp.dhis.api.mobile.model.LWUITmodel.PatientList;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.PatientIdentifierAndAttribute;
+import org.hisp.dhis.api.mobile.model.LWUITmodel.PatientList;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.Program;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.ProgramInstance;
 import org.hisp.dhis.api.mobile.model.LWUITmodel.ProgramStage;
@@ -63,6 +65,7 @@ import org.hisp.dhis.api.mobile.model.LWUITmodel.Relationship;
 import org.hisp.dhis.i18n.I18nService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
+import org.hisp.dhis.relationship.RelationshipTypeService;
 import org.hisp.dhis.smscommand.SMSCommandService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -87,6 +90,9 @@ public class MobileOrganisationUnitController
 
     @Autowired
     private IProgramService programService;
+    
+    @Autowired
+    private RelationshipTypeService relationshipTypeService;
 
     @Autowired
     private FacilityReportingService facilityReportingService;
@@ -347,6 +353,7 @@ public class MobileOrganisationUnitController
         OrganisationUnit unit = getUnit( id );
         mobileModel.setPrograms( programService.getProgramsLWUIT( unit ) );
         mobileModel.setServerCurrentDate( new Date() );
+        mobileModel.setRelationshipTypes( programService.getAllRelationshipTypes() );
         return mobileModel;
     }
 
@@ -364,7 +371,7 @@ public class MobileOrganisationUnitController
     String patientId )
         throws NotAllowedException
     {
-        return activityReportingService.findPatient( Integer.parseInt( patientId ) );
+        return activityReportingService.findPatient( patientId );
     }
 
     @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/LWUIT/orgUnits/{id}/findPatients" )
@@ -497,7 +504,7 @@ public class MobileOrganisationUnitController
         {
             return null;
         }
-        Collection<String> localeStrings = new ArrayList<String>();
+        Collection<String> localeStrings = new ArrayList<>();
 
         for ( Locale locale : locales )
         {
@@ -508,11 +515,11 @@ public class MobileOrganisationUnitController
 
     private List<SMSCommand> getMobileSMSCommands( Collection<org.hisp.dhis.smscommand.SMSCommand> normalSMSCommands )
     {
-        List<SMSCommand> smsCommands = new ArrayList<SMSCommand>();
+        List<SMSCommand> smsCommands = new ArrayList<>();
         for ( org.hisp.dhis.smscommand.SMSCommand normalSMSCommand : normalSMSCommands )
         {
             SMSCommand mobileSMSCommand = new SMSCommand();
-            List<SMSCode> smsCodes = new ArrayList<SMSCode>();
+            List<SMSCode> smsCodes = new ArrayList<>();
 
             mobileSMSCommand.setName( normalSMSCommand.getName() );
             mobileSMSCommand.setCodeSeparator( normalSMSCommand.getCodeSeparator() );
@@ -721,6 +728,41 @@ public class MobileOrganisationUnitController
     {
         return activityReportingService.replyMessage( message );
 
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/orgUnits/{id}/downloadInterpretation" )
+    @ResponseBody
+    public Interpretation downloadInterpretation( String clientVersion, @PathVariable
+    int id, @RequestHeader( "uId" )
+    String uId )
+        throws NotAllowedException
+    {
+        Interpretation interpretation = activityReportingService.getInterpretation( uId );
+        return interpretation;
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/orgUnits/{id}/postInterpretation" )
+    @ResponseBody
+    public Interpretation postInterpretation( String clientVersion, @PathVariable
+    int id, @RequestHeader( "data" )
+    String data )
+        throws NotAllowedException
+    {
+        Interpretation interpretation = new Interpretation();
+        interpretation.setText( activityReportingService.postInterpretation( data ) );
+        return interpretation;
+    }
+
+    @RequestMapping( method = RequestMethod.GET, value = "{clientVersion}/orgUnits/{id}/postComment" )
+    @ResponseBody
+    public InterpretationComment postInterpretationComment( String clientVersion, @PathVariable
+    int id, @RequestHeader( "data" )
+    String data )
+        throws NotAllowedException
+    {
+        InterpretationComment message = new InterpretationComment();
+        message.setText( activityReportingService.postInterpretationComment( data ) );
+        return message;
     }
 
 }

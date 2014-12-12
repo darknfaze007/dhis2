@@ -21,9 +21,18 @@ public class Lookup extends BaseNameableObject implements Serializable
     
     public static final String PBF_AGG_TYPE_OVERALL_QUALITY_SCORE = "OVERALL QUALITY SCORE";
     public static final String PBF_AGG_TYPE_OVERALL_UNADJUSTED_PBF_AMOUNT = "OVERALL UNADJUSTED PBF AMOUNT";
+    public static final String PBF_AGG_TYPE_QUANTITY_VALIDATED = "QUANTITY VALIDATED";
     
     public static final String ORGUNITID_BY_COMMA = "ORGUNITID_BY_COMMA";
     public static final String PERIODID_BY_COMMA = "PERIODID_BY_COMMA";
+    
+    public static final String OPTION_SET_PARTNER = "OPTION_SET_PARTNER";
+    
+    public static final String CATEGORY_QUANTITY_REPORTED = "CATEGORY_QUANTITY_REPORTED";
+    public static final String CATEGORY_QUANTITY_VALIDATED = "CATEGORY_QUANTITY_VALIDATED";
+    public static final String CATEGORY_QUANTITY_EXTERNAL_VERIFICATION = "CATEGORY_QUANTITY_EXTERNAL_VERIFICATION";
+    
+    public static final String QUALITY_OVERHEAD_PAYMENT = "QUALITY_OVERHEAD_PAYMENT";
     
     
     private String type;

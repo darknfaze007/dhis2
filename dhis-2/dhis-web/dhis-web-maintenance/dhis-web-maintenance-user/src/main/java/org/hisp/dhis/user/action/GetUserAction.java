@@ -84,12 +84,13 @@ public class GetUserAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         user = userService.getUser( id );
 
-        userAuthorityGroups = new ArrayList<UserAuthorityGroup>( userService.getAllUserAuthorityGroups() );
+        userAuthorityGroups = new ArrayList<>( userService.getAllUserAuthorityGroups() );
 
         if ( user != null )
         {

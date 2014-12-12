@@ -61,11 +61,11 @@ public class ProgramStageInstance
 
     private OrganisationUnit organisationUnit;
 
-    private List<OutboundSms> outboundSms = new ArrayList<OutboundSms>();
+    private List<OutboundSms> outboundSms = new ArrayList<>();
 
-    private List<MessageConversation> messageConversations = new ArrayList<MessageConversation>();
+    private List<MessageConversation> messageConversations = new ArrayList<>();
 
-    private TrackedEntityComment comment;
+    private List<TrackedEntityComment> comments = new ArrayList<>();
 
     private EventStatus status = EventStatus.ACTIVE;
 
@@ -243,14 +243,14 @@ public class ProgramStageInstance
         this.latitude = latitude;
     }
 
-    public TrackedEntityComment getComment()
+    public List<TrackedEntityComment> getComments()
     {
-        return comment;
+        return comments;
     }
 
-    public void setComment( TrackedEntityComment comment )
+    public void setComments( List<TrackedEntityComment> comments )
     {
-        this.comment = comment;
+        this.comments = comments;
     }
 
     public EventStatus getStatus()

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
 
   <bean id="org.hisp.dhis.validationrule.action.NoAction" class="org.hisp.dhis.validationrule.action.NoAction">
   </bean>
@@ -198,6 +198,13 @@
   <bean id="org.hisp.dhis.validationrule.action.dataanalysis.ValidationRunAnalysisAction"
     class="org.hisp.dhis.validationrule.action.dataanalysis.ValidationRunAnalysisAction"
     scope="prototype">
+    <property name="selectionTreeManager" ref="org.hisp.dhis.oust.manager.SelectionTreeManager" />
+  </bean>
+
+  <bean id="org.hisp.dhis.validationrule.action.dataanalysis.GetFollowupAction"
+    class="org.hisp.dhis.validationrule.action.dataanalysis.GetFollowupAction"
+    scope="prototype">
+    <property name="followupAnalysisService" ref="org.hisp.dhis.dataanalysis.FollowupAnalysisService" />
     <property name="selectionTreeManager" ref="org.hisp.dhis.oust.manager.SelectionTreeManager" />
   </bean>
 

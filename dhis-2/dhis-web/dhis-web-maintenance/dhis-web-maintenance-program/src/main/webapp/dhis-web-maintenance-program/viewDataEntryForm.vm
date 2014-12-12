@@ -4,20 +4,22 @@
 	{
 		validation( 'saveDataEntryForm', function( form )
 		{
-			setInnerHTML( 'designTextarea' , jQuery("#designTextarea").ckeditorGet().getData() );
+			setInnerHTML( 'designTextarea' , jQuery("#designTextarea").ckeditor().editor.getData() );
 			form.submit();
 		} );
 
-		jQuery('#designTextarea').ckeditor();
-		jQuery("#designTextarea").ckeditorGet().setData('$encoder.jsEscape( $dataEntryValue, "'" )');
+		jQuery('#designTextarea').ckeditor()
+		  .editor
+		  .setData('$encoder.jsEscape( $dataEntryValue, "'" )');
+
 		openDataElementSelector();
 		
 		checkValueIsExist( "name", "validateDataEntryForm.action", { dataEntryFormId: '$!programStage.dataEntryForm.id' } );
 	});
 
-    var i18n_dataelement_is_inserted = '$encoder.jsEscape( $i18n.getString( "dataelement_is_inserted" ) , "'" )';
+  var i18n_dataelement_is_inserted = '$encoder.jsEscape( $i18n.getString( "dataelement_is_inserted" ) , "'" )';
 	var i18n_specify_dataelememt = '$encoder.jsEscape( $i18n.getString( "specify_dataelememt" ) , "'" )';
-    var i18n_choose_existing_dataentry ='$encoder.jsEscape( $i18n.getString( "choose_existing_dataentry" ) , "'" )';
+  var i18n_choose_existing_dataentry ='$encoder.jsEscape( $i18n.getString( "choose_existing_dataentry" ) , "'" )';
 	var i18n_dataelement = '$encoder.jsEscape( $i18n.getString( "dataelement" ) , "'" )';
 	var i18n_dataelement_of_orther_program_stage = "$i18n.getString( 'dataelement_of_orther_program_stage' )";
 	var i18n_save_success = '$encoder.jsEscape( $i18n.getString( "save_success" ) , "'" )';
@@ -81,7 +83,7 @@
 		<tr>
 			<td>
 				<label for="name">$i18n.getString( "name" ) <em title="$i18n.getString( "required" )" class="required">*</em></label>
-				<input type="text" id="name" value="$!dataEntryForm.name" name="name" class="{validate:{required:true,rangelength:[4,150],alphanumericwithbasicpuncspaces:true,firstletteralphabet:false}}" style="margin-left:15px;width:30em;">
+				<input type="text" id="name" value="$!encoder.htmlEncode($dataEntryForm.name)" name="name" class="{validate:{required:true,rangelength:[4,150],alphanumericwithbasicpuncspaces:true,firstletteralphabet:false}}" style="margin-left:15px;width:30em;">
 			</td>				
 		</tr>	
 	</table>  
@@ -142,13 +144,13 @@
 				<select id="dataElementIds" name="dataElementIds" style="height:200px; width:100%;"  multiple="multiple" size="10" ondblclick="insertDataElement( '#dataElementSelection', '$programStage.uid')">
 					#foreach( $de in $dataElements)
 					#set($deJSON = '{' + '"uid"' + ':"' + "$de.uid" + '",' + '"name"' + ':"' + "$de.name" + '",' + '"shortName"' + ':"' + "$de.shortName" + '",' + '"type"' + ':"' + "$de.getDetailedTextType()"  + '"}' )
-					<option value='$deJSON' decode="$!de.code" dename="$de.name" title="$de.name">$encoder.htmlEncode( $de.name )</option>
+					<option value='$deJSON' decode="$!de.code" dename="$encoder.htmlEncode($de.name)" title="$encoder.htmlEncode($de.name)">$encoder.htmlEncode( $de.name )</option>
 					#end
 				</select>
 				<select id="dataElementIdsStore" multiple="multiple" style="display:none">
 					#foreach( $de in $dataElements)
 					#set($deJSON = '{' + '"uid"' + ':"' + "$de.uid" + '",' + '"name"' + ':"' + "$de.name" + '",' + '"shortName"' + ':"' + "$de.shortName" + '",' + '"type"' + ':"' + "$de.getDetailedTextType()"  + '"}' )
-					<option value='$deJSON' decode="$!de.code" dename="$de.name">$encoder.htmlEncode( $de.name )</option>
+					<option value='$deJSON' decode="$!de.code" dename="$encoder.htmlEncode($de.name)">$encoder.htmlEncode( $de.name )</option>
 					#end
 				</select>
 			</td>

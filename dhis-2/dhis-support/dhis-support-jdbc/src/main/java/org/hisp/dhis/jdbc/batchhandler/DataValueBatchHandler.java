@@ -54,6 +54,7 @@ public class DataValueBatchHandler
     // AbstractBatchHandler implementation
     // -------------------------------------------------------------------------
 
+    @Override
     protected void setTableName()
     {
         statementBuilder.setTableName( "datavalue" );
@@ -79,6 +80,7 @@ public class DataValueBatchHandler
         statementBuilder.setIdentifierValue( value.getAttributeOptionCombo().getId() );
     }
     
+    @Override
     protected void setUniqueColumns()
     {
         statementBuilder.setUniqueColumn( "dataelementid" );
@@ -88,6 +90,7 @@ public class DataValueBatchHandler
         statementBuilder.setUniqueColumn( "attributeoptioncomboid" );
     }
     
+    @Override
     protected void setUniqueValues( DataValue value )
     {        
         statementBuilder.setUniqueValue( value.getDataElement().getId() );
@@ -97,6 +100,7 @@ public class DataValueBatchHandler
         statementBuilder.setUniqueValue( value.getAttributeOptionCombo().getId() );
     }
     
+    @Override
     protected void setColumns()
     {
         statementBuilder.setColumn( "dataelementid" );
@@ -106,11 +110,13 @@ public class DataValueBatchHandler
         statementBuilder.setColumn( "attributeoptioncomboid" );
         statementBuilder.setColumn( "value" );
         statementBuilder.setColumn( "storedby" );
+        statementBuilder.setColumn( "created ");
         statementBuilder.setColumn( "lastupdated" );
         statementBuilder.setColumn( "comment" );
         statementBuilder.setColumn( "followup" );
     }
     
+    @Override
     protected void setValues( DataValue value )
     {        
         statementBuilder.setValue( value.getDataElement().getId() );
@@ -120,7 +126,8 @@ public class DataValueBatchHandler
         statementBuilder.setValue( value.getAttributeOptionCombo().getId() );
         statementBuilder.setValue( value.getValue() );
         statementBuilder.setValue( value.getStoredBy() );
-        statementBuilder.setValue( getLongDateString( value.getTimestamp() ) );
+        statementBuilder.setValue( getLongDateString( value.getCreated() ) );
+        statementBuilder.setValue( getLongDateString( value.getLastUpdated() ) );
         statementBuilder.setValue( value.getComment() );
         statementBuilder.setValue( value.isFollowup() );
     }

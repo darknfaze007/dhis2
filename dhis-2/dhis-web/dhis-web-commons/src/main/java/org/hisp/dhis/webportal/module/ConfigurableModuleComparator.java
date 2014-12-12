@@ -46,7 +46,7 @@ public class ConfigurableModuleComparator
     // Configuration
     // -------------------------------------------------------------------------
 
-    private List<String> order = new ArrayList<String>();
+    private List<String> order = new ArrayList<>();
 
     public void setOrder( List<String> order )
     {
@@ -57,6 +57,7 @@ public class ConfigurableModuleComparator
     // Comparator
     // -------------------------------------------------------------------------
 
+    @Override
     public int compare( Module moduleA, Module moduleB )
     {
         int indexA = order.indexOf( moduleA.getName() );

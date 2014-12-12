@@ -91,6 +91,7 @@ public class GetDataElementCategoryComboListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         defaultCombo = dataElementCategoryService
@@ -100,13 +101,13 @@ public class GetDataElementCategoryComboListAction
         {
             this.paging = createPaging( dataElementCategoryService.getDataElementCategoryComboCountByName( key ) );
             
-            dataElementCategoryCombos = new ArrayList<DataElementCategoryCombo>( dataElementCategoryService.getDataElementCategoryCombosBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
+            dataElementCategoryCombos = new ArrayList<>( dataElementCategoryService.getDataElementCategoryCombosBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( dataElementCategoryService.getDataElementCategoryComboCount() );
             
-            dataElementCategoryCombos = new ArrayList<DataElementCategoryCombo>( dataElementCategoryService.getDataElementCategoryCombosBetween( paging.getStartPos(), paging.getPageSize() ) );
+            dataElementCategoryCombos = new ArrayList<>( dataElementCategoryService.getDataElementCategoryCombosBetween( paging.getStartPos(), paging.getPageSize() ) );
         }
 
         Collections.sort( dataElementCategoryCombos, IdentifiableObjectNameComparator.INSTANCE );

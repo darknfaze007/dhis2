@@ -28,6 +28,7 @@ package org.hisp.dhis.message;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -72,6 +73,8 @@ public interface MessageService
     int sendMessage( String subject, String text, String metaData, Set<User> users, User sender, boolean includeFeedbackRecipients, boolean forceNotifications );
 
     int sendFeedback( String subject, String text, String metaData );
+    
+    int sendSystemNotification( String subject, String text );
 
     void sendReply( MessageConversation conversation, String text, String metaData );
 
@@ -89,15 +92,21 @@ public interface MessageService
 
     long getUnreadMessageConversationCount( User user );
 
+    /**
+     * Get all MessageConversations for the current user.
+     * @return a list of all message conversations for the current user.
+     */
+    List<MessageConversation> getMessageConversations();
+
     List<MessageConversation> getMessageConversations( int first, int max );
 
     List<MessageConversation> getMessageConversations( boolean followUpOnly, boolean unreadOnly, int first, int max );
 
+    Collection<MessageConversation> getMessageConversations( String[] messageConversationUids );
+
     int getMessageConversationCount();
 
     int getMessageConversationCount( boolean followUpOnly, boolean unreadOnly );
-
-    List<MessageConversation> getAllMessageConversations();
 
     void deleteMessages( User sender );
 

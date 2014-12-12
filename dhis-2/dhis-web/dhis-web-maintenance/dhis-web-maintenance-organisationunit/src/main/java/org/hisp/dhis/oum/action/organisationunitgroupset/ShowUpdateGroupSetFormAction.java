@@ -101,7 +101,7 @@ public class ShowUpdateGroupSetFormAction
         return attributes;
     }
 
-    public Map<Integer, String> attributeValues = new HashMap<Integer, String>();
+    public Map<Integer, String> attributeValues = new HashMap<>();
 
     public Map<Integer, String> getAttributeValues()
     {
@@ -112,16 +112,17 @@ public class ShowUpdateGroupSetFormAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
         organisationUnitGroupSet = organisationUnitGroupService.getOrganisationUnitGroupSet( id, true );
 
-        selectedGroups = new ArrayList<OrganisationUnitGroup>( organisationUnitGroupSet.getOrganisationUnitGroups() );
+        selectedGroups = new ArrayList<>( organisationUnitGroupSet.getOrganisationUnitGroups() );
 
         Collections.sort( selectedGroups, IdentifiableObjectNameComparator.INSTANCE );
 
-        attributes = new ArrayList<Attribute>( attributeService.getOrganisationUnitGroupSetAttributes() );
+        attributes = new ArrayList<>( attributeService.getOrganisationUnitGroupSetAttributes() );
 
         attributeValues = AttributeUtils.getAttributeValueMap( organisationUnitGroupSet.getAttributeValues() );
 

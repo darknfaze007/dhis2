@@ -47,6 +47,7 @@ import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.resourcetable.ResourceTableService;
 import org.hisp.dhis.scheduling.TaskId;
+import org.hisp.dhis.setting.SystemSettingManager;
 import org.hisp.dhis.sqlview.SqlViewService;
 import org.hisp.dhis.system.notification.Notifier;
 import org.hisp.dhis.system.util.Clock;
@@ -86,14 +87,20 @@ public class DefaultAnalyticsTableService
     
     @Autowired
     private Notifier notifier;
+    
+    @Autowired
+    private SystemSettingManager systemSettingManager;
 
     // -------------------------------------------------------------------------
     // Implementation
     // -------------------------------------------------------------------------
     
+    @Override
     public void update( Integer lastYears, TaskId taskId )
     {
-        Clock clock = new Clock().startClock().logTime( "Starting update, no of processes: " + getProcessNo() );
+        int processNo = getProcessNo();
+        
+        Clock clock = new Clock().startClock().logTime( "Starting update, no of processes: " + processNo );
         
         String validState = tableManager.validState();
         
@@ -105,9 +112,8 @@ public class DefaultAnalyticsTableService
         
         final List<AnalyticsTable> tables = tableManager.getTables( lastYears );
         
-        clock.logTime( "Partition tables: " + tables + ", last years: " + lastYears );
-        
-        notifier.notify( taskId, "Creating analytics tables" );
+        clock.logTime( "Partition tables: " + tables + ", last years: " + lastYears );        
+        notifier.notify( taskId, "Creating analytics tables, processes: " + processNo );
         
         createTables( tables );
         
@@ -141,12 +147,16 @@ public class DefaultAnalyticsTableService
         
         swapTables( tables );
         
+        clock.logTime( "Partition tables: " + tables + ", last years: " + lastYears );
+        notifier.notify( taskId, "Clearing caches" );
+
         partitionManager.clearCaches();
-        
+
         clock.logTime( "Table update done" );
         notifier.notify( taskId, "Table update done" );
     }
 
+    @Override
     public void dropTables()
     {
         List<AnalyticsTable> tables = tableManager.getTables( null );
@@ -158,11 +168,13 @@ public class DefaultAnalyticsTableService
         }
     }
 
+    @Override
     public void generateResourceTables()
     {
         resourceTableService.dropAllSqlViews();
         resourceTableService.generateOrganisationUnitStructures();        
         resourceTableService.generateCategoryOptionComboNames();
+        resourceTableService.generateCategoryOptionGroupSetTable();
         resourceTableService.generateDataElementGroupSetTable();
         resourceTableService.generateIndicatorGroupSetTable();
         resourceTableService.generateOrganisationUnitGroupSetTable();
@@ -192,11 +204,11 @@ public class DefaultAnalyticsTableService
         
         log.info( "Populate table task number: " + taskNo );
         
-        ConcurrentLinkedQueue<AnalyticsTable> tableQ = new ConcurrentLinkedQueue<AnalyticsTable>( tables );
+        ConcurrentLinkedQueue<AnalyticsTable> tableQ = new ConcurrentLinkedQueue<>( tables );
         
-        List<Future<?>> futures = new ArrayList<Future<?>>();
+        List<Future<?>> futures = new ArrayList<>();
         
-        for ( int i = 0; i < getProcessNo(); i++ )
+        for ( int i = 0; i < taskNo; i++ )
         {
             futures.add( tableManager.populateTableAsync( tableQ ) );
         }
@@ -233,9 +245,9 @@ public class DefaultAnalyticsTableService
                 continue levelLoop;
             }
                         
-            ConcurrentLinkedQueue<AnalyticsTable> tableQ = new ConcurrentLinkedQueue<AnalyticsTable>( tables );
+            ConcurrentLinkedQueue<AnalyticsTable> tableQ = new ConcurrentLinkedQueue<>( tables );
 
-            List<Future<?>> futures = new ArrayList<Future<?>>();
+            List<Future<?>> futures = new ArrayList<>();
             
             for ( int j = 0; j < getProcessNo(); j++ )
             {
@@ -248,7 +260,7 @@ public class DefaultAnalyticsTableService
     
     private void createIndexes( List<AnalyticsTable> tables )
     {
-        ConcurrentLinkedQueue<AnalyticsIndex> indexes = new ConcurrentLinkedQueue<AnalyticsIndex>();
+        ConcurrentLinkedQueue<AnalyticsIndex> indexes = new ConcurrentLinkedQueue<>();
         
         for ( AnalyticsTable table : tables )
         {
@@ -262,7 +274,7 @@ public class DefaultAnalyticsTableService
         
         log.info( "No of indexes: " + indexes.size() );
         
-        List<Future<?>> futures = new ArrayList<Future<?>>();
+        List<Future<?>> futures = new ArrayList<>();
 
         for ( int i = 0; i < getProcessNo(); i++ )
         {
@@ -274,9 +286,9 @@ public class DefaultAnalyticsTableService
 
     private void vacuumTables( List<AnalyticsTable> tables )
     {
-        ConcurrentLinkedQueue<AnalyticsTable> tableQ = new ConcurrentLinkedQueue<AnalyticsTable>( tables );
+        ConcurrentLinkedQueue<AnalyticsTable> tableQ = new ConcurrentLinkedQueue<>( tables );
         
-        List<Future<?>> futures = new ArrayList<Future<?>>();
+        List<Future<?>> futures = new ArrayList<>();
         
         for ( int i = 0; i < getProcessNo(); i++ )
         {
@@ -288,16 +300,28 @@ public class DefaultAnalyticsTableService
     
     private void swapTables( List<AnalyticsTable> tables )
     {
+        resourceTableService.dropAllSqlViews();
+        
         for ( AnalyticsTable table : tables )
         {
             tableManager.swapTable( table );
         }
+        
+        resourceTableService.createAllSqlViews();
     }
     
+    /**
+     * Gets the number of available cores. Uses explicit number from system
+     * setting if available. Detects number of cores from current server runtime
+     * if not. Subtracts one to the number of cores if greater than two to allow
+     * one core for general system operations.
+     */
     private int getProcessNo()
     {
-        int cores = SystemUtils.getCpuCores();
+        Integer cores = (Integer) systemSettingManager.getSystemSetting( SystemSettingManager.KEY_DATABASE_SERVER_CPUS );
         
+        cores = ( cores == null || cores == 0 ) ? SystemUtils.getCpuCores() : cores;
+                        
         return cores > 2 ? ( cores - 1 ) : cores;
     }
 }

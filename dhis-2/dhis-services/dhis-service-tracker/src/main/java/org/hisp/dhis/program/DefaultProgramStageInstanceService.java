@@ -49,6 +49,7 @@ import org.hisp.dhis.sms.SmsSender;
 import org.hisp.dhis.sms.SmsServiceException;
 import org.hisp.dhis.sms.outbound.OutboundSms;
 import org.hisp.dhis.system.grid.ListGrid;
+import org.hisp.dhis.system.util.MathUtils;
 import org.hisp.dhis.trackedentity.TrackedEntityInstance;
 import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminder;
 import org.hisp.dhis.trackedentity.TrackedEntityInstanceReminderService;
@@ -221,7 +222,7 @@ public class DefaultProgramStageInstanceService
                 ProgramInstance.STATUS_ACTIVE );
             percent = (stageCompleted + 0.0) / totalCompleted;
         }
-        grid.addValue( format.formatValue( percent ) ).addEmptyValues( 6 );
+        grid.addValue( MathUtils.getRounded( percent ) ).addEmptyValues( 6 );
 
         // Add empty row
 
@@ -269,7 +270,7 @@ public class DefaultProgramStageInstanceService
             {
                 percent = (totalVisit + 0.0) * 100 / totalAll;
             }
-            grid.addValue( format.formatValue( percent ) + "%" );
+            grid.addValue( MathUtils.getRounded( percent ) + "%" );
 
             // Forms completed (#) = Program stage instances where the user has
             // clicked complete.
@@ -281,7 +282,7 @@ public class DefaultProgramStageInstanceService
             {
                 percent = (totalCompletedEvent + 0.0) * 100 / totalAll;
             }
-            grid.addValue( format.formatValue( percent ) + "%" );
+            grid.addValue( MathUtils.getRounded( percent ) + "%" );
 
             // Visits overdue (#)
             int overdue = programStageInstanceStore.getOverDueCount( programStage, orgunitIds, startDate, endDate );
@@ -294,7 +295,7 @@ public class DefaultProgramStageInstanceService
             {
                 percent = (overdue + 0.0) * 100 / totalAll;
             }
-            grid.addValue( format.formatValue( percent ) + "%" );
+            grid.addValue( MathUtils.getRounded( percent ) + "%" );
         }
 
         return grid;
@@ -326,7 +327,7 @@ public class DefaultProgramStageInstanceService
 
         if ( outboundSms == null )
         {
-            outboundSms = new ArrayList<OutboundSms>();
+            outboundSms = new ArrayList<>();
         }
 
         outboundSms.addAll( sendMessages( programStageInstance,
@@ -340,7 +341,7 @@ public class DefaultProgramStageInstanceService
 
         if ( messageConversations == null )
         {
-            messageConversations = new ArrayList<MessageConversation>();
+            messageConversations = new ArrayList<>();
         }
 
         messageConversations.addAll( sendMessageConversations( programStageInstance,
@@ -483,7 +484,7 @@ public class DefaultProgramStageInstanceService
         I18nFormat format )
     {
         TrackedEntityInstance entityInstance = programStageInstance.getProgramInstance().getEntityInstance();
-        Collection<OutboundSms> outboundSmsList = new HashSet<OutboundSms>();
+        Collection<OutboundSms> outboundSmsList = new HashSet<>();
 
         Collection<TrackedEntityInstanceReminder> reminders = programStageInstance.getProgramStage()
             .getReminders();
@@ -508,7 +509,7 @@ public class DefaultProgramStageInstanceService
     private Collection<MessageConversation> sendMessageConversations( ProgramStageInstance programStageInstance,
          int status, I18nFormat format )
      {
-         Collection<MessageConversation> messageConversations = new HashSet<MessageConversation>();
+         Collection<MessageConversation> messageConversations = new HashSet<>();
 
          Collection<TrackedEntityInstanceReminder> reminders = programStageInstance.getProgramStage()
              .getReminders();

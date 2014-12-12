@@ -69,10 +69,11 @@ public class GetUserRolesAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        userRoles = new ArrayList<UserAuthorityGroup>( userService.getAllUserAuthorityGroups() );
+        userRoles = new ArrayList<>( userService.getAllUserAuthorityGroups() );
 
         userService.canIssueFilter( userRoles );
         

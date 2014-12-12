@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
-@JacksonXmlRootElement(localName = "typeSummary", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement( localName = "typeSummary", namespace = DxfNamespaces.DXF_2_0 )
 public class ImportTypeSummary
     extends ImportSummary
 {
@@ -51,7 +51,14 @@ public class ImportTypeSummary
 
     private ImportCount importCount = new ImportCount();
 
-    private List<ImportConflict> importConflicts = new ArrayList<ImportConflict>();
+    private List<ImportConflict> importConflicts = new ArrayList<>();
+
+    /**
+     * This will always have the UID of the latest imported object. This is used for cases where you are only importing a single
+     * object, and want to return the Location header etc to the user. We might extend this in the future, so that we can get all
+     * UIDs of imported objects.
+     */
+    private String lastImported;
 
     public ImportTypeSummary( String type )
     {
@@ -59,7 +66,7 @@ public class ImportTypeSummary
     }
 
     @JsonProperty
-    @JacksonXmlProperty(isAttribute = true)
+    @JacksonXmlProperty( isAttribute = true )
     public String getType()
     {
         return type;
@@ -70,21 +77,23 @@ public class ImportTypeSummary
         this.type = type;
     }
 
+    @Override
     @JsonProperty
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public ImportCount getImportCount()
     {
         return importCount;
     }
 
+    @Override
     public void setImportCount( ImportCount importCount )
     {
         this.importCount = importCount;
     }
 
     @JsonProperty
-    @JacksonXmlElementWrapper(localName = "conflicts", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty(localName = "conflict", namespace = DxfNamespaces.DXF_2_0)
+    @JacksonXmlElementWrapper( localName = "conflicts", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "conflict", namespace = DxfNamespaces.DXF_2_0 )
     public List<ImportConflict> getImportConflicts()
     {
         return importConflicts;
@@ -93,6 +102,18 @@ public class ImportTypeSummary
     public void setImportConflicts( List<ImportConflict> importConflicts )
     {
         this.importConflicts = importConflicts;
+    }
+
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public String getLastImported()
+    {
+        return lastImported;
+    }
+
+    public void setLastImported( String lastImported )
+    {
+        this.lastImported = lastImported;
     }
 
     //-------------------------------------------------------------------------

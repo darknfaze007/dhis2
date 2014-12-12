@@ -71,6 +71,7 @@ public abstract class AbstractAutomaticAccessProvider
 
     protected abstract void initialise();
     
+    @Override
     public final void init()
     {
         if ( isEnabled() )
@@ -97,7 +98,7 @@ public abstract class AbstractAutomaticAccessProvider
     {
         Collection<String> systemAuthorities = getAuthorities();
 
-        Set<GrantedAuthority> grantedAuthorities = new HashSet<GrantedAuthority>( systemAuthorities.size() );
+        Set<GrantedAuthority> grantedAuthorities = new HashSet<>( systemAuthorities.size() );
 
         for ( String authority : systemAuthorities )
         {

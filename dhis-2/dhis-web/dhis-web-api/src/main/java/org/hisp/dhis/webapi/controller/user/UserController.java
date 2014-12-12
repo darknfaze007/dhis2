@@ -28,9 +28,14 @@ package org.hisp.dhis.webapi.controller.user;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
-import org.apache.struts2.ServletActionContext;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.hisp.dhis.common.Pager;
 import org.hisp.dhis.dxf2.metadata.ImportTypeSummary;
 import org.hisp.dhis.hibernate.exception.CreateAccessDeniedException;
@@ -46,28 +51,22 @@ import org.hisp.dhis.user.User;
 import org.hisp.dhis.user.UserGroup;
 import org.hisp.dhis.user.UserGroupService;
 import org.hisp.dhis.user.UserService;
+import org.hisp.dhis.user.Users;
 import org.hisp.dhis.webapi.controller.AbstractCrudController;
 import org.hisp.dhis.webapi.utils.ContextUtils;
 import org.hisp.dhis.webapi.webdomain.WebMetaData;
 import org.hisp.dhis.webapi.webdomain.WebOptions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import static org.hisp.dhis.setting.SystemSettingManager.KEY_ONLY_MANAGE_WITHIN_USER_GROUPS;
+import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
@@ -78,6 +77,8 @@ public class UserController
     extends AbstractCrudController<User>
 {
     public static final String INVITE_PATH = "/invite";
+
+    public static final String BULK_INVITE_PATH = "/invites";
 
     @Autowired
     private UserService userService;
@@ -94,10 +95,16 @@ public class UserController
     @Autowired
     private SystemSettingManager systemSettingManager;
 
+    //--------------------------------------------------------------------------
+    // GET
+    //--------------------------------------------------------------------------
+
     @Override
     @PreAuthorize( "hasRole('ALL') or hasRole('F_USER_VIEW')" )
     public RootNode getObjectList( @RequestParam Map<String, String> parameters, HttpServletResponse response, HttpServletRequest request )
     {
+        //TODO: Allow user with F_USER_VIEW_WITHIN_MANAGED_GROUP and restrict viewing to within managed groups.
+
         return super.getObjectList( parameters, response, request );
     }
 
@@ -106,11 +113,13 @@ public class UserController
     public RootNode getObject( @PathVariable( "uid" ) String uid, @RequestParam Map<String, String> parameters,
         HttpServletRequest request, HttpServletResponse response ) throws Exception
     {
+        //TODO: Allow user with F_USER_VIEW_WITHIN_MANAGED_GROUP and restrict viewing to within managed groups.
+
         return super.getObject( uid, parameters, request, response );
     }
 
     @Override
-    protected List<User> getEntityList( WebMetaData metaData, WebOptions options )
+    protected List<User> getEntityList( WebMetaData metaData, WebOptions options, List<String> filters )
     {
         List<User> entityList;
 
@@ -125,18 +134,18 @@ public class UserController
             Pager pager = new Pager( options.getPage(), count );
             metaData.setPager( pager );
 
-            entityList = new ArrayList<User>( userService.getAllUsersBetween( pager.getOffset(), pager.getPageSize() ) );
+            entityList = new ArrayList<>( userService.getAllUsersBetween( pager.getOffset(), pager.getPageSize() ) );
         }
         else
         {
-            entityList = new ArrayList<User>( userService.getAllUsers() );
+            entityList = new ArrayList<>( userService.getAllUsers() );
         }
 
         return entityList;
     }
 
     @Override
-    protected List<User> getEntity( String uid )
+    protected List<User> getEntity( String uid, WebOptions options )
     {
         List<User> users = Lists.newArrayList();
         Optional<User> user = Optional.fromNullable( userService.getUser( uid ) );
@@ -176,7 +185,7 @@ public class UserController
     {
         User user = renderService.fromXml( request.getInputStream(), getEntityClass() );
 
-        inviteUser( user, response );
+        inviteUser( user, request, response );
     }
 
     @RequestMapping( value = INVITE_PATH, method = RequestMethod.POST, consumes = "application/json" )
@@ -184,15 +193,37 @@ public class UserController
     {
         User user = renderService.fromJson( request.getInputStream(), getEntityClass() );
 
-        inviteUser( user, response );
+        inviteUser( user, request, response );
+    }
+
+    @RequestMapping( value = BULK_INVITE_PATH, method = RequestMethod.POST, consumes = { "application/xml", "text/xml" } )
+    public void postXmlInvites( HttpServletResponse response, HttpServletRequest request, InputStream input ) throws Exception
+    {
+        Users users = renderService.fromXml( request.getInputStream(), Users.class );
+
+        for ( User user : users.getUsers() )
+        {
+            inviteUser( user, request, response );
+        }
+    }
+
+    @RequestMapping( value = BULK_INVITE_PATH, method = RequestMethod.POST, consumes = "application/json" )
+    public void postJsonInvites( HttpServletResponse response, HttpServletRequest request, InputStream input ) throws Exception
+    {
+        Users users = renderService.fromJson( request.getInputStream(), Users.class );
+
+        for ( User user : users.getUsers() )
+        {
+            inviteUser( user, request, response );
+        }
     }
 
     //--------------------------------------------------------------------------
     // PUT
     //--------------------------------------------------------------------------
 
+    @Override
     @RequestMapping( value = "/{uid}", method = RequestMethod.PUT, consumes = { "application/xml", "text/xml" } )
-    @ResponseStatus( value = HttpStatus.NO_CONTENT )
     public void putXmlObject( HttpServletResponse response, HttpServletRequest request, @PathVariable( "uid" ) String uid, InputStream
         input ) throws Exception
     {
@@ -211,20 +242,15 @@ public class UserController
 
         User parsed = renderService.fromXml( request.getInputStream(), getEntityClass() );
         parsed.setUid( uid );
+        checkUserGroups( parsed );
 
-        if ( parsed.getUserCredentials().getPassword() != null )
-        {
-            String encodePassword = passwordManager.encodePassword( parsed.getUsername(),
-                parsed.getUserCredentials().getPassword() );
-            parsed.getUserCredentials().setPassword( encodePassword );
-        }
-
-        ImportTypeSummary summary = importService.importObject( currentUserService.getCurrentUser().getUid(), parsed, ImportStrategy.UPDATE );
+        ImportTypeSummary summary = importService.importObject( currentUserService.getCurrentUser().getUid(), parsed,
+            ImportStrategy.UPDATE );
         renderService.toXml( response.getOutputStream(), summary );
     }
 
+    @Override
     @RequestMapping( value = "/{uid}", method = RequestMethod.PUT, consumes = "application/json" )
-    @ResponseStatus( value = HttpStatus.NO_CONTENT )
     public void putJsonObject( HttpServletResponse response, HttpServletRequest request, @PathVariable( "uid" ) String uid, InputStream
         input ) throws Exception
     {
@@ -243,15 +269,10 @@ public class UserController
 
         User parsed = renderService.fromJson( request.getInputStream(), getEntityClass() );
         parsed.setUid( uid );
+        checkUserGroups( parsed );
 
-        if ( parsed.getUserCredentials().getPassword() != null )
-        {
-            String encodePassword = passwordManager.encodePassword( parsed.getUsername(),
-                parsed.getUserCredentials().getPassword() );
-            parsed.getUserCredentials().setPassword( encodePassword );
-        }
-
-        ImportTypeSummary summary = importService.importObject( currentUserService.getCurrentUser().getUid(), parsed, ImportStrategy.UPDATE );
+        ImportTypeSummary summary = importService.importObject( currentUserService.getCurrentUser().getUid(), parsed,
+            ImportStrategy.UPDATE );
         renderService.toJson( response.getOutputStream(), summary );
     }
 
@@ -266,7 +287,7 @@ public class UserController
      * @param response response for created user invitation
      * @throws Exception
      */
-    private void inviteUser( User user, HttpServletResponse response ) throws Exception
+    private void inviteUser( User user, HttpServletRequest request, HttpServletResponse response ) throws Exception
     {
         RestoreOptions restoreOptions = user.getUsername() == null || user.getUsername().isEmpty() ?
             RestoreOptions.INVITE_WITH_USERNAME_CHOICE : RestoreOptions.INVITE_WITH_DEFINED_USERNAME;
@@ -276,7 +297,7 @@ public class UserController
         createUser( user, response );
 
         securityService.sendRestoreMessage( user.getUserCredentials(),
-            ContextUtils.getContextPath( ServletActionContext.getRequest() ), restoreOptions );
+            ContextUtils.getContextPath( request ), restoreOptions );
     }
 
     /**
@@ -306,10 +327,6 @@ public class UserController
         user.getUserCredentials().getCatDimensionConstraints().addAll(
             currentUserService.getCurrentUser().getUserCredentials().getCatDimensionConstraints() );
 
-        String encodePassword = passwordManager.encodePassword( user.getUsername(),
-            user.getUserCredentials().getPassword() );
-        user.getUserCredentials().setPassword( encodePassword );
-
         ImportTypeSummary summary = importService.importObject( currentUserService.getCurrentUser().getUid(), user, ImportStrategy.CREATE );
 
         renderService.toJson( response.getOutputStream(), summary );
@@ -318,42 +335,49 @@ public class UserController
     }
 
     /**
-     * Before adding the user, checks to see that any specified user groups
-     * exist. Also checks to see that user can be created by the current
-     * user, if it is required that the current user have read/write access
-     * to a user group that is assigned to the new user.
+     * Before adding or updating the user, checks to see that any specified user
+     * groups exist.
+     * <p>
+     * Also, if the current user doesn't have the F_USER_ADD authority, that
+     * means they have the weaker F_USER_ADD_WITHIN_MANAGED_GROUP authority.
+     * In this case, the new user must be added to a group that is managed
+     * by the current user.
      *
-     * @param user user object parsed from the POST request
+     * @param user user object parsed from the request
      */
     private void checkUserGroups( User user )
     {
-        boolean writeGroupRequired = (Boolean) systemSettingManager.getSystemSetting( KEY_ONLY_MANAGE_WITHIN_USER_GROUPS, false );
+        User currentUser = currentUserService.getCurrentUser();
 
-        boolean writeGroupFound = false;
-
-        if ( currentUserService.getCurrentUser() != null && user.getGroups() != null )
+        if ( currentUser != null && user.getGroups() != null )
         {
+            boolean authorizedToAdd = currentUserService.currentUserIsSuper() ||
+                    currentUser.getUserCredentials().isAuthorized( UserGroup.AUTH_USER_ADD );
+
             for ( UserGroup ug : user.getGroups() )
             {
                 UserGroup group = userGroupService.getUserGroup( ug.getUid() );
 
                 if ( group == null )
                 {
-                    throw new CreateAccessDeniedException( "Can't add user: Can't find user group with UID = " + ug.getUid() );
+                    throw new CreateAccessDeniedException( "Can't add/update user: Can't find user group with UID = " + ug.getUid() );
                 }
 
-                if ( writeGroupRequired && securityService.canWrite( group ) )
+                if ( !securityService.canRead( group ) )
                 {
-                    writeGroupFound = true;
+                    throw new CreateAccessDeniedException( "Can't add/update user: Can't read the group with UID = " + ug.getUid() );
+                }
 
-                    break;
+                if ( !authorizedToAdd && CollectionUtils.containsAny( group.getManagedByGroups(), currentUser.getGroups() ) )
+                {
+                    authorizedToAdd = true;
                 }
             }
-        }
 
-        if ( writeGroupRequired && !writeGroupFound )
-        {
-            throw new CreateAccessDeniedException( "The new user must be assigned to a user group to which you have write access." );
+            if ( !authorizedToAdd )
+            {
+                throw new CreateAccessDeniedException( "Can't add user: User must belong to a group that you manage." );
+            }
         }
     }
 
@@ -366,18 +390,13 @@ public class UserController
     {
         if ( user.getGroups() != null )
         {
-            boolean writeGroupRequired = (Boolean) systemSettingManager.getSystemSetting( KEY_ONLY_MANAGE_WITHIN_USER_GROUPS, false );
-
-            for ( UserGroup ug : new ArrayList<UserGroup>( user.getGroups() ) )
+            for ( UserGroup ug : new ArrayList<>( user.getGroups() ) )
             {
                 UserGroup group = userGroupService.getUserGroup( ug.getUid() );
 
-                if ( group != null && (!writeGroupRequired || securityService.canWrite( group )) )
-                {
-                    group.addUser( user );
+                group.addUser( user );
 
-                    userGroupService.updateUserGroup( group );
-                }
+                userGroupService.updateUserGroup( group );
             }
         }
     }

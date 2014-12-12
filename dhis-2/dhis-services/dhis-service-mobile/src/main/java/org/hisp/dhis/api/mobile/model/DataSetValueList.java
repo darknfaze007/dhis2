@@ -39,7 +39,7 @@ public class DataSetValueList
 {
     private String clientVersion;
 
-    private List<DataSetValue> dataSetValues = new ArrayList<DataSetValue>();
+    private List<DataSetValue> dataSetValues = new ArrayList<>();
 
     public DataSetValueList()
     {
@@ -55,11 +55,13 @@ public class DataSetValueList
         this.dataSetValues = dataSetValues;
     }
 
+    @Override
     public String getClientVersion()
     {
         return clientVersion;
     }
 
+    @Override
     public void setClientVersion( String clientVersion )
     {
         this.clientVersion = clientVersion;
@@ -84,7 +86,7 @@ public class DataSetValueList
         size = dataInputStream.readInt();
         if ( size > 0 )
         {
-            dataSetValues = new ArrayList<DataSetValue>();
+            dataSetValues = new ArrayList<>();
             for ( int i = 0; i < size; i++ )
             {
                 DataSetValue dataSetValue = new DataSetValue();

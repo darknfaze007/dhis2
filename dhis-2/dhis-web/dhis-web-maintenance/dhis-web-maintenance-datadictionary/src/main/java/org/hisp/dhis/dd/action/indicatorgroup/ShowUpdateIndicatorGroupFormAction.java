@@ -83,11 +83,11 @@ public class ShowUpdateIndicatorGroupFormAction
         return indicatorGroup;
     }
 
-    private List<Indicator> groupMembers = new ArrayList<Indicator>();
+    private List<Indicator> indicators = new ArrayList<>();
 
-    public List<Indicator> getGroupMembers()
+    public List<Indicator> getIndicators()
     {
-        return groupMembers;
+        return indicators;
     }
 
     private List<Attribute> attributes;
@@ -97,7 +97,7 @@ public class ShowUpdateIndicatorGroupFormAction
         return attributes;
     }
 
-    public Map<Integer, String> attributeValues = new HashMap<Integer, String>();
+    public Map<Integer, String> attributeValues = new HashMap<>();
 
     public Map<Integer, String> getAttributeValues()
     {
@@ -108,17 +108,18 @@ public class ShowUpdateIndicatorGroupFormAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         indicatorGroup = indicatorService.getIndicatorGroup( id, true );
 
-        groupMembers = new ArrayList<Indicator>( indicatorGroup.getMembers() );
+        indicators = new ArrayList<>( indicatorGroup.getMembers() );
 
-        attributes = new ArrayList<Attribute>( attributeService.getIndicatorGroupAttributes() );
+        attributes = new ArrayList<>( attributeService.getIndicatorGroupAttributes() );
 
         attributeValues = AttributeUtils.getAttributeValueMap( indicatorGroup.getAttributeValues() );
 
-        Collections.sort( groupMembers, IdentifiableObjectNameComparator.INSTANCE );
+        Collections.sort( indicators, IdentifiableObjectNameComparator.INSTANCE );
         Collections.sort( attributes, AttributeSortOrderComparator.INSTANCE );
 
         return SUCCESS;

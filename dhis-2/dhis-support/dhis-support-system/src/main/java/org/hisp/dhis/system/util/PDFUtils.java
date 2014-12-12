@@ -653,9 +653,6 @@ public class PDFUtils
             table.addCell( getTextCell( validationRule.getDescription() ) );
         }
 
-        table.addCell( getItalicCell( i18n.getString( "type" ) ) );
-        table.addCell( getTextCell( i18n.getString( validationRule.getType() ) ) );
-
         table.addCell( getItalicCell( i18n.getString( "operator" ) ) );
         table.addCell( getTextCell( i18n.getString( validationRule.getOperator().toString() ) ) );
 
@@ -687,7 +684,7 @@ public class PDFUtils
 
     private static Map<Boolean, String> getBoolean()
     {
-        Map<Boolean, String> map = new HashMap<Boolean, String>();
+        Map<Boolean, String> map = new HashMap<>();
         map.put( true, "yes" );
         map.put( false, "no" );
         return map;
@@ -695,7 +692,7 @@ public class PDFUtils
 
     private static Map<String, String> getType()
     {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         map.put( DataElement.VALUE_TYPE_STRING, "text" );
         map.put( DataElement.VALUE_TYPE_INT, "number" );
         map.put( DataElement.VALUE_TYPE_BOOL, "yes_no" );
@@ -705,9 +702,9 @@ public class PDFUtils
 
     private static Map<String, String> getAggregationOperator()
     {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         map.put( DataElement.AGGREGATION_OPERATOR_SUM, "sum" );
-        map.put( DataElement.AGGREGATION_OPERATOR_AVERAGE, "average" );
+        map.put( DataElement.AGGREGATION_OPERATOR_AVERAGE_SUM, "average" );
         map.put( DataElement.AGGREGATION_OPERATOR_COUNT, "count" );
         return map;
     }

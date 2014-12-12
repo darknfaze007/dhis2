@@ -30,11 +30,12 @@ package org.hisp.dhis.dd.action.category;
 
 import org.apache.commons.lang.StringUtils;
 import org.hisp.dhis.calendar.CalendarService;
-import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.calendar.DateTimeUnit;
 import org.hisp.dhis.dataelement.DataElementCategoryOption;
 import org.hisp.dhis.dataelement.DataElementCategoryService;
 
 import com.opensymphony.xwork2.Action;
+
 import org.hisp.dhis.ouwt.manager.OrganisationUnitSelectionManager;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -74,6 +75,13 @@ public class AddDataElementCategoryOptionAction
         this.name = name;
     }
 
+    private String shortName;
+
+    public void setShortName( String shortName )
+    {
+        this.shortName = shortName;
+    }
+
     private String code;
 
     public void setCode( String code )
@@ -110,6 +118,7 @@ public class AddDataElementCategoryOptionAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         code = StringUtils.trimToNull( code );
@@ -119,17 +128,18 @@ public class AddDataElementCategoryOptionAction
 
         if ( startDate != null && startDate.trim().length() != 0 )
         {
-            DateUnit isoStartDate = calendarService.getSystemCalendar().toIso( startDate );
+            DateTimeUnit isoStartDate = calendarService.getSystemCalendar().toIso( startDate );
             sDate = isoStartDate.toJdkCalendar().getTime();
         }
 
         if ( endDate != null && endDate.trim().length() != 0 )
         {
-            DateUnit isoEndDate = calendarService.getSystemCalendar().toIso( endDate );
+            DateTimeUnit isoEndDate = calendarService.getSystemCalendar().toIso( endDate );
             eDate = isoEndDate.toJdkCalendar().getTime();
         }
 
         dataElementCategoryOption = new DataElementCategoryOption( name );
+        dataElementCategoryOption.setShortName( shortName );
         dataElementCategoryOption.setCode( code );
         dataElementCategoryOption.setStartDate( sDate );
         dataElementCategoryOption.setEndDate( eDate );

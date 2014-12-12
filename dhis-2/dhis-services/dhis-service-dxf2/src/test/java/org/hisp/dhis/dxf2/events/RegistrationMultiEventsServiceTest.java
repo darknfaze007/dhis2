@@ -28,6 +28,12 @@ package org.hisp.dhis.dxf2.events;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+
+import java.util.Arrays;
+import java.util.HashSet;
+
 import org.hamcrest.CoreMatchers;
 import org.hibernate.SessionFactory;
 import org.hisp.dhis.DhisSpringTest;
@@ -53,12 +59,6 @@ import org.hisp.dhis.user.UserService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
@@ -82,7 +82,13 @@ public class RegistrationMultiEventsServiceTest
 
     @Autowired
     private SessionFactory sessionFactory;
-
+    
+    @Autowired 
+    private IdentifiableObjectManager _identifiableObjectManager;
+    
+    @Autowired
+    private UserService _userService;
+    
     private org.hisp.dhis.trackedentity.TrackedEntityInstance maleA;
 
     private org.hisp.dhis.trackedentity.TrackedEntityInstance maleB;
@@ -111,8 +117,8 @@ public class RegistrationMultiEventsServiceTest
     protected void setUpTest()
         throws Exception
     {
-        identifiableObjectManager = (IdentifiableObjectManager) getBean( IdentifiableObjectManager.ID );
-        userService = (UserService) getBean( UserService.ID );
+        identifiableObjectManager = _identifiableObjectManager;
+        userService = _userService;
 
         organisationUnitA = createOrganisationUnit( 'A' );
         organisationUnitB = createOrganisationUnit( 'B' );
@@ -183,12 +189,6 @@ public class RegistrationMultiEventsServiceTest
         identifiableObjectManager.update( programA );
 
         createUserAndInjectSecurityContext( true );
-    }
-
-    // @Override
-    public boolean emptyDatabaseAfterTest()
-    {
-        return true;
     }
 
     @Test

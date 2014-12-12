@@ -118,18 +118,15 @@ function getKeyCode(e) {
 function validateAdvancedSearch( page ) {
 	hideById('listEntityInstanceDiv');
 	var flag = true;
-	if (getFieldValue('startDate') == ''
-			&& getFieldValue('endDate') == '') {
-		if (getFieldValue('searchByProgramStage') == "false"
-				|| (getFieldValue('searchByProgramStage') == "true" && jQuery('#advancedSearchTB tr').length > 1)) {
-			jQuery("#searchDiv :input").each(function(i, item) {
-				var elementName = $(this).attr('name');
-				if (elementName == 'searchText' && jQuery(item).val() == '') {
-					showWarningMessage(i18n_specify_search_criteria);
-					flag = false;
-				}
-			});
-		}
+	if (getFieldValue('searchByProgramStage') == "false"
+			|| (getFieldValue('searchByProgramStage') == "true" && jQuery('#advancedSearchTB tr').length > 1)) {
+		jQuery("#searchDiv :input").each(function(i, item) {
+			var elementName = $(this).attr('name');
+			if (elementName == 'searchText' && jQuery(item).val() == '') {
+				showWarningMessage(i18n_specify_search_criteria);
+				flag = false;
+			}
+		});
 	}
 
 	if (flag) {
@@ -361,39 +358,73 @@ function enableBtn() {
 	} else {
 		hideById('enrollmentSelectTR');
 	}
+	
+	if( program!=""){
+		$.get("../api/programs/" + program + ".json?fields=programTrackedEntityAttributes", {}
+			, function(json) {
+				removeAttributeOption('advSearchBox0');
+				var attributeList = jQuery('#searchObjectId');
+				jQuery('input[name=clearSearchBtn]').each(function() {
+					jQuery(this).click();
+				});
 
-	$.postJSON("getAttributesByProgram.action", {
-		id : program,
-		entityInstanceId : getFieldValue('entityInstanceId')
-	}, function(json) {
-		removeAttributeOption('advSearchBox0');
-		var attributeList = jQuery('#searchObjectId');
-		jQuery('input[name=clearSearchBtn]').each(function() {
-			jQuery(this).click();
+				clearListById('searchObjectId');
+				clearListById('attributeIds');
+				for ( var i in json.programTrackedEntityAttributes) {
+					var progamAttribute = json.programTrackedEntityAttributes[i];
+					var attribute = progamAttribute.trackedEntityAttribute;
+					jQuery('#searchObjectId').append(
+						'<option value="' + attribute.id + '" >'
+							+ attribute.name + '</option>');
+					
+					if(json.programTrackedEntityAttributes[i].displayed=='true'){
+						jQuery('#attributeIds').append(
+							'<option value="' + attribute.id 
+							+ '" valueType="' + attribute.valueType  + '"></option>');
+					}
+				}
+				
+				if (getFieldValue('program') != '') {
+					jQuery('#searchObjectId').append(
+						'<option value="programDate" >' + i18n_enrollment_date
+							+ '</option>');
+				}
+
+				addAttributeOption();
 		});
+	}
+	else
+	{
+		$.get("../api/trackedEntityAttributes.json?fields=id,name&filter=displayInListNoProgram:eq:true", {}
+			, function(json) {
+				removeAttributeOption('advSearchBox0');
+				var attributeList = jQuery('#searchObjectId');
+				jQuery('input[name=clearSearchBtn]').each(function() {
+					jQuery(this).click();
+				});
 
-		clearListById('searchObjectId');
-		clearListById('attributeIds');
-		for ( var i in json.attributes) {
-			jQuery('#searchObjectId').append(
-				'<option value="' + json.attributes[i].id + '" >'
-					+ json.attributes[i].name + '</option>');
-			
-			if(json.attributes[i].displayed=='true'){
-				jQuery('#attributeIds').append(
-				'<option value="' + json.attributes[i].id 
-				+ '" valueType="' + json.attributes[i].valueType  + '"></option>');
-			}
-		}
-		
-		if (getFieldValue('program') != '') {
-			jQuery('#searchObjectId').append(
-				'<option value="programDate" >' + i18n_enrollment_date
-					+ '</option>');
-		}
+				clearListById('searchObjectId');
+				clearListById('attributeIds');
+				for ( var i in json.trackedEntityAttributes) {
+					var attribute = json.trackedEntityAttributes[i];
+					jQuery('#searchObjectId').append(
+						'<option value="' + attribute.id + '" >' + attribute.name + '</option>');
+					
+					jQuery('#attributeIds').append(
+						'<option value="' + attribute.id 
+						+ '" valueType="' + attribute.valueType  + '"></option>');
+				}
+				
+				if (getFieldValue('program') != '') {
+					jQuery('#searchObjectId').append(
+						'<option value="programDate" >' + i18n_enrollment_date
+							+ '</option>');
+				}
 
-		addAttributeOption();
-	});
+				addAttributeOption();
+		});
+	}
+	
 }
 
 function enableRadioButton(programId) {
@@ -1038,34 +1069,29 @@ function programOnchange(programId) {
 	} else {
 		var type = $('#enrollmentDiv [name=programId] option:selected').attr(
 				'programType')
-		if (type == '2') {
-			hideById('enrollmentDateTR');
-			hideById('dateOfIncidentTR');
-			disable('enrollmentDateField');
-			disable('dateOfIncidentField');
+		
+		showById('enrollmentDateTR');
+		enable('enrollmentDateField');
+		var dateOfEnrollmentDescription = $(
+				'#enrollmentDiv [name=programId] option:selected').attr(
+				'dateOfEnrollmentDescription');
+		var dateOfIncidentDescription = $(
+				'#enrollmentDiv [name=programId] option:selected').attr(
+				'dateOfIncidentDescription');
+		setInnerHTML('enrollmentDateDescription',
+				dateOfEnrollmentDescription);
+		setInnerHTML('dateOfIncidentDescription', dateOfIncidentDescription);
+		var displayIncidentDate = $(
+				'#enrollmentDiv [name=programId] option:selected').attr(
+				'displayIncidentDate');
+		if (displayIncidentDate == 'true') {
+			showById('dateOfIncidentTR');
+			enable('dateOfIncidentField');
 		} else {
-			showById('enrollmentDateTR');
-			enable('enrollmentDateField');
-			var dateOfEnrollmentDescription = $(
-					'#enrollmentDiv [name=programId] option:selected').attr(
-					'dateOfEnrollmentDescription');
-			var dateOfIncidentDescription = $(
-					'#enrollmentDiv [name=programId] option:selected').attr(
-					'dateOfIncidentDescription');
-			setInnerHTML('enrollmentDateDescription',
-					dateOfEnrollmentDescription);
-			setInnerHTML('dateOfIncidentDescription', dateOfIncidentDescription);
-			var displayIncidentDate = $(
-					'#enrollmentDiv [name=programId] option:selected').attr(
-					'displayIncidentDate');
-			if (displayIncidentDate == 'true') {
-				showById('dateOfIncidentTR');
-				enable('dateOfIncidentField');
-			} else {
-				hideById('dateOfIncidentTR');
-				disable('dateOfIncidentField');
-			}
+			hideById('dateOfIncidentTR');
+			disable('dateOfIncidentField');
 		}
+		
 		var program = $('#programEnrollmentSelectDiv [id=programId] option:selected');
 		$('#identifierAndAttributeDiv')
 				.load("getAttribute.action", {
@@ -1339,8 +1365,13 @@ function registerTrackedEntityInstanceLocation(entityInstanceId) {
 	$.getJSON('registerTrackedEntityInstanceLocation.action', {
 		entityInstanceId : entityInstanceId
 	}, function(json) {
-		showTrackedEntityInstanceDashboardForm(entityInstanceId);
-		showSuccessMessage(i18n_save_success);
+		if(json.response=='input'){
+			showWarningMessage( i18n_please_select_an_orgunit );
+		}
+		else{
+			showTrackedEntityInstanceDashboardForm(entityInstanceId);
+			showSuccessMessage(i18n_save_success);
+		}
 	});
 }
 
@@ -1395,8 +1426,7 @@ function hideProgramInstanceDiv(programInstanceId) {
 	$('#pi_' + programInstanceId).removeClass("link-area-active");
 	$("#img_" + programInstanceId).attr('src', '');
 }
-function loadActiveProgramStageRecords(programInstanceId,
-		activeProgramStageInstanceId) {
+function loadActiveProgramStageRecords(programInstanceId, activeProgramStageInstanceId) {
 	hideById('programEnrollmentDiv');
 	if (programInstanceId == "")
 		return;
@@ -1647,9 +1677,9 @@ function removeComment(programStageInstanceId, commentId) {
 }
 function commentKeyup() {
 	var commentInput = byId('commentInput');
-	while ($(commentInput).outerHeight() < commentInput.scrollHeight
+	if ($(commentInput).outerHeight() < commentInput.scrollHeight
 			+ parseFloat($(commentInput).css("borderTopWidth"))
-			+ parseFloat($(commentInput).css("borderBottomWidth"))) {
+			+ parseFloat($(commentInput).css("borderBottomWidth")) - 1 ) {
 		$(commentInput).height($(commentInput).height() + 10);
 	}
 }
@@ -1768,8 +1798,7 @@ function saveCoordinatesEvent() {
 		isValid = false;
 	}
 	if (isValid) {
-		$
-				.ajax({
+		$.ajax({
 					url : 'saveCoordinatesEvent.action',
 					data : {
 						programStageInstanceId : programStageInstanceId,

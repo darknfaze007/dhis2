@@ -59,7 +59,7 @@ public class GetAttributesWithoutGroupAction
     // Output
     // -------------------------------------------------------------------------
 
-    private Collection<TrackedEntityAttribute> attributes = new ArrayList<TrackedEntityAttribute>();
+    private Collection<TrackedEntityAttribute> attributes = new ArrayList<>();
 
     public Collection<TrackedEntityAttribute> getAttributes()
     {
@@ -70,6 +70,7 @@ public class GetAttributesWithoutGroupAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {

@@ -33,7 +33,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +45,7 @@ import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.criterion.Restrictions;
 import org.hisp.dhis.common.AuditLogUtil;
+import org.hisp.dhis.common.SetMap;
 import org.hisp.dhis.common.hibernate.HibernateIdentifiableObjectStore;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
@@ -86,6 +86,16 @@ public class HibernateOrganisationUnitStore
         }
 
         return object;
+    }
+
+    @Override
+    @SuppressWarnings( "unchecked" )
+    public Collection<OrganisationUnit> getByNames( Collection<String> names )
+    {
+        Query query = getQuery( "from OrganisationUnit where name in :names" );
+        query.setParameterList( "names", names );
+
+        return query.list();
     }
 
     @Override
@@ -188,30 +198,23 @@ public class HibernateOrganisationUnitStore
         return q.list();
     }
 
+    @Override
     public Map<String, Set<String>> getOrganisationUnitDataSetAssocationMap()
     {
         final String sql = "select ds.uid as ds_uid, ou.uid as ou_uid from datasetsource d " +
             "left join organisationunit ou on ou.organisationunitid=d.sourceid " +
             "left join dataset ds on ds.datasetid=d.datasetid";
 
-        final Map<String, Set<String>> map = new HashMap<String, Set<String>>();
+        final SetMap<String, String> map = new SetMap<>();        
 
         jdbcTemplate.query( sql, new RowCallbackHandler()
         {
+            @Override
             public void processRow( ResultSet rs ) throws SQLException
             {
                 String dataSetId = rs.getString( "ds_uid" );
                 String organisationUnitId = rs.getString( "ou_uid" );
-
-                Set<String> dataSets = map.get( organisationUnitId );
-
-                if ( dataSets == null )
-                {
-                    dataSets = new HashSet<String>();
-                    map.put( organisationUnitId, dataSets );
-                }
-
-                dataSets.add( dataSetId );
+                map.putValue( organisationUnitId, dataSetId );
             }
         } );
 
@@ -219,46 +222,16 @@ public class HibernateOrganisationUnitStore
     }
 
     @Override
-    public Map<String, Set<String>> getOrganisationUnitGroupDataSetAssocationMap()
-    {
-        final String sql = "select ds.uid as ds_uid, ou.uid as ou_uid from orgunitgroupdatasets ougds " +
-            "left join orgunitgroupmembers ougm on ougds.orgunitgroupid=ougm.orgunitgroupid " +
-            "left join organisationunit ou on ou.organisationunitid=ougm.organisationunitid " +
-            "left join dataset ds on ds.datasetid=ougds.datasetid";
-
-        final Map<String, Set<String>> map = new HashMap<String, Set<String>>();
-
-        jdbcTemplate.query( sql, new RowCallbackHandler()
-        {
-            public void processRow( ResultSet rs ) throws SQLException
-            {
-                String dataSetId = rs.getString( "ds_uid" );
-                String organisationUnitId = rs.getString( "ou_uid" );
-
-                Set<String> dataSets = map.get( organisationUnitId );
-
-                if ( dataSets == null )
-                {
-                    dataSets = new HashSet<String>();
-                    map.put( organisationUnitId, dataSets );
-                }
-
-                dataSets.add( dataSetId );
-            }
-        } );
-
-        return map;
-    }
-
     public Set<Integer> getOrganisationUnitIdsWithoutData()
     {
         final String sql = "select organisationunitid from organisationunit ou where not exists (" +
             "select sourceid from datavalue where sourceid=ou.organisationunitid)";
 
-        final Set<Integer> units = new HashSet<Integer>();
+        final Set<Integer> units = new HashSet<>();
 
         jdbcTemplate.query( sql, new RowCallbackHandler()
         {
+            @Override
             public void processRow( ResultSet rs ) throws SQLException
             {
                 units.add( rs.getInt( 1 ) );
@@ -301,6 +274,7 @@ public class HibernateOrganisationUnitStore
         return criteria.list();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Collection<OrganisationUnit> getWithinCoordinateArea( double[] box )
     {
@@ -318,6 +292,7 @@ public class HibernateOrganisationUnitStore
     // OrganisationUnitHierarchy
     // -------------------------------------------------------------------------
 
+    @Override
     public OrganisationUnitHierarchy getOrganisationUnitHierarchy()
     {
         final String sql = "select organisationunitid, parentid from organisationunit";
@@ -325,6 +300,7 @@ public class HibernateOrganisationUnitStore
         return new OrganisationUnitHierarchy( jdbcTemplate.query( sql, new OrganisationUnitRelationshipRowMapper() ) );
     }
 
+    @Override
     public void updateOrganisationUnitParent( int organisationUnitId, int parentId )
     {
         Timestamp now = new Timestamp( new Date().getTime() );

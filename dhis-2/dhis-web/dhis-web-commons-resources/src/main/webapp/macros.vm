@@ -132,7 +132,7 @@ function clearFilter() {
 <tr>
 	<td style="width: 200px;"><label for="$!args.id">$!args.text #if($args.mandatory)<em title="$i18n.getString( 'required' )" class="required">*</em>#end</label></td>
 	<td>
-		<input type="text" id="$!args.id" name="$!name" value="$!args.value" class="{validate:{required:$args.mandatory,rangelength:[2,230]}}" />
+		<input type="text" id="$!args.id" name="$!name" value="$!args.value" class="{validate:{required:$args.mandatory,rangelength:[1,230]}}" />
 	</td>
 </tr>
 #end
@@ -333,10 +333,9 @@ jQuery.each(attributes, function(i, item) {
             <tr>
                 <td colspan="2" style="height: 40px"><span class="settingHeader" id="sharingName"></span></td>
             </tr>
-
             <tr>
                 <td><input style="width: 100%;" id="sharingFindUserGroup" placeholder="$i18n.getString( 'search_for_user_groups' )"/></td>
-                <td style="width: 24px;"><button id="addUserGroupAccess" disabled="disabled" style="width: 24px; text-align: center;">+</button></td>
+                <td style="width: 24px;"><button id="addUserGroupAccess" disabled="disabled" style="width:24px; margin-left:2px; text-align:center;">+</button></td>
             </tr>
         </tbody>
     </table>
@@ -344,7 +343,10 @@ jQuery.each(attributes, function(i, item) {
     <table id="sharingAccessTable" style="width: 100%; margin-top: 6px;">
         <tbody>
         <tr>
-            <td style="width: 300px; padding-top: 5px; padding-bottom: 5px;">$i18n.getString( "external_access" )</td>
+        	<td colspan="2" style="padding: 5px 0"><span class="tipText">$i18n.getString( "created_by" ): </span><span class="tipText" id="sharingUser"></span></td>
+        </tr>
+        <tr>
+        	<td style="width: 300px; padding: 5px 0;">$i18n.getString( "external_access" )</td>
             <td style="text-align: right;">
                 <input id="sharingExternalAccess" type="checkbox" value="true" />
             </td>
@@ -431,7 +433,6 @@ jQuery.each(attributes, function(i, item) {
       <th>$i18n.getString( $args.i18n_selected )
           #if( $required )
             <em title="$i18n.getString( 'required' )" class="required">*</em>
-            <select id="${args.prefix}Validator" style="display:none"></select>
           #end
       </th>
     </tr>
@@ -466,4 +467,7 @@ jQuery.each(attributes, function(i, item) {
     </tr>
     </tbody>
 </table>
+
+<select id="${args.prefix}Validator" style="display:none"></select>
+
 #end

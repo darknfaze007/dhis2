@@ -35,6 +35,9 @@ import org.hisp.dhis.dataset.Section;
 public class SectionOrderComparator
     implements Comparator<Section>
 {
+    public static final SectionOrderComparator INSTANCE = new SectionOrderComparator();
+    
+    @Override
     public int compare( Section o1, Section o2 )
     {
         if ( o1.getDataSet() != null && o2.getDataSet() != null )

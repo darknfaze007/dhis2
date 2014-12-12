@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
  */
-@Target( { ElementType.FIELD } )
+@Target( { ElementType.FIELD, ElementType.METHOD } )
 @Retention( RetentionPolicy.RUNTIME )
 @NodeAnnotation
 public @interface NodeSimple
@@ -46,8 +46,6 @@ public @interface NodeSimple
     String namespace() default "";
 
     boolean isAttribute() default false;
-
-    boolean isPersisted() default true;
 
     boolean isWritable() default true;
 

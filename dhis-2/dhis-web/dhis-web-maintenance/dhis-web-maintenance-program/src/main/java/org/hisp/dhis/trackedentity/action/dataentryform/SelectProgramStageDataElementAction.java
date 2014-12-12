@@ -86,6 +86,7 @@ public class SelectProgramStageDataElementAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -99,7 +100,7 @@ public class SelectProgramStageDataElementAction
             if ( program != null )
             {
 
-                programStages = new ArrayList<ProgramStage>( program.getProgramStages() );
+                programStages = new ArrayList<>( program.getProgramStages() );
                 for ( ProgramStage ps : programStages )
                 {
                     if ( ps.equals( programStage ) )

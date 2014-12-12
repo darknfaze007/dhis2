@@ -146,14 +146,14 @@ public class GetValidationResultDetailsAction
         return validationRule;
     }
     
-    private Map<String, String> leftSideMap = new HashMap<String, String>();
+    private Map<String, String> leftSideMap = new HashMap<>();
 
     public Map<String, String> getLeftSideMap()
     {
         return leftSideMap;
     }
 
-    private Map<String, String> rightSideMap = new HashMap<String, String>();
+    private Map<String, String> rightSideMap = new HashMap<>();
 
     public Map<String, String> getRightSideMap()
     {
@@ -164,6 +164,7 @@ public class GetValidationResultDetailsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {

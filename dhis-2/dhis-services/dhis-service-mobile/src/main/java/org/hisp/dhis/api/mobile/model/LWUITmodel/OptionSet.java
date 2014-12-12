@@ -46,7 +46,7 @@ public class OptionSet
 {
 private String clientVersion;
     
-    private List<String> options = new ArrayList<String>();
+    private List<String> options = new ArrayList<>();
 
     public List<String> getOptions()
     {
@@ -58,11 +58,13 @@ private String clientVersion;
         this.options = options;
     }
     
+    @Override
     public String getClientVersion()
     {
         return clientVersion;
     }
 
+    @Override
     public void setClientVersion( String clientVersion )
     {
         this.clientVersion = clientVersion;

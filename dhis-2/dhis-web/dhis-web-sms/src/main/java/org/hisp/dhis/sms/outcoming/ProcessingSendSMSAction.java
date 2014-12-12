@@ -125,7 +125,7 @@ public class ProcessingSendSMSAction
         this.userGroup = userGroup;
     }
 
-    private Set<String> recipients = new HashSet<String>();
+    private Set<String> recipients = new HashSet<>();
 
     public void setRecipients( Set<String> recipients )
     {
@@ -154,6 +154,7 @@ public class ProcessingSendSMSAction
     // Action Implementation
     // -------------------------------------------------------------------------
 
+    @Override
     @SuppressWarnings( "unchecked" )
     public String execute()
         throws Exception
@@ -176,7 +177,7 @@ public class ProcessingSendSMSAction
 
         User currentUser = currentUserService.getCurrentUser();
 
-        List<User> recipientsList = new ArrayList<User>();
+        List<User> recipientsList = new ArrayList<>();
 
         // Set<User> recipientsList = new HashSet<User>();
 
@@ -219,7 +220,7 @@ public class ProcessingSendSMSAction
                 return ERROR;
             }
 
-            recipientsList = new ArrayList<User>( group.getMembers());
+            recipientsList = new ArrayList<>( group.getMembers());
         }
         else if ( sendTarget.equals( "user" ) )
         {

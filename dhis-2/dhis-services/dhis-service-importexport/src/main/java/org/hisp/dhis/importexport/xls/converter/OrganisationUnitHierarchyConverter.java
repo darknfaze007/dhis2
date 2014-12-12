@@ -66,6 +66,7 @@ public class OrganisationUnitHierarchyConverter
     // PDFConverter implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void write( WritableWorkbook workbook, ExportParams params, int sheetIndex )
     {
         I18n i18n = params.getI18n();
@@ -105,7 +106,7 @@ public class OrganisationUnitHierarchyConverter
 
     private Collection<OrganisationUnit> getHierarchy()
     {
-        Collection<OrganisationUnit> hierarchy = new ArrayList<OrganisationUnit>();
+        Collection<OrganisationUnit> hierarchy = new ArrayList<>();
 
         Collection<OrganisationUnit> roots = organisationUnitService.getRootOrganisationUnits();
 

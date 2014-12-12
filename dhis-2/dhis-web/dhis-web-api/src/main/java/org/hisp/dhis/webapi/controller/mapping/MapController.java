@@ -29,12 +29,9 @@ package org.hisp.dhis.webapi.controller.mapping;
  */
 
 import org.hisp.dhis.common.DimensionService;
-import org.hisp.dhis.dataelement.DataElementOperandService;
-import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.dxf2.utils.JacksonUtils;
 import org.hisp.dhis.i18n.I18nFormat;
 import org.hisp.dhis.i18n.I18nManager;
-import org.hisp.dhis.indicator.IndicatorService;
 import org.hisp.dhis.mapgeneration.MapGenerationService;
 import org.hisp.dhis.mapping.Map;
 import org.hisp.dhis.mapping.MapView;
@@ -43,7 +40,6 @@ import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroupService;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.Period;
-import org.hisp.dhis.period.PeriodService;
 import org.hisp.dhis.schema.descriptors.MapSchemaDescriptor;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.UserService;
@@ -52,21 +48,21 @@ import org.hisp.dhis.webapi.utils.ContextUtils;
 import org.hisp.dhis.webapi.utils.ContextUtils.CacheStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Set;
 
 import static org.hisp.dhis.webapi.utils.ContextUtils.DATE_PATTERN;
 
@@ -81,7 +77,7 @@ public class MapController
 {
     private static final int MAP_MIN_WIDTH = 140;
     private static final int MAP_MIN_HEIGHT = 25;
-    
+
     @Autowired
     private MappingService mappingService;
 
@@ -90,18 +86,6 @@ public class MapController
 
     @Autowired
     private OrganisationUnitGroupService organisationUnitGroupService;
-
-    @Autowired
-    private IndicatorService indicatorService;
-
-    @Autowired
-    private DataElementService dataElementService;
-
-    @Autowired
-    private DataElementOperandService operandService;
-
-    @Autowired
-    private PeriodService periodService;
 
     @Autowired
     private CurrentUserService currentUserService;
@@ -147,7 +131,6 @@ public class MapController
 
     @Override
     @RequestMapping( value = "/{uid}", method = RequestMethod.PUT, consumes = "application/json" )
-    @ResponseStatus( value = HttpStatus.NO_CONTENT )
     public void putJsonObject( HttpServletResponse response, HttpServletRequest request, @PathVariable( "uid" ) String uid, InputStream input ) throws Exception
     {
         Map map = mappingService.getMap( uid );
@@ -190,7 +173,6 @@ public class MapController
 
     @Override
     @RequestMapping( value = "/{uid}", method = RequestMethod.DELETE )
-    @ResponseStatus( value = HttpStatus.NO_CONTENT )
     public void deleteObject( HttpServletResponse response, HttpServletRequest request, @PathVariable( "uid" ) String uid ) throws Exception
     {
         Map map = mappingService.getMap( uid );
@@ -223,21 +205,21 @@ public class MapController
             ContextUtils.notFoundResponse( response, "Map does not exist: " + uid );
             return;
         }
-        
+
         if ( width != null && width < MAP_MIN_WIDTH )
         {
             ContextUtils.conflictResponse( response, "Min map width is " + MAP_MIN_WIDTH + ": " + width );
             return;
         }
-        
+
         if ( height != null && height < MAP_MIN_HEIGHT )
         {
             ContextUtils.conflictResponse( response, "Min map height is " + MAP_MIN_HEIGHT + ": " + height );
-            return;            
+            return;
         }
 
         OrganisationUnit unit = ou != null ? organisationUnitService.getOrganisationUnit( ou ) : null;
-        
+
         renderMapViewPng( map, date, unit, width, height, response );
     }
 
@@ -250,13 +232,15 @@ public class MapController
     {
         I18nFormat format = i18nManager.getI18nFormat();
 
+        Set<OrganisationUnit> roots = currentUserService.getCurrentUser().getDataViewOrganisationUnitsWithFallback();
+        
         for ( MapView view : map.getMapViews() )
         {
             view.populateAnalyticalProperties();
 
             for ( OrganisationUnit organisationUnit : view.getOrganisationUnits() )
             {
-                view.getParentGraphMap().put( organisationUnit.getUid(), organisationUnit.getParentGraph() );
+                view.getParentGraphMap().put( organisationUnit.getUid(), organisationUnit.getParentGraph( roots ) );
             }
 
             if ( view.getPeriods() != null && !view.getPeriods().isEmpty() )

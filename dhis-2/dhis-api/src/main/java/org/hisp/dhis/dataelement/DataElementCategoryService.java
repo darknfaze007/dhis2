@@ -28,13 +28,12 @@ package org.hisp.dhis.dataelement;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.concept.Concept;
-import org.hisp.dhis.hierarchy.HierarchyViolationException;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.hisp.dhis.hierarchy.HierarchyViolationException;
 
 /**
  * @author Abyot Asalefew
@@ -228,6 +227,14 @@ public interface DataElementCategoryService
     DataElementCategoryOption getDataElementCategoryOptionByName( String name );
 
     /**
+     * Retrieves the DataElementCategoryOption with the given short name.
+     * 
+     * @param shortName the short name.
+     * @return the DataElementCategoryOption with the given short name.
+     */
+    DataElementCategoryOption getDataElementCategoryOptionByShortName( String shortName );
+
+    /**
      * Retrieves the DataElementCategoryOption with the given code.
      * 
      * @param code the code.
@@ -244,14 +251,14 @@ public interface DataElementCategoryService
     Collection<DataElementCategoryOption> getAllDataElementCategoryOptions();
 
     /**
-     * Returns all DataElementCategoryOptions for a given concept
+     * Returns all DataElementCategoryOptions for the given DataElementCategory.
      * 
-     * @param concept the Concept
+     * @param category the DataElementCategory.
      * @return a collection of all DataElementCategoryOptions, or an empty
      *         collection if there are no DataElementCategoryOptions.
      */
-    Collection<DataElementCategoryOption> getDataElementCategoryOptionsByConcept( Concept concept );
-
+    Collection<DataElementCategoryOption> getDataElementCategoryOptions( DataElementCategory category );
+    
     // -------------------------------------------------------------------------
     // CategoryCombo
     // -------------------------------------------------------------------------
@@ -382,6 +389,14 @@ public interface DataElementCategoryService
     DataElementCategoryOptionCombo getDataElementCategoryOptionCombo( String uid );
 
     /**
+     * Retrieves the DataElementCategoryOptionCombo with the given uid.
+     * 
+     * @param code the code of the DataElementCategoryOptionCombo.
+     * @return the DataElementCategoryOptionCombo.
+     */
+    DataElementCategoryOptionCombo getDataElementCategoryOptionComboByCode( String code );
+
+    /**
      * Retrieves the DataElementCategoryOptionCombos with the given identifiers.
      * 
      * @param identifiers the identifiers of the
@@ -425,7 +440,22 @@ public interface DataElementCategoryService
      * @return a Collection of DataElementCategoryOptionCombos.
      */
     Collection<DataElementCategoryOptionCombo> getAllDataElementCategoryOptionCombos();
-
+    
+    /**
+     * Returns {@link DataElementCategoryOptionCombo} list with paging
+     *
+     * @param min  First result
+     * @param max  Maximum results
+     * 
+     * @return a collection of all category-option-combo
+     */
+    Collection<DataElementCategoryOptionCombo> getOptionCombosBetween( int min, int max );
+    
+    /**
+     * Returns The number of all DataElementCategoryOptionCombo available
+     */
+    Integer getOptionComboCount();
+    
     /**
      * Generates and persists a default DataElementCategory,
      * DataElementCategoryOption, DataElementCategoryCombo and
@@ -519,15 +549,6 @@ public interface DataElementCategoryService
 
     Collection<DataElementCategory> getDataElementCategoriesBetweenByName( String name, int first, int max );
 
-    /**
-     * Returns all DataElementCategories for a given concept
-     * 
-     * @param concept the Concept
-     * @return a collection of all DataElementCategories, or an empty
-     *         collection.
-     */
-    Collection<DataElementCategory> getDataElementCategoriesByConcept( Concept concept );
-
     Map<String, Integer> getDataElementCategoryOptionComboUidIdMap();
 
     int getDataElementCategoryCount();
@@ -579,6 +600,8 @@ public interface DataElementCategoryService
     Collection<CategoryOptionGroup> getCategoryOptionGroupsBetweenByName( int first, int max, String name );
 
     Collection<CategoryOptionGroup> getAllCategoryOptionGroups();
+    
+    List<CategoryOptionGroup> getCategoryOptionGroups( CategoryOptionGroupSet groupSet );
 
     CategoryOptionGroup getCategoryOptionGroupByName( String name );
 

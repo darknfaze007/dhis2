@@ -93,9 +93,9 @@ public class ProgramStageInstanceCompletenessAction
     // Input/output
     // -------------------------------------------------------------------------
 
-    private String programId;
+    private int programId;
 
-    public void setProgramId( String programId )
+    public void setProgramId( int programId )
     {
         this.programId = programId;
     }
@@ -153,7 +153,7 @@ public class ProgramStageInstanceCompletenessAction
         // Get orgunitIds
         // ---------------------------------------------------------------------
 
-        Collection<Integer> orgunitIds = new HashSet<Integer>();
+        Collection<Integer> orgunitIds = new HashSet<>();
 
         for ( OrganisationUnit orgunit : orgunits )
         {

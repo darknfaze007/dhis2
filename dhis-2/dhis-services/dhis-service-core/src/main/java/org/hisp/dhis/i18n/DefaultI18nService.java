@@ -74,6 +74,7 @@ public class DefaultI18nService
     // Internationalise
     // -------------------------------------------------------------------------
 
+    @Override
     public void internationalise( Object object )
     {
         if ( isCollection( object ) )
@@ -86,6 +87,7 @@ public class DefaultI18nService
         }
     }
 
+    @Override
     public void internationalise( Object object, Locale locale )
     {
         if ( isCollection( object ) )
@@ -152,11 +154,17 @@ public class DefaultI18nService
         }
     }
 
+    @Override
     public Map<String, String> getObjectPropertyValues( Object object )
     {
+        if ( object == null )
+        {
+            return null;
+        }
+        
         List<String> properties = getObjectPropertyNames( object );
 
-        Map<String, String> translations = new HashMap<String, String>();
+        Map<String, String> translations = new HashMap<>();
 
         for ( String property : properties )
         {
@@ -166,8 +174,14 @@ public class DefaultI18nService
         return translations;
     }
 
+    @Override
     public List<String> getObjectPropertyNames( Object object )
     {
+        if ( object == null )
+        {
+            return null;
+        }
+        
         if ( !(object instanceof IdentifiableObject) )
         {
             throw new IllegalArgumentException( "I18n object must be identifiable: " + object );
@@ -186,6 +200,7 @@ public class DefaultI18nService
     // Object
     // -------------------------------------------------------------------------
 
+    @Override
     public void removeObject( Object object )
     {
         if ( object != null )
@@ -198,6 +213,7 @@ public class DefaultI18nService
     // Translation
     // -------------------------------------------------------------------------
 
+    @Override
     public void updateTranslation( String className, Locale locale, Map<String, String> translations, String objectUid )
     {
         if ( locale != null && className != null )
@@ -212,11 +228,13 @@ public class DefaultI18nService
         }
     }
 
+    @Override
     public Map<String, String> getTranslations( String className, String objectUid )
     {
         return getTranslations( className, getCurrentLocale(), objectUid );
     }
 
+    @Override
     public Map<String, String> getTranslations( String className, Locale locale, String objectUid )
     {
         if ( locale != null && className != null )
@@ -224,14 +242,16 @@ public class DefaultI18nService
             return convertTranslations( translationService.getTranslations( className, locale, objectUid ) );
         }
 
-        return new HashMap<String, String>();
+        return new HashMap<>();
     }
 
+    @Override
     public Map<String, String> getTranslationsNoFallback( String className, String objectUid )
     {
         return getTranslationsNoFallback( className, objectUid, getCurrentLocale() );
     }
 
+    @Override
     public Map<String, String> getTranslationsNoFallback( String className, String objectUid, Locale locale )
     {
         if ( locale != null && className != null )
@@ -239,23 +259,26 @@ public class DefaultI18nService
             return convertTranslations( translationService.getTranslationsNoFallback( className, locale, objectUid ) );
         }
 
-        return new HashMap<String, String>();
+        return new HashMap<>();
     }
 
     // -------------------------------------------------------------------------
     // Locale
     // -------------------------------------------------------------------------
 
+    @Override
     public Locale getCurrentLocale()
     {
         return (Locale) userSettingService.getUserSetting( UserSettingService.KEY_DB_LOCALE );
     }
 
+    @Override
     public boolean currentLocaleIsBase()
     {
         return getCurrentLocale() == null;
     }
 
+    @Override
     public List<Locale> getAvailableLocales()
     {
         return localeService.getAllLocales();
@@ -269,7 +292,6 @@ public class DefaultI18nService
      * Returns a map representing Translations for an object matching the given
      * id where the key is the translation property and the value is the
      * translation value.
-     * 
      *
      * @param translations Collection to search.
      * @param objectUid
@@ -277,13 +299,16 @@ public class DefaultI18nService
      */
     private Map<String, String> getTranslationsForObject( Collection<Translation> translations, String objectUid )
     {
-        Collection<Translation> objectTranslations = new ArrayList<Translation>();
+        Collection<Translation> objectTranslations = new ArrayList<>();
 
-        for ( Translation translation : translations )
+        if ( objectUid != null )
         {
-            if (translation.getObjectUid().equals( objectUid ))
+            for ( Translation translation : translations )
             {
-                objectTranslations.add( translation );
+                if ( objectUid.equals( translation.getObjectUid() ) )
+                {
+                    objectTranslations.add( translation );
+                }
             }
         }
 
@@ -299,7 +324,7 @@ public class DefaultI18nService
      */
     private Map<String, String> convertTranslations( Collection<Translation> translations )
     {
-        Map<String, String> translationMap = new Hashtable<String, String>();
+        Map<String, String> translationMap = new Hashtable<>();
 
         for ( Translation translation : translations )
         {

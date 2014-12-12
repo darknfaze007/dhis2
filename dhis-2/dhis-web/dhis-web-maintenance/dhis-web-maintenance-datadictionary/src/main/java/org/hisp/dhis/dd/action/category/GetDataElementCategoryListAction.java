@@ -91,6 +91,7 @@ public class GetDataElementCategoryListAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         defaultCategory = dataElementCategoryService.getDataElementCategoryByName( DataElementCategory.DEFAULT_NAME );
@@ -99,13 +100,13 @@ public class GetDataElementCategoryListAction
         {
             this.paging = createPaging( dataElementCategoryService.getDataElementCategoryCountByName( key ) );
             
-            dataElementCategories = new ArrayList<DataElementCategory>( dataElementCategoryService.getDataElementCategoriesBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
+            dataElementCategories = new ArrayList<>( dataElementCategoryService.getDataElementCategoriesBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( dataElementCategoryService.getDataElementCategoryCount() );
             
-            dataElementCategories = new ArrayList<DataElementCategory>( dataElementCategoryService.getDataElementCategoriesBetween( paging.getStartPos(), paging.getPageSize() ) );
+            dataElementCategories = new ArrayList<>( dataElementCategoryService.getDataElementCategoriesBetween( paging.getStartPos(), paging.getPageSize() ) );
         }
         
         Collections.sort( dataElementCategories, IdentifiableObjectNameComparator.INSTANCE );

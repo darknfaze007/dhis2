@@ -43,13 +43,14 @@ import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
 import org.hisp.dhis.dataelement.DataElementOperand;
+import org.hisp.dhis.indicator.Indicator;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@JacksonXmlRootElement(localName = "section", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement( localName = "section", namespace = DxfNamespaces.DXF_2_0 )
 public class Section
     extends BaseIdentifiableObject
 {
@@ -58,12 +59,17 @@ public class Section
      */
     private static final long serialVersionUID = -4657657995917502852L;
 
+    private String description;
+
     private DataSet dataSet;
 
     @Scanned
-    private List<DataElement> dataElements = new ArrayList<DataElement>();
+    private List<DataElement> dataElements = new ArrayList<>();
 
-    private Set<DataElementOperand> greyedFields = new HashSet<DataElementOperand>();
+    @Scanned
+    private List<Indicator> indicators = new ArrayList<>();
+
+    private Set<DataElementOperand> greyedFields = new HashSet<>();
 
     private int sortOrder;
 
@@ -143,18 +149,21 @@ public class Section
 
             for ( DataElement element : dataElements )
             {
-                if ( categoryCombo != null && !categoryCombo.equals( element.getCategoryCombo() ) )
+                if ( element != null )
                 {
-                    return true;
-                }
+                    if ( categoryCombo != null && !categoryCombo.equals( element.getCategoryCombo() ) )
+                    {
+                        return true;
+                    }
 
-                categoryCombo = element.getCategoryCombo();
+                    categoryCombo = element.getCategoryCombo();
+                }
             }
         }
 
         return false;
     }
-    
+
     public boolean hasDataElements()
     {
         return dataElements != null && !dataElements.isEmpty();
@@ -171,9 +180,22 @@ public class Section
     // -------------------------------------------------------------------------
 
     @JsonProperty
-    @JsonSerialize(as = BaseIdentifiableObject.class)
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlProperty(namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public String getDescription()
+    {
+        return description;
+    }
+
+    public void setDescription( String description )
+    {
+        this.description = description;
+    }
+
+    @JsonProperty
+    @JsonSerialize( as = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public DataSet getDataSet()
     {
         return dataSet;
@@ -185,10 +207,10 @@ public class Section
     }
 
     @JsonProperty
-    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlElementWrapper(localName = "dataElements", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty(localName = "dataElement", namespace = DxfNamespaces.DXF_2_0)
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "dataElements", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "dataElement", namespace = DxfNamespaces.DXF_2_0 )
     public List<DataElement> getDataElements()
     {
         return dataElements;
@@ -197,6 +219,21 @@ public class Section
     public void setDataElements( List<DataElement> dataElements )
     {
         this.dataElements = dataElements;
+    }
+
+    @JsonProperty
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "indicators", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "indicator", namespace = DxfNamespaces.DXF_2_0 )
+    public List<Indicator> getIndicators()
+    {
+        return indicators;
+    }
+
+    public void setIndicators( List<Indicator> indicators )
+    {
+        this.indicators = indicators;
     }
 
     public int getSortOrder()
@@ -210,9 +247,9 @@ public class Section
     }
 
     @JsonProperty
-    @JsonView({ DetailedView.class, ExportView.class })
-    @JacksonXmlElementWrapper(localName = "greyedFields", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty(localName = "greyedField", namespace = DxfNamespaces.DXF_2_0)
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlElementWrapper( localName = "greyedFields", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "greyedField", namespace = DxfNamespaces.DXF_2_0 )
     public Set<DataElementOperand> getGreyedFields()
     {
         return greyedFields;

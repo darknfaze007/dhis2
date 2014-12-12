@@ -28,7 +28,7 @@ package org.hisp.dhis.period;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.calendar.DateTimeUnit;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -83,7 +83,7 @@ public class TwoYearlyPeriodType
     }
 
     @Override
-    public Period createPeriod( DateUnit dateUnit, org.hisp.dhis.calendar.Calendar calendar )
+    public Period createPeriod( DateTimeUnit dateTimeUnit, org.hisp.dhis.calendar.Calendar calendar )
     {
         return null;
     }
@@ -99,7 +99,7 @@ public class TwoYearlyPeriodType
     // -------------------------------------------------------------------------
 
     @Override
-    public Period getNextPeriod( Period period )
+    public Period getNextPeriod( Period period, org.hisp.dhis.calendar.Calendar calendar )
     {
         Calendar cal = createCalendarInstance( period.getStartDate() );
         cal.set( Calendar.YEAR, cal.get( Calendar.YEAR ) - cal.get( Calendar.YEAR ) % 2 + 2 );
@@ -114,7 +114,7 @@ public class TwoYearlyPeriodType
     }
 
     @Override
-    public Period getPreviousPeriod( Period period )
+    public Period getPreviousPeriod( Period period, org.hisp.dhis.calendar.Calendar calendar )
     {
         Calendar cal = createCalendarInstance( period.getStartDate() );
         cal.set( Calendar.YEAR, cal.get( Calendar.YEAR ) - cal.get( Calendar.YEAR ) % 2 - 2 );
@@ -138,7 +138,7 @@ public class TwoYearlyPeriodType
         cal.add( Calendar.YEAR, cal.get( Calendar.YEAR ) % 2 == 0 ? -10 : -9 );
         cal.set( Calendar.DAY_OF_YEAR, 1 );
 
-        ArrayList<Period> twoYears = new ArrayList<Period>();
+        ArrayList<Period> twoYears = new ArrayList<>();
 
         for ( int i = 0; i < 11; ++i )
         {
@@ -153,7 +153,7 @@ public class TwoYearlyPeriodType
     }
 
     @Override
-    public List<Period> generatePeriods( DateUnit dateUnit )
+    public List<Period> generatePeriods( DateTimeUnit dateTimeUnit )
     {
         return null; // TODO
     }
@@ -165,9 +165,9 @@ public class TwoYearlyPeriodType
     }
 
     @Override
-    public List<Period> generateRollingPeriods( DateUnit dateUnit )
+    public List<Period> generateRollingPeriods( DateTimeUnit dateTimeUnit )
     {
-        return generateLast5Years( getCalendar().toIso( dateUnit ).toJdkDate() );
+        return generateLast5Years( getCalendar().toIso( dateTimeUnit ).toJdkDate() );
     }
 
     @Override
@@ -177,7 +177,7 @@ public class TwoYearlyPeriodType
         cal.add( Calendar.YEAR, cal.get( Calendar.YEAR ) % 2 == 0 ? -10 : -9 );
         cal.set( Calendar.DAY_OF_YEAR, 1 );
 
-        ArrayList<Period> twoYears = new ArrayList<Period>();
+        ArrayList<Period> twoYears = new ArrayList<>();
 
         for ( int i = 0; i < 5; ++i )
         {
@@ -198,7 +198,7 @@ public class TwoYearlyPeriodType
     }
 
     @Override
-    public String getIsoDate( DateUnit dateUnit )
+    public String getIsoDate( DateTimeUnit dateTimeUnit )
     {
         return null; // TODO
     }

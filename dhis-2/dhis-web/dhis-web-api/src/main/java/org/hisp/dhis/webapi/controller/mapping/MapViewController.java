@@ -117,7 +117,7 @@ public class MapViewController
     //--------------------------------------------------------------------------
 
     @Override
-    protected List<MapView> getEntityList( WebMetaData metaData, WebOptions options )
+    protected List<MapView> getEntityList( WebMetaData metaData, WebOptions options, List<String> filters )
     {
         List<MapView> entityList;
 
@@ -127,7 +127,7 @@ public class MapViewController
         }
         else
         {
-            entityList = new ArrayList<MapView>( manager.getAll( getEntityClass() ) );
+            entityList = new ArrayList<>( manager.getAll( getEntityClass() ) );
         }
 
         return entityList;

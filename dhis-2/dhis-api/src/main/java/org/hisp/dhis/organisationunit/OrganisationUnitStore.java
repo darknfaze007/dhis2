@@ -59,6 +59,14 @@ public interface OrganisationUnitStore
     OrganisationUnit getByUuid( String uuid );
 
     /**
+     * Retrieves all OrganisationUnits matching the given names.
+     *
+     * @param names names of the OrganisationUnits to return.
+     * @return all OrganisationUnits matching the given names.
+     */
+    Collection<OrganisationUnit> getByNames( Collection<String> names );
+
+    /**
      * Returns all OrganisationUnits by status.
      *
      * @param active Get active or inactive
@@ -121,9 +129,13 @@ public interface OrganisationUnitStore
      */
     Collection<OrganisationUnit> getOrganisationUnitsByNameAndGroups( String query, Collection<OrganisationUnitGroup> groups, boolean limit );
 
+    /**
+     * Creates a mapping between organisation unit UID and set of data set UIDs
+     * being assigned to the organisation unit.
+     * 
+     * @return a map of sets.
+     */
     Map<String, Set<String>> getOrganisationUnitDataSetAssocationMap();
-
-    Map<String, Set<String>> getOrganisationUnitGroupDataSetAssocationMap();
 
     Set<Integer> getOrganisationUnitIdsWithoutData();
 

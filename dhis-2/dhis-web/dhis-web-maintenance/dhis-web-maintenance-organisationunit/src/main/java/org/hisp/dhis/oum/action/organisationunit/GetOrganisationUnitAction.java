@@ -33,7 +33,7 @@ import org.hisp.dhis.attribute.Attribute;
 import org.hisp.dhis.attribute.AttributeService;
 import org.hisp.dhis.attribute.comparator.AttributeSortOrderComparator;
 import org.hisp.dhis.calendar.CalendarService;
-import org.hisp.dhis.calendar.DateUnit;
+import org.hisp.dhis.calendar.DateTimeUnit;
 import org.hisp.dhis.common.comparator.IdentifiableObjectNameComparator;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
@@ -131,7 +131,7 @@ public class GetOrganisationUnitAction
         return attributes;
     }
 
-    public Map<Integer, String> attributeValues = new HashMap<Integer, String>();
+    public Map<Integer, String> attributeValues = new HashMap<>();
 
     public Map<Integer, String> getAttributeValues()
     {
@@ -177,6 +177,7 @@ public class GetOrganisationUnitAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -211,16 +212,14 @@ public class GetOrganisationUnitAction
 
         if ( organisationUnit.getOpeningDate() != null )
         {
-            DateUnit dateUnit = DateUnit.fromJdkDate( organisationUnit.getOpeningDate() );
-            dateUnit = calendarService.getSystemCalendar().fromIso( dateUnit );
-            openingDate = calendarService.getSystemCalendar().formattedDate( dateUnit );
+            DateTimeUnit dateTimeUnit = calendarService.getSystemCalendar().fromIso( organisationUnit.getOpeningDate() );
+            openingDate = calendarService.getSystemCalendar().formattedDate( dateTimeUnit );
         }
 
         if ( organisationUnit.getClosedDate() != null )
         {
-            DateUnit dateUnit = DateUnit.fromJdkDate( organisationUnit.getClosedDate() );
-            dateUnit = calendarService.getSystemCalendar().fromIso( dateUnit );
-            closedDate = calendarService.getSystemCalendar().formattedDate( dateUnit );
+            DateTimeUnit dateTimeUnit = calendarService.getSystemCalendar().fromIso( organisationUnit.getClosedDate() );
+            closedDate = calendarService.getSystemCalendar().formattedDate( dateTimeUnit );
         }
 
         return SUCCESS;

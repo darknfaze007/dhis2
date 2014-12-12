@@ -29,8 +29,11 @@ package org.hisp.dhis.dxf2.events.trackedentity;
  */
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
+import org.apache.commons.lang.StringUtils;
 import org.hisp.dhis.common.DxfNamespaces;
 
 import java.util.ArrayList;
@@ -47,13 +50,29 @@ public class TrackedEntityInstance
     private String trackedEntityInstance;
 
     private String orgUnit;
+    
+    private String created;
 
-    private List<Relationship> relationships = new ArrayList<Relationship>();
+    private List<Relationship> relationships = new ArrayList<>();
 
-    private List<Attribute> attributes = new ArrayList<Attribute>();
+    private List<Attribute> attributes = new ArrayList<>();
 
     public TrackedEntityInstance()
     {
+    }
+
+    /**
+     * Trims the value property of attribute values to null.
+     */
+    public void trimValuesToNull()
+    {
+        if ( attributes != null )
+        {
+            for ( Attribute attribute : attributes )
+            {
+                attribute.setValue( StringUtils.trimToNull( attribute.getValue() ) );
+            }
+        }
     }
 
     @JsonProperty( required = true )
@@ -91,6 +110,18 @@ public class TrackedEntityInstance
     {
         this.orgUnit = orgUnit;
     }
+    
+    @JsonProperty( required = true )
+    @JacksonXmlProperty( isAttribute = true )
+    public String getCreated()
+    {
+        return created;
+    }
+
+    public void setCreated( String created )
+    {
+        this.created = created;
+    }
 
     @JsonProperty
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -105,7 +136,8 @@ public class TrackedEntityInstance
     }
 
     @JsonProperty
-    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlElementWrapper( localName = "attributes", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "attribute", namespace = DxfNamespaces.DXF_2_0 )
     public List<Attribute> getAttributes()
     {
         return attributes;
@@ -126,6 +158,7 @@ public class TrackedEntityInstance
 
         if ( attributes != null ? !attributes.equals( that.attributes ) : that.attributes != null ) return false;
         if ( orgUnit != null ? !orgUnit.equals( that.orgUnit ) : that.orgUnit != null ) return false;
+        if ( created != null ? !created.equals( that.created ) : that.created != null ) return false;
         if ( relationships != null ? !relationships.equals( that.relationships ) : that.relationships != null ) return false;
         if ( trackedEntity != null ? !trackedEntity.equals( that.trackedEntity ) : that.trackedEntity != null ) return false;
         if ( trackedEntityInstance != null ? !trackedEntityInstance.equals( that.trackedEntityInstance ) : that.trackedEntityInstance != null )
@@ -140,6 +173,7 @@ public class TrackedEntityInstance
         int result = trackedEntity != null ? trackedEntity.hashCode() : 0;
         result = 31 * result + (trackedEntityInstance != null ? trackedEntityInstance.hashCode() : 0);
         result = 31 * result + (orgUnit != null ? orgUnit.hashCode() : 0);
+        result = 31 * result + (created != null ? created.hashCode() : 0);
         result = 31 * result + (relationships != null ? relationships.hashCode() : 0);
         result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
         return result;
@@ -152,6 +186,7 @@ public class TrackedEntityInstance
             "trackedEntity='" + trackedEntity + '\'' +
             ", trackedEntityInstance='" + trackedEntityInstance + '\'' +
             ", orgUnit='" + orgUnit + '\'' +
+            ", created='" + created + '\'' +
             ", relationships=" + relationships +
             ", attributes=" + attributes +
             '}';

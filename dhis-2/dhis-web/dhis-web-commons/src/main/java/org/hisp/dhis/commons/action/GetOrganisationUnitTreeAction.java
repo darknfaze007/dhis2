@@ -34,8 +34,6 @@ import org.hisp.dhis.configuration.ConfigurationService;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitLevel;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
-import org.hisp.dhis.system.util.CollectionUtils;
-import org.hisp.dhis.system.util.functional.Predicate;
 import org.hisp.dhis.user.CurrentUserService;
 import org.hisp.dhis.user.User;
 import org.hisp.dhis.version.Version;
@@ -89,14 +87,14 @@ public class GetOrganisationUnitTreeAction
     // Input & Output
     // -------------------------------------------------------------------------
 
-    private List<OrganisationUnit> organisationUnits = new ArrayList<OrganisationUnit>();
+    private List<OrganisationUnit> organisationUnits = new ArrayList<>();
 
     public List<OrganisationUnit> getOrganisationUnits()
     {
         return organisationUnits;
     }
 
-    private List<OrganisationUnit> rootOrganisationUnits = new ArrayList<OrganisationUnit>();
+    private List<OrganisationUnit> rootOrganisationUnits = new ArrayList<>();
 
     public List<OrganisationUnit> getRootOrganisationUnits()
     {
@@ -136,6 +134,13 @@ public class GetOrganisationUnitTreeAction
         this.parentId = parentId;
     }
 
+    private String leafId;
+
+    public void setLeafId( String leafId )
+    {
+        this.leafId = leafId;
+    }
+
     private String byName;
 
     public void setByName( String byName )
@@ -150,13 +155,25 @@ public class GetOrganisationUnitTreeAction
         return realRoot;
     }
 
+    private Integer offlineLevel;
+
+    public void setOfflineLevel( Integer offlineLevel )
+    {
+        this.offlineLevel = offlineLevel;
+    }
+
     // -------------------------------------------------------------------------
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
+        version = getVersionString();
+
+        username = currentUserService.getCurrentUsername();
+
         if ( byName != null )
         {
             List<OrganisationUnit> organisationUnitByName = organisationUnitService.getOrganisationUnitByName( byName );
@@ -181,6 +198,25 @@ public class GetOrganisationUnitTreeAction
             }
         }
 
+        if ( leafId != null )
+        {
+            OrganisationUnit leaf = organisationUnitService.getOrganisationUnit( leafId );
+
+            if ( leaf != null )
+            {
+                organisationUnits.add( leaf );
+                organisationUnits.addAll( leaf.getChildren() );
+
+                for ( OrganisationUnit organisationUnit : leaf.getAncestors() )
+                {
+                    organisationUnits.add( organisationUnit );
+                    organisationUnits.addAll( organisationUnit.getChildren() );
+                }
+            }
+
+            return "partial";
+        }
+
         if ( parentId != null )
         {
             OrganisationUnit parent = organisationUnitService.getOrganisationUnit( parentId );
@@ -193,73 +229,33 @@ public class GetOrganisationUnitTreeAction
             return "partial";
         }
 
-        Collection<OrganisationUnit> userOrganisationUnits;
+        Collection<OrganisationUnit> userOrganisationUnits = new ArrayList<>();
 
         User user = currentUserService.getCurrentUser();
 
-        if ( user.getOrganisationUnits() != null && user.getOrganisationUnits().size() > 0 )
+        if ( user != null && user.hasOrganisationUnit() )
         {
-            userOrganisationUnits = new ArrayList<OrganisationUnit>( user.getOrganisationUnits() );
-            rootOrganisationUnits = new ArrayList<OrganisationUnit>( user.getOrganisationUnits() );
+            userOrganisationUnits = new ArrayList<>( user.getOrganisationUnits() );
+            rootOrganisationUnits = new ArrayList<>( user.getOrganisationUnits() );
         }
-        else
+        else if ( currentUserService.currentUserIsSuper() || user == null )
         {
-            if ( user.getOrganisationUnits() != null && currentUserService.currentUserIsSuper() )
-            {
-                userOrganisationUnits = new ArrayList<OrganisationUnit>( organisationUnitService.getRootOrganisationUnits() );
-                rootOrganisationUnits = new ArrayList<OrganisationUnit>( organisationUnitService.getRootOrganisationUnits() );
-            }
-            else
-            {
-                userOrganisationUnits = new ArrayList<OrganisationUnit>();
-                rootOrganisationUnits = new ArrayList<OrganisationUnit>();
-            }
+            userOrganisationUnits = new ArrayList<>( organisationUnitService.getRootOrganisationUnits() );
+            rootOrganisationUnits = new ArrayList<>( organisationUnitService.getRootOrganisationUnits() );
         }
 
         if ( !versionOnly && !rootOrganisationUnits.isEmpty() )
         {
+            OrganisationUnitLevel offlineOrgUnitLevel = offlineLevel != null ? new OrganisationUnitLevel( offlineLevel, "<no-name>" )
+                : configurationService.getConfiguration().getOfflineOrganisationUnitLevel();
+
+            List<OrganisationUnitLevel> orgUnitLevels = organisationUnitService.getOrganisationUnitLevels();
+
+            final Integer maxLevels = (offlineOrgUnitLevel != null && !orgUnitLevels.isEmpty()) ? offlineOrgUnitLevel.getLevel() : null;
+
             for ( OrganisationUnit unit : userOrganisationUnits )
             {
-                organisationUnits.addAll( organisationUnitService.getOrganisationUnitWithChildren( unit.getId() ) );
-            }
-
-            // only try OU-level filtering if there are any levels available
-            if ( !organisationUnitService.getOrganisationUnitLevels().isEmpty() )
-            {
-                OrganisationUnitLevel offlineOrganisationUnitLevel = configurationService.getConfiguration().getOfflineOrganisationUnitLevel();
-
-                int size = organisationUnitService.getOrganisationUnitLevels().size();
-
-                if ( offlineOrganisationUnitLevel == null )
-                {
-                    offlineOrganisationUnitLevel = organisationUnitService.getOrganisationUnitLevelByLevel( size );
-                }
-
-                int minLevel = rootOrganisationUnits.get( 0 ).getLevel();
-                int maxLevel = Integer.MAX_VALUE;
-
-                if ( organisationUnitService.getOrganisationUnitLevelByLevel( size ) != null )
-                {
-                    maxLevel = organisationUnitService.getOrganisationUnitLevelByLevel( size ).getLevel();
-                }
-
-                int total = minLevel + offlineOrganisationUnitLevel.getLevel() - 1;
-
-                if ( total > offlineOrganisationUnitLevel.getLevel() )
-                {
-                    total = maxLevel;
-                }
-
-                final int finalTotal = total;
-
-                CollectionUtils.filter( organisationUnits, new Predicate<OrganisationUnit>()
-                {
-                    @Override
-                    public boolean evaluate( OrganisationUnit organisationUnit )
-                    {
-                        return organisationUnit.getLevel() <= finalTotal;
-                    }
-                } );
+                organisationUnits.addAll( organisationUnitService.getOrganisationUnitWithChildren( unit.getId(), maxLevels ) );
             }
         }
 
@@ -272,10 +268,6 @@ public class GetOrganisationUnitTreeAction
         }
 
         Collections.sort( rootOrganisationUnits, IdentifiableObjectNameComparator.INSTANCE );
-
-        version = getVersionString();
-
-        username = currentUserService.getCurrentUsername();
 
         return SUCCESS;
     }

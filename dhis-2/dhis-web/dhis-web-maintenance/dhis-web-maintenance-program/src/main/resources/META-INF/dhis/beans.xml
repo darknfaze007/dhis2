@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
 
 	<!-- RelationshipType -->
 
@@ -285,13 +285,6 @@
 	</bean>
 
 	<bean
-		id="org.hisp.dhis.trackedentity.action.programstage.GetProgramStageListAction"
-		class="org.hisp.dhis.trackedentity.action.programstage.GetProgramStageListAction"
-		scope="prototype">
-		<property name="programService" ref="org.hisp.dhis.program.ProgramService" />
-	</bean>
-
-	<bean
 		id="org.hisp.dhis.trackedentity.action.programstage.GetProgramStageAction"
 		class="org.hisp.dhis.trackedentity.action.programstage.GetProgramStageAction"
 		scope="prototype">
@@ -304,14 +297,6 @@
 		class="org.hisp.dhis.trackedentity.action.programstage.RemoveProgramStageAction"
 		scope="prototype">
 		<property name="programStageService" ref="org.hisp.dhis.program.ProgramStageService" />
-	</bean>
-
-	<bean
-		id="org.hisp.dhis.trackedentity.action.programstage.SaveProgramStageSortOrderAction"
-		class="org.hisp.dhis.trackedentity.action.programstage.SaveProgramStageSortOrderAction"
-		scope="prototype">
-		<property name="programStageService" ref="org.hisp.dhis.program.ProgramStageService" />
-		<property name="programService" ref="org.hisp.dhis.program.ProgramService" />
 	</bean>
 
 	<bean
@@ -333,6 +318,12 @@
 		<property name="programService" ref="org.hisp.dhis.program.ProgramService" />
 	</bean>
 
+	<bean
+		id="org.hisp.dhis.trackedentity.action.programstage.SortProgramStagesAction"
+		class="org.hisp.dhis.trackedentity.action.programstage.SortProgramStagesAction"
+		scope="prototype">
+	</bean>
+	
 	<!-- Program Stage Section -->
 
 	<bean
@@ -818,6 +809,12 @@
 		scope="prototype">
 		<property name="dataSetService" ref="org.hisp.dhis.dataset.DataSetService" />
 		<property name="dataElementService" ref="org.hisp.dhis.dataelement.DataElementService" />
+	</bean>
+	
+	<bean
+		id="org.hisp.dhis.trackedentity.action.caseaggregation.GetOptionsAction"
+		class="org.hisp.dhis.trackedentity.action.caseaggregation.GetOptionsAction"
+		scope="prototype">
 	</bean>
 
 	<!-- Validation - ValidationCriteria -->

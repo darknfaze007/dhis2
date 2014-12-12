@@ -31,6 +31,7 @@ package org.hisp.dhis.system.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,6 +46,7 @@ public class TextUtils
     public static final TextUtils INSTANCE = new TextUtils();
     public static final String EMPTY = "";
     public static final String SPACE = "";
+    public static final String SEP = "-";
     public static final String LN = System.getProperty( "line.separator" );
     
     private static final Pattern LINK_PATTERN = Pattern.compile( "((http://|https://|www\\.).+?)($|\\n|\\r|\\r\\n| )" );
@@ -128,7 +130,7 @@ public class TextUtils
             return null;
         }
         
-        return new ArrayList<String>( Arrays.asList( string.split( "\\s" ) ) );
+        return new ArrayList<>( Arrays.asList( string.split( "\\s" ) ) );
     }
     
     /**
@@ -281,6 +283,32 @@ public class TextUtils
         return builder.toString();
     }
 
+    /**
+     * Joins the elements of the provided array into a single String containing 
+     * the provided list of elements.
+     * 
+     * @param list the list of objects to join.
+     * @param separator the separator string.
+     * @param nullReplacement the value to replace nulls in list with.
+     * @return the joined string.
+     */
+    public static <T> String join( List<T> list, String separator, T nullReplacement )
+    {
+        if ( list == null )
+        {
+            return null;
+        }
+        
+        List<T> objects = new ArrayList<T>( list );
+        
+        if ( nullReplacement != null )
+        {
+            Collections.replaceAll( objects, null, nullReplacement );
+        }
+        
+        return StringUtils.join( objects, separator );
+    }
+    
     /**
      * Transforms a collection of Integers into a comma delimited String. If the
      * given collection of elements are null or is empty, an empty String is

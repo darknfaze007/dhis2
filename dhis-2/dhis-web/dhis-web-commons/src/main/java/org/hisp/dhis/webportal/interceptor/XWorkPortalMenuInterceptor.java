@@ -66,22 +66,25 @@ public class XWorkPortalMenuInterceptor
     // AroundInterceptor implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void destroy()
     {
         // TODO Auto-generated method stub
         
     }
 
+    @Override
     public void init()
     {
         // TODO Auto-generated method stub
         
     }
 
+    @Override
     public String intercept( ActionInvocation invocation )
         throws Exception
     {
-        Map<String, MenuState> menuStateMap = new HashMap<String, MenuState>( 1 );
+        Map<String, MenuState> menuStateMap = new HashMap<>( 1 );
 
         MenuState menuState = menuStateManager.getMenuState();
 

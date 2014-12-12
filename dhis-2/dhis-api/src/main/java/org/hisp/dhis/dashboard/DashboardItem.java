@@ -34,12 +34,16 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
 import org.hisp.dhis.chart.Chart;
 import org.hisp.dhis.common.BaseIdentifiableObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.IdentifiableObject;
+import org.hisp.dhis.common.annotation.Scanned;
 import org.hisp.dhis.common.view.DetailedView;
+import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.document.Document;
+import org.hisp.dhis.eventchart.EventChart;
 import org.hisp.dhis.mapping.Map;
 import org.hisp.dhis.report.Report;
 import org.hisp.dhis.reporttable.ReportTable;
@@ -61,7 +65,8 @@ public class DashboardItem
 {
     public static final int MAX_CONTENT = 8;
 
-    public static final String TYPE_CHART = "chart";
+    public static final String TYPE_CHART = "chart"; //TODO use enum
+    public static final String TYPE_EVENT_CHART = "eventChart"; //TODO use enum
     public static final String TYPE_MAP = "map";
     public static final String TYPE_REPORT_TABLE = "reportTable";
     public static final String TYPE_USERS = "users";
@@ -72,17 +77,23 @@ public class DashboardItem
 
     private Chart chart;
 
+    private EventChart eventChart;
+
     private Map map;
 
     private ReportTable reportTable;
 
-    private List<User> users = new ArrayList<User>();
+    @Scanned
+    private List<User> users = new ArrayList<>();
 
-    private List<ReportTable> reportTables = new ArrayList<ReportTable>();
+    @Scanned
+    private List<ReportTable> reportTables = new ArrayList<>();
 
-    private List<Report> reports = new ArrayList<Report>();
+    @Scanned
+    private List<Report> reports = new ArrayList<>();
 
-    private List<Document> resources = new ArrayList<Document>();
+    @Scanned
+    private List<Document> resources = new ArrayList<>();
 
     private Boolean messages;
 
@@ -111,6 +122,10 @@ public class DashboardItem
         if ( chart != null )
         {
             return TYPE_CHART;
+        }
+        else if ( eventChart != null )
+        {
+            return TYPE_EVENT_CHART;
         }
         else if ( map != null )
         {
@@ -153,6 +168,10 @@ public class DashboardItem
         if ( chart != null )
         {
             return chart;
+        }
+        else if ( eventChart != null )
+        {
+            return eventChart;
         }
         else if ( map != null )
         {
@@ -198,6 +217,7 @@ public class DashboardItem
     {
         int count = 0;
         count += chart != null ? 1 : 0;
+        count += eventChart != null ? 1 : 0;
         count += map != null ? 1 : 0;
         count += reportTable != null ? 1 : 0;
         count += users.size();
@@ -256,7 +276,7 @@ public class DashboardItem
     // -------------------------------------------------------------------------
 
     @JsonProperty
-    @JsonView( { DetailedView.class } )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Chart getChart()
@@ -270,7 +290,21 @@ public class DashboardItem
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class } )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JsonSerialize( as = BaseIdentifiableObject.class )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public EventChart getEventChart()
+    {
+        return eventChart;
+    }
+    
+    public void setEventChart( EventChart eventChart )
+    {
+        this.eventChart = eventChart;
+    }
+    
+    @JsonProperty
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Map getMap()
@@ -284,7 +318,7 @@ public class DashboardItem
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class } )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JsonSerialize( as = BaseIdentifiableObject.class )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public ReportTable getReportTable()
@@ -298,7 +332,7 @@ public class DashboardItem
     }
 
     @JsonProperty( value = "users" )
-    @JsonView( { DetailedView.class } )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
     @JacksonXmlElementWrapper( localName = "users", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "user", namespace = DxfNamespaces.DXF_2_0 )
@@ -313,7 +347,7 @@ public class DashboardItem
     }
 
     @JsonProperty( value = "reportTables" )
-    @JsonView( { DetailedView.class } )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
     @JacksonXmlElementWrapper( localName = "reportTables", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "reportTableItem", namespace = DxfNamespaces.DXF_2_0 )
@@ -328,7 +362,7 @@ public class DashboardItem
     }
 
     @JsonProperty( value = "reports" )
-    @JsonView( { DetailedView.class } )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
     @JacksonXmlElementWrapper( localName = "reports", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "report", namespace = DxfNamespaces.DXF_2_0 )
@@ -343,7 +377,7 @@ public class DashboardItem
     }
 
     @JsonProperty( value = "resources" )
-    @JsonView( { DetailedView.class } )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JsonSerialize( contentAs = BaseIdentifiableObject.class )
     @JacksonXmlElementWrapper( localName = "resources", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "resource", namespace = DxfNamespaces.DXF_2_0 )
@@ -358,7 +392,7 @@ public class DashboardItem
     }
 
     @JsonProperty
-    @JsonView( { DetailedView.class } )
+    @JsonView( { DetailedView.class, ExportView.class } )
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Boolean getMessages()
     {

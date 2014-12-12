@@ -30,6 +30,7 @@ package org.hisp.dhis.user;
 
 import org.hisp.dhis.DhisSpringTest;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,8 +46,12 @@ import static org.junit.Assert.*;
 public class UserGroupServiceTest
     extends DhisSpringTest
 {
+    @Autowired
     private UserGroupService userGroupService;
 
+    @Autowired
+    private  UserService userService;
+    
     private User user1;
     private User user2;
     private User user3;
@@ -55,9 +60,6 @@ public class UserGroupServiceTest
     public void setUpTest()
         throws Exception
     {
-        userService = (UserService) getBean( UserService.ID );
-        userGroupService = (UserGroupService) getBean( UserGroupService.ID );
-
         user1 = createUser( 'A' );
         user2 = createUser( 'B' );
         user3 = createUser( 'C' );
@@ -83,7 +85,7 @@ public class UserGroupServiceTest
     @Test
     public void testAddUserGroup()
     {
-        Set<User> members = new HashSet<User>();
+        Set<User> members = new HashSet<>();
 
         members.add( user1 );
         members.add( user2 );
@@ -101,7 +103,7 @@ public class UserGroupServiceTest
     @Test
     public void testDeleteUserGroup()
     {
-        Set<User> members = new HashSet<User>();
+        Set<User> members = new HashSet<>();
 
         members.add( user1 );
         members.add( user2 );
@@ -125,7 +127,7 @@ public class UserGroupServiceTest
     @Test
     public void testUpdateUserGroup()
     {
-        Set<User> members = new HashSet<User>();
+        Set<User> members = new HashSet<>();
 
         members.add( user1 );
         members.add( user3 );
@@ -160,9 +162,9 @@ public class UserGroupServiceTest
     @Test
     public void testGetAllUserGroups()
     {
-        List<UserGroup> userGroups = new ArrayList<UserGroup>();
+        List<UserGroup> userGroups = new ArrayList<>();
 
-        Set<User> members = new HashSet<User>();
+        Set<User> members = new HashSet<>();
 
         members.add( user1 );
         members.add( user3 );
@@ -172,7 +174,7 @@ public class UserGroupServiceTest
 
         userGroupService.addUserGroup( userGroupA );
 
-        members = new HashSet<User>();
+        members = new HashSet<>();
 
         members.add( user1 );
         members.add( user2 );
@@ -188,7 +190,7 @@ public class UserGroupServiceTest
     @Test
     public void testGetUserGroupById()
     {
-        Set<User> members = new HashSet<User>();
+        Set<User> members = new HashSet<>();
 
         members.add( user1 );
         members.add( user2 );
@@ -209,7 +211,7 @@ public class UserGroupServiceTest
     @Test
     public void testGetUserGroupByName()
     {
-        Set<User> members = new HashSet<User>();
+        Set<User> members = new HashSet<>();
 
         members.add( user1 );
 

@@ -169,14 +169,14 @@ public class UpdateIndicatorAction
         this.denominatorDescription = denominatorDescription;
     }
 
-    private List<String> indicatorGroupSets = new ArrayList<String>();
+    private List<String> indicatorGroupSets = new ArrayList<>();
 
     public void setIndicatorGroupSets( List<String> indicatorGroupSets )
     {
         this.indicatorGroupSets = indicatorGroupSets;
     }
 
-    private List<String> indicatorGroups = new ArrayList<String>();
+    private List<String> indicatorGroups = new ArrayList<>();
 
     public void setIndicatorGroups( List<String> indicatorGroups )
     {
@@ -194,6 +194,7 @@ public class UpdateIndicatorAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         Indicator indicator = indicatorService.getIndicator( id );

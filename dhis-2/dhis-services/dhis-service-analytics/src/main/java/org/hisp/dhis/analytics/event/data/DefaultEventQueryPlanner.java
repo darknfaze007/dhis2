@@ -28,6 +28,8 @@ package org.hisp.dhis.analytics.event.data;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static org.hisp.dhis.analytics.AnalyticsTableManager.EVENT_ANALYTICS_TABLE_NAME;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -37,20 +39,19 @@ import org.apache.commons.logging.LogFactory;
 import org.hisp.dhis.analytics.DataQueryParams;
 import org.hisp.dhis.analytics.QueryPlanner;
 import org.hisp.dhis.analytics.event.EventAnalyticsManager;
-import org.hisp.dhis.analytics.event.EventAnalyticsService;
 import org.hisp.dhis.analytics.event.EventQueryParams;
 import org.hisp.dhis.analytics.event.EventQueryPlanner;
 import org.hisp.dhis.analytics.partition.PartitionManager;
 import org.hisp.dhis.analytics.table.PartitionUtils;
 import org.hisp.dhis.common.DimensionalObject;
 import org.hisp.dhis.common.IllegalQueryException;
+import org.hisp.dhis.common.MaintenanceModeException;
 import org.hisp.dhis.common.NameableObject;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.Period;
+import org.hisp.dhis.setting.SystemSettingManager;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import static org.hisp.dhis.analytics.AnalyticsTableManager.EVENT_ANALYTICS_TABLE_NAME;
 
 /**
  * @author Lars Helge Overland
@@ -70,6 +71,9 @@ public class DefaultEventQueryPlanner
     private OrganisationUnitService organisationUnitService;
     
     @Autowired
+    private SystemSettingManager systemSettingManager;
+    
+    @Autowired
     private PartitionManager partitionManager;
 
     // -------------------------------------------------------------------------
@@ -78,7 +82,7 @@ public class DefaultEventQueryPlanner
 
     @Override
     public void validate( EventQueryParams params )
-        throws IllegalQueryException
+        throws IllegalQueryException, MaintenanceModeException
     {
         String violation = null;
 
@@ -86,6 +90,8 @@ public class DefaultEventQueryPlanner
         {
             throw new IllegalQueryException( "Params cannot be null" );
         }
+        
+        queryPlanner.validateMaintenanceMode();
         
         if ( !params.hasOrganisationUnits() )
         {
@@ -122,9 +128,9 @@ public class DefaultEventQueryPlanner
             violation = "Page size must be zero or positive: " + params.getPageSize();
         }
         
-        if ( params.hasLimit() && params.getLimit() > EventAnalyticsService.MAX_ROWS_LIMIT )
+        if ( params.hasLimit() && getMaxLimit() > 0 && params.getLimit() > getMaxLimit() )
         {
-            violation = "Limit of: " + params.getLimit() + " is larger than max limit: " + EventAnalyticsService.MAX_ROWS_LIMIT;
+            violation = "Limit of: " + params.getLimit() + " is larger than max limit: " + getMaxLimit();
         }
         
         if ( violation != null )
@@ -140,7 +146,7 @@ public class DefaultEventQueryPlanner
     {
         Set<String> validPartitions = partitionManager.getEventAnalyticsPartitions();
 
-        List<EventQueryParams> queries = new ArrayList<EventQueryParams>();
+        List<EventQueryParams> queries = new ArrayList<>();
         
         List<EventQueryParams> groupedByPartition = groupByPartition( params, validPartitions );
         
@@ -186,6 +192,18 @@ public class DefaultEventQueryPlanner
         return params;
     }
     
+    public void validateMaintenanceMode()
+        throws MaintenanceModeException
+    {
+        queryPlanner.validateMaintenanceMode();
+    }
+    
+    @Override
+    public int getMaxLimit()
+    {
+        return (Integer) systemSettingManager.getSystemSetting( SystemSettingManager.KEY_ANALYTICS_MAX_LIMIT, SystemSettingManager.DEFAULT_ANALYTICS_MAX_LIMIT );
+    }
+    
     // -------------------------------------------------------------------------
     // Supportive methods
     // -------------------------------------------------------------------------
@@ -196,7 +214,7 @@ public class DefaultEventQueryPlanner
         
         if ( params.hasStartEndDate() )
         {
-            List<EventQueryParams> queries = new ArrayList<EventQueryParams>();
+            List<EventQueryParams> queries = new ArrayList<>();
             
             Period queryPeriod = new Period();
             queryPeriod.setStartDate( params.getStartDate() );
@@ -220,7 +238,7 @@ public class DefaultEventQueryPlanner
         
     private static List<EventQueryParams> convert( List<DataQueryParams> params )
     {
-        List<EventQueryParams> eventParams = new ArrayList<EventQueryParams>();
+        List<EventQueryParams> eventParams = new ArrayList<>();
         
         for ( DataQueryParams param : params )
         {

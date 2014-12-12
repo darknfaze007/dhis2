@@ -77,10 +77,11 @@ public class GetDataElementGroupSetsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        dataElementGroupSets = new ArrayList<DataElementGroupSet>( dataElementService.getAllDataElementGroupSets() );
+        dataElementGroupSets = new ArrayList<>( dataElementService.getAllDataElementGroupSets() );
 
         if ( key != null )
         {

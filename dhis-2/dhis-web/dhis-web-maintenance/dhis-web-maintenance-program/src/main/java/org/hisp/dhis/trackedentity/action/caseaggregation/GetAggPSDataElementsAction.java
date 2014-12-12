@@ -91,9 +91,10 @@ public class GetAggPSDataElementsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
-        dataElementList = new ArrayList<DataElement>( programStageDataElementService
+        dataElementList = new ArrayList<>( programStageDataElementService
             .getListDataElement( programStageService.getProgramStage( psId ) ) );
 
         if ( dataElementList != null && !dataElementList.isEmpty() )

@@ -40,10 +40,12 @@ import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementService;
 import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.DataSetService;
+import org.hisp.dhis.sms.parse.ParserType;
 import org.hisp.dhis.smscommand.SMSCode;
 import org.hisp.dhis.smscommand.SMSCommand;
 import org.hisp.dhis.smscommand.SMSCommandService;
 import org.hisp.dhis.smscommand.SMSSpecialCharacter;
+import org.hisp.dhis.trackedentity.TrackedEntityAttributeService;
 import org.hisp.dhis.user.UserGroupService;
 
 import com.opensymphony.xwork2.Action;
@@ -54,6 +56,7 @@ public class EditSMSCommandForm
     // -------------------------------------------------------------------------
     // Dependencies
     // -------------------------------------------------------------------------
+
     private SMSCommandService smsCommandService;
 
     public void setSmsCommandService( SMSCommandService smsCommandService )
@@ -82,6 +85,18 @@ public class EditSMSCommandForm
         this.userGroupService = userGroupService;
     }
 
+    private TrackedEntityAttributeService trackedEntityAttributeService;
+
+    public TrackedEntityAttributeService getTrackedEntityAttributeService()
+    {
+        return trackedEntityAttributeService;
+    }
+
+    public void setTrackedEntityAttributeService( TrackedEntityAttributeService trackedEntityAttributeService )
+    {
+        this.trackedEntityAttributeService = trackedEntityAttributeService;
+    }
+
     // -------------------------------------------------------------------------
     // Input && Output
     // -------------------------------------------------------------------------
@@ -95,6 +110,8 @@ public class EditSMSCommandForm
     private String codeDataelementOption;
 
     private String specialCharactersInfo;
+
+    private String trackedEntityAttributeCodes;
 
     private String separator;
 
@@ -110,6 +127,8 @@ public class EditSMSCommandForm
 
     private String moreThanOneOrgUnitMessage;
 
+    private String successMessage;
+
     private Integer completenessMethod;
 
     private int selectedCommandID = -1;
@@ -120,11 +139,12 @@ public class EditSMSCommandForm
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
 
-        Set<SMSCode> codeSet = new HashSet<SMSCode>();
+        Set<SMSCode> codeSet = new HashSet<>();
 
         @SuppressWarnings( "unchecked" )
         List<JSONObject> jsonCodes = (List<JSONObject>) JSONObject.fromObject( codeDataelementOption ).get( "codes" );
@@ -134,13 +154,21 @@ public class EditSMSCommandForm
             c.setCode( x.getString( "code" ) );
             c.setDataElement( dataElementService.getDataElement( x.getInt( "dataElementId" ) ) );
             c.setOptionId( x.getInt( "optionId" ) );
+            if ( !x.getString( "formula" ).trim().equals( "" ) )
+            {
+                c.setFormula( x.getString( "formula" ) );
+            }
+            else
+            {
+                c.setFormula( null );
+            }
             codeSet.add( c );
         }
 
         @SuppressWarnings( "unchecked" )
         List<JSONObject> jsonSpecialCharacters = (List<JSONObject>) JSONObject.fromObject( specialCharactersInfo ).get(
             "specialCharacters" );
-        Set<SMSSpecialCharacter> specialCharacterSet = new HashSet<SMSSpecialCharacter>();
+        Set<SMSSpecialCharacter> specialCharacterSet = new HashSet<>();
         for ( JSONObject x : jsonSpecialCharacters )
         {
             String name = x.getString( "name" );
@@ -150,47 +178,66 @@ public class EditSMSCommandForm
         }
         smsCommandService.saveSpecialCharacterSet( specialCharacterSet );
 
+        SMSCommand command = getSMSCommand();
+
+        if ( selectedDataSetID > -1 && command != null )
+        {
+            if ( command.getParserType() == ParserType.TRACKED_ENTITY_REGISTRATION_PARSER )
+            {
+                @SuppressWarnings( "unchecked" )
+                List<JSONObject> jsonRegistrationCodes = (List<JSONObject>) JSONObject.fromObject(
+                    trackedEntityAttributeCodes ).get( "trackedEntityAttributeCodes" );
+                for ( JSONObject x : jsonRegistrationCodes )
+                {
+                    SMSCode c = new SMSCode();
+                    c.setCode( x.getString( "code" ) );
+                    c.setTrackedEntityAttribute( trackedEntityAttributeService.getTrackedEntityAttribute( x
+                        .getInt( "trackedEntityAttributeId" ) ) );
+                    codeSet.add( c );
+                }
+            }
+        }
+
         if ( codeSet.size() > 0 )
         {
             smsCommandService.save( codeSet );
         }
 
-        SMSCommand c = getSMSCommand();
-
-        if ( selectedDataSetID > -1 && c != null )
+        if ( selectedDataSetID > -1 && command != null )
         {
-            c.setCurrentPeriodUsedForReporting( currentPeriodUsedForReporting );
-            c.setName( name );
-            c.setSeparator( separator );
+            command.setCurrentPeriodUsedForReporting( currentPeriodUsedForReporting );
+            command.setName( name );
+            command.setSeparator( separator );
 
             if ( completenessMethod != null )
             {
-                c.setCompletenessMethod( completenessMethod );
+                command.setCompletenessMethod( completenessMethod );
             }
 
             // remove codes
-            Set<SMSCode> toRemoveCodes = c.getCodes();
+            Set<SMSCode> toRemoveCodes = command.getCodes();
             smsCommandService.deleteCodeSet( toRemoveCodes );
 
             // remove special characters
-            Set<SMSSpecialCharacter> toRemoveCharacters = c.getSpecialCharacters();
+            Set<SMSSpecialCharacter> toRemoveCharacters = command.getSpecialCharacters();
             smsCommandService.deleteSpecialCharacterSet( toRemoveCharacters );
 
-            c.setCodes( codeSet );
+            command.setCodes( codeSet );
 
             // message
-            c.setDefaultMessage( defaultMessage );
-            c.setReceivedMessage( receivedMessage );
-            c.setMoreThanOneOrgUnitMessage( moreThanOneOrgUnitMessage );
-            c.setNoUserMessage( noUserMessage );
-            c.setWrongFormatMessage( wrongFormatMessage );
+            command.setDefaultMessage( defaultMessage );
+            command.setReceivedMessage( receivedMessage );
+            command.setMoreThanOneOrgUnitMessage( moreThanOneOrgUnitMessage );
+            command.setNoUserMessage( noUserMessage );
+            command.setWrongFormatMessage( wrongFormatMessage );
+            command.setSuccessMessage( successMessage );
 
             if ( userGroupID != null && userGroupID > -1 )
             {
-                c.setUserGroup( userGroupService.getUserGroup( userGroupID ) );
+                command.setUserGroup( userGroupService.getUserGroup( userGroupID ) );
             }
-            c.setSpecialCharacters( specialCharacterSet );
-            smsCommandService.save( c );
+            command.setSpecialCharacters( specialCharacterSet );
+            smsCommandService.save( command );
         }
 
         return SUCCESS;
@@ -362,4 +409,25 @@ public class EditSMSCommandForm
     {
         this.completenessMethod = completenessMethod;
     }
+
+    public String getSuccessMessage()
+    {
+        return successMessage;
+    }
+
+    public void setSuccessMessage( String successMessage )
+    {
+        this.successMessage = successMessage;
+    }
+
+    public String getTrackedEntityAttributeCodes()
+    {
+        return trackedEntityAttributeCodes;
+    }
+
+    public void setTrackedEntityAttributeCodes( String trackedEntityAttributeCodes )
+    {
+        this.trackedEntityAttributeCodes = trackedEntityAttributeCodes;
+    }
+
 }

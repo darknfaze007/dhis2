@@ -71,10 +71,11 @@ public class GetMinMaxValidationParamsAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        dataSets = new ArrayList<DataSet>( dataSetService.getAllDataSets() );
+        dataSets = new ArrayList<>( dataSetService.getAllDataSets() );
         
         Collections.sort( dataSets, IdentifiableObjectNameComparator.INSTANCE );
 

@@ -5,7 +5,7 @@ jQuery(document).ready(	function(){
 	validation( 'saveOrganisationUnitLevelsForm', function( form ){ form.submit() } );
 	
 	jQuery.getJSON( '../api/organisationUnitLevels.json?paging=false', function( data ) {
-		if ( !data || !data.organisationUnitLevels || !data.organisationUnitLevels ) {
+		if ( !data || !data.organisationUnitLevels || !data.organisationUnitLevels.length ) {
 			setMessage( 'Organisation unit level is not yet saved, please save' );
 		}
 	} );
@@ -26,7 +26,7 @@ jQuery(document).ready(	function(){
     <tr>
         <td style="text-align: center">$level.level</td>
         <td><input type="text" id="level${level.level}" name="level${level.level}" value="$!level.displayName" class="uniqueFields {validate:{required:true,alphanumeric:false,unique:'uniqueFields'}}"/></td>
-		<td align="center"><a href="javascript:translate( 'OrganisationUnitLevel', '$level.id' )" title="$i18n.getString( 'translation_translate' )"><img src="../images/i18n.png" alt="$i18n.getString( 'translation_translate' )"/></a></td>
+		<td align="center"><a href="javascript:translate( 'OrganisationUnitLevel', '$level.uid' )" title="$i18n.getString( 'translation_translate' )"><img src="../images/i18n.png" alt="$i18n.getString( 'translation_translate' )"/></a></td>
     </tr>
     #end
     <tr>
@@ -39,4 +39,4 @@ jQuery(document).ready(	function(){
 </table>
 </form>
 
-<span id="message"></span>
+<div id="message"></div>

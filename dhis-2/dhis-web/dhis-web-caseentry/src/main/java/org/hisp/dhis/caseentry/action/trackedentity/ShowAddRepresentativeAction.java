@@ -59,7 +59,7 @@ public class ShowAddRepresentativeAction
     // Output
     // -------------------------------------------------------------------------
 
-    private List<RelationshipType> relationshipTypes = new ArrayList<RelationshipType>();
+    private List<RelationshipType> relationshipTypes = new ArrayList<>();
 
     private Collection<TrackedEntityAttribute> attributes;
 
@@ -69,9 +69,10 @@ public class ShowAddRepresentativeAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
-        relationshipTypes = new ArrayList<RelationshipType>( relationshipTypeService.getAllRelationshipTypes() );
+        relationshipTypes = new ArrayList<>( relationshipTypeService.getAllRelationshipTypes() );
 
         attributes = attributeService.getAllTrackedEntityAttributes();
 

@@ -125,15 +125,16 @@ public class DataValueDailyConverter
         this.importObjectService = importObjectService;
         this.importAnalyser = importAnalyser;
         this.params = params;
-        this.dataElementMapping = new MimicingHashMap<Object, Integer>();
-        this.periodMapping = new MimicingHashMap<Object, Integer>();
-        this.sourceMapping = new MimicingHashMap<Object, Integer>();
+        this.dataElementMapping = new MimicingHashMap<>();
+        this.periodMapping = new MimicingHashMap<>();
+        this.sourceMapping = new MimicingHashMap<>();
     }
 
     // -------------------------------------------------------------------------
     // CSVConverter implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void write( ZipOutputStream out, ExportParams params )
     {
         try
@@ -207,7 +208,7 @@ public class DataValueDailyConverter
                         }
                     }
 
-                    HashMap<String, DeflatedDataValueDaily> dailyDataCache = new HashMap<String, DeflatedDataValueDaily>();
+                    HashMap<String, DeflatedDataValueDaily> dailyDataCache = new HashMap<>();
 
                     for ( final Integer element : params.getDataElements() )
                     {
@@ -258,9 +259,9 @@ public class DataValueDailyConverter
                         out.write( getCsvValue( 0 ) );
                         out.write( getCsvValue( csvEncode( value.getComment() ) ) );
                         out.write( getCsvValue( 1594 ) );
-                        if ( value.getTimestamp() != null )
+                        if ( value.getLastUpdated() != null )
                         {
-                            out.write( getCsvEndValue( DateUtils.getAccessDateString( value.getTimestamp() ) ) );
+                            out.write( getCsvEndValue( DateUtils.getAccessDateString( value.getLastUpdated() ) ) );
                         }
                         else
                         {
@@ -432,7 +433,7 @@ public class DataValueDailyConverter
         value.setSourceId( newDataValue.getSourceId() );
         value.setSourceName( newDataValue.getSourceName() );
         value.setStoredBy( newDataValue.getStoredBy() );
-        value.setTimestamp( newDataValue.getTimestamp() );
+        value.setLastUpdated( newDataValue.getLastUpdated() );
         value.setValue( newDataValue.getValue() );
         
         if ( period.endsWith( "-01" ) )
@@ -563,6 +564,7 @@ public class DataValueDailyConverter
         return value;
     }
 
+    @Override
     public void read( BufferedReader reader, ImportParams params )
     {
         String line = "";
@@ -624,7 +626,8 @@ public class DataValueDailyConverter
                 }
 
                 value.setComment( values[13] );
-                value.setTimestamp( DateUtils.getDefaultDate( values[15] ) );
+                value.setLastUpdated( DateUtils.getDefaultDate( values[15] ) );
+                value.setCreated( value.getLastUpdated() );
                 value.setCategoryOptionCombo( proxyCategoryOptionCombo );
                 value.setStoredBy( owner );
 

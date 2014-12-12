@@ -93,9 +93,6 @@ public class DataValueConverter
 
     private Map<Object, Integer> sourceMapping;
 
-    // private BigDecimal price = new BigDecimal("0");
-    // private BigDecimal totalEntry;
-
     // -------------------------------------------------------------------------
     // Constructor
     // -------------------------------------------------------------------------
@@ -120,15 +117,16 @@ public class DataValueConverter
         this.importObjectService = importObjectService;
         this.importAnalyser = importAnalyser;
         this.params = params;
-        this.dataElementMapping = new MimicingHashMap<Object, Integer>();
-        this.periodMapping = new MimicingHashMap<Object, Integer>();
-        this.sourceMapping = new MimicingHashMap<Object, Integer>();
+        this.dataElementMapping = new MimicingHashMap<>();
+        this.periodMapping = new MimicingHashMap<>();
+        this.sourceMapping = new MimicingHashMap<>();
     }
 
     // -------------------------------------------------------------------------
     // CSVConverter implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public void write( ZipOutputStream out, ExportParams params )
     {
         try
@@ -186,9 +184,9 @@ public class DataValueConverter
                                     out.write( getCsvValue( 0 ) );
                                     out.write( getCsvValue( csvEncode( value.getComment() ) ) );
                                     out.write( getCsvValue( 1594 ) );
-                                    if ( value.getTimestamp() != null )
+                                    if ( value.getLastUpdated() != null )
                                     {
-                                        out.write( getCsvEndValue( DateUtils.getAccessDateString( value.getTimestamp() ) ) );
+                                        out.write( getCsvEndValue( DateUtils.getAccessDateString( value.getLastUpdated() ) ) );
                                     }
                                     else
                                     {
@@ -214,6 +212,7 @@ public class DataValueConverter
         }
     }
 
+    @Override
     public void read( BufferedReader reader, ImportParams params )
     {
         String line = "";
@@ -275,7 +274,8 @@ public class DataValueConverter
                 }
 
                 value.setComment( values[13] );
-                value.setTimestamp( DateUtils.getDefaultDate( values[15] ) );
+                value.setLastUpdated( DateUtils.getDefaultDate( values[15] ) );
+                value.setCreated( value.getLastUpdated() );
                 value.setCategoryOptionCombo( proxyCategoryOptionCombo );
                 value.setStoredBy( owner );
 

@@ -61,7 +61,7 @@ public class ShowAttributeVisitScheduleFormAction
     // Output
     // -------------------------------------------------------------------------
 
-    private List<TrackedEntityAttribute> selectedAttributes = new ArrayList<TrackedEntityAttribute>();
+    private List<TrackedEntityAttribute> selectedAttributes = new ArrayList<>();
 
     public List<TrackedEntityAttribute> getSelectedAttributes()
     {
@@ -72,10 +72,11 @@ public class ShowAttributeVisitScheduleFormAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        selectedAttributes = new ArrayList<TrackedEntityAttribute>(
+        selectedAttributes = new ArrayList<>(
             attributeService.getTrackedEntityAttributesByDisplayOnVisitSchedule( true ) );
         
         Collections.sort( selectedAttributes, new TrackedEntityAttributeSortOrderComparator() );

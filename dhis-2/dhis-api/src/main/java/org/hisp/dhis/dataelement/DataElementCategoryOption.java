@@ -28,30 +28,30 @@ package org.hisp.dhis.dataelement;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.hisp.dhis.common.BaseIdentifiableObject;
-import org.hisp.dhis.common.BaseNameableObject;
-import org.hisp.dhis.common.DxfNamespaces;
-import org.hisp.dhis.common.annotation.Scanned;
-import org.hisp.dhis.common.view.DetailedView;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import org.hisp.dhis.common.BaseIdentifiableObject;
+import org.hisp.dhis.common.BaseNameableObject;
+import org.hisp.dhis.common.DxfNamespaces;
+import org.hisp.dhis.common.IdentifiableObject;
+import org.hisp.dhis.common.annotation.Scanned;
+import org.hisp.dhis.common.view.DetailedView;
 import org.hisp.dhis.common.view.ExportView;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
+import org.hisp.dhis.period.Period;
+
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Abyot Asalefew
  */
-@JacksonXmlRootElement(localName = "categoryOption", namespace = DxfNamespaces.DXF_2_0)
+@JacksonXmlRootElement( localName = "categoryOption", namespace = DxfNamespaces.DXF_2_0 )
 public class DataElementCategoryOption
     extends BaseNameableObject
 {
@@ -67,15 +67,14 @@ public class DataElementCategoryOption
     private Date endDate;
 
     @Scanned
-    private Set<OrganisationUnit> organisationUnits = new HashSet<OrganisationUnit>();
+    private Set<OrganisationUnit> organisationUnits = new HashSet<>();
 
-    private Set<DataElementCategory> categories = new HashSet<DataElementCategory>();
+    private Set<DataElementCategory> categories = new HashSet<>();
 
-    @Scanned
-    private Set<DataElementCategoryOptionCombo> categoryOptionCombos = new HashSet<DataElementCategoryOptionCombo>();
+    private Set<DataElementCategoryOptionCombo> categoryOptionCombos = new HashSet<>();
 
-    private Set<CategoryOptionGroup> groups = new HashSet<CategoryOptionGroup>();
-    
+    private Set<CategoryOptionGroup> groups = new HashSet<>();
+
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
@@ -106,8 +105,8 @@ public class DataElementCategoryOption
      */
     public Set<CategoryOptionGroupSet> getGroupSets()
     {
-        Set<CategoryOptionGroupSet> groupSets = new HashSet<CategoryOptionGroupSet>();
-        
+        Set<CategoryOptionGroupSet> groupSets = new HashSet<>();
+
         if ( groups != null )
         {
             for ( CategoryOptionGroup group : groups )
@@ -118,13 +117,9 @@ public class DataElementCategoryOption
                 }
             }
         }
-        
+
         return groupSets;
     }
-    
-    // -------------------------------------------------------------------------
-    // Logic
-    // -------------------------------------------------------------------------
 
     public void addCategoryOptionCombo( DataElementCategoryOptionCombo dataElementCategoryOptionCombo )
     {
@@ -136,6 +131,30 @@ public class DataElementCategoryOption
     {
         categoryOptionCombos.remove( dataElementCategoryOptionCombo );
         dataElementCategoryOptionCombo.getCategoryOptions().remove( this );
+    }
+
+    public boolean includes( Period period )
+    {
+        return (startDate == null || !startDate.after( period.getEndDate() ))
+            && (endDate == null || !endDate.before( period.getStartDate() ));
+    }
+
+    public boolean includes( OrganisationUnit ou )
+    {
+        return organisationUnits == null || organisationUnits.isEmpty() || ou.isDescendant( organisationUnits );
+    }
+
+    public boolean includesAny( Set<OrganisationUnit> orgUnits )
+    {
+        for ( OrganisationUnit ou : orgUnits )
+        {
+            if ( includes( ou ) )
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // -------------------------------------------------------------------------
@@ -154,15 +173,9 @@ public class DataElementCategoryOption
         return name != null && name.equals( DEFAULT_NAME );
     }
 
-    @Override
-    @JsonIgnore
-    public String getShortName()
-    {
-        return name;
-    }
-
     @JsonProperty
-    @JsonView( {DetailedView.class } )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Date getStartDate()
     {
         return startDate;
@@ -174,7 +187,8 @@ public class DataElementCategoryOption
     }
 
     @JsonProperty
-    @JsonView( {DetailedView.class } )
+    @JsonView( { DetailedView.class, ExportView.class } )
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
     public Date getEndDate()
     {
         return endDate;
@@ -201,10 +215,10 @@ public class DataElementCategoryOption
     }
 
     @JsonProperty
-    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
-    @JsonView({ DetailedView.class })
-    @JacksonXmlElementWrapper(localName = "categories", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty(localName = "category", namespace = DxfNamespaces.DXF_2_0)
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class } )
+    @JacksonXmlElementWrapper( localName = "categories", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "category", namespace = DxfNamespaces.DXF_2_0 )
     public Set<DataElementCategory> getCategories()
     {
         return categories;
@@ -216,10 +230,10 @@ public class DataElementCategoryOption
     }
 
     @JsonProperty
-    @JsonSerialize(contentAs = BaseIdentifiableObject.class)
-    @JsonView({ DetailedView.class })
-    @JacksonXmlElementWrapper(localName = "categoryOptionCombos", namespace = DxfNamespaces.DXF_2_0)
-    @JacksonXmlProperty(localName = "categoryOptionCombo", namespace = DxfNamespaces.DXF_2_0)
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class } )
+    @JacksonXmlElementWrapper( localName = "categoryOptionCombos", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "categoryOptionCombo", namespace = DxfNamespaces.DXF_2_0 )
     public Set<DataElementCategoryOptionCombo> getCategoryOptionCombos()
     {
         return categoryOptionCombos;
@@ -230,6 +244,11 @@ public class DataElementCategoryOption
         this.categoryOptionCombos = categoryOptionCombos;
     }
 
+    @JsonProperty
+    @JsonSerialize( contentAs = BaseIdentifiableObject.class )
+    @JsonView( { DetailedView.class } )
+    @JacksonXmlElementWrapper( localName = "categoryOptionGroups", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "categoryOptionGroup", namespace = DxfNamespaces.DXF_2_0 )
     public Set<CategoryOptionGroup> getGroups()
     {
         return groups;
@@ -238,5 +257,29 @@ public class DataElementCategoryOption
     public void setGroups( Set<CategoryOptionGroup> groups )
     {
         this.groups = groups;
+    }
+
+    @Override
+    public void mergeWith( IdentifiableObject other )
+    {
+        super.mergeWith( other );
+
+        if ( other.getClass().isInstance( this ) )
+        {
+            DataElementCategoryOption dataElementCategoryOption = (DataElementCategoryOption) other;
+
+            startDate = dataElementCategoryOption.getStartDate();
+            endDate = dataElementCategoryOption.getEndDate();
+
+            organisationUnits.clear();
+            categories.clear();
+            groups.clear();
+            categoryOptionCombos.clear();
+
+            organisationUnits.addAll( dataElementCategoryOption.getOrganisationUnits() );
+            categories.addAll( dataElementCategoryOption.getCategories() );
+            groups.addAll( dataElementCategoryOption.getGroups() );
+            categoryOptionCombos.addAll( dataElementCategoryOption.getCategoryOptionCombos() );
+        }
     }
 }

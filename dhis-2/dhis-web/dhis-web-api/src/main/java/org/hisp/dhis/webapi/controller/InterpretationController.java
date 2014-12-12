@@ -96,7 +96,7 @@ public class InterpretationController
     private CurrentUserService currentUserService;
 
     @Override
-    protected List<Interpretation> getEntityList( WebMetaData metaData, WebOptions options )
+    protected List<Interpretation> getEntityList( WebMetaData metaData, WebOptions options, List<String> filters )
     {
         List<Interpretation> entityList;
 
@@ -111,11 +111,11 @@ public class InterpretationController
             Pager pager = new Pager( options.getPage(), count );
             metaData.setPager( pager );
 
-            entityList = new ArrayList<Interpretation>( interpretationService.getInterpretations( pager.getOffset(), pager.getPageSize() ) );
+            entityList = new ArrayList<>( interpretationService.getInterpretations( pager.getOffset(), pager.getPageSize() ) );
         }
         else
         {
-            entityList = new ArrayList<Interpretation>( interpretationService.getInterpretations() );
+            entityList = new ArrayList<>( interpretationService.getInterpretations() );
         }
 
         return entityList;
@@ -281,8 +281,6 @@ public class InterpretationController
         {
             throw new AccessDeniedException( "You are not allowed to update this interpretation." );
         }
-
-        System.err.println( content );
 
         interpretation.setText( content );
 

@@ -66,9 +66,10 @@ public class ShowAddOrganisationUnitGroupSetFormAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
-        attributes = new ArrayList<Attribute>( attributeService.getOrganisationUnitGroupSetAttributes() );
+        attributes = new ArrayList<>( attributeService.getOrganisationUnitGroupSetAttributes() );
         Collections.sort( attributes, AttributeSortOrderComparator.INSTANCE );
 
         return SUCCESS;

@@ -115,41 +115,49 @@ public class DefaultDataSetService
     // DataSet
     // -------------------------------------------------------------------------
 
+    @Override
     public int addDataSet( DataSet dataSet )
     {
         return dataSetStore.save( dataSet );
     }
 
+    @Override
     public void updateDataSet( DataSet dataSet )
     {
         dataSetStore.update( dataSet );
     }
 
+    @Override
     public void deleteDataSet( DataSet dataSet )
     {
         dataSetStore.delete( dataSet );
     }
 
+    @Override
     public DataSet getDataSet( int id )
     {
         return i18n( i18nService, dataSetStore.get( id ) );
     }
 
+    @Override
     public DataSet getDataSet( String uid )
     {
         return i18n( i18nService, dataSetStore.getByUid( uid ) );
     }
 
+    @Override
     public DataSet getDataSetNoAcl( String uid )
     {
         return i18n( i18nService, dataSetStore.getByUidNoAcl( uid ) );
     }
 
+    @Override
     public DataSet getDataSet( int id, boolean i18nDataElements, boolean i18nIndicators, boolean i18nOrgUnits )
     {
         return getDataSet( id, i18nDataElements, i18nIndicators, i18nOrgUnits, false );
     }
 
+    @Override
     public DataSet getDataSet( int id, boolean i18nDataElements, boolean i18nIndicators, boolean i18nOrgUnits, boolean i18nSections )
     {
         DataSet dataSet = getDataSet( id );
@@ -182,6 +190,7 @@ public class DefaultDataSetService
         return dataSet;
     }
 
+    @Override
     public DataSet getDataSet( String id, boolean i18nDataElements, boolean i18nIndicators, boolean i18nOrgUnits, boolean i18nSections )
     {
         DataSet dataSet = getDataSet( id );
@@ -214,26 +223,31 @@ public class DefaultDataSetService
         return dataSet;
     }
 
+    @Override
     public List<DataSet> getDataSetByName( String name )
     {
-        return new ArrayList<DataSet>( i18n( i18nService, dataSetStore.getAllEqName( name ) ) );
+        return new ArrayList<>( i18n( i18nService, dataSetStore.getAllEqName( name ) ) );
     }
 
+    @Override
     public List<DataSet> getDataSetByShortName( String shortName )
     {
-        return new ArrayList<DataSet>( i18n( i18nService, dataSetStore.getAllEqShortName( shortName ) ) );
+        return new ArrayList<>( i18n( i18nService, dataSetStore.getAllEqShortName( shortName ) ) );
     }
 
+    @Override
     public DataSet getDataSetByCode( String code )
     {
         return i18n( i18nService, dataSetStore.getByCode( code ) );
     }
 
+    @Override
     public Collection<DataSet> getDataSetsBySources( Collection<OrganisationUnit> sources )
     {
         return i18n( i18nService, dataSetStore.getDataSetsBySources( sources ) );
     }
 
+    @Override
     public int getSourcesAssociatedWithDataSet( DataSet dataSet, Collection<OrganisationUnit> sources )
     {
         int count = 0;
@@ -249,22 +263,26 @@ public class DefaultDataSetService
         return count;
     }
 
+    @Override
     public Collection<DataSet> getAllDataSets()
     {
         return i18n( i18nService, dataSetStore.getAll() );
     }
 
+    @Override
     public Collection<DataSet> getDataSetsByPeriodType( PeriodType periodType )
     {
         return i18n( i18nService, dataSetStore.getDataSetsByPeriodType( periodType ) );
     }
 
+    @Override
     public Collection<DataSet> getDataSets( final Collection<Integer> identifiers )
     {
         Collection<DataSet> dataSets = getAllDataSets();
 
         return identifiers == null ? dataSets : FilterUtils.filter( dataSets, new Filter<DataSet>()
         {
+            @Override
             public boolean retain( DataSet object )
             {
                 return identifiers.contains( object.getId() );
@@ -272,10 +290,11 @@ public class DefaultDataSetService
         } );
     }
 
+    @Override
     public List<DataSet> getAvailableDataSets()
     {
-        List<DataSet> availableDataSetList = new ArrayList<DataSet>();
-        List<DataSet> dataSetList = new ArrayList<DataSet>( getAllDataSets() );
+        List<DataSet> availableDataSetList = new ArrayList<>();
+        List<DataSet> dataSetList = new ArrayList<>( getAllDataSets() );
 
         for ( DataSet dataSet : dataSetList )
         {
@@ -290,10 +309,11 @@ public class DefaultDataSetService
         return availableDataSetList;
     }
 
+    @Override
     public List<DataSet> getAssignedDataSets()
     {
-        List<DataSet> assignedDataSetList = new ArrayList<DataSet>();
-        List<DataSet> dataSetList = new ArrayList<DataSet>( getAllDataSets() );
+        List<DataSet> assignedDataSetList = new ArrayList<>();
+        List<DataSet> dataSetList = new ArrayList<>( getAllDataSets() );
 
         for ( DataSet dataSet : dataSetList )
         {
@@ -308,6 +328,7 @@ public class DefaultDataSetService
         return assignedDataSetList;
     }
 
+    @Override
     public PeriodType getPeriodType( DataElement dataElement, Collection<Integer> dataSetIdentifiers )
     {
         Collection<DataSet> dataSets = getDataSets( dataSetIdentifiers );
@@ -323,9 +344,10 @@ public class DefaultDataSetService
         return null;
     }
 
+    @Override
     public List<DataSet> getAssignedDataSetsByPeriodType( PeriodType periodType )
     {
-        List<DataSet> dataSetListByPeriodType = new ArrayList<DataSet>( getDataSetsByPeriodType( periodType ) );
+        List<DataSet> dataSetListByPeriodType = new ArrayList<>( getDataSetsByPeriodType( periodType ) );
 
         Iterator<DataSet> dataSetIterator = dataSetListByPeriodType.iterator();
         while ( dataSetIterator.hasNext() )
@@ -340,11 +362,12 @@ public class DefaultDataSetService
         return dataSetListByPeriodType;
     }
 
+    @Override
     public Collection<DataElement> getDistinctDataElements( Collection<Integer> dataSetIdentifiers )
     {
         Collection<DataSet> dataSets = getDataSets( dataSetIdentifiers );
 
-        Set<DataElement> dataElements = new HashSet<DataElement>();
+        Set<DataElement> dataElements = new HashSet<>();
 
         for ( DataSet dataSet : dataSets )
         {
@@ -354,26 +377,31 @@ public class DefaultDataSetService
         return dataElements;
     }
 
+    @Override
     public List<DataSet> getDataSetsByUid( Collection<String> uids )
     {
         return dataSetStore.getByUid( uids );
     }
     
+    @Override
     public List<DataSet> getDataSetsByUidNoAcl( Collection<String> uids )
     {
         return dataSetStore.getByUidNoAcl( uids );
     }
 
+    @Override
     public Collection<DataElement> getDataElements( DataSet dataSet )
     {
         return i18n( i18nService, dataSet.getDataElements() );
     }
 
+    @Override
     public Collection<DataSet> getDataSetsForMobile( OrganisationUnit source )
     {
         return i18n( i18nService, dataSetStore.getDataSetsForMobile( source ) );
     }
 
+    @Override
     public Collection<DataSet> getDataSetsForMobile()
     {
         return i18n( i18nService, dataSetStore.getDataSetsForMobile() );
@@ -477,7 +505,7 @@ public class DefaultDataSetService
 
         DataApprovalStatus dataApprovalStatus = dataApprovalService.getDataApprovalStatus( dataSet, period, organisationUnit, attributeOptionCombo );
         
-        return dataApprovalStatus.getDataApprovalState().isApproved();
+        return dataApprovalStatus.getState().isApproved();
     }
 
     @Override
@@ -520,13 +548,13 @@ public class DefaultDataSetService
     @Override
     public void mergeWithCurrentUserOrganisationUnits( DataSet dataSet, Collection<OrganisationUnit> mergeOrganisationUnits )
     {
-        Set<OrganisationUnit> organisationUnits = new HashSet<OrganisationUnit>( dataSet.getSources() );
+        Set<OrganisationUnit> organisationUnits = new HashSet<>( dataSet.getSources() );
 
-        Set<OrganisationUnit> userOrganisationUnits = new HashSet<OrganisationUnit>();
+        Set<OrganisationUnit> userOrganisationUnits = new HashSet<>();
 
         for ( OrganisationUnit organisationUnit : currentUserService.getCurrentUser().getOrganisationUnits() )
         {
-            userOrganisationUnits.addAll( organisationUnitService.getOrganisationUnitsWithChildren( organisationUnit.getUid() ) );
+            userOrganisationUnits.addAll( organisationUnitService.getOrganisationUnitWithChildren( organisationUnit.getUid() ) );
         }
 
         organisationUnits.removeAll( userOrganisationUnits );

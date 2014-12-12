@@ -119,6 +119,7 @@ public class AddRepresentativeAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
@@ -141,7 +142,7 @@ public class AddRepresentativeAction
 
         Collection<TrackedEntityAttribute> attributes = attributeService.getAllTrackedEntityAttributes();
 
-        Set<TrackedEntityAttributeValue> entityInstanceAttributeValues = new HashSet<TrackedEntityAttributeValue>();
+        Set<TrackedEntityAttributeValue> entityInstanceAttributeValues = new HashSet<>();
 
         TrackedEntityAttributeValue attributeValue = null;
 

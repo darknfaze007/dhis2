@@ -84,19 +84,20 @@ public class GetValidationRuleGroupListAction
     // Action implemantation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
     {
         if ( isNotBlank( key ) ) // Filter on key only if set
         {
             this.paging = createPaging( validationRuleService.getValidationRuleGroupCountByName( key ) );
             
-            validationRuleGroups = new ArrayList<ValidationRuleGroup>( validationRuleService.getValidationRuleGroupsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
+            validationRuleGroups = new ArrayList<>( validationRuleService.getValidationRuleGroupsBetweenByName( key, paging.getStartPos(), paging.getPageSize() ) );
         }
         else
         {
             this.paging = createPaging( validationRuleService.getValidationRuleGroupCount() );
             
-            validationRuleGroups = new ArrayList<ValidationRuleGroup>( validationRuleService.getValidationRuleGroupsBetween( paging.getStartPos(), paging.getPageSize() ) );
+            validationRuleGroups = new ArrayList<>( validationRuleService.getValidationRuleGroupsBetween( paging.getStartPos(), paging.getPageSize() ) );
         }
         
         Collections.sort( validationRuleGroups, IdentifiableObjectNameComparator.INSTANCE );

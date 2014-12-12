@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.hisp.dhis.DhisTest;
+import org.hisp.dhis.DhisSpringTest;
 import org.hisp.dhis.dataelement.DataElement;
 import org.hisp.dhis.dataelement.DataElementCategory;
 import org.hisp.dhis.dataelement.DataElementCategoryCombo;
@@ -50,13 +50,29 @@ import org.hisp.dhis.organisationunit.OrganisationUnitService;
 import org.hisp.dhis.period.Period;
 import org.hisp.dhis.period.PeriodService;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Lars Helge Overland
  */
 public class DataValueDimensionTest
-    extends DhisTest
+    extends DhisSpringTest
 {
+    @Autowired
+    private DataElementCategoryService categoryService;
+
+    @Autowired
+    private DataElementService dataElementService;
+
+    @Autowired
+    private DataValueService dataValueService;
+
+    @Autowired
+    private PeriodService periodService;
+
+    @Autowired
+    private OrganisationUnitService organisationUnitService;
+    
     private DataElementCategoryOption male;
     private DataElementCategoryOption female;
     private DataElementCategoryOption under15;    
@@ -78,13 +94,6 @@ public class DataValueDimensionTest
     @Override
     public void setUpTest()
     {
-        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
-        dataElementService = (DataElementService) getBean( DataElementService.ID );
-        dataValueService = (DataValueService) getBean( DataValueService.ID );
-        periodService = (PeriodService) getBean( PeriodService.ID );
-        organisationUnitService = (OrganisationUnitService) getBean( OrganisationUnitService.ID );
-        categoryService = (DataElementCategoryService) getBean( DataElementCategoryService.ID );
-        
         male = new DataElementCategoryOption( "Male" );
         female = new DataElementCategoryOption( "Female" );
         under15 = new DataElementCategoryOption( "<15" );
@@ -133,17 +142,11 @@ public class DataValueDimensionTest
             dataValueService.addDataValue( createDataValue( dataElementA, periodA, sourceA, "10", categoryOptionCombo, defaultOptionCombo ) );
         }
     }
-    
-    @Override
-    public boolean emptyDatabaseAfterTest()
-    {
-        return true;
-    }
-    
+        
     @Test
     public void testGetDimensions()
     {
-        Collection<DataElementCategoryOption> categoryOptions = new ArrayList<DataElementCategoryOption>();
+        Collection<DataElementCategoryOption> categoryOptions = new ArrayList<>();
         categoryOptions.add( male );
         categoryOptions.add( under15 );
         
@@ -157,7 +160,7 @@ public class DataValueDimensionTest
     @Test
     public void testGetByCategoryOptionCombos()
     {
-        Collection<DataElementCategoryOption> categoryOptions = new ArrayList<DataElementCategoryOption>();
+        Collection<DataElementCategoryOption> categoryOptions = new ArrayList<>();
         categoryOptions.add( male );
         categoryOptions.add( under15 );
         

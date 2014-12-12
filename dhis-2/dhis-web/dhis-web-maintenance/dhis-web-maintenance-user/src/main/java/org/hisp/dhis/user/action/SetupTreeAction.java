@@ -182,7 +182,7 @@ public class SetupTreeAction
         return attributes;
     }
 
-    public Map<Integer, String> attributeValues = new HashMap<Integer, String>();
+    public Map<Integer, String> attributeValues = new HashMap<>();
 
     public Map<Integer, String> getAttributeValues()
     {
@@ -193,10 +193,11 @@ public class SetupTreeAction
     // Action implementation
     // -------------------------------------------------------------------------
 
+    @Override
     public String execute()
         throws Exception
     {
-        userAuthorityGroups = new ArrayList<UserAuthorityGroup>( userService.getAllUserAuthorityGroups() );
+        userAuthorityGroups = new ArrayList<>( userService.getAllUserAuthorityGroups() );
 
         userService.canIssueFilter( userAuthorityGroups );
         
@@ -243,7 +244,7 @@ public class SetupTreeAction
 
         Collections.sort( userAuthorityGroups, IdentifiableObjectNameComparator.INSTANCE );
         
-        attributes = new ArrayList<Attribute>( attributeService.getUserAttributes() );
+        attributes = new ArrayList<>( attributeService.getUserAttributes() );
         Collections.sort( attributes, AttributeSortOrderComparator.INSTANCE );
 
         return SUCCESS;

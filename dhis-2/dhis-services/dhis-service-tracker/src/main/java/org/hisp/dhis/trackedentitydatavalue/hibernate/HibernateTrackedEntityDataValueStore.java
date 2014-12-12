@@ -50,11 +50,13 @@ public class HibernateTrackedEntityDataValueStore
     extends HibernateGenericStore<TrackedEntityDataValue>
     implements TrackedEntityDataValueStore
 {
+    @Override
     public void saveVoid( TrackedEntityDataValue dataValue )
     {
         sessionFactory.getCurrentSession().save( dataValue );
     }
    
+    @Override
     public int detele( ProgramStageInstance programStageInstance )
     {
         Query query = getQuery( "delete from TrackedEntityDataValue where programStageInstance = :programStageInstance" );
@@ -62,48 +64,53 @@ public class HibernateTrackedEntityDataValueStore
         return query.executeUpdate();
     }
 
+    @Override
     @SuppressWarnings( "unchecked" )
     public Collection<TrackedEntityDataValue> get( ProgramStageInstance programStageInstance )
     {
         return getCriteria( Restrictions.eq( "programStageInstance", programStageInstance ) ).list();
     }
 
+    @Override
     @SuppressWarnings( "unchecked" )
     public Collection<TrackedEntityDataValue> get( ProgramStageInstance programStageInstance,
         Collection<DataElement> dataElements )
     {
         if ( dataElements == null || dataElements.isEmpty() )
         {
-            return new ArrayList<TrackedEntityDataValue>();
+            return new ArrayList<>();
         }
         
         return getCriteria( Restrictions.in( "dataElement", dataElements ), Restrictions.eq( "programStageInstance", programStageInstance ) ).list();
     }
 
+    @Override
     @SuppressWarnings( "unchecked" )
     public Collection<TrackedEntityDataValue> get( Collection<ProgramStageInstance> programStageInstances )
     {
         if ( programStageInstances == null || programStageInstances.isEmpty() )
         {
-            return new ArrayList<TrackedEntityDataValue>();
+            return new ArrayList<>();
         }
 
         return getCriteria( Restrictions.in( "programStageInstance", programStageInstances ) ).list();
     }
 
+    @Override
     @SuppressWarnings( "unchecked" )
     public Collection<TrackedEntityDataValue> get( DataElement dataElement )
     {
         return getCriteria( Restrictions.eq( "dataElement", dataElement ) ).list();
     }
 
+    @Override
     @SuppressWarnings( "unchecked" )
     public Collection<TrackedEntityDataValue> get( TrackedEntityInstance entityInstance, Collection<DataElement> dataElements, Date startDate,
         Date endDate )
      {
         if ( dataElements == null || dataElements.isEmpty() )
         {
-            return new ArrayList<TrackedEntityDataValue>();
+            return new ArrayList<>();
         }
         
         Criteria criteria = getCriteria();
@@ -115,6 +122,7 @@ public class HibernateTrackedEntityDataValueStore
         return criteria.list();
     }
 
+    @Override
     public TrackedEntityDataValue get( ProgramStageInstance programStageInstance, DataElement dataElement )
     {
         return (TrackedEntityDataValue) getCriteria( Restrictions.eq( "programStageInstance", programStageInstance ),

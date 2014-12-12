@@ -32,11 +32,9 @@ import org.hisp.dhis.attribute.Attribute;
 import org.hisp.dhis.attribute.AttributeValue;
 import org.hisp.dhis.caseaggregation.CaseAggregationCondition;
 import org.hisp.dhis.chart.Chart;
-import org.hisp.dhis.concept.Concept;
 import org.hisp.dhis.constant.Constant;
 import org.hisp.dhis.dashboard.DashboardItem;
 import org.hisp.dhis.dataapproval.DataApprovalLevel;
-import org.hisp.dhis.datadictionary.DataDictionary;
 import org.hisp.dhis.dataelement.CategoryOptionGroup;
 import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElement;
@@ -53,6 +51,8 @@ import org.hisp.dhis.dataset.LockException;
 import org.hisp.dhis.dataset.Section;
 import org.hisp.dhis.datavalue.DataValue;
 import org.hisp.dhis.document.Document;
+import org.hisp.dhis.eventchart.EventChart;
+import org.hisp.dhis.eventreport.EventReport;
 import org.hisp.dhis.expression.Expression;
 import org.hisp.dhis.i18n.locale.I18nLocale;
 import org.hisp.dhis.indicator.Indicator;
@@ -159,15 +159,6 @@ public abstract class DeletionHandler
     }
 
     public String allowDeleteDataApprovalLevel( DataApprovalLevel dataApprovalLevel )
-    {
-        return null;
-    }
-
-    public void deleteDataDictionary( DataDictionary dataDictionary )
-    {
-    }
-
-    public String allowDeleteDataDictionary( DataDictionary dataDictionary )
     {
         return null;
     }
@@ -505,15 +496,6 @@ public abstract class DeletionHandler
         return null;
     }
 
-    public void deleteConcept( Concept concept )
-    {
-    }
-
-    public String allowDeleteConcept( Concept concept )
-    {
-        return null;
-    }
-
     public void deleteTrackedEntityInstance( TrackedEntityInstance entityInstance )
     {
     }
@@ -771,6 +753,24 @@ public abstract class DeletionHandler
     }
     
     public String allowDeleteTrackedEntity( TrackedEntity trackedEntity )
+    {
+        return null;
+    }
+    
+    public void deleteEventReport( EventReport eventReport )
+    {
+    }
+    
+    public String allowDeleteEventReport( EventReport eventReport )
+    {
+        return null;
+    }
+        
+    public void deleteEventChart( EventChart eventChart )
+    {
+    }
+    
+    public String allowDeleteEventChart( EventChart eventChart )
     {
         return null;
     }

@@ -28,21 +28,19 @@ package org.hisp.dhis.dxf2.metadata;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.hisp.dhis.attribute.Attribute;
 import org.hisp.dhis.chart.Chart;
 import org.hisp.dhis.common.DimensionalObject;
 import org.hisp.dhis.common.DxfNamespaces;
 import org.hisp.dhis.common.NameableObject;
-import org.hisp.dhis.concept.Concept;
 import org.hisp.dhis.constant.Constant;
 import org.hisp.dhis.dashboard.Dashboard;
+import org.hisp.dhis.dashboard.DashboardItem;
 import org.hisp.dhis.dataapproval.DataApprovalLevel;
-import org.hisp.dhis.datadictionary.DataDictionary;
 import org.hisp.dhis.dataelement.CategoryOptionGroup;
 import org.hisp.dhis.dataelement.CategoryOptionGroupSet;
 import org.hisp.dhis.dataelement.DataElement;
@@ -57,6 +55,7 @@ import org.hisp.dhis.dataset.DataSet;
 import org.hisp.dhis.dataset.Section;
 import org.hisp.dhis.document.Document;
 import org.hisp.dhis.dxf2.events.event.Event;
+import org.hisp.dhis.eventchart.EventChart;
 import org.hisp.dhis.eventreport.EventReport;
 import org.hisp.dhis.filter.MetaDataFilter;
 import org.hisp.dhis.indicator.Indicator;
@@ -70,6 +69,7 @@ import org.hisp.dhis.mapping.MapLegend;
 import org.hisp.dhis.mapping.MapLegendSet;
 import org.hisp.dhis.mapping.MapView;
 import org.hisp.dhis.message.MessageConversation;
+import org.hisp.dhis.option.Option;
 import org.hisp.dhis.option.OptionSet;
 import org.hisp.dhis.organisationunit.OrganisationUnit;
 import org.hisp.dhis.organisationunit.OrganisationUnitGroup;
@@ -94,9 +94,11 @@ import org.hisp.dhis.validation.ValidationCriteria;
 import org.hisp.dhis.validation.ValidationRule;
 import org.hisp.dhis.validation.ValidationRuleGroup;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import com.google.common.collect.Lists;
 
 /**
  * @author Morten Olav Hansen <mortenoh@gmail.com>
@@ -108,121 +110,123 @@ public class MetaData
 
     private List<Schema> schemas = Lists.newArrayList();
 
-    private List<Attribute> attributes = new ArrayList<Attribute>();
+    private List<Attribute> attributes = new ArrayList<>();
 
-    private List<DataApprovalLevel> dataApprovalLevels = new ArrayList<DataApprovalLevel>();
+    private List<DataApprovalLevel> dataApprovalLevels = new ArrayList<>();
 
-    private List<Document> documents = new ArrayList<Document>();
+    private List<Document> documents = new ArrayList<>();
 
-    private List<Constant> constants = new ArrayList<Constant>();
+    private List<Constant> constants = new ArrayList<>();
 
-    private List<Concept> concepts = new ArrayList<Concept>();
+    private List<User> users = new ArrayList<>();
 
-    private List<User> users = new ArrayList<User>();
+    private List<UserAuthorityGroup> userRoles = new ArrayList<>();
 
-    private List<UserAuthorityGroup> userRoles = new ArrayList<UserAuthorityGroup>();
+    private List<UserGroup> userGroups = new ArrayList<>();
 
-    private List<UserGroup> userGroups = new ArrayList<UserGroup>();
+    private List<MessageConversation> messageConversations = new ArrayList<>();
 
-    private List<MessageConversation> messageConversations = new ArrayList<MessageConversation>();
+    private List<Interpretation> interpretations = new ArrayList<>();
 
-    private List<Interpretation> interpretations = new ArrayList<Interpretation>();
+    private List<Option> options = new ArrayList<>();
 
-    private List<OptionSet> optionSets = new ArrayList<OptionSet>();
+    private List<OptionSet> optionSets = new ArrayList<>();
 
-    private List<DataElementCategory> categories = new ArrayList<DataElementCategory>();
+    private List<DataElementCategory> categories = new ArrayList<>();
 
-    private List<DataElementCategoryOption> categoryOptions = new ArrayList<DataElementCategoryOption>();
+    private List<DataElementCategoryOption> categoryOptions = new ArrayList<>();
 
-    private List<DataElementCategoryCombo> categoryCombos = new ArrayList<DataElementCategoryCombo>();
+    private List<DataElementCategoryCombo> categoryCombos = new ArrayList<>();
 
-    private List<DataElementCategoryOptionCombo> categoryOptionCombos = new ArrayList<DataElementCategoryOptionCombo>();
+    private List<DataElementCategoryOptionCombo> categoryOptionCombos = new ArrayList<>();
 
-    private List<CategoryOptionGroup> categoryOptionGroups = new ArrayList<CategoryOptionGroup>();
+    private List<CategoryOptionGroup> categoryOptionGroups = new ArrayList<>();
 
-    private List<CategoryOptionGroupSet> categoryOptionGroupSets = new ArrayList<CategoryOptionGroupSet>();
+    private List<CategoryOptionGroupSet> categoryOptionGroupSets = new ArrayList<>();
 
-    private List<DataElementOperand> dataElementOperands = new ArrayList<DataElementOperand>();
+    private List<DataElementOperand> dataElementOperands = new ArrayList<>();
 
-    private List<Dashboard> dashboards = new ArrayList<Dashboard>();
+    private List<DashboardItem> dashboardItems = new ArrayList<>();
 
-    private List<DataElement> dataElements = new ArrayList<DataElement>();
+    private List<Dashboard> dashboards = new ArrayList<>();
 
-    private List<DataElementGroup> dataElementGroups = new ArrayList<DataElementGroup>();
+    private List<DataElement> dataElements = new ArrayList<>();
 
-    private List<DataElementGroupSet> dataElementGroupSets = new ArrayList<DataElementGroupSet>();
+    private List<DataElementGroup> dataElementGroups = new ArrayList<>();
 
-    private List<DimensionalObject> dimensions = new ArrayList<DimensionalObject>();
+    private List<DataElementGroupSet> dataElementGroupSets = new ArrayList<>();
 
-    private List<Indicator> indicators = new ArrayList<Indicator>();
+    private List<DimensionalObject> dimensions = new ArrayList<>();
 
-    private List<IndicatorGroup> indicatorGroups = new ArrayList<IndicatorGroup>();
+    private List<Indicator> indicators = new ArrayList<>();
 
-    private List<IndicatorGroupSet> indicatorGroupSets = new ArrayList<IndicatorGroupSet>();
+    private List<IndicatorGroup> indicatorGroups = new ArrayList<>();
 
-    private List<IndicatorType> indicatorTypes = new ArrayList<IndicatorType>();
+    private List<IndicatorGroupSet> indicatorGroupSets = new ArrayList<>();
 
-    private List<NameableObject> items = new ArrayList<NameableObject>();
+    private List<IndicatorType> indicatorTypes = new ArrayList<>();
 
-    private List<OrganisationUnit> organisationUnits = new ArrayList<OrganisationUnit>();
+    private List<NameableObject> items = new ArrayList<>();
 
-    private List<OrganisationUnitGroup> organisationUnitGroups = new ArrayList<OrganisationUnitGroup>();
+    private List<OrganisationUnit> organisationUnits = new ArrayList<>();
 
-    private List<OrganisationUnitGroupSet> organisationUnitGroupSets = new ArrayList<OrganisationUnitGroupSet>();
+    private List<OrganisationUnitGroup> organisationUnitGroups = new ArrayList<>();
 
-    private List<OrganisationUnitLevel> organisationUnitLevels = new ArrayList<OrganisationUnitLevel>();
+    private List<OrganisationUnitGroupSet> organisationUnitGroupSets = new ArrayList<>();
 
-    private List<ValidationRule> validationRules = new ArrayList<ValidationRule>();
+    private List<OrganisationUnitLevel> organisationUnitLevels = new ArrayList<>();
 
-    private List<ValidationRuleGroup> validationRuleGroups = new ArrayList<ValidationRuleGroup>();
+    private List<ValidationRule> validationRules = new ArrayList<>();
 
-    private List<SqlView> sqlViews = new ArrayList<SqlView>();
+    private List<ValidationRuleGroup> validationRuleGroups = new ArrayList<>();
 
-    private List<Chart> charts = new ArrayList<Chart>();
+    private List<SqlView> sqlViews = new ArrayList<>();
 
-    private List<Report> reports = new ArrayList<Report>();
+    private List<Chart> charts = new ArrayList<>();
 
-    private List<ReportTable> reportTables = new ArrayList<ReportTable>();
+    private List<Report> reports = new ArrayList<>();
 
-    private List<Map> maps = new ArrayList<Map>();
+    private List<ReportTable> reportTables = new ArrayList<>();
 
-    private List<MapView> mapViews = new ArrayList<MapView>();
+    private List<Map> maps = new ArrayList<>();
 
-    private List<MapLegend> mapLegends = new ArrayList<MapLegend>();
+    private List<MapView> mapViews = new ArrayList<>();
 
-    private List<MapLegendSet> mapLegendSets = new ArrayList<MapLegendSet>();
+    private List<MapLegend> mapLegends = new ArrayList<>();
 
-    private List<MapLayer> mapLayers = new ArrayList<MapLayer>();
+    private List<MapLegendSet> mapLegendSets = new ArrayList<>();
 
-    private List<DataDictionary> dataDictionaries = new ArrayList<DataDictionary>();
+    private List<MapLayer> mapLayers = new ArrayList<>();
 
-    private List<Section> sections = new ArrayList<Section>();
+    private List<Section> sections = new ArrayList<>();
 
-    private List<DataSet> dataSets = new ArrayList<DataSet>();
+    private List<DataSet> dataSets = new ArrayList<>();
 
-    private List<MetaDataFilter> metaDataFilters = new ArrayList<MetaDataFilter>();
+    private List<MetaDataFilter> metaDataFilters = new ArrayList<>();
 
-    private List<Event> events = new ArrayList<Event>();
+    private List<Event> events = new ArrayList<>();
 
-    private List<EventReport> eventReports = new ArrayList<EventReport>();
+    private List<EventReport> eventReports = new ArrayList<>();
+    
+    private List<EventChart> eventCharts = new ArrayList<>();
 
-    private List<Program> programs = new ArrayList<Program>();
+    private List<Program> programs = new ArrayList<>();
 
-    private List<ProgramStage> programStages = new ArrayList<ProgramStage>();
+    private List<ProgramStage> programStages = new ArrayList<>();
 
     private List<ProgramValidation> programValidations = Lists.newArrayList();
 
-    private List<ProgramStageSection> programStageSections = new ArrayList<ProgramStageSection>();
+    private List<ProgramStageSection> programStageSections = new ArrayList<>();
 
-    private List<RelationshipType> relationshipTypes = new ArrayList<RelationshipType>();
+    private List<RelationshipType> relationshipTypes = new ArrayList<>();
 
-    private List<ValidationCriteria> validationCriterias = new ArrayList<ValidationCriteria>();
+    private List<ValidationCriteria> validationCriterias = new ArrayList<>();
 
-    private List<TrackedEntity> trackedEntities = new ArrayList<TrackedEntity>();
+    private List<TrackedEntity> trackedEntities = new ArrayList<>();
 
-    private List<TrackedEntityAttribute> trackedEntityAttributes = new ArrayList<TrackedEntityAttribute>();
+    private List<TrackedEntityAttribute> trackedEntityAttributes = new ArrayList<>();
 
-    private List<TrackedEntityAttributeGroup> trackedEntityAttributeGroups = new ArrayList<TrackedEntityAttributeGroup>();
+    private List<TrackedEntityAttributeGroup> trackedEntityAttributeGroups = new ArrayList<>();
 
     public MetaData()
     {
@@ -358,6 +362,19 @@ public class MetaData
     }
 
     @JsonProperty
+    @JacksonXmlElementWrapper( localName = "options", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "option", namespace = DxfNamespaces.DXF_2_0 )
+    public List<Option> getOptions()
+    {
+        return options;
+    }
+
+    public void setOptions( List<Option> options )
+    {
+        this.options = options;
+    }
+
+    @JsonProperty
     @JacksonXmlElementWrapper( localName = "optionSets", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "optionSet", namespace = DxfNamespaces.DXF_2_0 )
     public List<OptionSet> getOptionSets()
@@ -394,19 +411,6 @@ public class MetaData
     public void setDataElementGroupSets( List<DataElementGroupSet> dataElementGroupSets )
     {
         this.dataElementGroupSets = dataElementGroupSets;
-    }
-
-    @JsonProperty
-    @JacksonXmlElementWrapper( localName = "concepts", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "concept", namespace = DxfNamespaces.DXF_2_0 )
-    public List<Concept> getConcepts()
-    {
-        return concepts;
-    }
-
-    public void setConcepts( List<Concept> concepts )
-    {
-        this.concepts = concepts;
     }
 
     @JsonProperty
@@ -748,6 +752,19 @@ public class MetaData
     }
 
     @JsonProperty
+    @JacksonXmlElementWrapper( localName = "dashboardItems", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "dashboardItem", namespace = DxfNamespaces.DXF_2_0 )
+    public List<DashboardItem> getDashboardItems()
+    {
+        return dashboardItems;
+    }
+
+    public void setDashboardItems( List<DashboardItem> dashboardItems )
+    {
+        this.dashboardItems = dashboardItems;
+    }
+
+    @JsonProperty
     @JacksonXmlElementWrapper( localName = "dashboards", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "dashboard", namespace = DxfNamespaces.DXF_2_0 )
     public List<Dashboard> getDashboards()
@@ -823,19 +840,6 @@ public class MetaData
     public void setMapLayers( List<MapLayer> mapLayers )
     {
         this.mapLayers = mapLayers;
-    }
-
-    @JsonProperty
-    @JacksonXmlElementWrapper( localName = "dataDictionaries", namespace = DxfNamespaces.DXF_2_0 )
-    @JacksonXmlProperty( localName = "dataDictionary", namespace = DxfNamespaces.DXF_2_0 )
-    public List<DataDictionary> getDataDictionaries()
-    {
-        return dataDictionaries;
-    }
-
-    public void setDataDictionaries( List<DataDictionary> dataDictionaries )
-    {
-        this.dataDictionaries = dataDictionaries;
     }
 
     @JsonProperty
@@ -943,6 +947,19 @@ public class MetaData
     }
 
     @JsonProperty
+    @JacksonXmlElementWrapper( localName = "eventCharts", namespace = DxfNamespaces.DXF_2_0 )
+    @JacksonXmlProperty( localName = "eventChart", namespace = DxfNamespaces.DXF_2_0 )
+    public List<EventChart> getEventCharts()
+    {
+        return eventCharts;
+    }
+
+    public void setEventCharts( List<EventChart> eventCharts )
+    {
+        this.eventCharts = eventCharts;
+    }
+
+    @JsonProperty
     @JacksonXmlElementWrapper( localName = "trackedEntities", namespace = DxfNamespaces.DXF_2_0 )
     @JacksonXmlProperty( localName = "trackedEntity", namespace = DxfNamespaces.DXF_2_0 )
     public List<TrackedEntity> getTrackedEntities()
@@ -1016,7 +1033,6 @@ public class MetaData
             ", attributes=" + attributes +
             ", documents=" + documents +
             ", constants=" + constants +
-            ", concepts=" + concepts +
             ", users=" + users +
             ", userRoles=" + userRoles +
             ", userGroups=" + userGroups +
@@ -1055,7 +1071,6 @@ public class MetaData
             ", mapLegends=" + mapLegends +
             ", mapLegendSets=" + mapLegendSets +
             ", mapLayers=" + mapLayers +
-            ", dataDictionaries=" + dataDictionaries +
             ", sections=" + sections +
             ", dataSets=" + dataSets +
             ", programs=" + programs +

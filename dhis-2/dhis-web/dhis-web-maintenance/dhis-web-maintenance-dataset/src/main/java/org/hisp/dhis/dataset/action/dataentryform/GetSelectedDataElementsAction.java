@@ -79,12 +79,13 @@ public class GetSelectedDataElementsAction
     // Execute
     // -------------------------------------------------------------------------
     
+    @Override
     public String execute()
         throws Exception
     {        
         DataSet dataSet = dataSetService.getDataSet( dataSetId );
 
-        dataElementList = new ArrayList<DataElement>( dataSet.getDataElements() );
+        dataElementList = new ArrayList<>( dataSet.getDataElements() );
 
         Collections.sort( dataElementList, new IdentifiableObjectNameComparator() );
         
